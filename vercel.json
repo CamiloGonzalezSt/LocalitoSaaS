@@ -1,12 +1,5 @@
-{
-  "version": 2,
-  "installCommand": "npm install",
+﻿{
+  "installCommand": "npm install --include=dev",
   "buildCommand": "npm run build",
-  "outputDirectory": "apps/web/dist",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "outputDirectory": "apps/web/dist"
 }
