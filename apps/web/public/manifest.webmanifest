@@ -1,0 +1,19 @@
+{
+  "name": "Localito",
+  "short_name": "Localito",
+  "description": "Caja inteligente de bolsillo para negocios de barrio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#166534",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

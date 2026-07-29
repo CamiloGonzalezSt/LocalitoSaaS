@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: localito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: localito
+      POSTGRES_USER: localito
+      POSTGRES_PASSWORD: localito
+    ports:
+      - "5432:5432"
+    volumes:
+      - localito_pg_data:/var/lib/postgresql/data
+
+volumes:
+  localito_pg_data:
+
