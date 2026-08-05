@@ -47,6 +47,14 @@ export interface Store {
   cashClosures: CashRegisterClosure[];
   passwordHashes: Record<string, string>;
   sessions: Array<{ tokenHash: string; userId: string; expiresAt: string; revokedAt?: string }>;
+  passwordResetTokens: Array<{
+    id: string;
+    userId: string;
+    tokenHash: string;
+    expiresAt: string;
+    createdAt: string;
+    usedAt?: string;
+  }>;
   suppliers: Supplier[];
   purchaseOrders: PurchaseOrder[];
   debts: DebtAccount[];
@@ -159,6 +167,7 @@ export const store: Store = {
     [systemAdminId]: hashPassword(systemAdminPassword)
   },
   sessions: [],
+  passwordResetTokens: [],
   suppliers: [
     {
       id: "supplier-demo-001",

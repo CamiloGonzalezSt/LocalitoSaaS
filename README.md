@@ -7,7 +7,8 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 ## Funcionalidades implementadas
 
 - Administrador de plataforma separado del negocio: crea locales, crea su primer dueño, agrega vendedores y puede suspender o reactivar locales y usuarios.
-- Registro de un negocio y primer usuario dueño.
+- Creación de negocios y del primer usuario dueño exclusivamente desde la cuenta administradora de plataforma.
+- Recuperación de contraseña por correo con enlace de un solo uso, vencimiento de 30 minutos y revocación de sesiones anteriores.
 - Inicio y cierre de sesión con contraseñas `scrypt`, tokens aleatorios almacenados como hash, expiración y aislamiento por negocio.
 - Roles `system_admin`, `owner` y `seller` protegidos tanto en la interfaz como en la API.
 - Punto de venta con búsqueda, código de barras, descuento, notas, ticket recuperable y pagos simples o divididos.
@@ -65,6 +66,9 @@ SELLER_DEMO_PASSWORD=Duoc2026V
 PLATFORM_ADMIN_EMAIL=caj.gonzalez.st@gmail.com
 PLATFORM_ADMIN_PASSWORD=change-this-before-production
 SESSION_SECRET=change-this-in-production-with-a-long-random-value
+APP_URL=http://localhost:5173
+RESEND_API_KEY=
+EMAIL_FROM=Localito <no-reply@auth.tudominio.cl>
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
 ```
@@ -73,7 +77,9 @@ OPENAI_VISION_MODEL=gpt-5.6
 
 `SESSION_SECRET` firma las sesiones del modo demostración serverless. En Vercel, configure además `DATABASE_URL` (o `POSTGRES_URL` mediante la integración de Supabase) para que registros, ventas y cambios sobrevivan entre invocaciones. Use la URL del **Transaction pooler** de Supabase para funciones serverless.
 
-`PLATFORM_ADMIN_PASSWORD` es obligatoria en producción. El backend crea o actualiza el administrador al conectarse a PostgreSQL; nunca publique esta clave en el frontend ni en el repositorio.
+`PLATFORM_ADMIN_PASSWORD` es obligatoria para crear inicialmente el administrador en producción. Una vez creada la cuenta, su clave se cambia mediante recuperación por correo; modificar esta variable no sobrescribe la contraseña existente. Nunca publique la clave en el frontend ni en el repositorio.
+
+La recuperación de contraseña usa Resend desde la API. En producción configure `APP_URL=https://localito-saas.vercel.app`, una `RESEND_API_KEY` con permiso de envío y `EMAIL_FROM` con un remitente de un dominio verificado. Estas variables son privadas y nunca deben llevar el prefijo `VITE_`.
 
 ## Migración a Supabase
 
@@ -94,7 +100,7 @@ Las tablas tienen RLS activado y sin políticas públicas: Localito accede exclu
 | Vendedor | `sam.solis+vendedor@duocuc.cl` | `Duoc2026V` |
 | Vendedor | `al.patino+vendedor@duocuc.cl` | `Duoc2026V` |
 
-También se puede crear un negocio nuevo desde la pantalla de acceso. La contraseña debe tener al menos 10 caracteres, una letra y un número.
+Los negocios nuevos solo se crean desde la cuenta administradora. En la pantalla de acceso, cada usuario puede solicitar por correo el restablecimiento de su contraseña; la nueva clave debe tener al menos 10 caracteres, una letra y un número.
 
 En desarrollo local, si no se define otra clave, el administrador usa `caj.gonzalez.st@gmail.com` / `AdminLocalito2026`. Ese valor de desarrollo se deshabilita automáticamente con `NODE_ENV=production`.
 
@@ -151,7 +157,7 @@ packages/
 
 - Cumplimiento tributario chileno, excluido por decisión de esta iteración.
 - Activación de Transbank real, bloqueada hasta contar con credenciales y URL pública de retorno.
-- Correo transaccional para recuperación de contraseña y avisos automáticos.
+- Avisos automáticos por correo distintos de la recuperación de contraseña.
 - Múltiples sucursales, e-commerce público, fidelización y facturación de la suscripción SaaS; son expansiones de producto y no forman parte del núcleo operacional entregado aquí.
 
 El ticket generado por Localito es un comprobante interno no tributario.

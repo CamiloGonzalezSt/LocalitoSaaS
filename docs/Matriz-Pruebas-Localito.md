@@ -64,7 +64,7 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-28 | Usuarios | Vendedor no administra usuarios | Iniciar como vendedor y entrar a Mi perfil. | No aparece el formulario de crear usuarios ni la lista administrativa. | Pendiente evidencia |
 | CP-29 | Webpay fiado | Compartir cobro | Entrar a Fiado, presionar Cobrar en cliente con deuda. | Se genera tarjeta Cobro listo con link, Compartir, WhatsApp y Copiar. | Pendiente evidencia |
 | CP-30 | Webpay fiado | Confirmar pago demo | Generar cobro Webpay y presionar Confirmar demo. | El pago queda aprobado y la deuda del cliente disminuye por el monto cobrado. | Pendiente evidencia |
-| CP-31 | Registro | Crear negocio | Registrar negocio, dueno y clave segura. | Se crea un tenant aislado y se inicia sesion. | Pendiente evidencia |
+| CP-31 | Administración | Crear negocio | Iniciar como administrador y registrar negocio, dueño y clave segura. | Se crea un tenant aislado; el login público no permite crear negocios. | Pendiente evidencia |
 | CP-32 | Seguridad | Cerrar sesion | Cerrar sesion y reutilizar el token anterior. | El token queda revocado y la API responde 401. | Pendiente evidencia |
 | CP-33 | Multi-tenant | Intentar cambiar negocio por cabecera | Enviar una cabecera `x-tenant-id` distinta con un token valido. | La API ignora la cabecera y deriva el negocio desde la sesion. | Pendiente evidencia |
 | CP-34 | Ventas | Pago dividido | Vender usando efectivo y tarjeta por montos que sumen el total. | La venta queda con metodo mixto y caja separa ambos montos. | Pendiente evidencia |
@@ -79,6 +79,7 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-43 | Datos | Importar y exportar CSV | Exportar catalogo e importar un archivo valido. | Se descarga CSV y se crean filas validas. | Pendiente evidencia |
 | CP-44 | Offline | Venta sin conexion | Perder red al confirmar y recuperarla. | La venta queda en cola y se sincroniza sin duplicarse. | Pendiente evidencia |
 | CP-45 | Vision | Reconocer envase | Configurar `OPENAI_API_KEY`, fotografiar un producto catalogado. | La API propone coincidencia con confianza y permite corregir. | Pendiente evidencia |
+| CP-46 | Seguridad | Recuperar contraseña | Solicitar el enlace, cambiar la clave y volver a usar el enlace. | La nueva clave funciona, sesiones anteriores quedan revocadas y el enlace no puede reutilizarse. | Automatizada aprobada |
 
 ## 5. Pruebas no funcionales sugeridas
 

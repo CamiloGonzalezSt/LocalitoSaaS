@@ -59,6 +59,7 @@ export function verifySignedSessionToken(token: string, secret: string): User | 
 
 export function passwordPolicyError(password: string) {
   if (password.length < 10) return "La clave debe tener al menos 10 caracteres.";
+  if (password.length > 128) return "La clave no puede superar los 128 caracteres.";
   if (!/[a-z]/i.test(password) || !/\d/.test(password)) return "La clave debe incluir letras y números.";
   return undefined;
 }

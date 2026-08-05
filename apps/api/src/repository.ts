@@ -79,6 +79,8 @@ export interface DataRepository {
   createSession(userId: string, tokenHash: string, expiresAt: string): Promise<void>;
   getSession(tokenHash: string): Promise<User | null>;
   revokeSession(tokenHash: string): Promise<void>;
+  createPasswordResetToken(email: string, tokenHash: string, expiresAt: string): Promise<{ email: string } | null>;
+  completePasswordReset(tokenHash: string, newPassword: string): Promise<boolean>;
   getProducts(tenantId: string): Promise<Product[]>;
   createProduct(tenantId: string, product: Partial<Product>): Promise<Product>;
   updateProduct(tenantId: string, productId: string, product: Partial<Product>): Promise<Product | null>;
@@ -450,6 +452,51 @@ export class MemoryRepository implements DataRepository {
   async revokeSession(tokenHash: string) {
     const session = store.sessions.find((candidate) => candidate.tokenHash === tokenHash);
     if (session) session.revokedAt = new Date().toISOString();
+  }
+
+  async createPasswordResetToken(email: string, tokenHash: string, expiresAt: string) {
+    const user = store.users.find(
+      (candidate) => candidate.email.toLowerCase() === email.toLowerCase() && candidate.active !== false
+    );
+    if (!user || store.tenants.find((tenant) => tenant.id === user.tenantId)?.active === false) return null;
+
+    const nowDate = new Date();
+    const recentlyCreated = store.passwordResetTokens.some(
+      (token) => token.userId === user.id && !token.usedAt && nowDate.getTime() - Date.parse(token.createdAt) < 60_000
+    );
+    if (recentlyCreated) return null;
+
+    const now = nowDate.toISOString();
+    store.passwordResetTokens.push({
+      id: randomUUID(),
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      createdAt: now
+    });
+    return { email: user.email };
+  }
+
+  async completePasswordReset(tokenHash: string, newPassword: string) {
+    const now = new Date();
+    const resetToken = store.passwordResetTokens.find(
+      (candidate) => candidate.tokenHash === tokenHash && !candidate.usedAt && Date.parse(candidate.expiresAt) > now.getTime()
+    );
+    if (!resetToken) return false;
+
+    const user = store.users.find((candidate) => candidate.id === resetToken.userId && candidate.active !== false);
+    if (!user) return false;
+
+    const passwordHash = hashPassword(newPassword);
+    const usedAt = now.toISOString();
+    store.passwordHashes[user.id] = passwordHash;
+    for (const token of store.passwordResetTokens) {
+      if (token.userId === user.id && !token.usedAt) token.usedAt = usedAt;
+    }
+    for (const session of store.sessions) {
+      if (session.userId === user.id && !session.revokedAt) session.revokedAt = usedAt;
+    }
+    return true;
   }
 
   async getProducts(tenantId: string) {
@@ -1187,6 +1234,107 @@ class PostgresRepository implements DataRepository {
 
   async revokeSession(tokenHash: string) {
     await this.pool.query(`update sesiones set revocada_en = CURRENT_TIMESTAMP where token_hash = $1`, [tokenHash]);
+  }
+
+  async createPasswordResetToken(email: string, tokenHash: string, expiresAt: string) {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const userResult = await client.query(
+        `select u.id, u.email
+         from usuarios u
+         join negocios n on n.id = u.negocio_id
+         where lower(u.email) = lower($1) and u.estado = 'activo' and n.estado = 'activo'
+         limit 1
+         for update of u`,
+        [email]
+      );
+      const user = userResult.rows[0];
+      if (!user) {
+        await client.query("commit");
+        return null;
+      }
+
+      const recentToken = await client.query(
+        `select 1 from password_reset_tokens
+         where usuario_id = $1 and usado_en is null
+           and fecha_creacion > CURRENT_TIMESTAMP - INTERVAL '60 seconds'
+         limit 1`,
+        [user.id]
+      );
+      if (recentToken.rows[0]) {
+        await client.query("commit");
+        return null;
+      }
+
+      await client.query(
+        `insert into password_reset_tokens (id, usuario_id, token_hash, expira_en)
+         values ($1, $2, $3, $4)`,
+        [randomUUID(), user.id, tokenHash, expiresAt]
+      );
+      await client.query("commit");
+      return { email: String(user.email) };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async completePasswordReset(tokenHash: string, newPassword: string) {
+    const preflight = await this.pool.query(
+      `select 1 from password_reset_tokens t
+       join usuarios u on u.id = t.usuario_id
+       where t.token_hash = $1 and t.usado_en is null and t.expira_en > CURRENT_TIMESTAMP
+         and u.estado = 'activo'
+       limit 1`,
+      [tokenHash]
+    );
+    if (!preflight.rows[0]) return false;
+
+    const passwordHash = hashPassword(newPassword);
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const tokenResult = await client.query(
+        `select id, usuario_id
+         from password_reset_tokens
+         where token_hash = $1 and usado_en is null and expira_en > CURRENT_TIMESTAMP
+         for update`,
+        [tokenHash]
+      );
+      const resetToken = tokenResult.rows[0];
+      if (!resetToken) {
+        await client.query("rollback");
+        return false;
+      }
+
+      const updatedUser = await client.query(
+        `update usuarios set password_hash = $1 where id = $2 and estado = 'activo' returning id`,
+        [passwordHash, resetToken.usuario_id]
+      );
+      if (!updatedUser.rows[0]) {
+        await client.query("rollback");
+        return false;
+      }
+
+      await client.query(
+        `update password_reset_tokens set usado_en = CURRENT_TIMESTAMP where usuario_id = $1 and usado_en is null`,
+        [resetToken.usuario_id]
+      );
+      await client.query(
+        `update sesiones set revocada_en = CURRENT_TIMESTAMP where usuario_id = $1 and revocada_en is null`,
+        [resetToken.usuario_id]
+      );
+      await client.query("commit");
+      return true;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async getProducts(tenantId: string) {
@@ -2149,9 +2297,9 @@ class PostgresRepository implements DataRepository {
       [systemTenantId]
     );
     await this.pool.query(
-      `insert into usuarios (id,negocio_id,nombre,email,password_hash,rol,estado)
-       values ($1,$2,'Camilo Gonzalez',$3,$4,'system_admin','activo')
-       on conflict (email) do update set negocio_id=excluded.negocio_id,nombre=excluded.nombre,password_hash=excluded.password_hash,rol='system_admin',estado='activo'`,
+       `insert into usuarios (id,negocio_id,nombre,email,password_hash,rol,estado)
+        values ($1,$2,'Camilo Gonzalez',$3,$4,'system_admin','activo')
+        on conflict (email) do update set negocio_id=excluded.negocio_id,nombre=excluded.nombre,rol='system_admin',estado='activo'`,
       [systemAdminId, systemTenantId, systemAdminEmail, hashPassword(adminPassword)]
     );
   }

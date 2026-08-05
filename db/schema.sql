@@ -32,6 +32,20 @@ CREATE TABLE IF NOT EXISTS sesiones (
 CREATE INDEX IF NOT EXISTS idx_sesiones_token ON sesiones(token_hash);
 CREATE INDEX IF NOT EXISTS idx_usuarios_negocio ON usuarios(negocio_id);
 
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id UUID PRIMARY KEY,
+  usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  token_hash VARCHAR(64) NOT NULL UNIQUE,
+  expira_en TIMESTAMPTZ NOT NULL,
+  usado_en TIMESTAMPTZ,
+  fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT password_reset_tokens_token_hash_length CHECK (char_length(token_hash) = 64)
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_usuario_activo
+  ON password_reset_tokens(usuario_id, expira_en)
+  WHERE usado_en IS NULL;
+
 CREATE TABLE IF NOT EXISTS categorias (
   id UUID PRIMARY KEY,
   negocio_id UUID NOT NULL REFERENCES negocios(id),
@@ -347,6 +361,7 @@ CREATE INDEX IF NOT EXISTS idx_cierres_caja_usuario ON cierres_caja(usuario_id);
 ALTER TABLE negocios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sesiones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categorias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
@@ -372,7 +387,7 @@ ALTER TABLE cierres_caja ENABLE ROW LEVEL SECURITY;
 -- bloque se omite en PostgreSQL local cuando esos roles no existen.
 DO $$
 DECLARE
-  app_tables TEXT := 'negocios, usuarios, sesiones, categorias, productos, clientes, ventas, detalle_ventas, movimientos_stock, devoluciones_venta, cuentas_fiado, abonos_fiado, pagos, proveedores, ordenes_compra, detalle_ordenes_compra, sesiones_caja, movimientos_caja, auditoria, alertas, reconocimientos_ia, cierres_caja';
+  app_tables TEXT := 'negocios, usuarios, sesiones, password_reset_tokens, categorias, productos, clientes, ventas, detalle_ventas, movimientos_stock, devoluciones_venta, cuentas_fiado, abonos_fiado, pagos, proveedores, ordenes_compra, detalle_ordenes_compra, sesiones_caja, movimientos_caja, auditoria, alertas, reconocimientos_ia, cierres_caja';
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
     EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE %s FROM anon', app_tables);

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createSessionToken, createSignedSessionToken, hashPassword, hashSessionToken, verifyPassword, verifySignedSessionToken } from "./auth.js";
+import { createSessionToken, createSignedSessionToken, hashPassword, hashSessionToken, passwordPolicyError, verifyPassword, verifySignedSessionToken } from "./auth.js";
 import { MemoryRepository } from "./repository.js";
 import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 
@@ -14,6 +14,7 @@ test("passwords and sessions use non-predictable hashes", () => {
   const signed = createSignedSessionToken(user, 60_000, "secreto-de-prueba");
   assert.deepEqual(verifySignedSessionToken(signed, "secreto-de-prueba"), user);
   assert.equal(verifySignedSessionToken(signed, "secreto-incorrecto"), null);
+  assert.match(passwordPolicyError(`${"A".repeat(128)}1`) ?? "", /128/);
 });
 
 test("tenant registration is isolated and rejects duplicate emails", async () => {
@@ -28,6 +29,41 @@ test("tenant registration is isolated and rejects duplicate emails", async () =>
     repository.registerTenant({ name: "Otra persona", email, password: "OtraClave2026", businessName: "Duplicado", businessType: "Almacén" }),
     /correo/
   );
+});
+
+test("password recovery is single-use, changes the password and revokes sessions", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const email = `reset-${suffix}@localito.test`;
+  const registered = await repository.registerTenant({
+    name: "Dueña recuperación",
+    email,
+    password: "ClaveAnterior2026",
+    businessName: `Local reset ${suffix}`,
+    businessType: "Almacén"
+  });
+  const sessionHash = hashSessionToken(`session-${suffix}`);
+  await repository.createSession(registered.user.id, sessionHash, new Date(Date.now() + 60_000).toISOString());
+  assert.equal((await repository.getSession(sessionHash))?.id, registered.user.id);
+
+  const resetTokenHash = hashSessionToken(`reset-${suffix}`);
+  assert.equal(
+    (await repository.createPasswordResetToken(email, resetTokenHash, new Date(Date.now() + 60_000).toISOString()))?.email,
+    email
+  );
+  assert.equal(
+    await repository.createPasswordResetToken(email, hashSessionToken(`duplicate-${suffix}`), new Date(Date.now() + 60_000).toISOString()),
+    null
+  );
+  assert.equal(await repository.completePasswordReset(resetTokenHash, "ClaveNueva2026"), true);
+  assert.equal(await repository.completePasswordReset(resetTokenHash, "OtraClave2026"), false);
+  assert.equal(await repository.authenticate(email, "ClaveAnterior2026"), null);
+  assert.equal((await repository.authenticate(email, "ClaveNueva2026"))?.user.id, registered.user.id);
+  assert.equal(await repository.getSession(sessionHash), null);
+
+  const expiredTokenHash = hashSessionToken(`expired-${suffix}`);
+  await repository.createPasswordResetToken(email, expiredTokenHash, new Date(Date.now() - 1_000).toISOString());
+  assert.equal(await repository.completePasswordReset(expiredTokenHash, "ClaveExpirada2026"), false);
 });
 
 test("system admin manages tenants and their users without entering store operations", async () => {

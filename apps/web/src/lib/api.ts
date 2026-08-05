@@ -108,8 +108,18 @@ export const api = {
     });
   },
 
-  async register(payload: { name: string; email: string; password: string; businessName: string; businessType: string }) {
-    return request<AuthSession>("/auth/register", { method: "POST", body: JSON.stringify(payload) });
+  async requestPasswordReset(email: string) {
+    return request<void>("/auth/password-reset/request", {
+      method: "POST",
+      body: JSON.stringify({ email })
+    });
+  },
+
+  async confirmPasswordReset(token: string, password: string) {
+    return request<void>("/auth/password-reset/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token, password })
+    });
   },
 
   async logout() { return request<void>("/auth/logout", { method: "POST" }); },

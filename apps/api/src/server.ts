@@ -6,6 +6,7 @@ import morgan from "morgan";
 import type { Customer, PaymentMethod, Product, Tenant, User } from "@localito/shared";
 import { createRepository } from "./repository.js";
 import { createSessionToken, createSignedSessionToken, hashSessionToken, passwordPolicyError, verifySignedSessionToken } from "./auth.js";
+import { isTransactionalEmailConfigured, sendPasswordResetEmail } from "./email.js";
 import { identifyProductImage } from "./vision.js";
 
 const app = express();
@@ -21,7 +22,11 @@ const sessionDurationMs = 7 * 24 * 60 * 60 * 1000;
 const usesServerlessMemory = process.env.VERCEL === "1" && repository.mode === "memory";
 const signedSessionSecret = process.env.SESSION_SECRET ?? process.env.JWT_SECRET ?? process.env.OWNER_DEMO_PASSWORD ?? "localito-demo-session-change-me";
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const passwordResetRequests = new Map<string, { count: number; resetAt: number }>();
+const passwordResetConfirmations = new Map<string, { count: number; resetAt: number }>();
+const passwordResetDurationMs = 30 * 60 * 1000;
 
+app.set("trust proxy", 1);
 app.use(helmet());
 app.use(
   cors({
@@ -122,6 +127,53 @@ function registerFailedLogin(req: express.Request) {
   if (attempt) attempt.count += 1;
 }
 
+function rateLimitPasswordReset(
+  attempts: Map<string, { count: number; resetAt: number }>,
+  limit: number,
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  const key = req.ip || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  const attempt = attempts.get(key);
+  if (attempt && attempt.resetAt > now && attempt.count >= limit) {
+    res.status(429).json({ message: "Demasiadas solicitudes. Espera 15 minutos antes de volver a intentar." });
+    return;
+  }
+
+  if (!attempt || attempt.resetAt <= now) attempts.set(key, { count: 1, resetAt: now + 15 * 60_000 });
+  else attempt.count += 1;
+
+  if (attempts.size > 5_000) {
+    for (const [entryKey, entry] of attempts) {
+      if (entry.resetAt <= now) attempts.delete(entryKey);
+    }
+  }
+  next();
+}
+
+function passwordResetRequestRateLimit(req: express.Request, res: express.Response, next: express.NextFunction) {
+  rateLimitPasswordReset(passwordResetRequests, 5, req, res, next);
+}
+
+function passwordResetConfirmationRateLimit(req: express.Request, res: express.Response, next: express.NextFunction) {
+  rateLimitPasswordReset(passwordResetConfirmations, 10, req, res, next);
+}
+
+function passwordResetUrl(token: string) {
+  const configuredUrl =
+    process.env.APP_URL ??
+    process.env.PUBLIC_APP_URL ??
+    configuredWebOrigins.find((origin) => origin.startsWith("https://")) ??
+    vercelOrigin ??
+    configuredWebOrigins[0] ??
+    "http://localhost:5173";
+  const url = new URL(configuredUrl);
+  url.hash = `reset_token=${encodeURIComponent(token)}`;
+  return url.toString();
+}
+
 function readPositiveNumber(value: unknown) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) && numberValue >= 0 ? numberValue : undefined;
@@ -187,43 +239,22 @@ app.get(
   })
 );
 
-app.post("/auth/register", loginRateLimit, asyncRoute(async (req, res) => {
-  const { name, email, password, businessName, businessType } = req.body as {
-    name?: string;
-    email?: string;
-    password?: string;
-    businessName?: string;
-    businessType?: string;
-  };
-
-  if (!name || !email || !password || !businessName || !businessType) {
-    res.status(400).json({ message: "Faltan datos obligatorios para registrar el negocio." });
-    return;
-  }
-  if (usesServerlessMemory) {
-    res.status(503).json({ message: "El registro de negocios en Vercel requiere configurar una conexión PostgreSQL para conservar los datos." });
-    return;
-  }
-  const policyError = passwordPolicyError(password);
-  if (policyError) { res.status(400).json({ message: policyError }); return; }
-  const { tenant, user } = await repository.registerTenant({ name, email: email.trim().toLowerCase(), password, businessName, businessType });
-  const token = await createAuthToken(user);
-
-  res.status(201).json({
-    data: {
-      tenant,
-      user,
-      token
-    }
-  });
-}));
-
 app.post(
   "/auth/login",
   loginRateLimit,
   asyncRoute(async (req, res) => {
-    const { email, password } = req.body as { email?: string; password?: string };
-    if (!email || !password) { res.status(400).json({ message: "Correo y clave son obligatorios." }); return; }
+    const { email, password } = (req.body ?? {}) as { email?: unknown; password?: unknown };
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !email ||
+      !password ||
+      email.length > 254 ||
+      password.length > 128
+    ) {
+      res.status(400).json({ message: "Correo y clave son obligatorios." });
+      return;
+    }
     const authenticated = await repository.authenticate(email.trim().toLowerCase(), password);
     if (!authenticated) {
       registerFailedLogin(req);
@@ -239,6 +270,82 @@ app.post(
         token
       }
     });
+  })
+);
+
+app.post(
+  "/auth/password-reset/request",
+  passwordResetRequestRateLimit,
+  asyncRoute(async (req, res) => {
+    const { email } = (req.body ?? {}) as { email?: unknown };
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    if (normalizedEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      res.status(400).json({ message: "Ingresa un correo válido." });
+      return;
+    }
+    if (usesServerlessMemory) {
+      res.status(503).json({ message: "La recuperación de contraseña requiere la base de datos configurada." });
+      return;
+    }
+    if (!isTransactionalEmailConfigured()) {
+      res.status(503).json({ message: "El servicio de correo aún no está configurado." });
+      return;
+    }
+
+    const token = createSessionToken();
+    const tokenHash = hashSessionToken(token);
+    const recipient = await repository.createPasswordResetToken(
+      normalizedEmail,
+      tokenHash,
+      new Date(Date.now() + passwordResetDurationMs).toISOString()
+    );
+
+    if (recipient) {
+      try {
+        await sendPasswordResetEmail({
+          to: recipient.email,
+          resetUrl: passwordResetUrl(token),
+          idempotencyKey: `password-reset-${tokenHash}`
+        });
+      } catch (error) {
+        console.error(
+          `[localito-api] No se pudo enviar un correo de recuperación: ${
+            error instanceof Error ? error.message : "error desconocido"
+          }`
+        );
+      }
+    }
+
+    res.status(202).json({
+      data: {
+        message: "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."
+      }
+    });
+  })
+);
+
+app.post(
+  "/auth/password-reset/confirm",
+  passwordResetConfirmationRateLimit,
+  asyncRoute(async (req, res) => {
+    const { token, password } = (req.body ?? {}) as { token?: unknown; password?: unknown };
+    if (typeof token !== "string" || !/^[A-Za-z0-9_-]{64}$/.test(token) || typeof password !== "string") {
+      res.status(400).json({ message: "El enlace de recuperación no es válido." });
+      return;
+    }
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      res.status(400).json({ message: policyError });
+      return;
+    }
+
+    const completed = await repository.completePasswordReset(hashSessionToken(token), password);
+    if (!completed) {
+      res.status(400).json({ message: "El enlace venció o ya fue utilizado. Solicita uno nuevo." });
+      return;
+    }
+
+    res.json({ data: { message: "Contraseña actualizada. Ya puedes iniciar sesión." } });
   })
 );
 

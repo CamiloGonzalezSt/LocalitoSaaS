@@ -112,6 +112,8 @@ type LoginFormState = {
   password: string;
 };
 
+type LoginMode = "login" | "forgot" | "reset";
+
 interface NoticeState {
   message: string;
   tone: NoticeTone;
@@ -175,7 +177,7 @@ const emptyUserForm: UserFormState = {
   name: "",
   email: "",
   role: "seller",
-  password: "localito123"
+  password: ""
 };
 
 const emptyProfileForm: ProfileFormState = {
@@ -209,10 +211,21 @@ const emptyCashRegister: CashRegisterSummary = {
   }
 };
 
-const demoCredentials = [
-  { label: "Dueno Caj", email: "caj.gonzalezs@duocuc.cl", password: "Duoc2026" },
-  { label: "Vendedor Caj", email: "caj.gonzalezs+vendedor@duocuc.cl", password: "Duoc2026V" }
-];
+const demoCredentials = import.meta.env.DEV
+  ? [
+      {
+        label: "Dueño demo",
+        email: String(import.meta.env.VITE_DEMO_OWNER_EMAIL ?? ""),
+        password: String(import.meta.env.VITE_DEMO_OWNER_PASSWORD ?? "")
+      },
+      {
+        label: "Vendedor demo",
+        email: String(import.meta.env.VITE_DEMO_SELLER_EMAIL ?? ""),
+        password: String(import.meta.env.VITE_DEMO_SELLER_PASSWORD ?? "")
+      }
+    ].filter((credential) => credential.email && credential.password)
+  : [];
+const showDemoCredentials = demoCredentials.length > 0;
 
 function formatCLP(value: number) {
   return new Intl.NumberFormat("es-CL", {
@@ -263,6 +276,23 @@ function userInitials(user: User) {
     .join("");
 }
 
+function readPasswordResetToken() {
+  if (typeof window === "undefined") return "";
+  const fragmentToken = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("reset_token")?.trim();
+  return fragmentToken || "";
+}
+
+function removePasswordResetTokenFromUrl() {
+  const url = new URL(window.location.href);
+  const fragmentParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+  if (fragmentParams.has("reset_token")) {
+    fragmentParams.delete("reset_token");
+    url.hash = fragmentParams.toString() ? `#${fragmentParams.toString()}` : "";
+  }
+
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 function App() {
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -288,9 +318,11 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [loginForm, setLoginForm] = useState<LoginFormState>({
-    email: demoCredentials[0].email,
-    password: demoCredentials[0].password
+    email: demoCredentials[0]?.email ?? "",
+    password: demoCredentials[0]?.password ?? ""
   });
+  const [passwordResetToken, setPasswordResetToken] = useState(readPasswordResetToken);
+  const [loginMode, setLoginMode] = useState<LoginMode>(() => readPasswordResetToken() ? "reset" : "login");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<ProductFormState>(emptyProductForm);
@@ -382,6 +414,12 @@ function App() {
   }
 
   useEffect(() => {
+    if (passwordResetToken) {
+      setNotice({ message: "Ingresa una nueva contraseña para recuperar tu acceso.", tone: "success" });
+      setIsLoading(false);
+      return;
+    }
+
     const storedSession = localStorage.getItem("localito-session");
     if (!storedSession) {
       setNotice({ message: "Inicia sesion para operar el local.", tone: "success" });
@@ -441,6 +479,67 @@ function App() {
     } finally {
       setIsBusy(false);
     }
+  }
+
+  async function requestPasswordReset(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setNotice({ message: "Ingresa el correo de tu cuenta.", tone: "warning" });
+      return;
+    }
+
+    setIsBusy(true);
+    try {
+      await api.requestPasswordReset(normalizedEmail);
+      setLoginForm((current) => ({ ...current, email: normalizedEmail, password: "" }));
+      setLoginMode("login");
+      setNotice({ message: "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.", tone: "success" });
+    } catch (error) {
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo enviar el enlace de recuperación.", tone: "error" });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function confirmPasswordReset(password: string, passwordConfirmation: string) {
+    if (!passwordResetToken) {
+      setNotice({ message: "El enlace de recuperación no es válido.", tone: "error" });
+      return;
+    }
+    if (password !== passwordConfirmation) {
+      setNotice({ message: "Las contraseñas no coinciden.", tone: "warning" });
+      return;
+    }
+    if (password.length < 10 || !/[a-z]/i.test(password) || !/\d/.test(password)) {
+      setNotice({ message: "La contraseña debe tener al menos 10 caracteres, letras y números.", tone: "warning" });
+      return;
+    }
+
+    setIsBusy(true);
+    try {
+      await api.confirmPasswordReset(passwordResetToken, password);
+      localStorage.removeItem("localito-session");
+      localStorage.removeItem("localito-token");
+      removePasswordResetTokenFromUrl();
+      setPasswordResetToken("");
+      setLoginMode("login");
+      setLoginForm({ email: "", password: "" });
+      setNotice({ message: "Contraseña actualizada. Ya puedes iniciar sesión.", tone: "success" });
+    } catch (error) {
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo restablecer la contraseña.", tone: "error" });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  function returnToLogin() {
+    if (passwordResetToken) {
+      removePasswordResetTokenFromUrl();
+      setPasswordResetToken("");
+      window.location.reload();
+      return;
+    }
+    setLoginMode("login");
   }
 
   function logout() {
@@ -936,8 +1035,17 @@ function App() {
       return;
     }
 
-    if (!userForm.name.trim() || !userForm.email.trim()) {
-      setNotice({ message: "Nombre y correo son obligatorios para crear usuario.", tone: "warning" });
+    if (!userForm.name.trim() || !userForm.email.trim() || !userForm.password) {
+      setNotice({ message: "Nombre, correo y clave inicial son obligatorios para crear usuario.", tone: "warning" });
+      return;
+    }
+    if (
+      userForm.password.length < 10 ||
+      userForm.password.length > 128 ||
+      !/[a-z]/i.test(userForm.password) ||
+      !/\d/.test(userForm.password)
+    ) {
+      setNotice({ message: "La clave inicial debe tener entre 10 y 128 caracteres, letras y números.", tone: "warning" });
       return;
     }
 
@@ -1085,16 +1193,16 @@ function App() {
     return (
       <LoginView
         loginForm={loginForm}
+        mode={loginMode}
+        showDemoCredentials={showDemoCredentials}
         notice={notice}
         isBusy={isBusy || isLoading}
         onForm={setLoginForm}
         onLogin={() => void login()}
-        onRegister={async (payload) => {
-          setIsBusy(true); setIsLoading(true);
-          try { const response = await api.register(payload); saveSession(response.data); await loadWorkspace(`Bienvenido a Localito, ${response.data.user.name}.`); }
-          catch (error) { setIsLoading(false); setNotice({ message: error instanceof Error ? error.message : "No se pudo crear el negocio.", tone: "error" }); }
-          finally { setIsBusy(false); }
-        }}
+        onForgot={() => setLoginMode("forgot")}
+        onRequestReset={(email) => void requestPasswordReset(email)}
+        onConfirmReset={(password, confirmation) => void confirmPasswordReset(password, confirmation)}
+        onReturnToLogin={returnToLogin}
       />
     );
   }
@@ -1147,8 +1255,8 @@ function App() {
       </nav>
 
       <main className="content">
-        {notice && <section className={`notice ${notice.tone}`} aria-live="polite">
-          <CheckCircle2 size={18} />
+        {notice && <section className={`notice ${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
+          {notice.tone === "success" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
           <span>{notice.message}</span>
         </section>}
 
@@ -1358,21 +1466,38 @@ function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
 
 function LoginView({
   loginForm,
+  mode,
+  showDemoCredentials,
   notice,
   isBusy,
   onForm,
   onLogin,
-  onRegister
+  onForgot,
+  onRequestReset,
+  onConfirmReset,
+  onReturnToLogin
 }: {
   loginForm: LoginFormState;
+  mode: LoginMode;
+  showDemoCredentials: boolean;
   notice: NoticeState | null;
   isBusy: boolean;
   onForm: (value: LoginFormState) => void;
   onLogin: () => void;
-  onRegister: (payload: { name: string; email: string; password: string; businessName: string; businessType: string }) => Promise<void>;
+  onForgot: () => void;
+  onRequestReset: (email: string) => void;
+  onConfirmReset: (password: string, confirmation: string) => void;
+  onReturnToLogin: () => void;
 }) {
-  const [registering, setRegistering] = useState(false);
-  const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "", businessName: "", businessType: "Almacén" });
+  const [recoveryEmail, setRecoveryEmail] = useState(loginForm.email);
+  const [resetForm, setResetForm] = useState({ password: "", confirmation: "" });
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const title = mode === "reset" ? "Nueva contraseña" : mode === "forgot" ? "Recuperar acceso" : "Acceso del local";
+
+  useEffect(() => {
+    firstFieldRef.current?.focus();
+    if (mode !== "reset") setResetForm({ password: "", confirmation: "" });
+  }, [mode]);
   return (
     <main className="login-shell">
       <section className="login-panel">
@@ -1382,16 +1507,16 @@ function LoginView({
           </div>
           <div>
             <p className="eyebrow">Localito</p>
-            <h1>Acceso del local</h1>
+            <h1>{title}</h1>
           </div>
         </div>
 
-        {notice && <section className={`notice ${notice.tone}`} aria-live="polite">
-          <CheckCircle2 size={18} />
+        {notice && <section className={`notice ${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
+          {notice.tone === "success" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
           <span>{notice.message}</span>
         </section>}
 
-        {!registering ? <form
+        {mode === "login" && <form
           className="login-form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -1402,39 +1527,95 @@ function LoginView({
             Correo
             <input
               value={loginForm.email}
+              ref={firstFieldRef}
               onChange={(event) => onForm({ ...loginForm, email: event.target.value })}
               placeholder="correo@localito.cl"
+              type="email"
               inputMode="email"
               autoComplete="username"
+              maxLength={254}
+              required
             />
           </label>
           <label className="field">
-            Contrasena
+            Contraseña
             <input
               value={loginForm.password}
               onChange={(event) => onForm({ ...loginForm, password: event.target.value })}
-              placeholder="Contrasena"
+              placeholder="Contraseña"
               type="password"
               autoComplete="current-password"
+              maxLength={128}
+              required
             />
           </label>
           <button className="primary-action full" type="submit" disabled={isBusy}>
             <LogIn size={20} />
             <span>{isBusy ? "Entrando..." : "Iniciar sesion"}</span>
           </button>
-          <button className="secondary-action full" type="button" onClick={() => setRegistering(true)}>Crear mi negocio</button>
-        </form> : <form className="login-form" onSubmit={(event) => { event.preventDefault(); void onRegister(registerForm); }}>
-          <label className="field">Tu nombre<input value={registerForm.name} onChange={(event) => setRegisterForm({ ...registerForm, name: event.target.value })} required /></label>
-          <label className="field">Nombre del negocio<input value={registerForm.businessName} onChange={(event) => setRegisterForm({ ...registerForm, businessName: event.target.value })} required /></label>
-          <label className="field">Rubro<input value={registerForm.businessType} onChange={(event) => setRegisterForm({ ...registerForm, businessType: event.target.value })} required /></label>
-          <label className="field">Correo<input type="email" value={registerForm.email} onChange={(event) => setRegisterForm({ ...registerForm, email: event.target.value })} required /></label>
-          <label className="field">Clave segura<input type="password" value={registerForm.password} onChange={(event) => setRegisterForm({ ...registerForm, password: event.target.value })} minLength={10} required /></label>
-          <p className="helper-text">Usa al menos 10 caracteres, letras y números.</p>
-          <button className="primary-action full" type="submit" disabled={isBusy}>{isBusy ? "Creando..." : "Crear negocio"}</button>
-          <button className="secondary-action full" type="button" onClick={() => setRegistering(false)}>Volver al ingreso</button>
+          <button className="secondary-action full" type="button" disabled={isBusy} onClick={() => {
+            setRecoveryEmail(loginForm.email);
+            onForgot();
+          }}>Olvidé mi contraseña</button>
         </form>}
 
-        {!registering && <div className="quick-login">
+        {mode === "forgot" && <form className="login-form" onSubmit={(event) => {
+          event.preventDefault();
+          onRequestReset(recoveryEmail);
+        }}>
+          <p className="helper-text">Te enviaremos un enlace seguro al correo asociado a tu cuenta.</p>
+          <label className="field">
+            Correo
+            <input
+              type="email"
+              ref={firstFieldRef}
+              value={recoveryEmail}
+              onChange={(event) => setRecoveryEmail(event.target.value)}
+              placeholder="correo@localito.cl"
+              autoComplete="email"
+              maxLength={254}
+              required
+            />
+          </label>
+          <button className="primary-action full" type="submit" disabled={isBusy}>{isBusy ? "Enviando..." : "Enviar enlace"}</button>
+          <button className="secondary-action full" type="button" onClick={onReturnToLogin} disabled={isBusy}>Volver al ingreso</button>
+        </form>}
+
+        {mode === "reset" && <form className="login-form" onSubmit={(event) => {
+          event.preventDefault();
+          onConfirmReset(resetForm.password, resetForm.confirmation);
+        }}>
+          <p className="helper-text">Usa al menos 10 caracteres e incluye letras y números.</p>
+          <label className="field">
+            Nueva contraseña
+            <input
+              type="password"
+              ref={firstFieldRef}
+              value={resetForm.password}
+              onChange={(event) => setResetForm({ ...resetForm, password: event.target.value })}
+              minLength={10}
+              maxLength={128}
+              autoComplete="new-password"
+              required
+            />
+          </label>
+          <label className="field">
+            Confirmar contraseña
+            <input
+              type="password"
+              value={resetForm.confirmation}
+              onChange={(event) => setResetForm({ ...resetForm, confirmation: event.target.value })}
+              minLength={10}
+              maxLength={128}
+              autoComplete="new-password"
+              required
+            />
+          </label>
+          <button className="primary-action full" type="submit" disabled={isBusy}>{isBusy ? "Actualizando..." : "Guardar nueva contraseña"}</button>
+          <button className="secondary-action full" type="button" onClick={onReturnToLogin} disabled={isBusy}>Volver al ingreso</button>
+        </form>}
+
+        {mode === "login" && showDemoCredentials && <div className="quick-login">
           {demoCredentials.map((credential) => (
             <button
               className="secondary-action"
@@ -1448,17 +1629,6 @@ function LoginView({
           ))}
         </div>}
 
-        <div className="settings-list">
-          <p>
-            <strong>Duenos:</strong> caj.gonzalezs@duocuc.cl, sam.solis@duocuc.cl, al.patino@duocuc.cl
-          </p>
-          <p>
-            <strong>Vendedores:</strong> usar el mismo correo con +vendedor antes de @duocuc.cl
-          </p>
-          <p>
-            <strong>Claves:</strong> duenos Duoc2026, vendedores Duoc2026V
-          </p>
-        </div>
       </section>
     </main>
   );
@@ -2611,8 +2781,11 @@ function SettingsView({
             <input
               value={userForm.password}
               onChange={(event) => onUserForm({ ...userForm, password: event.target.value })}
-              placeholder="Clave demo"
+              placeholder="Clave inicial segura"
               type="password"
+              minLength={10}
+              maxLength={128}
+              autoComplete="new-password"
             />
           </div>
           <button className="primary-action full" type="button" onClick={onCreateUser} disabled={isBusy}>
