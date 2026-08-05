@@ -1507,7 +1507,7 @@ function App() {
 
 function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
   const labels: Record<View, string> = {
-    dashboard: "Panel del dia",
+    dashboard: "Panel del día",
     sale: "Vender",
     scan: "Escanear producto",
     product_create: "Crear producto",
