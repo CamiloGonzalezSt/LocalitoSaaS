@@ -476,6 +476,10 @@ function App() {
     return () => window.clearTimeout(timeoutId);
   }, [notice]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [activeView]);
+
   async function login() {
     if (!loginForm.email.trim() || !loginForm.password.trim()) {
       setNotice({ message: "Ingresa correo y contrasena.", tone: "warning" });
