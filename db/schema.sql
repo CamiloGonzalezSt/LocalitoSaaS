@@ -299,6 +299,48 @@ CREATE TABLE IF NOT EXISTS cierres_caja (
 
 CREATE INDEX IF NOT EXISTS idx_cierres_caja_negocio_fecha ON cierres_caja(negocio_id, fecha_caja);
 
+-- Índices de relaciones y filtros multi-negocio. PostgreSQL no crea índices
+-- automáticamente para las columnas que contienen claves foráneas.
+CREATE INDEX IF NOT EXISTS idx_sesiones_usuario ON sesiones(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_categorias_negocio ON categorias(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_productos_categoria ON productos(categoria_id);
+CREATE INDEX IF NOT EXISTS idx_productos_proveedor ON productos(proveedor_id);
+CREATE INDEX IF NOT EXISTS idx_clientes_negocio ON clientes(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_negocio_fecha ON ventas(negocio_id, fecha_creacion DESC);
+CREATE INDEX IF NOT EXISTS idx_ventas_usuario ON ventas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_ventas_cliente ON ventas(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_detalle_ventas_venta ON detalle_ventas(venta_id);
+CREATE INDEX IF NOT EXISTS idx_detalle_ventas_producto ON detalle_ventas(producto_id);
+CREATE INDEX IF NOT EXISTS idx_movimientos_stock_negocio_fecha ON movimientos_stock(negocio_id, fecha_creacion DESC);
+CREATE INDEX IF NOT EXISTS idx_movimientos_stock_producto ON movimientos_stock(producto_id);
+CREATE INDEX IF NOT EXISTS idx_movimientos_stock_usuario ON movimientos_stock(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_devoluciones_negocio ON devoluciones_venta(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_devoluciones_venta ON devoluciones_venta(venta_id);
+CREATE INDEX IF NOT EXISTS idx_devoluciones_usuario ON devoluciones_venta(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_cuentas_fiado_negocio ON cuentas_fiado(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_cuentas_fiado_cliente ON cuentas_fiado(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_cuentas_fiado_venta ON cuentas_fiado(venta_id);
+CREATE INDEX IF NOT EXISTS idx_abonos_fiado_cuenta ON abonos_fiado(cuenta_fiado_id);
+CREATE INDEX IF NOT EXISTS idx_pagos_negocio ON pagos(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_pagos_venta ON pagos(venta_id);
+CREATE INDEX IF NOT EXISTS idx_pagos_cliente ON pagos(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_proveedores_negocio ON proveedores(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_ordenes_compra_negocio ON ordenes_compra(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_ordenes_compra_proveedor ON ordenes_compra(proveedor_id);
+CREATE INDEX IF NOT EXISTS idx_detalle_ordenes_orden ON detalle_ordenes_compra(orden_id);
+CREATE INDEX IF NOT EXISTS idx_detalle_ordenes_producto ON detalle_ordenes_compra(producto_id);
+CREATE INDEX IF NOT EXISTS idx_sesiones_caja_negocio ON sesiones_caja(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_sesiones_caja_usuario_apertura ON sesiones_caja(usuario_apertura_id);
+CREATE INDEX IF NOT EXISTS idx_sesiones_caja_usuario_cierre ON sesiones_caja(usuario_cierre_id);
+CREATE INDEX IF NOT EXISTS idx_movimientos_caja_negocio_fecha ON movimientos_caja(negocio_id, fecha_creacion DESC);
+CREATE INDEX IF NOT EXISTS idx_movimientos_caja_sesion ON movimientos_caja(sesion_caja_id);
+CREATE INDEX IF NOT EXISTS idx_movimientos_caja_usuario ON movimientos_caja(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_auditoria_usuario ON auditoria(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_alertas_negocio ON alertas(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_reconocimientos_negocio ON reconocimientos_ia(negocio_id);
+CREATE INDEX IF NOT EXISTS idx_reconocimientos_producto ON reconocimientos_ia(producto_id);
+CREATE INDEX IF NOT EXISTS idx_cierres_caja_usuario ON cierres_caja(usuario_id);
+
 -- Supabase expone por defecto el esquema public mediante su Data API. La aplicación
 -- usa una conexión PostgreSQL del servidor, por lo que RLS queda cerrado sin
 -- publicar políticas de acceso directo desde el navegador.
@@ -324,3 +366,18 @@ ALTER TABLE auditoria ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alertas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reconocimientos_ia ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cierres_caja ENABLE ROW LEVEL SECURITY;
+
+-- Localito no consulta estas tablas mediante la Data API. En Supabase se
+-- revocan sus permisos para anon/authenticated como defensa adicional; el
+-- bloque se omite en PostgreSQL local cuando esos roles no existen.
+DO $$
+DECLARE
+  app_tables TEXT := 'negocios, usuarios, sesiones, categorias, productos, clientes, ventas, detalle_ventas, movimientos_stock, devoluciones_venta, cuentas_fiado, abonos_fiado, pagos, proveedores, ordenes_compra, detalle_ordenes_compra, sesiones_caja, movimientos_caja, auditoria, alertas, reconocimientos_ia, cierres_caja';
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE %s FROM anon', app_tables);
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE %s FROM authenticated', app_tables);
+  END IF;
+END $$;
