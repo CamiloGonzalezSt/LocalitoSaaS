@@ -1,0 +1,46 @@
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+
+const KEY_LENGTH = 64;
+
+export function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const derived = scryptSync(password, salt, KEY_LENGTH).toString("hex");
+  return `scrypt:${salt}:${derived}`;
+}
+
+export function verifyPassword(password: string, storedHash: string) {
+  if (storedHash.startsWith("demo-hash:")) {
+    return timingSafeTextEqual(password, storedHash.slice("demo-hash:".length));
+  }
+
+  const [algorithm, salt, expectedHex] = storedHash.split(":");
+  if (algorithm !== "scrypt" || !salt || !expectedHex) return false;
+
+  try {
+    const expected = Buffer.from(expectedHex, "hex");
+    const actual = scryptSync(password, salt, expected.length);
+    return expected.length === actual.length && timingSafeEqual(expected, actual);
+  } catch {
+    return false;
+  }
+}
+
+export function createSessionToken() {
+  return randomBytes(48).toString("base64url");
+}
+
+export function hashSessionToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export function passwordPolicyError(password: string) {
+  if (password.length < 10) return "La clave debe tener al menos 10 caracteres.";
+  if (!/[a-z]/i.test(password) || !/\d/.test(password)) return "La clave debe incluir letras y números.";
+  return undefined;
+}
+
+function timingSafeTextEqual(left: string, right: string) {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}

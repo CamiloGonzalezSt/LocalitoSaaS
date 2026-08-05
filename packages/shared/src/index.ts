@@ -1,10 +1,15 @@
 export type UserRole = "system_admin" | "owner" | "seller";
 
-export type PaymentMethod = "cash" | "card" | "transfer" | "webpay" | "credit";
+export type PaymentMethod = "cash" | "card" | "transfer" | "webpay" | "credit" | "mixed";
 
 export type PaymentStatus = "pending" | "approved" | "rejected" | "cancelled" | "expired";
 
-export type SaleStatus = "active" | "cancelled";
+export type SaleStatus = "active" | "cancelled" | "partially_refunded" | "refunded";
+
+export type StockMovementType = "sale" | "return" | "purchase" | "adjustment" | "waste" | "transfer" | "count";
+export type CashMovementType = "deposit" | "withdrawal" | "expense";
+export type PurchaseStatus = "draft" | "ordered" | "partially_received" | "received" | "cancelled";
+export type DebtStatus = "pending" | "overdue" | "paid" | "cancelled";
 
 export interface Tenant {
   id: string;
@@ -35,6 +40,13 @@ export interface Product {
   stock: number;
   minimumStock: number;
   imageUrl?: string;
+  sku?: string;
+  variant?: string;
+  unit?: "unit" | "kg" | "gram" | "liter" | "pack" | "box";
+  unitsPerPack?: number;
+  supplierId?: string;
+  expiryDate?: string;
+  trackStock?: boolean;
   active: boolean;
 }
 
@@ -45,8 +57,17 @@ export interface Customer {
   phone?: string;
   email?: string;
   address?: string;
+  notes?: string;
+  creditLimit?: number;
+  creditDays?: number;
+  creditBlocked?: boolean;
   debtBalance: number;
   active: boolean;
+}
+
+export interface SalePayment {
+  method: Exclude<PaymentMethod, "mixed" | "credit"> | "credit";
+  amount: number;
 }
 
 export interface SaleItem {
@@ -63,13 +84,144 @@ export interface Sale {
   sellerId: string;
   customerId?: string;
   items: SaleItem[];
+  subtotal?: number;
+  discount?: number;
   total: number;
   paymentMethod: PaymentMethod;
+  payments?: SalePayment[];
+  notes?: string;
   paymentStatus: PaymentStatus;
   saleType: "normal" | "credit";
   status: SaleStatus;
   cancellationReason?: string;
   cancelledAt?: string;
+  createdAt: string;
+}
+
+export interface SaleReturnItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  amount: number;
+}
+
+export interface SaleReturn {
+  id: string;
+  tenantId: string;
+  saleId: string;
+  items: SaleReturnItem[];
+  total: number;
+  reason: string;
+  createdByUserId?: string;
+  createdAt: string;
+}
+
+export interface Supplier {
+  id: string;
+  tenantId: string;
+  name: string;
+  contactName?: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+  active: boolean;
+}
+
+export interface PurchaseItem {
+  productId: string;
+  productName?: string;
+  quantity: number;
+  receivedQuantity: number;
+  unitCost: number;
+  subtotal: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  tenantId: string;
+  supplierId: string;
+  supplierName?: string;
+  status: PurchaseStatus;
+  items: PurchaseItem[];
+  total: number;
+  expectedAt?: string;
+  notes?: string;
+  createdAt: string;
+  receivedAt?: string;
+}
+
+export interface DebtAccount {
+  id: string;
+  tenantId: string;
+  customerId: string;
+  customerName?: string;
+  saleId?: string;
+  originalAmount: number;
+  balance: number;
+  dueDate?: string;
+  status: DebtStatus;
+  createdAt: string;
+}
+
+export interface DebtPayment {
+  id: string;
+  debtId: string;
+  amount: number;
+  method: PaymentMethod;
+  note?: string;
+  createdAt: string;
+}
+
+export interface CashMovement {
+  id: string;
+  tenantId: string;
+  sessionId?: string;
+  type: CashMovementType;
+  amount: number;
+  reason: string;
+  createdByUserId?: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
+export interface CashSession {
+  id: string;
+  tenantId: string;
+  openedByUserId?: string;
+  openedByName?: string;
+  openedAt: string;
+  openingAmount: number;
+  status: "open" | "closed";
+  closedAt?: string;
+  closedByUserId?: string;
+  countedAmount?: number;
+  expectedCash?: number;
+  difference?: number;
+  note?: string;
+}
+
+export interface StockMovement {
+  id: string;
+  tenantId: string;
+  productId: string;
+  productName?: string;
+  type: StockMovementType;
+  quantity: number;
+  resultingStock: number;
+  reason?: string;
+  createdByUserId?: string;
+  createdAt: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  tenantId: string;
+  userId?: string;
+  userName?: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  details?: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -118,6 +270,10 @@ export interface CashRegisterSummary {
   creditTotal: number;
   averageTicket: number;
   totalsByMethod: Record<PaymentMethod, number>;
+  openingAmount?: number;
+  cashDeposits?: number;
+  cashWithdrawals?: number;
+  expectedCash?: number;
 }
 
 export interface CashRegisterClosure extends CashRegisterSummary {
@@ -144,6 +300,12 @@ export interface BootstrapData {
   products: Product[];
   customers: Customer[];
   sales: Sale[];
+  suppliers: Supplier[];
+  purchaseOrders: PurchaseOrder[];
+  debts: DebtAccount[];
+  cashSession?: CashSession;
+  cashMovements: CashMovement[];
+  auditEvents: AuditEvent[];
   recognitionHistory: RecognitionLog[];
   cashRegister: CashRegisterSummary;
   cashClosures: CashRegisterClosure[];

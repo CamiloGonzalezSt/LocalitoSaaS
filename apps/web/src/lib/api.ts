@@ -1,14 +1,23 @@
 import type {
   ApiResponse,
+  AuditEvent,
   CashRegisterClosure,
   BootstrapData,
+  CashMovement,
   CashRegisterSummary,
+  CashSession,
   Customer,
+  DebtAccount,
   PaymentMethod,
   Product,
+  PurchaseOrder,
   RecognitionLog,
   RecognitionResult,
   Sale,
+  SalePayment,
+  SaleReturn,
+  StockMovement,
+  Supplier,
   Tenant,
   User
 } from "@localito/shared";
@@ -27,11 +36,13 @@ function resolveApiBaseUrl() {
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
-const TENANT_ID = "00000000-0000-4000-8000-000000000001";
-
 type SalePayload = {
   customerId?: string;
   paymentMethod: PaymentMethod;
+  payments?: SalePayment[];
+  discount?: number;
+  notes?: string;
+  idempotencyKey?: string;
   items: Array<{ productId: string; quantity: number }>;
 };
 
@@ -41,17 +52,33 @@ export type AuthSession = {
   token: string;
 };
 
-async function request<T>(path: string, options: RequestInit = {}) {
+type OfflineRequest = { id: string; path: string; options: { method: string; body?: string; headers?: Record<string, string> }; createdAt: string };
+
+function readOfflineQueue(): OfflineRequest[] {
+  try { return JSON.parse(localStorage.getItem("localito-offline-queue") ?? "[]") as OfflineRequest[]; } catch { return []; }
+}
+
+function queueOfflineRequest(path: string, options: RequestInit) {
+  const queue = readOfflineQueue();
+  queue.push({ id: crypto.randomUUID(), path, options: { method: options.method ?? "POST", body: typeof options.body === "string" ? options.body : undefined, headers: options.headers as Record<string, string> | undefined }, createdAt: new Date().toISOString() });
+  localStorage.setItem("localito-offline-queue", JSON.stringify(queue));
+}
+
+async function request<T>(path: string, options: RequestInit = {}, queueWhenOffline = false) {
   const token = localStorage.getItem("localito-token");
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "x-tenant-id": TENANT_ID,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers }
+    });
+  } catch (error) {
+    if (queueWhenOffline && options.method && options.method !== "GET") {
+      queueOfflineRequest(path, options);
+      throw new Error("Sin conexión: la operación quedó guardada y se sincronizará automáticamente.");
     }
-  });
+    throw error;
+  }
 
   const payload = (await response.json().catch(() => ({}))) as ApiResponse<T> & { message?: string };
 
@@ -62,6 +89,16 @@ async function request<T>(path: string, options: RequestInit = {}) {
   return payload;
 }
 
+export async function flushOfflineQueue() {
+  if (!navigator.onLine) return { synced: 0, pending: readOfflineQueue().length };
+  const queue = readOfflineQueue(); const pending: OfflineRequest[] = []; let synced = 0;
+  for (const entry of queue) {
+    try { await request(entry.path, { ...entry.options, headers: entry.options.headers }); synced += 1; } catch { pending.push(entry); }
+  }
+  localStorage.setItem("localito-offline-queue", JSON.stringify(pending));
+  return { synced, pending: pending.length };
+}
+
 export const api = {
   async login(email: string, password: string) {
     return request<AuthSession>("/auth/login", {
@@ -69,6 +106,12 @@ export const api = {
       body: JSON.stringify({ email, password })
     });
   },
+
+  async register(payload: { name: string; email: string; password: string; businessName: string; businessType: string }) {
+    return request<AuthSession>("/auth/register", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async logout() { return request<void>("/auth/logout", { method: "POST" }); },
 
   async bootstrap() {
     return request<BootstrapData>("/bootstrap");
@@ -112,7 +155,7 @@ export const api = {
     return request<Product>(`/products/${productId}/stock`, {
       method: "PATCH",
       body: JSON.stringify({ quantity })
-    });
+    }, true);
   },
 
   async createCustomer(customer: Partial<Customer>) {
@@ -136,10 +179,12 @@ export const api = {
   },
 
   async createSale(payload: SalePayload) {
+    const idempotencyKey = payload.idempotencyKey ?? crypto.randomUUID();
     return request<Sale>("/sales", {
       method: "POST",
-      body: JSON.stringify(payload)
-    });
+      headers: { "Idempotency-Key": idempotencyKey },
+      body: JSON.stringify({ ...payload, idempotencyKey })
+    }, true);
   },
 
   async cancelSale(saleId: string, reason: string) {
@@ -161,6 +206,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload)
     });
+  },
+
+  async recognizeProductImage(imageDataUrl: string, hint?: string) {
+    return request<RecognitionResult>("/ai/recognize", { method: "POST", body: JSON.stringify({ imageDataUrl, hint }) });
   },
 
   async getRecognitionHistory() {
@@ -201,5 +250,22 @@ export const api = {
     return request<{ id: string; status: string }>(`/payments/webpay/${paymentId}/confirm`, {
       method: "POST"
     });
-  }
+  },
+
+  async returnSale(saleId: string, items: Array<{ productId: string; quantity: number }>, reason: string) { return request<SaleReturn>(`/sales/${saleId}/returns`, { method: "POST", body: JSON.stringify({ items, reason }) }); },
+  async getSuppliers() { return request<Supplier[]>("/suppliers"); },
+  async createSupplier(supplier: Partial<Supplier>) { return request<Supplier>("/suppliers", { method: "POST", body: JSON.stringify(supplier) }); },
+  async updateSupplier(id: string, supplier: Partial<Supplier>) { return request<Supplier>(`/suppliers/${id}`, { method: "PATCH", body: JSON.stringify(supplier) }); },
+  async getPurchases() { return request<PurchaseOrder[]>("/purchases"); },
+  async createPurchase(purchase: { supplierId: string; expectedAt?: string; notes?: string; items: Array<{ productId: string; quantity: number; unitCost: number }> }) { return request<PurchaseOrder>("/purchases", { method: "POST", body: JSON.stringify(purchase) }); },
+  async receivePurchase(id: string, quantities?: Record<string, number>) { return request<PurchaseOrder>(`/purchases/${id}/receive`, { method: "POST", body: JSON.stringify({ quantities }) }); },
+  async getDebts() { return request<DebtAccount[]>("/debts"); },
+  async getDebtReminders() { return request<Array<{ debt: DebtAccount; customer?: Customer; message: string; whatsappUrl?: string }>>("/debts/reminders"); },
+  async getCashSession() { return request<CashSession | null>("/cash/session"); },
+  async openCashSession(openingAmount: number) { return request<CashSession>("/cash/session/open", { method: "POST", body: JSON.stringify({ openingAmount }) }); },
+  async addCashMovement(type: CashMovement["type"], amount: number, reason: string) { return request<CashMovement>("/cash/movements", { method: "POST", body: JSON.stringify({ type, amount, reason }) }); },
+  async getCashMovements() { return request<CashMovement[]>("/cash/movements"); },
+  async closeCashSession(countedAmount: number, note?: string) { return request<CashSession>("/cash/session/close", { method: "POST", body: JSON.stringify({ countedAmount, note }) }); },
+  async getStockMovements(productId?: string) { return request<StockMovement[]>(`/stock-movements${productId ? `?productId=${encodeURIComponent(productId)}` : ""}`); },
+  async getAuditEvents() { return request<AuditEvent[]>("/audit"); }
 };

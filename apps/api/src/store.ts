@@ -1,19 +1,28 @@
 import { randomUUID } from "node:crypto";
 import type {
+  AuditEvent,
+  CashMovement,
   CashRegisterClosure,
   CashRegisterSummary,
+  CashSession,
   Customer,
+  DebtAccount,
   PaymentMethod,
   PaymentStatus,
   Product,
+  PurchaseOrder,
   RecognitionLog,
   ReportSummary,
   Sale,
+  SaleReturn,
   StockAlert,
+  StockMovement,
+  Supplier,
   Tenant,
   User
 } from "@localito/shared";
 import { buildDemoProducts, buildDemoUsers } from "./demoData.js";
+import { hashPassword } from "./auth.js";
 
 export interface PaymentRecord {
   id: string;
@@ -21,7 +30,7 @@ export interface PaymentRecord {
   saleId?: string;
   customerId?: string;
   amount: number;
-  method: "cash" | "card" | "transfer" | "webpay" | "credit";
+  method: PaymentMethod;
   status: PaymentStatus;
   externalTransactionId?: string;
   createdAt: string;
@@ -36,6 +45,17 @@ export interface Store {
   payments: PaymentRecord[];
   recognitionLogs: RecognitionLog[];
   cashClosures: CashRegisterClosure[];
+  passwordHashes: Record<string, string>;
+  sessions: Array<{ tokenHash: string; userId: string; expiresAt: string; revokedAt?: string }>;
+  suppliers: Supplier[];
+  purchaseOrders: PurchaseOrder[];
+  debts: DebtAccount[];
+  cashSessions: CashSession[];
+  cashMovements: CashMovement[];
+  stockMovements: StockMovement[];
+  auditEvents: AuditEvent[];
+  saleReturns: SaleReturn[];
+  idempotencyKeys: Record<string, string>;
 }
 
 export const demoTenantId = "00000000-0000-4000-8000-000000000001";
@@ -117,7 +137,53 @@ export const store: Store = {
   ],
   payments: [],
   recognitionLogs: [],
-  cashClosures: []
+  cashClosures: [],
+  passwordHashes: {
+    [demoOwnerId]: hashPassword(process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026"),
+    [demoSellerId]: hashPassword(process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V")
+  },
+  sessions: [],
+  suppliers: [
+    {
+      id: "supplier-demo-001",
+      tenantId: demoTenantId,
+      name: "Distribuidora Barrio Sur",
+      contactName: "María Soto",
+      phone: "+56 9 5555 1200",
+      active: true
+    }
+  ],
+  purchaseOrders: [],
+  debts: [
+    {
+      id: "debt-demo-ana",
+      tenantId: demoTenantId,
+      customerId: "cust-ana",
+      customerName: "Ana Riquelme",
+      originalAmount: 14500,
+      balance: 14500,
+      dueDate: new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10),
+      status: "pending",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "debt-demo-juan",
+      tenantId: demoTenantId,
+      customerId: "cust-juan",
+      customerName: "Juan Perez",
+      originalAmount: 6200,
+      balance: 6200,
+      dueDate: new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10),
+      status: "overdue",
+      createdAt: new Date().toISOString()
+    }
+  ],
+  cashSessions: [],
+  cashMovements: [],
+  stockMovements: [],
+  auditEvents: [],
+  saleReturns: [],
+  idempotencyKeys: {}
 };
 
 export function getTenantProducts(tenantId: string) {
@@ -130,7 +196,7 @@ export function getTenantCustomers(tenantId: string) {
 
 export function getStockAlerts(tenantId: string): StockAlert[] {
   return getTenantProducts(tenantId)
-    .filter((product) => product.stock <= product.minimumStock)
+    .filter((product) => product.trackStock !== false && product.stock <= product.minimumStock)
     .map((product) => ({
       id: randomUUID(),
       tenantId,
@@ -146,33 +212,40 @@ export function getReportSummary(tenantId: string): ReportSummary {
   const products = getTenantProducts(tenantId);
   const customers = getTenantCustomers(tenantId);
   const sales = store.sales.filter((sale) => sale.tenantId === tenantId && sale.status !== "cancelled");
+  const netSales = sales.map((sale) => ({ sale, total: netSaleTotal(sale) })).filter((entry) => entry.total > 0);
 
   return {
-    totalSales: sales.reduce((sum, sale) => sum + sale.total, 0),
-    salesCount: sales.length,
+    totalSales: netSales.reduce((sum, entry) => sum + entry.total, 0),
+    salesCount: netSales.length,
     pendingDebt: customers.reduce((sum, customer) => sum + customer.debtBalance, 0),
     lowStockCount: getStockAlerts(tenantId).length,
     stockValue: products.reduce((sum, product) => sum + product.stock * product.salePrice, 0)
   };
 }
 
-export function getCashRegisterSummary(tenantId: string, date = new Date()): CashRegisterSummary {
+export function getCashRegisterSummary(tenantId: string, date = new Date(), openedAt?: string): CashRegisterSummary {
   const dayKey = date.toISOString().slice(0, 10);
-  const salesForDay = store.sales.filter((sale) => sale.tenantId === tenantId && sale.createdAt.slice(0, 10) === dayKey);
-  const activeSales = salesForDay.filter((sale) => sale.status !== "cancelled");
+  const salesForDay = store.sales.filter(
+    (sale) => sale.tenantId === tenantId && sale.createdAt.slice(0, 10) === dayKey && (!openedAt || sale.createdAt >= openedAt)
+  );
+  const activeSales = salesForDay
+    .filter((sale) => sale.status !== "cancelled")
+    .map((sale) => ({ sale, total: netSaleTotal(sale) }))
+    .filter((entry) => entry.total > 0);
   const totalsByMethod = {
     cash: 0,
     card: 0,
     transfer: 0,
     webpay: 0,
-    credit: 0
+    credit: 0,
+    mixed: 0
   } satisfies Record<PaymentMethod, number>;
 
-  for (const sale of activeSales) {
-    totalsByMethod[sale.paymentMethod] += sale.total;
+  for (const entry of activeSales) {
+    addNetPaymentTotals(totalsByMethod, entry.sale, entry.total);
   }
 
-  const grossTotal = activeSales.reduce((sum, sale) => sum + sale.total, 0);
+  const grossTotal = activeSales.reduce((sum, entry) => sum + entry.total, 0);
   const creditTotal = totalsByMethod.credit;
   const receivedTotal = grossTotal - creditTotal;
 
@@ -186,4 +259,27 @@ export function getCashRegisterSummary(tenantId: string, date = new Date()): Cas
     averageTicket: activeSales.length > 0 ? Math.round(grossTotal / activeSales.length) : 0,
     totalsByMethod
   };
+}
+
+function netSaleTotal(sale: Sale) {
+  const returned = store.saleReturns
+    .filter((entry) => entry.tenantId === sale.tenantId && entry.saleId === sale.id)
+    .reduce((sum, entry) => sum + entry.total, 0);
+  return Math.max(0, sale.total - returned);
+}
+
+function addNetPaymentTotals(totals: Record<PaymentMethod, number>, sale: Sale, netTotal: number) {
+  if (!sale.payments?.length || sale.total <= 0) {
+    totals[sale.paymentMethod] += netTotal;
+    return;
+  }
+
+  let remaining = netTotal;
+  sale.payments.forEach((payment, index) => {
+    const amount = index === sale.payments!.length - 1
+      ? remaining
+      : Math.min(remaining, Math.round((payment.amount / sale.total) * netTotal));
+    totals[payment.method] += amount;
+    remaining -= amount;
+  });
 }

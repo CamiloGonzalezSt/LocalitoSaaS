@@ -1347,20 +1347,23 @@ Entrega un prototipo o diseno completo de Localito que permita entender como fun
 
 ## 31. Estado actual de desarrollo
 
-La primera version implementada deja un MVP tecnico inicial conectado entre frontend y backend. La PWA React consume la API REST de Node.js y permite operar los flujos principales con datos en memoria:
+La version actual deja un nucleo operacional conectado entre frontend, API REST y una capa de persistencia intercambiable. Puede ejecutarse en memoria para demostraciones o con PostgreSQL para conservar los datos:
 
 - Carga inicial mediante endpoint `/bootstrap`.
-- Pantalla de inicio de sesion para dueno/admin y vendedor.
+- Registro de negocio, inicio y cierre de sesion seguro para dueno/admin y vendedor.
 - Dashboard con ventas, fiado, stock bajo y tickets.
-- Inventario con creacion, edicion, ajuste de stock y desactivacion de productos.
-- Venta con ticket y registro contra backend.
-- Anulacion de venta con restauracion de stock.
+- Inventario con SKU, variantes, unidades, packs, vencimiento, stock minimo, kardex y productos sin control de stock.
+- Venta con descuento, notas, pagos divididos, ticket recuperable e idempotencia para evitar duplicados.
+- Anulacion y devolucion parcial con restauracion consistente de stock, ventas netas y deuda.
 - Comprobante imprimible posterior a la venta.
 - Clientes con creacion, edicion, desactivacion, deuda fiada y abonos.
-- Gestion demo de usuarios internos del local.
-- Caja en vivo por metodo de pago.
-- Cierre de caja manual para registrar una foto formal del turno o dia.
-- Reconocimiento IA demo mediante `/ai/recognize`, historial, confirmacion y correccion.
+- Gestion protegida de usuarios internos y permisos por rol.
+- Clientes con cupo, plazo, bloqueo de fiado, cuentas por cobrar, vencimientos y recordatorios por WhatsApp.
+- Caja por turno con apertura, ingresos, gastos, retiros, efectivo esperado, contado y diferencia.
+- Proveedores, ordenes de compra, recepcion de mercaderia y costo promedio ponderado.
+- Alertas de reposicion y vencimiento, auditoria de operaciones e importacion/exportacion CSV.
+- Cola local para ventas y ajustes de stock cuando se pierde la conexion.
+- Reconocimiento visual real opcional mediante OpenAI, con historial, confianza, confirmacion y correccion.
 - Lector de codigo de barras con ZXing: lectura desde foto en celular y camara en vivo cuando el navegador permite `getUserMedia`.
 - Generacion de link Webpay demo mediante `/payments/webpay/create`, mensaje compartible y confirmacion demo mediante `/payments/webpay/:id/confirm`.
 - Reportes basicos calculados desde API.
@@ -1368,13 +1371,13 @@ La primera version implementada deja un MVP tecnico inicial conectado entre fron
 - Acceso desde celular en red local usando la IP del computador de desarrollo.
 - Catalogo demo amplio con cientos de productos de supermercado chileno para probar ventas, stock, busqueda, fiado y escaneo por codigo.
 
-La API puede operar en dos modos. En modo `memory`, usa almacenamiento en memoria para demos rapidas y desarrollo sin base de datos local. En modo `postgres`, cuando existe `DATABASE_URL` y la base responde, inicializa tablas desde `db/schema.sql`, siembra datos demo si la base esta vacia y persiste productos, clientes, ventas, fiados, pagos y reconocimientos IA.
+La API puede operar en dos modos. En modo `memory`, usa almacenamiento en memoria para demos rapidas y desarrollo sin base de datos local. En modo `postgres`, cuando existe `DATABASE_URL` y la base responde, inicializa tablas desde `db/schema.sql`, siembra datos demo si la base esta vacia y persiste las entidades operacionales. Los datos se aislan por negocio usando el usuario de la sesion; el cliente ya no envia ni decide el identificador del negocio.
 
-El reconocimiento de productos implementado en esta etapa es una simulacion funcional para IA visual, pero la lectura de codigos de barra desde foto ya es funcional mediante ZXing. El usuario puede capturar una foto desde el celular, el frontend intenta extraer el numero del codigo y luego consulta el inventario mediante la API. Tambien puede ingresar una pista o codigo manualmente. En iPhone, la camara en vivo requiere HTTPS; por eso el MVP local prioriza el boton **Tomar foto** para pruebas por red local. La integracion con IA visual real para reconocer envases sin codigo queda definida como siguiente mejora tecnica.
+El reconocimiento intenta primero leer el codigo de barras mediante ZXing. Si no lo encuentra y existe `OPENAI_API_KEY`, el frontend reduce la imagen y el backend usa un modelo con vision para compararla contra el catalogo del negocio. Sin clave externa se conserva el flujo controlado por pista o codigo. En iPhone, la camara en vivo requiere HTTPS; por eso la prueba local prioriza el boton **Tomar foto**.
 
 La lectura de codigos de barra se implementa en el frontend con la libreria `@zxing/browser`. Si el navegador permite camara en vivo en un contexto seguro, el sistema puede leer el codigo desde video. Si se prueba desde iPhone por HTTP local, se usa captura de foto porque iOS bloquea `getUserMedia` fuera de HTTPS. Si la foto no permite leer el codigo, la PWA mantiene entrada manual de codigo y pista como respaldo. Esto permite defender el flujo sin contratar servicios externos.
 
-La autenticacion implementada en esta etapa es demo y permite diferenciar el acceso del dueno/admin y del vendedor. La siguiente etapa tecnica recomendada es completar autenticacion real con JWT, contrasenas cifradas, usuarios por negocio y proteccion de rutas segun roles.
+La autenticacion usa contrasenas derivadas con `scrypt`, tokens aleatorios de sesion almacenados como hash, expiracion, cierre de sesion, limitacion de intentos y autorizacion por rol en cada endpoint. El negocio se deriva de la sesion autenticada para impedir acceso cruzado entre tenants.
 
 ### 31.1 Permisos actuales por rol
 
@@ -1382,14 +1385,14 @@ La autenticacion implementada en esta etapa es demo y permite diferenciar el acc
 | --- | --- | --- |
 | Registrar ventas | Si | Si |
 | Generar, imprimir y compartir comprobante | Si | Si |
-| Escanear productos con camara/IA demo | Si | Si |
+| Escanear productos con camara/IA | Si | Si |
 | Ver inventario | Si | Si, solo lectura |
 | Crear, editar o desactivar productos | Si | No |
 | Ajustar stock manualmente | Si | No |
 | Crear clientes para fiado | Si | Si |
 | Editar o desactivar clientes | Si | No |
 | Registrar abonos de fiado | Si | Si |
-| Cerrar caja | Si | Si |
+| Abrir, operar y cerrar caja | Si | Si |
 | Ver reportes completos | Si | No |
 | Anular ventas | Si | No |
 | Editar perfil propio | Si | Si |
@@ -1442,12 +1445,13 @@ Contenido esperado para desarrollo:
 ```env
 NODE_ENV=development
 API_PORT=3000
+API_HOST=0.0.0.0
 WEB_ORIGIN=http://localhost:5173
 DATABASE_URL=postgresql://localito:localito@localhost:5432/localito
-JWT_SECRET=change-me-in-development
 OWNER_DEMO_PASSWORD=Duoc2026
 SELLER_DEMO_PASSWORD=Duoc2026V
-WEBPAY_ENV=integration
+OPENAI_API_KEY=
+OPENAI_VISION_MODEL=gpt-5.6
 ```
 
 El archivo `.env` no debe subirse al repositorio.
@@ -1571,9 +1575,9 @@ Si la pagina carga pero no aparecen datos, se debe revisar que el firewall permi
 
 Para instalar Localito como PWA real desde el iPhone se requiere una URL con HTTPS. La prueba por red local permite validar navegacion y flujos, pero la instalacion completa tipo aplicacion requiere despliegue publico o tunel HTTPS.
 
-### 32.9 Validacion del reconocimiento IA demo
+### 32.9 Validacion del reconocimiento por camara e IA
 
-En la version actual, la IA visual es un modulo demo controlado. No reconoce todavia el envase completo mediante un modelo de vision, pero la lectura de codigos de barra desde una foto real si permite comprobar un flujo funcional cercano al uso en local.
+La version actual puede reconocer el envase con un modelo de vision cuando el backend tiene `OPENAI_API_KEY`. Sin esa variable, la lectura de codigo de barras y la pista manual permiten demostrar el mismo flujo con un resultado controlado.
 
 Pruebas sugeridas:
 
@@ -1594,7 +1598,7 @@ Resultados esperados:
 - Pista textual: fuente `vision`, confianza cercana a `0.86`.
 - Sin coincidencia clara: producto no reconocido, confianza menor y confirmacion/correccion requerida.
 
-Para una implementacion real de IA visual, la camara debe capturar una imagen del producto, enviarla al backend, procesarla con un modelo de vision, comparar el resultado contra el inventario y guardar la confianza obtenida. La lectura de codigos de barra queda como apoyo funcional cuando el producto tiene codigo impreso.
+La imagen se reduce antes de enviarse, se procesa exclusivamente en el backend y se compara contra el inventario del negocio. La lectura de codigos de barra queda como primera opcion por ser mas rapida, barata y precisa cuando el producto tiene codigo impreso.
 
 ### 32.10 Ticket imprimible y boleta legal
 

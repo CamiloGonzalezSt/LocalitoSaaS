@@ -30,8 +30,7 @@ import {
   WalletCards
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
-import type { IScannerControls } from "@zxing/browser";
+import type { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import type {
@@ -49,10 +48,11 @@ import type {
   Tenant,
   User
 } from "@localito/shared";
-import { api } from "./lib/api";
+import { api, flushOfflineQueue } from "./lib/api";
 import type { AuthSession } from "./lib/api";
+import { OperationsView } from "./OperationsView";
 
-type View = "dashboard" | "sale" | "scan" | "products" | "customers" | "reports" | "settings";
+type View = "dashboard" | "sale" | "scan" | "products" | "customers" | "operations" | "reports" | "settings";
 
 type NoticeTone = "success" | "warning" | "error";
 
@@ -65,6 +65,12 @@ type ProductFormState = {
   salePrice: string;
   stock: string;
   minimumStock: string;
+  sku: string;
+  variant: string;
+  unit: NonNullable<Product["unit"]>;
+  unitsPerPack: string;
+  expiryDate: string;
+  trackStock: boolean;
 };
 
 type CustomerFormState = {
@@ -72,6 +78,10 @@ type CustomerFormState = {
   phone: string;
   email: string;
   address: string;
+  notes: string;
+  creditLimit: string;
+  creditDays: string;
+  creditBlocked: boolean;
 };
 
 type UserFormState = {
@@ -117,6 +127,7 @@ const navItems: NavItem[] = [
   { id: "scan", label: "IA", icon: Camera },
   { id: "products", label: "Stock", icon: Package },
   { id: "customers", label: "Fiado", icon: Users },
+  { id: "operations", label: "Gestion", icon: Settings },
   { id: "reports", label: "Reportes", icon: BarChart3 }
 ];
 
@@ -125,7 +136,8 @@ const paymentOptions: Array<{ id: PaymentMethod; label: string; icon: LucideIcon
   { id: "card", label: "Tarjeta", icon: CreditCard },
   { id: "transfer", label: "Transferencia", icon: Smartphone },
   { id: "webpay", label: "Webpay", icon: WalletCards },
-  { id: "credit", label: "Fiado", icon: ReceiptText }
+  { id: "credit", label: "Fiado", icon: ReceiptText },
+  { id: "mixed", label: "Mixto", icon: CreditCard }
 ];
 
 const emptyProductForm: ProductFormState = {
@@ -136,14 +148,24 @@ const emptyProductForm: ProductFormState = {
   costPrice: "",
   salePrice: "",
   stock: "",
-  minimumStock: ""
+  minimumStock: "",
+  sku: "",
+  variant: "",
+  unit: "unit",
+  unitsPerPack: "1",
+  expiryDate: "",
+  trackStock: true
 };
 
 const emptyCustomerForm: CustomerFormState = {
   name: "",
   phone: "",
   email: "",
-  address: ""
+  address: "",
+  notes: "",
+  creditLimit: "",
+  creditDays: "30",
+  creditBlocked: false
 };
 
 const emptyUserForm: UserFormState = {
@@ -179,7 +201,8 @@ const emptyCashRegister: CashRegisterSummary = {
     card: 0,
     transfer: 0,
     webpay: 0,
-    credit: 0
+    credit: 0,
+    mixed: 0
   }
 };
 
@@ -206,8 +229,9 @@ function paymentMethodLabel(method: PaymentMethod) {
     cash: "Efectivo",
     card: "Tarjeta",
     transfer: "Transferencia",
-    webpay: "Webpay",
-    credit: "Fiado"
+  webpay: "Webpay",
+  credit: "Fiado",
+  mixed: "Pago mixto"
   };
   return labels[method];
 }
@@ -274,7 +298,7 @@ function App() {
   const [lastDebtCharge, setLastDebtCharge] = useState<DebtChargeState | null>(null);
 
   const lowStockProducts = useMemo(
-    () => products.filter((product) => product.stock <= product.minimumStock),
+    () => products.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock),
     [products]
   );
 
@@ -305,8 +329,8 @@ function App() {
   }, [activeSales]);
   const topDebtor = useMemo(() => [...customers].sort((a, b) => b.debtBalance - a.debtBalance)[0], [customers]);
   const isOwner = isOwnerUser(currentUser);
-  const visibleNavItems = navItems.map((item) =>
-    item.id === "reports" && !isOwner
+  const visibleNavItems = navItems.filter((item) => isOwner || item.id !== "reports").map((item) =>
+    item.id === "operations" && !isOwner
       ? {
           ...item,
           label: "Caja",
@@ -324,9 +348,10 @@ function App() {
 
   async function loadWorkspace(message?: string) {
     try {
+      const syncResult = await flushOfflineQueue();
       const response = await api.bootstrap();
       applyWorkspace(response.data);
-      if (message) setNotice({ message, tone: "success" });
+      if (message || syncResult.synced > 0) setNotice({ message: syncResult.synced > 0 ? `${syncResult.synced} operaciones pendientes sincronizadas.` : message!, tone: "success" });
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo cargar la API.", tone: "error" });
     } finally {
@@ -399,6 +424,7 @@ function App() {
   }
 
   function logout() {
+    void api.logout().catch(() => undefined);
     localStorage.removeItem("localito-session");
     localStorage.removeItem("localito-token");
     setCurrentUser(null);
@@ -419,7 +445,7 @@ function App() {
 
   function addToTicket(product: Product) {
     const currentQuantity = ticket.find((item) => item.productId === product.id)?.quantity ?? 0;
-    if (currentQuantity >= product.stock) {
+    if (product.trackStock !== false && currentQuantity >= product.stock) {
       setNotice({ message: `No hay mas stock disponible para ${product.name}.`, tone: "warning" });
       return;
     }
@@ -461,13 +487,13 @@ function App() {
     );
   }
 
-  async function confirmSale() {
+  async function confirmSale(options?: { discount?: number; notes?: string; payments?: Array<{ method: "cash" | "card" | "transfer" | "webpay" | "credit"; amount: number }> }) {
     if (ticket.length === 0) {
       setNotice({ message: "Agrega al menos un producto antes de confirmar la venta.", tone: "warning" });
       return;
     }
 
-    if (paymentMethod === "credit" && !selectedCustomerId) {
+    if ((paymentMethod === "credit" || options?.payments?.some((payment) => payment.method === "credit")) && !selectedCustomerId) {
       setNotice({ message: "Selecciona un cliente para registrar la venta fiada.", tone: "warning" });
       return;
     }
@@ -476,19 +502,22 @@ function App() {
     try {
       const saleResponse = await api.createSale({
         paymentMethod,
-        customerId: paymentMethod === "credit" ? selectedCustomerId : undefined,
+        customerId: paymentMethod === "credit" || options?.payments?.some((payment) => payment.method === "credit") ? selectedCustomerId : undefined,
+        discount: options?.discount,
+        notes: options?.notes,
+        payments: options?.payments,
         items: ticket.map((item) => ({ productId: item.productId, quantity: item.quantity }))
       });
       setLastReceipt(saleResponse.data);
 
       if (paymentMethod === "webpay") {
-        const webpay = await api.createWebpayPayment(ticketTotal, undefined, saleResponse.data.id);
+        const webpay = await api.createWebpayPayment(saleResponse.data.total, undefined, saleResponse.data.id);
         setNotice({
           message: `Venta registrada. Link Webpay demo: ${webpay.data.redirectUrl}`,
           tone: "success"
         });
       } else {
-        setNotice({ message: `Venta registrada por ${formatCLP(ticketTotal)}.`, tone: "success" });
+        setNotice({ message: `Venta registrada por ${formatCLP(saleResponse.data.total)}.`, tone: "success" });
       }
 
       setTicket([]);
@@ -665,7 +694,13 @@ function App() {
         costPrice: numberFromInput(productForm.costPrice),
         salePrice: numberFromInput(productForm.salePrice),
         stock: numberFromInput(productForm.stock),
-        minimumStock: numberFromInput(productForm.minimumStock)
+        minimumStock: numberFromInput(productForm.minimumStock),
+        sku: productForm.sku.trim(),
+        variant: productForm.variant.trim(),
+        unit: productForm.unit,
+        unitsPerPack: numberFromInput(productForm.unitsPerPack) || 1,
+        expiryDate: productForm.expiryDate || undefined,
+        trackStock: productForm.trackStock
       };
 
       if (editingProductId) {
@@ -699,7 +734,13 @@ function App() {
       costPrice: String(product.costPrice),
       salePrice: String(product.salePrice),
       stock: String(product.stock),
-      minimumStock: String(product.minimumStock)
+      minimumStock: String(product.minimumStock),
+      sku: product.sku ?? "",
+      variant: product.variant ?? "",
+      unit: product.unit ?? "unit",
+      unitsPerPack: String(product.unitsPerPack ?? 1),
+      expiryDate: product.expiryDate ?? "",
+      trackStock: product.trackStock !== false
     });
     setActiveView("products");
   }
@@ -755,7 +796,11 @@ function App() {
         name: customerForm.name.trim(),
         phone: customerForm.phone.trim(),
         email: customerForm.email.trim(),
-        address: customerForm.address.trim()
+        address: customerForm.address.trim(),
+        notes: customerForm.notes.trim(),
+        creditLimit: numberFromInput(customerForm.creditLimit),
+        creditDays: numberFromInput(customerForm.creditDays) || 30,
+        creditBlocked: customerForm.creditBlocked
       };
 
       if (editingCustomerId) {
@@ -785,7 +830,11 @@ function App() {
       name: customer.name,
       phone: customer.phone ?? "",
       email: customer.email ?? "",
-      address: customer.address ?? ""
+      address: customer.address ?? "",
+      notes: customer.notes ?? "",
+      creditLimit: String(customer.creditLimit ?? 0),
+      creditDays: String(customer.creditDays ?? 30),
+      creditBlocked: customer.creditBlocked ?? false
     });
     setActiveView("customers");
   }
@@ -949,12 +998,35 @@ function App() {
       setCorrectionProductId(response.data.productId ?? "");
       const history = await api.getRecognitionHistory();
       setRecognitionHistory(history.data);
-      setNotice({ message: "Producto detectado desde la API de IA demo.", tone: "success" });
+      setNotice({ message: "Producto detectado.", tone: "success" });
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo reconocer el producto.", tone: "error" });
     } finally {
       setIsBusy(false);
     }
+  }
+
+  async function returnSale(sale: Sale) {
+    if (!isOwner || sale.status === "cancelled" || sale.status === "refunded") return;
+    const item = sale.items[0]; if (!item) return;
+    const quantity = Number(window.prompt(`Cantidad a devolver de ${item.productName} (máximo ${item.quantity})`, "1"));
+    if (!Number.isFinite(quantity) || quantity <= 0 || quantity > item.quantity) { setNotice({ message: "Cantidad de devolución inválida.", tone: "warning" }); return; }
+    const reason = window.prompt("Motivo de la devolución", "Cambio o producto devuelto")?.trim(); if (!reason) return;
+    setIsBusy(true);
+    try { await api.returnSale(sale.id, [{ productId: item.productId, quantity }], reason); await loadWorkspace("Devolución registrada y stock restaurado."); }
+    catch (error) { setNotice({ message: error instanceof Error ? error.message : "No se pudo devolver la venta.", tone: "error" }); }
+    finally { setIsBusy(false); }
+  }
+
+  async function recognizeProductImage(imageDataUrl: string) {
+    setIsBusy(true);
+    try {
+      const response = await api.recognizeProductImage(imageDataUrl, scanHint.trim() || undefined);
+      setRecognition(response.data); setCorrectionProductId(response.data.productId ?? "");
+      const history = await api.getRecognitionHistory(); setRecognitionHistory(history.data);
+      setNotice({ message: "Imagen analizada con visión. Confirma el resultado antes de vender.", tone: "success" });
+    } catch (error) { setNotice({ message: error instanceof Error ? error.message : "No se pudo analizar la imagen.", tone: "error" }); }
+    finally { setIsBusy(false); }
   }
 
   async function confirmRecognition(confirmed: boolean) {
@@ -997,6 +1069,12 @@ function App() {
         isBusy={isBusy || isLoading}
         onForm={setLoginForm}
         onLogin={() => void login()}
+        onRegister={async (payload) => {
+          setIsBusy(true); setIsLoading(true);
+          try { const response = await api.register(payload); saveSession(response.data); await loadWorkspace(`Bienvenido a Localito, ${response.data.user.name}.`); }
+          catch (error) { setIsLoading(false); setNotice({ message: error instanceof Error ? error.message : "No se pudo crear el negocio.", tone: "error" }); }
+          finally { setIsBusy(false); }
+        }}
       />
     );
   }
@@ -1031,7 +1109,7 @@ function App() {
         </div>
       </header>
 
-      <nav className="bottom-nav" aria-label="Navegacion principal">
+      <nav className="bottom-nav" aria-label="Navegacion principal" style={{ gridTemplateColumns: `repeat(${visibleNavItems.length}, minmax(0, 1fr))` }}>
         {visibleNavItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -1087,7 +1165,15 @@ function App() {
             onRemoveOne={removeOneFromTicket}
             onPaymentMethod={setPaymentMethod}
             onCustomer={setSelectedCustomerId}
-            onConfirm={() => void confirmSale()}
+            onConfirm={(options) => void confirmSale(options)}
+            onSuspend={() => {
+              localStorage.setItem("localito-suspended-cart", JSON.stringify(ticket));
+              setTicket([]);
+              setNotice({ message: "Carrito guardado para retomarlo después.", tone: "success" });
+            }}
+            onRestore={() => {
+              try { setTicket(JSON.parse(localStorage.getItem("localito-suspended-cart") ?? "[]") as SaleItem[]); setNotice({ message: "Carrito recuperado.", tone: "success" }); } catch { setNotice({ message: "No se pudo recuperar el carrito.", tone: "error" }); }
+            }}
             onScan={() => setActiveView("scan")}
             lastReceipt={lastReceipt}
             onPrintReceipt={printLastReceipt}
@@ -1108,6 +1194,7 @@ function App() {
             onBarcode={setScanBarcode}
             onRecognize={() => void recognizeProduct()}
             onRecognizeBarcode={(barcode) => void recognizeProduct({ barcode })}
+            onRecognizeImage={(imageDataUrl) => void recognizeProductImage(imageDataUrl)}
             onCorrectionProduct={setCorrectionProductId}
             onConfirmRecognition={() => void confirmRecognition(true)}
             onCorrectRecognition={() => void confirmRecognition(false)}
@@ -1179,7 +1266,12 @@ function App() {
             onCashClosureNote={setCashClosureNote}
             onCloseCashRegister={() => void closeCashRegister()}
             onCancelSale={(sale) => void cancelSale(sale)}
+            onReturnSale={(sale) => void returnSale(sale)}
           />
+        )}
+
+        {!isLoading && activeView === "operations" && (
+          <OperationsView products={products} canManage={isOwner} onRefresh={() => loadWorkspace()} />
         )}
 
         {!isLoading && activeView === "settings" && (
@@ -1213,6 +1305,7 @@ function viewTitle(view: View, isOwner: boolean) {
     scan: "Camara IA",
     products: "Inventario",
     customers: "Clientes y fiado",
+    operations: "Gestion del negocio",
     reports: isOwner ? "Reportes" : "Cierre de caja",
     settings: isOwner ? "Configuracion" : "Mi perfil"
   };
@@ -1224,14 +1317,18 @@ function LoginView({
   notice,
   isBusy,
   onForm,
-  onLogin
+  onLogin,
+  onRegister
 }: {
   loginForm: LoginFormState;
   notice: NoticeState;
   isBusy: boolean;
   onForm: (value: LoginFormState) => void;
   onLogin: () => void;
+  onRegister: (payload: { name: string; email: string; password: string; businessName: string; businessType: string }) => Promise<void>;
 }) {
+  const [registering, setRegistering] = useState(false);
+  const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "", businessName: "", businessType: "Almacén" });
   return (
     <main className="login-shell">
       <section className="login-panel">
@@ -1250,7 +1347,7 @@ function LoginView({
           <span>{notice.message}</span>
         </section>
 
-        <form
+        {!registering ? <form
           className="login-form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -1281,9 +1378,19 @@ function LoginView({
             <LogIn size={20} />
             <span>{isBusy ? "Entrando..." : "Iniciar sesion"}</span>
           </button>
-        </form>
+          <button className="secondary-action full" type="button" onClick={() => setRegistering(true)}>Crear mi negocio</button>
+        </form> : <form className="login-form" onSubmit={(event) => { event.preventDefault(); void onRegister(registerForm); }}>
+          <label className="field">Tu nombre<input value={registerForm.name} onChange={(event) => setRegisterForm({ ...registerForm, name: event.target.value })} required /></label>
+          <label className="field">Nombre del negocio<input value={registerForm.businessName} onChange={(event) => setRegisterForm({ ...registerForm, businessName: event.target.value })} required /></label>
+          <label className="field">Rubro<input value={registerForm.businessType} onChange={(event) => setRegisterForm({ ...registerForm, businessType: event.target.value })} required /></label>
+          <label className="field">Correo<input type="email" value={registerForm.email} onChange={(event) => setRegisterForm({ ...registerForm, email: event.target.value })} required /></label>
+          <label className="field">Clave segura<input type="password" value={registerForm.password} onChange={(event) => setRegisterForm({ ...registerForm, password: event.target.value })} minLength={10} required /></label>
+          <p className="helper-text">Usa al menos 10 caracteres, letras y números.</p>
+          <button className="primary-action full" type="submit" disabled={isBusy}>{isBusy ? "Creando..." : "Crear negocio"}</button>
+          <button className="secondary-action full" type="button" onClick={() => setRegistering(false)}>Volver al ingreso</button>
+        </form>}
 
-        <div className="quick-login">
+        {!registering && <div className="quick-login">
           {demoCredentials.map((credential) => (
             <button
               className="secondary-action"
@@ -1295,7 +1402,7 @@ function LoginView({
               <span>{credential.label}</span>
             </button>
           ))}
-        </div>
+        </div>}
 
         <div className="settings-list">
           <p>
@@ -1438,6 +1545,8 @@ function SaleView({
   onPaymentMethod,
   onCustomer,
   onConfirm,
+  onSuspend,
+  onRestore,
   onScan,
   lastReceipt,
   onPrintReceipt,
@@ -1457,12 +1566,25 @@ function SaleView({
   onRemoveOne: (productId: string) => void;
   onPaymentMethod: (value: PaymentMethod) => void;
   onCustomer: (value: string) => void;
-  onConfirm: () => void;
+  onConfirm: (options?: { discount?: number; notes?: string; payments?: Array<{ method: "cash" | "card" | "transfer" | "webpay" | "credit"; amount: number }> }) => void;
+  onSuspend: () => void;
+  onRestore: () => void;
   onScan: () => void;
   lastReceipt: Sale | null;
   onPrintReceipt: () => void;
   onShareReceipt: () => void;
 }) {
+  const [discount, setDiscount] = useState("");
+  const [notes, setNotes] = useState("");
+  const [cashPart, setCashPart] = useState("");
+  const discountedTotal = Math.max(0, ticketTotal - numberFromInput(discount));
+  const cardPart = Math.max(0, discountedTotal - numberFromInput(cashPart));
+
+  function submitSale() {
+    const payments = paymentMethod === "mixed" ? [{ method: "cash" as const, amount: numberFromInput(cashPart) }, { method: "card" as const, amount: cardPart }].filter((payment) => payment.amount > 0) : undefined;
+    onConfirm({ discount: numberFromInput(discount), notes: notes.trim() || undefined, payments });
+  }
+
   return (
     <div className="workspace-grid sale-workspace">
       <section className="panel sale-products-panel">
@@ -1548,15 +1670,20 @@ function SaleView({
           </label>
         )}
 
+        {paymentMethod === "mixed" && <div className="form-grid"><label className="field">Parte en efectivo<input value={cashPart} onChange={(event) => setCashPart(event.target.value)} inputMode="numeric" placeholder="Monto efectivo" /></label><div className="report-metric"><span>Parte en tarjeta</span><strong>{formatCLP(cardPart)}</strong></div></div>}
+
+        <div className="form-grid"><label className="field">Descuento<input value={discount} onChange={(event) => setDiscount(event.target.value)} inputMode="numeric" placeholder="Monto descuento" /></label><label className="field">Nota de venta<input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Pedido, encargo u observación" /></label></div>
+
         <div className="ticket-total">
           <span>Total</span>
-          <strong>{formatCLP(ticketTotal)}</strong>
+          <strong>{formatCLP(discountedTotal)}</strong>
         </div>
 
-        <button className="primary-action full" type="button" onClick={onConfirm} disabled={isBusy}>
+        <button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy}>
           <CheckCircle2 size={20} />
           <span>{isBusy ? "Registrando..." : "Confirmar venta"}</span>
         </button>
+        <div className="action-grid"><button className="secondary-action" type="button" onClick={onSuspend} disabled={!ticket.length}>Guardar carrito</button><button className="secondary-action" type="button" onClick={onRestore}>Recuperar carrito</button></div>
 
         {lastReceipt && (
           <div className="receipt-card">
@@ -1593,6 +1720,7 @@ function ScanView({
   onBarcode,
   onRecognize,
   onRecognizeBarcode,
+  onRecognizeImage,
   onCorrectionProduct,
   onConfirmRecognition,
   onCorrectRecognition,
@@ -1610,6 +1738,7 @@ function ScanView({
   onBarcode: (value: string) => void;
   onRecognize: () => void;
   onRecognizeBarcode: (barcode: string) => void;
+  onRecognizeImage: (imageDataUrl: string) => void;
   onCorrectionProduct: (value: string) => void;
   onConfirmRecognition: () => void;
   onCorrectRecognition: () => void;
@@ -1625,9 +1754,10 @@ function ScanView({
   const [scannerMessage, setScannerMessage] = useState("Camara lista para iniciar.");
   const [capturedPhotoName, setCapturedPhotoName] = useState("");
 
-  function getBarcodeReader() {
+  async function getBarcodeReader() {
     if (!barcodeReaderRef.current) {
-      barcodeReaderRef.current = new BrowserMultiFormatReader(undefined, {
+      const { BrowserMultiFormatReader: Reader } = await import("@zxing/browser");
+      barcodeReaderRef.current = new Reader(undefined, {
         delayBetweenScanAttempts: 120,
         delayBetweenScanSuccess: 600
       });
@@ -1673,7 +1803,8 @@ function ScanView({
       setIsCameraActive(true);
       setScannerMessage("Buscando codigo de barras...");
 
-      const controls = await getBarcodeReader().decodeFromConstraints(
+      const reader = await getBarcodeReader();
+      const controls = await reader.decodeFromConstraints(
         {
           video: {
             facingMode: { ideal: "environment" },
@@ -1715,10 +1846,20 @@ function ScanView({
     const imageUrl = URL.createObjectURL(file);
 
     try {
-      const result = await getBarcodeReader().decodeFromImageUrl(imageUrl);
+      const reader = await getBarcodeReader();
+      const result = await reader.decodeFromImageUrl(imageUrl);
       submitDetectedBarcode(result.getText(), "photo");
     } catch {
-      setScannerMessage("Foto capturada, pero no pude leer el codigo. Acerca el codigo de barras, usa buena luz o escribe el codigo manual.");
+      setScannerMessage("No encontré un código. Analizando el envase con visión...");
+      try {
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement("canvas"); canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+        canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close();
+        onRecognizeImage(canvas.toDataURL("image/jpeg", 0.82));
+      } catch {
+        setScannerMessage("No pude preparar la imagen. Intenta otra foto con mejor luz.");
+      }
     } finally {
       URL.revokeObjectURL(imageUrl);
       event.target.value = "";
@@ -1879,7 +2020,7 @@ function ProductsView({
   onDeactivate: (product: Product) => void;
   onAdjustStock: (product: Product, delta: number) => void;
 }) {
-  const visibleLowStock = products.filter((product) => product.stock <= product.minimumStock).length;
+  const visibleLowStock = products.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock).length;
   const visibleStockValue = products.reduce((sum, product) => sum + product.stock * product.salePrice, 0);
 
   return (
@@ -1899,6 +2040,14 @@ function ProductsView({
             <input value={productForm.salePrice} onChange={(event) => onForm({ ...productForm, salePrice: event.target.value })} placeholder="Precio venta" inputMode="numeric" />
             <input value={productForm.stock} onChange={(event) => onForm({ ...productForm, stock: event.target.value })} placeholder="Stock" inputMode="numeric" />
             <input value={productForm.minimumStock} onChange={(event) => onForm({ ...productForm, minimumStock: event.target.value })} placeholder="Stock minimo" inputMode="numeric" />
+            <input value={productForm.sku} onChange={(event) => onForm({ ...productForm, sku: event.target.value })} placeholder="SKU interno" />
+            <input value={productForm.variant} onChange={(event) => onForm({ ...productForm, variant: event.target.value })} placeholder="Variante / formato" />
+            <select value={productForm.unit} onChange={(event) => onForm({ ...productForm, unit: event.target.value as ProductFormState["unit"] })}>
+              <option value="unit">Unidad</option><option value="kg">Kilogramo</option><option value="gram">Gramo</option><option value="liter">Litro</option><option value="pack">Pack</option><option value="box">Caja</option>
+            </select>
+            <input value={productForm.unitsPerPack} onChange={(event) => onForm({ ...productForm, unitsPerPack: event.target.value })} placeholder="Unidades por pack" inputMode="numeric" />
+            <label className="field">Vencimiento<input type="date" value={productForm.expiryDate} onChange={(event) => onForm({ ...productForm, expiryDate: event.target.value })} /></label>
+            <label className="field checkbox-field"><input type="checkbox" checked={productForm.trackStock} onChange={(event) => onForm({ ...productForm, trackStock: event.target.checked })} /> Controlar stock de este producto</label>
           </div>
           <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy}>
             {editingProductId ? <Save size={19} /> : <Plus size={19} />}
@@ -2006,6 +2155,10 @@ function CustomersView({
           <input value={customerForm.phone} onChange={(event) => onForm({ ...customerForm, phone: event.target.value })} placeholder="Telefono" />
           <input value={customerForm.email} onChange={(event) => onForm({ ...customerForm, email: event.target.value })} placeholder="Email" />
           <input value={customerForm.address} onChange={(event) => onForm({ ...customerForm, address: event.target.value })} placeholder="Direccion" />
+          <input value={customerForm.notes} onChange={(event) => onForm({ ...customerForm, notes: event.target.value })} placeholder="Observaciones" />
+          <input value={customerForm.creditLimit} onChange={(event) => onForm({ ...customerForm, creditLimit: event.target.value })} placeholder="Limite de fiado (0 = sin limite)" inputMode="numeric" />
+          <input value={customerForm.creditDays} onChange={(event) => onForm({ ...customerForm, creditDays: event.target.value })} placeholder="Dias para pagar" inputMode="numeric" />
+          {canManageCustomers && <label className="field checkbox-field"><input type="checkbox" checked={customerForm.creditBlocked} onChange={(event) => onForm({ ...customerForm, creditBlocked: event.target.checked })} /> Bloquear nuevos fiados</label>}
         </div>
         <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy}>
           {editingCustomerId ? <Save size={19} /> : <Plus size={19} />}
@@ -2113,7 +2266,8 @@ function ReportsView({
   canViewFullReports,
   onCashClosureNote,
   onCloseCashRegister,
-  onCancelSale
+  onCancelSale,
+  onReturnSale
 }: {
   products: Product[];
   customers: Customer[];
@@ -2128,6 +2282,7 @@ function ReportsView({
   onCashClosureNote: (value: string) => void;
   onCloseCashRegister: () => void;
   onCancelSale: (sale: Sale) => void;
+  onReturnSale: (sale: Sale) => void;
 }) {
   const topProducts = [...products].sort((a, b) => b.salePrice * b.stock - a.salePrice * a.stock).slice(0, 4);
   const activeSales = sales.filter((sale) => sale.status !== "cancelled");
@@ -2254,6 +2409,9 @@ function ReportsView({
                     <button className="secondary-action small danger-soft" type="button" onClick={() => onCancelSale(sale)} disabled={sale.status === "cancelled"}>
                       <Trash2 size={16} />
                       <span>Anular</span>
+                    </button>
+                    <button className="secondary-action small" type="button" onClick={() => onReturnSale(sale)} disabled={sale.status === "cancelled" || sale.status === "refunded"}>
+                      <RefreshCw size={16} /><span>Devolver</span>
                     </button>
                   </div>
                 </div>
@@ -2531,7 +2689,7 @@ function ProductRow({
   onEdit: (product: Product) => void;
   onDeactivate: (product: Product) => void;
 }) {
-  const isLow = product.stock <= product.minimumStock;
+  const isLow = product.trackStock !== false && product.stock <= product.minimumStock;
   const stockGap = Math.max(0, product.minimumStock - product.stock);
 
   return (
