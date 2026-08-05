@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import type { Customer, PaymentMethod, Product, User } from "@localito/shared";
+import type { Customer, PaymentMethod, Product, Tenant, User } from "@localito/shared";
 import { createRepository } from "./repository.js";
 import { createSessionToken, createSignedSessionToken, hashSessionToken, passwordPolicyError, verifySignedSessionToken } from "./auth.js";
 import { identifyProductImage } from "./vision.js";
@@ -201,7 +201,7 @@ app.post("/auth/register", loginRateLimit, asyncRoute(async (req, res) => {
     return;
   }
   if (usesServerlessMemory) {
-    res.status(503).json({ message: "El registro de negocios en Vercel requiere configurar DATABASE_URL para conservar los datos." });
+    res.status(503).json({ message: "El registro de negocios en Vercel requiere configurar una conexión PostgreSQL para conservar los datos." });
     return;
   }
   const policyError = passwordPolicyError(password);
@@ -246,6 +246,60 @@ app.post("/auth/logout", asyncRoute(async (req, res) => {
   const token = tokenUserIdFromRequest(req);
   if (token && !token.startsWith("v1.")) await repository.revokeSession(hashSessionToken(token));
   res.status(204).send();
+}));
+
+app.get("/platform/tenants", asyncRoute(async (req, res) => {
+  if (!(await requireRoles(req, res, ["system_admin"]))) return;
+  res.json({ data: await repository.listTenants() });
+}));
+
+app.post("/platform/tenants", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["system_admin"]); if (!actor) return;
+  const { businessName, businessType, ownerName, ownerEmail, ownerPassword } = req.body as { businessName?: string; businessType?: string; ownerName?: string; ownerEmail?: string; ownerPassword?: string };
+  if (!businessName?.trim() || !businessType?.trim() || !ownerName?.trim() || !ownerEmail?.trim() || !ownerPassword) {
+    res.status(400).json({ message: "Nombre del local, rubro y datos del primer dueño son obligatorios." }); return;
+  }
+  const policyError = passwordPolicyError(ownerPassword); if (policyError) { res.status(400).json({ message: policyError }); return; }
+  const created = await repository.registerTenant({ name: ownerName, email: ownerEmail.trim().toLowerCase(), password: ownerPassword, businessName, businessType });
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "create", entity: "tenant", entityId: created.tenant.id, details: { name: created.tenant.name, ownerEmail: created.user.email } });
+  res.status(201).json({ data: created });
+}));
+
+app.patch("/platform/tenants/:id", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["system_admin"]); if (!actor) return;
+  const tenant = await repository.updateTenant(req.params.id, req.body as Partial<Tenant>);
+  if (!tenant) { res.status(404).json({ message: "Local no encontrado." }); return; }
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "tenant", entityId: tenant.id, details: { active: tenant.active } });
+  res.json({ data: tenant });
+}));
+
+app.get("/platform/tenants/:id/users", asyncRoute(async (req, res) => {
+  if (!(await requireRoles(req, res, ["system_admin"]))) return;
+  const exists = (await repository.listTenants()).some((tenant) => tenant.id === req.params.id);
+  if (!exists) { res.status(404).json({ message: "Local no encontrado." }); return; }
+  res.json({ data: await repository.getUsers(req.params.id, true) });
+}));
+
+app.post("/platform/tenants/:id/users", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["system_admin"]); if (!actor) return;
+  const { name, email, password, role } = req.body as { name?: string; email?: string; password?: string; role?: User["role"] };
+  if (!name?.trim() || !email?.trim() || !password || !["owner", "seller"].includes(String(role))) { res.status(400).json({ message: "Nombre, correo, clave y rol dueño/vendedor son obligatorios." }); return; }
+  const policyError = passwordPolicyError(password); if (policyError) { res.status(400).json({ message: policyError }); return; }
+  const exists = (await repository.listTenants()).some((tenant) => tenant.id === req.params.id);
+  if (!exists) { res.status(404).json({ message: "Local no encontrado." }); return; }
+  const user = await repository.createUser(req.params.id, { name, email, password, role });
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "create", entity: "tenant_user", entityId: user.id, details: { tenantId: req.params.id, role: user.role } });
+  res.status(201).json({ data: user });
+}));
+
+app.patch("/platform/tenants/:id/users/:userId", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["system_admin"]); if (!actor) return;
+  const body = req.body as Partial<User>;
+  const safeBody: Partial<User> = { name: body.name, email: body.email, active: body.active, role: body.role === "seller" ? "seller" : body.role === "owner" ? "owner" : undefined };
+  const user = await repository.updateUser(req.params.id, req.params.userId, safeBody);
+  if (!user) { res.status(404).json({ message: "Usuario no encontrado en ese local." }); return; }
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "tenant_user", entityId: user.id, details: { tenantId: req.params.id, active: user.active, role: user.role } });
+  res.json({ data: user });
 }));
 
 app.get(

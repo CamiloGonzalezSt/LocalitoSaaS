@@ -61,6 +61,12 @@ export interface Store {
 export const demoTenantId = "00000000-0000-4000-8000-000000000001";
 export const demoOwnerId = "00000000-0000-4000-8000-000000000101";
 export const demoSellerId = "00000000-0000-4000-8000-000000000201";
+export const systemTenantId = "00000000-0000-4000-8000-000000009999";
+export const systemAdminId = "00000000-0000-4000-8000-000000009901";
+export const systemAdminEmail = process.env.PLATFORM_ADMIN_EMAIL ?? "caj.gonzalez.st@gmail.com";
+const systemAdminPassword =
+  process.env.PLATFORM_ADMIN_PASSWORD ??
+  (process.env.NODE_ENV === "production" ? randomUUID() : "AdminLocalito2026");
 
 export const store: Store = {
   tenants: [
@@ -70,9 +76,18 @@ export const store: Store = {
       businessType: "Almacen",
       address: "Pasaje Los Aromos 123",
       phone: "+56 9 1234 5678"
+    },
+    {
+      id: systemTenantId,
+      name: "Administración Localito",
+      businessType: "Plataforma",
+      active: true
     }
   ],
-  users: buildDemoUsers(demoTenantId),
+  users: [
+    ...buildDemoUsers(demoTenantId),
+    { id: systemAdminId, tenantId: systemTenantId, name: "Camilo Gonzalez", email: systemAdminEmail, role: "system_admin", active: true }
+  ],
   products: buildDemoProducts(demoTenantId),
   customers: [
     {
@@ -140,7 +155,8 @@ export const store: Store = {
   cashClosures: [],
   passwordHashes: {
     [demoOwnerId]: hashPassword(process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026"),
-    [demoSellerId]: hashPassword(process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V")
+    [demoSellerId]: hashPassword(process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V"),
+    [systemAdminId]: hashPassword(systemAdminPassword)
   },
   sessions: [],
   suppliers: [

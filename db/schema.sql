@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS sesiones (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sesiones_token ON sesiones(token_hash);
+CREATE INDEX IF NOT EXISTS idx_usuarios_negocio ON usuarios(negocio_id);
 
 CREATE TABLE IF NOT EXISTS categorias (
   id UUID PRIMARY KEY,
@@ -297,3 +298,29 @@ CREATE TABLE IF NOT EXISTS cierres_caja (
 );
 
 CREATE INDEX IF NOT EXISTS idx_cierres_caja_negocio_fecha ON cierres_caja(negocio_id, fecha_caja);
+
+-- Supabase expone por defecto el esquema public mediante su Data API. La aplicación
+-- usa una conexión PostgreSQL del servidor, por lo que RLS queda cerrado sin
+-- publicar políticas de acceso directo desde el navegador.
+ALTER TABLE negocios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sesiones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categorias ENABLE ROW LEVEL SECURITY;
+ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ventas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE detalle_ventas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE movimientos_stock ENABLE ROW LEVEL SECURITY;
+ALTER TABLE devoluciones_venta ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cuentas_fiado ENABLE ROW LEVEL SECURITY;
+ALTER TABLE abonos_fiado ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pagos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE proveedores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ordenes_compra ENABLE ROW LEVEL SECURITY;
+ALTER TABLE detalle_ordenes_compra ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sesiones_caja ENABLE ROW LEVEL SECURITY;
+ALTER TABLE movimientos_caja ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auditoria ENABLE ROW LEVEL SECURITY;
+ALTER TABLE alertas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reconocimientos_ia ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cierres_caja ENABLE ROW LEVEL SECURITY;

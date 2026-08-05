@@ -9,6 +9,7 @@ import type {
   Customer,
   DebtAccount,
   PaymentMethod,
+  PlatformTenantSummary,
   Product,
   PurchaseOrder,
   RecognitionLog,
@@ -115,6 +116,26 @@ export const api = {
 
   async bootstrap() {
     return request<BootstrapData>("/bootstrap");
+  },
+
+  async getPlatformTenants() { return request<PlatformTenantSummary[]>("/platform/tenants"); },
+
+  async createPlatformTenant(payload: { businessName: string; businessType: string; ownerName: string; ownerEmail: string; ownerPassword: string }) {
+    return request<{ tenant: Tenant; user: User }>("/platform/tenants", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async updatePlatformTenant(tenantId: string, payload: Partial<Tenant>) {
+    return request<Tenant>(`/platform/tenants/${tenantId}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+
+  async getPlatformTenantUsers(tenantId: string) { return request<User[]>(`/platform/tenants/${tenantId}/users`); },
+
+  async createPlatformTenantUser(tenantId: string, payload: { name: string; email: string; password: string; role: "owner" | "seller" }) {
+    return request<User>(`/platform/tenants/${tenantId}/users`, { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async updatePlatformTenantUser(tenantId: string, userId: string, payload: Partial<User>) {
+    return request<User>(`/platform/tenants/${tenantId}/users/${userId}`, { method: "PATCH", body: JSON.stringify(payload) });
   },
 
   async createUser(user: Partial<User> & { password?: string }) {

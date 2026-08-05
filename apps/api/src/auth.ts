@@ -50,7 +50,7 @@ export function verifySignedSessionToken(token: string, secret: string): User | 
   try {
     const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { user?: Partial<User>; exp?: number };
     const user = parsed.user;
-    if (!parsed.exp || parsed.exp <= Date.now() || !user?.id || !user.tenantId || !user.name || !user.email || !["owner", "seller"].includes(String(user.role))) return null;
+    if (!parsed.exp || parsed.exp <= Date.now() || !user?.id || !user.tenantId || !user.name || !user.email || !["system_admin", "owner", "seller"].includes(String(user.role))) return null;
     return { id: user.id, tenantId: user.tenantId, name: user.name, email: user.email, role: user.role as User["role"], active: user.active !== false };
   } catch {
     return null;

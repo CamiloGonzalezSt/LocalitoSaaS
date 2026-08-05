@@ -14,6 +14,7 @@ import {
   MessageCircle,
   Minus,
   Package,
+  PackagePlus,
   Plus,
   Printer,
   ReceiptText,
@@ -51,8 +52,9 @@ import type {
 import { api, flushOfflineQueue } from "./lib/api";
 import type { AuthSession } from "./lib/api";
 import { OperationsView } from "./OperationsView";
+import { PlatformAdminView } from "./PlatformAdminView";
 
-type View = "dashboard" | "sale" | "scan" | "products" | "customers" | "operations" | "reports" | "settings";
+type View = "dashboard" | "sale" | "scan" | "product_create" | "products" | "customers" | "operations" | "reports" | "settings" | "platform";
 
 type NoticeTone = "success" | "warning" | "error";
 
@@ -125,6 +127,7 @@ const navItems: NavItem[] = [
   { id: "dashboard", label: "Inicio", icon: Home },
   { id: "sale", label: "Venta", icon: ShoppingCart },
   { id: "scan", label: "IA", icon: Camera },
+  { id: "product_create", label: "Crear producto", icon: PackagePlus },
   { id: "products", label: "Stock", icon: Package },
   { id: "customers", label: "Fiado", icon: Users },
   { id: "operations", label: "Gestion", icon: Settings },
@@ -247,6 +250,10 @@ function isOwnerUser(user: User | null) {
   return user?.role === "owner";
 }
 
+function isSystemAdminUser(user: User | null) {
+  return user?.role === "system_admin";
+}
+
 function userInitials(user: User) {
   return user.name
     .split(" ")
@@ -329,15 +336,12 @@ function App() {
   }, [activeSales]);
   const topDebtor = useMemo(() => [...customers].sort((a, b) => b.debtBalance - a.debtBalance)[0], [customers]);
   const isOwner = isOwnerUser(currentUser);
-  const visibleNavItems = navItems.filter((item) => isOwner || item.id !== "reports").map((item) =>
-    item.id === "operations" && !isOwner
-      ? {
-          ...item,
-          label: "Caja",
-          icon: Banknote
-        }
-      : item
-  );
+  const isSystemAdmin = isSystemAdminUser(currentUser);
+  const visibleNavItems: NavItem[] = isSystemAdmin
+    ? [{ id: "platform", label: "Locales", icon: Settings }]
+    : navItems
+        .filter((item) => (isOwner || item.id !== "reports") && (isOwner || item.id !== "product_create"))
+        .map((item) => item.id === "operations" && !isOwner ? { ...item, label: "Caja", icon: Banknote } : item);
 
   function saveSession(session: AuthSession) {
     localStorage.setItem("localito-session", JSON.stringify(session));
@@ -346,8 +350,13 @@ function App() {
     setTenant(session.tenant);
   }
 
-  async function loadWorkspace(message?: string) {
+  async function loadWorkspace(message?: string, sessionUser: User | null = currentUser) {
     try {
+      if (sessionUser?.role === "system_admin") {
+        setActiveView("platform");
+        if (message) setNotice({ message, tone: "success" });
+        return;
+      }
       const syncResult = await flushOfflineQueue();
       const response = await api.bootstrap();
       applyWorkspace(response.data);
@@ -381,8 +390,9 @@ function App() {
     }
 
     try {
-      saveSession(JSON.parse(storedSession) as AuthSession);
-      void loadWorkspace("Sesion restaurada.");
+      const restored = JSON.parse(storedSession) as AuthSession;
+      saveSession(restored);
+      void loadWorkspace("Sesion restaurada.", restored.user);
     } catch {
       localStorage.removeItem("localito-session");
       localStorage.removeItem("localito-token");
@@ -414,7 +424,7 @@ function App() {
     try {
       const response = await api.login(loginForm.email.trim(), loginForm.password);
       saveSession(response.data);
-      await loadWorkspace(`Bienvenido, ${response.data.user.name}.`);
+      await loadWorkspace(`Bienvenido, ${response.data.user.name}.`, response.data.user);
     } catch (error) {
       setIsLoading(false);
       setNotice({ message: error instanceof Error ? error.message : "No se pudo iniciar sesion.", tone: "error" });
@@ -742,7 +752,7 @@ function App() {
       expiryDate: product.expiryDate ?? "",
       trackStock: product.trackStock !== false
     });
-    setActiveView("products");
+    setActiveView("product_create");
   }
 
   async function deactivateProduct(product: Product) {
@@ -1084,25 +1094,25 @@ function App() {
       <header className="topbar">
         <div className="topbar-copy">
           <p className="eyebrow">{tenant?.name ?? "Localito"}</p>
-          <h1>{viewTitle(activeView, isOwner)}</h1>
+          <h1>{viewTitle(activeView, isOwner, isSystemAdmin)}</h1>
           <p className="session-line">
             <span className="avatar-mini">{userInitials(currentUser)}</span>
             <span>{currentUser.name}</span>
-            <span className="role-pill">{currentUser.role === "owner" ? "Dueno/admin" : "Vendedor"}</span>
+            <span className="role-pill">{currentUser.role === "system_admin" ? "Admin plataforma" : currentUser.role === "owner" ? "Dueño" : "Vendedor"}</span>
           </p>
         </div>
         <div className="topbar-actions">
           <button className="icon-button" type="button" onClick={() => void loadWorkspace("Datos refrescados.")} aria-label="Refrescar">
             <RefreshCw size={20} />
           </button>
-          <button
-            className="icon-button"
-            type="button"
-            onClick={() => setActiveView("settings")}
-            aria-label={isOwner ? "Configuracion" : "Mi perfil"}
-          >
-            <Settings size={21} />
-          </button>
+          {!isSystemAdmin && <button
+              className="icon-button"
+              type="button"
+              onClick={() => setActiveView("settings")}
+              aria-label={isOwner ? "Configuracion" : "Mi perfil"}
+            >
+              <Settings size={21} />
+            </button>}
           <button className="icon-button" type="button" onClick={logout} aria-label="Cerrar sesion">
             <LogOut size={20} />
           </button>
@@ -1133,6 +1143,8 @@ function App() {
         </section>
 
         {isLoading && <p className="empty-state">Conectando con la API de Localito...</p>}
+
+        {!isLoading && activeView === "platform" && isSystemAdmin && <PlatformAdminView />}
 
         {!isLoading && activeView === "dashboard" && (
           <DashboardView
@@ -1203,9 +1215,10 @@ function App() {
           />
         )}
 
-        {!isLoading && activeView === "products" && (
+        {!isLoading && activeView === "product_create" && isOwner && (
           <ProductsView
-            products={filteredProducts}
+            mode="create"
+            products={products}
             searchTerm={searchTerm}
             productForm={productForm}
             isBusy={isBusy}
@@ -1218,6 +1231,25 @@ function App() {
               setEditingProductId(null);
               setProductForm(emptyProductForm);
             }}
+            onEdit={startEditProduct}
+            onDeactivate={(product) => void deactivateProduct(product)}
+            onAdjustStock={(product, delta) => void adjustStock(product, delta)}
+          />
+        )}
+
+        {!isLoading && activeView === "products" && (
+          <ProductsView
+            mode="stock"
+            products={filteredProducts}
+            searchTerm={searchTerm}
+            productForm={productForm}
+            isBusy={isBusy}
+            editingProductId={editingProductId}
+            canManageProducts={isOwner}
+            onSearch={setSearchTerm}
+            onForm={setProductForm}
+            onCreate={() => void createProduct()}
+            onCancelEdit={() => { setEditingProductId(null); setProductForm(emptyProductForm); }}
             onEdit={startEditProduct}
             onDeactivate={(product) => void deactivateProduct(product)}
             onAdjustStock={(product, delta) => void adjustStock(product, delta)}
@@ -1298,16 +1330,18 @@ function App() {
   );
 }
 
-function viewTitle(view: View, isOwner: boolean) {
+function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
   const labels: Record<View, string> = {
     dashboard: "Panel del dia",
     sale: "Nueva venta",
     scan: "Camara IA",
-    products: "Inventario",
+    product_create: "Crear producto",
+    products: "Stock actual",
     customers: "Clientes y fiado",
     operations: "Gestion del negocio",
     reports: isOwner ? "Reportes" : "Cierre de caja",
-    settings: isOwner ? "Configuracion" : "Mi perfil"
+    settings: isOwner ? "Configuracion" : "Mi perfil",
+    platform: isSystemAdmin ? "Locales y usuarios" : "Administración"
   };
   return labels[view];
 }
@@ -1992,6 +2026,7 @@ function ScanView({
 }
 
 function ProductsView({
+  mode,
   products,
   searchTerm,
   productForm,
@@ -2006,6 +2041,7 @@ function ProductsView({
   onDeactivate,
   onAdjustStock
 }: {
+  mode: "create" | "stock";
   products: Product[];
   searchTerm: string;
   productForm: ProductFormState;
@@ -2024,12 +2060,12 @@ function ProductsView({
   const visibleStockValue = products.reduce((sum, product) => sum + product.stock * product.salePrice, 0);
 
   return (
-    <div className="workspace-grid product-workspace">
-      {canManageProducts && (
+    <div className="stack">
+      {mode === "create" && canManageProducts && (
         <section className="panel product-form-panel">
           <div className="section-heading">
             <h2>{editingProductId ? "Editar producto" : "Crear producto"}</h2>
-            <span>{editingProductId ? "Actualizacion" : "Inventario real"}</span>
+            <span>{editingProductId ? "Actualización" : "Catálogo del local"}</span>
           </div>
           <div className="form-grid">
             <input value={productForm.name} onChange={(event) => onForm({ ...productForm, name: event.target.value })} placeholder="Nombre" />
@@ -2061,7 +2097,7 @@ function ProductsView({
         </section>
       )}
 
-      <section className="panel inventory-panel">
+      {mode === "stock" && <section className="panel inventory-panel">
         <div className="section-heading compact-heading">
           <h2>Inventario</h2>
           <span>{products.length} productos</span>
@@ -2097,7 +2133,7 @@ function ProductsView({
             />
           ))}
         </div>
-      </section>
+      </section>}
     </div>
   );
 }

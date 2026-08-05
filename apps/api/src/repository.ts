@@ -12,6 +12,7 @@ import type {
   Customer,
   DebtAccount,
   PaymentMethod,
+  PlatformTenantSummary,
   Product,
   PurchaseOrder,
   PurchaseStatus,
@@ -36,7 +37,10 @@ import {
   getStockAlerts,
   getTenantCustomers,
   getTenantProducts,
-  store
+  store,
+  systemAdminEmail,
+  systemAdminId,
+  systemTenantId
 } from "./store.js";
 import { hashPassword, verifyPassword } from "./auth.js";
 
@@ -66,7 +70,9 @@ export interface DataRepository {
   mode: "memory" | "postgres";
   registerTenant(input: { name: string; email: string; password: string; businessName: string; businessType: string }): Promise<{ tenant: Tenant; user: User }>;
   bootstrap(tenantId: string): Promise<BootstrapData>;
-  getUsers(tenantId: string): Promise<User[]>;
+  listTenants(): Promise<PlatformTenantSummary[]>;
+  updateTenant(tenantId: string, tenant: Partial<Tenant>): Promise<Tenant | null>;
+  getUsers(tenantId: string, includeInactive?: boolean): Promise<User[]>;
   createUser(tenantId: string, user: Partial<User> & { password?: string }): Promise<User>;
   updateUser(tenantId: string, userId: string, user: Partial<User>): Promise<User | null>;
   authenticate(email: string, password: string): Promise<{ user: User; tenant: Tenant } | null>;
@@ -150,13 +156,21 @@ export type PurchaseCreationPayload = {
 };
 
 export async function createRepository() {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.SUPABASE_DB_URL;
 
   if (!databaseUrl) {
     return new MemoryRepository();
   }
 
-  const pool = new Pool({ connectionString: databaseUrl });
+  const isSupabase = /supabase\.(co|com)|pooler\.supabase\.com/i.test(databaseUrl);
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
+    max: process.env.VERCEL === "1" ? 1 : 10,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 10_000,
+    allowExitOnIdle: true
+  });
 
   try {
     await pool.query("select 1");
@@ -346,8 +360,32 @@ export class MemoryRepository implements DataRepository {
     return buildMemoryBootstrap(tenantId);
   }
 
-  async getUsers(tenantId: string) {
-    return store.users.filter((user) => user.tenantId === tenantId && user.active !== false);
+  async listTenants() {
+    return store.tenants
+      .filter((tenant) => tenant.id !== systemTenantId)
+      .map((tenant) => ({
+        ...tenant,
+        active: tenant.active !== false,
+        userCount: store.users.filter((user) => user.tenantId === tenant.id && user.active !== false).length,
+        ownerCount: store.users.filter((user) => user.tenantId === tenant.id && user.role === "owner" && user.active !== false).length,
+        productCount: store.products.filter((product) => product.tenantId === tenant.id && product.active).length
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  async updateTenant(tenantId: string, body: Partial<Tenant>) {
+    const tenant = store.tenants.find((candidate) => candidate.id === tenantId && candidate.id !== systemTenantId);
+    if (!tenant) return null;
+    if (body.name?.trim()) tenant.name = body.name.trim();
+    if (body.businessType?.trim()) tenant.businessType = body.businessType.trim();
+    if (body.address != null) tenant.address = toOptional(body.address);
+    if (body.phone != null) tenant.phone = toOptional(body.phone);
+    if (body.active != null) tenant.active = body.active;
+    return tenant;
+  }
+
+  async getUsers(tenantId: string, includeInactive = false) {
+    return store.users.filter((user) => user.tenantId === tenantId && (includeInactive || user.active !== false));
   }
 
   async createUser(tenantId: string, body: Partial<User> & { password?: string }) {
@@ -391,6 +429,7 @@ export class MemoryRepository implements DataRepository {
   async authenticate(email: string, password: string) {
     const user = store.users.find((candidate) => candidate.email.toLowerCase() === email.toLowerCase() && candidate.active !== false);
     if (!user) return null;
+    if (store.tenants.find((tenant) => tenant.id === user.tenantId)?.active === false) return null;
     const storedHash = store.passwordHashes[user.id] ?? hashPassword(user.role === "seller" ? "Duoc2026V" : "Duoc2026");
     store.passwordHashes[user.id] = storedHash;
     if (!verifyPassword(password, storedHash)) return null;
@@ -958,6 +997,7 @@ class PostgresRepository implements DataRepository {
     const schema = readFileSync(schemaPath, "utf8");
     await this.pool.query(schema);
     await this.seedDemoData();
+    await this.ensureSystemAdmin();
   }
 
   async bootstrap(tenantId: string) {
@@ -1012,10 +1052,10 @@ class PostgresRepository implements DataRepository {
     };
   }
 
-  async getUsers(tenantId: string) {
+  async getUsers(tenantId: string, includeInactive = false) {
     const result = await this.pool.query(
-      `select * from usuarios where negocio_id = $1 and estado = 'activo' order by fecha_creacion asc, nombre asc`,
-      [tenantId]
+      `select * from usuarios where negocio_id = $1 and ($2::boolean = true or estado = 'activo') order by fecha_creacion asc, nombre asc`,
+      [tenantId, includeInactive]
     );
     return result.rows.map(mapUser);
   }
@@ -1059,6 +1099,35 @@ class PostgresRepository implements DataRepository {
     return updated;
   }
 
+  async listTenants() {
+    const result = await this.pool.query(
+      `select n.*,
+       count(distinct u.id) filter (where u.estado = 'activo')::int as user_count,
+       count(distinct u.id) filter (where u.estado = 'activo' and u.rol = 'owner')::int as owner_count,
+       count(distinct p.id) filter (where p.activo = true)::int as product_count
+       from negocios n
+       left join usuarios u on u.negocio_id = n.id
+       left join productos p on p.negocio_id = n.id
+       where n.id <> $1
+       group by n.id
+       order by n.nombre`,
+      [systemTenantId]
+    );
+    return result.rows.map((row) => ({ ...mapTenant(row), active: String(row.estado) === "activo", userCount: Number(row.user_count), ownerCount: Number(row.owner_count), productCount: Number(row.product_count) }));
+  }
+
+  async updateTenant(tenantId: string, body: Partial<Tenant>) {
+    if (tenantId === systemTenantId) return null;
+    const current = await this.findTenant(tenantId);
+    if (!current) return null;
+    const updated = { ...current, name: body.name?.trim() || current.name, businessType: body.businessType?.trim() || current.businessType, address: body.address != null ? toOptional(body.address) : current.address, phone: body.phone != null ? toOptional(body.phone) : current.phone, active: body.active ?? current.active ?? true };
+    const result = await this.pool.query(
+      `update negocios set nombre=$1,rubro=$2,direccion=$3,telefono=$4,estado=$5 where id=$6 returning *`,
+      [updated.name, updated.businessType, updated.address, updated.phone, updated.active ? "activo" : "inactivo", tenantId]
+    );
+    return result.rows[0] ? mapTenant(result.rows[0]) : null;
+  }
+
   async registerTenant(input: { name: string; email: string; password: string; businessName: string; businessType: string }) {
     const tenant: Tenant = { id: randomUUID(), name: input.businessName.trim(), businessType: input.businessType.trim() };
     const user: User = { id: randomUUID(), tenantId: tenant.id, name: input.name.trim(), email: input.email.trim().toLowerCase(), role: "owner", active: true };
@@ -1086,7 +1155,7 @@ class PostgresRepository implements DataRepository {
     const result = await this.pool.query(
       `select u.*, n.nombre as negocio_nombre, n.rubro, n.direccion, n.telefono
        from usuarios u join negocios n on n.id = u.negocio_id
-       where lower(u.email) = lower($1) and u.estado = 'activo' limit 1`,
+       where lower(u.email) = lower($1) and u.estado = 'activo' and n.estado = 'activo' limit 1`,
       [email]
     );
     const row = result.rows[0];
@@ -2040,7 +2109,7 @@ class PostgresRepository implements DataRepository {
        values ($1, 'Almacen Don Pepe', 'Almacen', 'Pasaje Los Aromos 123', '+56 9 1234 5678', 'demo@localito.cl', 'activo')`,
       [demoTenantId]
     );
-    for (const user of store.users) {
+    for (const user of store.users.filter((candidate) => candidate.tenantId === demoTenantId)) {
       await this.pool.query(
         `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
          values ($1, $2, $3, $4, $5, $6, 'activo')`,
@@ -2062,6 +2131,29 @@ class PostgresRepository implements DataRepository {
         );
       }
     }
+  }
+
+  private async ensureSystemAdmin() {
+    const adminPassword =
+      process.env.PLATFORM_ADMIN_PASSWORD ??
+      (process.env.NODE_ENV === "production" ? undefined : "AdminLocalito2026");
+
+    if (!adminPassword) {
+      console.warn("[localito-api] Falta PLATFORM_ADMIN_PASSWORD; el administrador de plataforma no fue creado.");
+      return;
+    }
+
+    await this.pool.query(
+      `insert into negocios (id,nombre,rubro,estado) values ($1,'Administración Localito','Plataforma','activo')
+       on conflict (id) do update set nombre=excluded.nombre,rubro=excluded.rubro,estado='activo'`,
+      [systemTenantId]
+    );
+    await this.pool.query(
+      `insert into usuarios (id,negocio_id,nombre,email,password_hash,rol,estado)
+       values ($1,$2,'Camilo Gonzalez',$3,$4,'system_admin','activo')
+       on conflict (email) do update set negocio_id=excluded.negocio_id,nombre=excluded.nombre,password_hash=excluded.password_hash,rol='system_admin',estado='activo'`,
+      [systemAdminId, systemTenantId, systemAdminEmail, hashPassword(adminPassword)]
+    );
   }
 
   private async findTenant(tenantId: string): Promise<Tenant | null> {
@@ -2125,7 +2217,9 @@ function mapTenant(row: Record<string, unknown>): Tenant {
     name: String(row.nombre),
     businessType: String(row.rubro),
     address: toOptional(row.direccion),
-    phone: toOptional(row.telefono)
+    phone: toOptional(row.telefono),
+    active: String(row.estado ?? "activo") === "activo",
+    createdAt: row.fecha_creacion ? new Date(String(row.fecha_creacion)).toISOString() : undefined
   };
 }
 

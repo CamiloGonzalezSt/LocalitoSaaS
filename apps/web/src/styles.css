@@ -612,6 +612,52 @@ button:active:not(:disabled) {
   justify-content: space-between;
 }
 
+.selected-row {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.row-main-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+
+.row-main-button span {
+  min-width: 0;
+}
+
+.row-main-button small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+.status-badge {
+  flex: none;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.status-badge.success {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.status-badge.warning {
+  color: #b45309;
+  background: #fef3c7;
+}
+
 .row strong,
 .product-row strong,
 .customer-row strong,

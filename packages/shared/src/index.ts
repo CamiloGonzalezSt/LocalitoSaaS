@@ -17,6 +17,15 @@ export interface Tenant {
   businessType: string;
   address?: string;
   phone?: string;
+  active?: boolean;
+  createdAt?: string;
+}
+
+export interface PlatformTenantSummary extends Tenant {
+  active: boolean;
+  userCount: number;
+  productCount: number;
+  ownerCount: number;
 }
 
 export interface User {

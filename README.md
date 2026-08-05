@@ -6,11 +6,13 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 
 ## Funcionalidades implementadas
 
+- Administrador de plataforma separado del negocio: crea locales, crea su primer dueño, agrega vendedores y puede suspender o reactivar locales y usuarios.
 - Registro de un negocio y primer usuario dueño.
 - Inicio y cierre de sesión con contraseñas `scrypt`, tokens aleatorios almacenados como hash, expiración y aislamiento por negocio.
-- Roles `owner` y `seller` protegidos tanto en la interfaz como en la API.
+- Roles `system_admin`, `owner` y `seller` protegidos tanto en la interfaz como en la API.
 - Punto de venta con búsqueda, código de barras, descuento, notas, ticket recuperable y pagos simples o divididos.
 - Idempotencia de ventas para evitar cobros duplicados al reintentar desde una red inestable.
+- Navegación de inventario separada entre **Productos**, para crear y editar el catálogo, y **Stock**, para consultar existencias y movimientos.
 - Inventario con SKU, variante, unidad, packs, vencimiento, stock mínimo, productos sin control de stock y kardex de movimientos.
 - Alertas de reposición y vencimiento a 30 días.
 - Clientes con cupo, plazo, bloqueo de crédito, cuentas por cobrar, vencimientos, abonos y recordatorios por WhatsApp.
@@ -60,6 +62,8 @@ WEB_ORIGIN=http://localhost:5173
 DATABASE_URL=postgresql://localito:localito@localhost:5432/localito
 OWNER_DEMO_PASSWORD=Duoc2026
 SELLER_DEMO_PASSWORD=Duoc2026V
+PLATFORM_ADMIN_EMAIL=caj.gonzalez.st@gmail.com
+PLATFORM_ADMIN_PASSWORD=change-this-before-production
 SESSION_SECRET=change-this-in-production-with-a-long-random-value
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
@@ -67,7 +71,17 @@ OPENAI_VISION_MODEL=gpt-5.6
 
 `OPENAI_API_KEY` es opcional. La imagen se reduce en el navegador antes de enviarse y el backend compara la respuesta con el catálogo del negocio. La clave nunca debe exponerse en el frontend ni subirse al repositorio.
 
-`SESSION_SECRET` firma las sesiones del modo demostración serverless. En Vercel, configure además `DATABASE_URL` para que registros, ventas y cambios sobrevivan entre invocaciones; sin base externa la publicación funciona únicamente como demo con los usuarios precargados.
+`SESSION_SECRET` firma las sesiones del modo demostración serverless. En Vercel, configure además `DATABASE_URL` (o `POSTGRES_URL` mediante la integración de Supabase) para que registros, ventas y cambios sobrevivan entre invocaciones. Use la URL del **Transaction pooler** de Supabase para funciones serverless.
+
+`PLATFORM_ADMIN_PASSWORD` es obligatoria en producción. El backend crea o actualiza el administrador al conectarse a PostgreSQL; nunca publique esta clave en el frontend ni en el repositorio.
+
+## Migración a Supabase
+
+1. Abra **Connect** en el proyecto Supabase y copie la URI de **Transaction pooler**.
+2. En Vercel, agregue esa URI como `DATABASE_URL` para Production, Preview y Development. Agregue también `PLATFORM_ADMIN_EMAIL`, `PLATFORM_ADMIN_PASSWORD` y un `SESSION_SECRET` largo.
+3. Vuelva a desplegar. Al arrancar, la API verifica el esquema y crea el administrador configurado.
+
+Las tablas tienen RLS activado y sin políticas públicas: Localito accede exclusivamente desde la API mediante PostgreSQL. Para migraciones manuales o herramientas de escritorio se puede usar la conexión directa; para Vercel debe mantenerse el pooler de transacciones.
 
 ## Acceso demo
 
@@ -82,18 +96,21 @@ OPENAI_VISION_MODEL=gpt-5.6
 
 También se puede crear un negocio nuevo desde la pantalla de acceso. La contraseña debe tener al menos 10 caracteres, una letra y un número.
 
+En desarrollo local, si no se define otra clave, el administrador usa `caj.gonzalez.st@gmail.com` / `AdminLocalito2026`. Ese valor de desarrollo se deshabilita automáticamente con `NODE_ENV=production`.
+
 ## Flujo sugerido de demostración
 
-1. Iniciar sesión como dueño o registrar un negocio.
-2. Abrir una caja con el monto inicial.
-3. Crear o editar un producto, incluyendo stock mínimo y vencimiento.
-4. Registrar una venta con descuento o pago dividido.
-5. Crear un cliente con cupo y realizar una venta fiada.
-6. Revisar cuentas vencidas y abrir el recordatorio por WhatsApp.
-7. Crear un proveedor y una orden; recibirla para actualizar stock y costo promedio.
-8. Anular una venta o registrar una devolución parcial.
-9. Importar/exportar catálogo y revisar movimientos de stock y auditoría.
-10. Contar el efectivo y cerrar la caja para ver la diferencia.
+1. Iniciar sesión como administrador, crear un local y su usuario dueño.
+2. Iniciar sesión como dueño y agregar un vendedor.
+3. Entrar en **Productos** para crear o editar un artículo y en **Stock** para revisar sus existencias.
+4. Abrir una caja con el monto inicial.
+5. Registrar una venta con descuento o pago dividido.
+6. Crear un cliente con cupo y realizar una venta fiada.
+7. Revisar cuentas vencidas y abrir el recordatorio por WhatsApp.
+8. Crear un proveedor y una orden; recibirla para actualizar stock y costo promedio.
+9. Anular una venta o registrar una devolución parcial.
+10. Importar/exportar catálogo y revisar movimientos de stock y auditoría.
+11. Contar el efectivo y cerrar la caja para ver la diferencia.
 
 ## Cámara y reconocimiento
 

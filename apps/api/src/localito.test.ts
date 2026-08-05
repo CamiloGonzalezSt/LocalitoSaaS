@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createSessionToken, createSignedSessionToken, hashPassword, hashSessionToken, verifyPassword, verifySignedSessionToken } from "./auth.js";
 import { MemoryRepository } from "./repository.js";
-import { demoOwnerId, demoTenantId } from "./store.js";
+import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 
 test("passwords and sessions use non-predictable hashes", () => {
   const hash = hashPassword("ClaveSegura2026");
@@ -28,6 +28,24 @@ test("tenant registration is isolated and rejects duplicate emails", async () =>
     repository.registerTenant({ name: "Otra persona", email, password: "OtraClave2026", businessName: "Duplicado", businessType: "Almacén" }),
     /correo/
   );
+});
+
+test("system admin manages tenants and their users without entering store operations", async () => {
+  const repository = new MemoryRepository();
+  const admin = await repository.authenticate(systemAdminEmail, process.env.PLATFORM_ADMIN_PASSWORD ?? "AdminLocalito2026");
+  assert.equal(admin?.user.id, systemAdminId);
+  assert.equal(admin?.user.role, "system_admin");
+  assert.equal((await repository.listTenants()).some((tenant) => tenant.id === admin?.user.tenantId), false);
+
+  const suffix = Date.now();
+  const created = await repository.registerTenant({ name: "Dueño nuevo", email: `dueno-${suffix}@localito.test`, password: "ClaveDueno2026", businessName: `Local ${suffix}`, businessType: "Minimarket" });
+  const seller = await repository.createUser(created.tenant.id, { name: "Vendedor nuevo", email: `seller-${suffix}@localito.test`, password: "ClaveSeller2026", role: "seller" });
+  assert.equal((await repository.getUsers(created.tenant.id, true)).length, 2);
+  await repository.updateUser(created.tenant.id, seller.id, { active: false });
+  assert.equal((await repository.getUsers(created.tenant.id)).length, 1);
+  assert.equal((await repository.getUsers(created.tenant.id, true)).find((user) => user.id === seller.id)?.active, false);
+  await repository.updateTenant(created.tenant.id, { active: false });
+  assert.equal(await repository.authenticate(created.user.email, "ClaveDueno2026"), null);
 });
 
 test("critical business flows are consistent and idempotent", async () => {
