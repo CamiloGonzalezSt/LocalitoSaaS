@@ -11,6 +11,7 @@ import {
   Home,
   LogIn,
   LogOut,
+  Menu,
   MessageCircle,
   Minus,
   Package,
@@ -26,9 +27,11 @@ import {
   Share2,
   ShoppingCart,
   Smartphone,
+  Store,
   Trash2,
   Users,
-  WalletCards
+  WalletCards,
+  X
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
@@ -127,12 +130,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: "dashboard", label: "Inicio", icon: Home },
-  { id: "sale", label: "Venta", icon: ShoppingCart },
-  { id: "scan", label: "IA", icon: Camera },
-  { id: "product_create", label: "Crear producto", icon: PackagePlus },
-  { id: "products", label: "Stock", icon: Package },
-  { id: "customers", label: "Fiado", icon: Users },
-  { id: "operations", label: "Gestion", icon: Settings },
+  { id: "sale", label: "Vender", icon: ShoppingCart },
+  { id: "scan", label: "Escanear", icon: Camera },
+  { id: "product_create", label: "Nuevo producto", icon: PackagePlus },
+  { id: "products", label: "Inventario", icon: Package },
+  { id: "customers", label: "Clientes", icon: Users },
+  { id: "operations", label: "Negocio", icon: Settings },
   { id: "reports", label: "Reportes", icon: BarChart3 }
 ];
 
@@ -335,6 +338,7 @@ function App() {
   const [correctionProductId, setCorrectionProductId] = useState("");
   const [cashClosureNote, setCashClosureNote] = useState("");
   const [lastDebtCharge, setLastDebtCharge] = useState<DebtChargeState | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const lowStockProducts = useMemo(
     () => products.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock),
@@ -370,10 +374,20 @@ function App() {
   const isOwner = isOwnerUser(currentUser);
   const isSystemAdmin = isSystemAdminUser(currentUser);
   const visibleNavItems: NavItem[] = isSystemAdmin
-    ? [{ id: "platform", label: "Locales", icon: Settings }]
+    ? [{ id: "platform", label: "Locales y usuarios", icon: Store }]
     : navItems
         .filter((item) => (isOwner || item.id !== "reports") && (isOwner || item.id !== "product_create"))
         .map((item) => item.id === "operations" && !isOwner ? { ...item, label: "Caja", icon: Banknote } : item);
+  const mobilePrimaryIds: View[] = isOwner
+    ? ["dashboard", "sale", "scan", "products"]
+    : ["sale", "scan", "dashboard", "operations"];
+  const mobileNavItems = isSystemAdmin ? [] : visibleNavItems.filter((item) => mobilePrimaryIds.includes(item.id));
+  const mobileMoreItems = isSystemAdmin ? [] : visibleNavItems.filter((item) => !mobilePrimaryIds.includes(item.id));
+
+  function navigateTo(view: View) {
+    setActiveView(view);
+    setIsMobileMenuOpen(false);
+  }
 
   function saveSession(session: AuthSession) {
     localStorage.setItem("localito-session", JSON.stringify(session));
@@ -430,6 +444,7 @@ function App() {
     try {
       const restored = JSON.parse(storedSession) as AuthSession;
       saveSession(restored);
+      if (restored.user.role === "seller") setActiveView("sale");
       void loadWorkspace("Sesion restaurada.", restored.user);
     } catch {
       localStorage.removeItem("localito-session");
@@ -472,6 +487,7 @@ function App() {
     try {
       const response = await api.login(loginForm.email.trim(), loginForm.password);
       saveSession(response.data);
+      if (response.data.user.role === "seller") setActiveView("sale");
       await loadWorkspace(`Bienvenido, ${response.data.user.name}.`, response.data.user);
     } catch (error) {
       setIsLoading(false);
@@ -1208,14 +1224,38 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isSystemAdmin ? "platform-shell" : "business-shell"}`}>
+      <aside className="desktop-sidebar">
+        <div className="sidebar-brand">
+          <span className="brand-mark"><ShoppingCart size={22} /></span>
+          <div><strong>Localito</strong><small>Tu negocio, más claro</small></div>
+        </div>
+        <div className="store-switcher">
+          <Store size={18} />
+          <div><small>{isSystemAdmin ? "Plataforma" : "Local activo"}</small><strong>{tenant?.name ?? "Localito"}</strong></div>
+        </div>
+        <nav className="sidebar-nav" aria-label="Navegación principal">
+          <span className="sidebar-label">{isSystemAdmin ? "ADMINISTRACIÓN" : "TU NEGOCIO"}</span>
+          {visibleNavItems.map((item) => {
+            const Icon = item.icon;
+            return <button className={activeView === item.id ? "sidebar-item active" : "sidebar-item"} key={item.id} type="button" onClick={() => navigateTo(item.id)}><Icon size={19}/><span>{item.label}</span></button>;
+          })}
+        </nav>
+        <div className="sidebar-account">
+          <span className="avatar-mini">{userInitials(currentUser)}</span>
+          <div><strong>{currentUser.name}</strong><small>{currentUser.role === "system_admin" ? "Admin plataforma" : currentUser.role === "owner" ? "Dueño" : "Vendedor"}</small></div>
+          {!isSystemAdmin && <button className="sidebar-icon-button" type="button" onClick={() => navigateTo("settings")} aria-label="Configuración"><Settings size={18}/></button>}
+          <button className="sidebar-icon-button" type="button" onClick={logout} aria-label="Cerrar sesión"><LogOut size={18}/></button>
+        </div>
+      </aside>
+
       <header className="topbar">
         <div className="topbar-copy">
-          <p className="eyebrow">{tenant?.name ?? "Localito"}</p>
+          <p className="eyebrow">{isSystemAdmin ? "Administración de Localito" : `Hola, ${currentUser.name.split(" ")[0]}`}</p>
           <h1>{viewTitle(activeView, isOwner, isSystemAdmin)}</h1>
           <p className="session-line">
-            <span className="avatar-mini">{userInitials(currentUser)}</span>
-            <span>{currentUser.name}</span>
+            <Store size={15}/>
+            <span>{tenant?.name ?? "Localito"}</span>
             <span className="role-pill">{currentUser.role === "system_admin" ? "Admin plataforma" : currentUser.role === "owner" ? "Dueño" : "Vendedor"}</span>
           </p>
         </div>
@@ -1226,7 +1266,7 @@ function App() {
           {!isSystemAdmin && <button
               className="icon-button"
               type="button"
-              onClick={() => setActiveView("settings")}
+              onClick={() => navigateTo("settings")}
               aria-label={isOwner ? "Configuracion" : "Mi perfil"}
             >
               <Settings size={21} />
@@ -1237,22 +1277,34 @@ function App() {
         </div>
       </header>
 
-      <nav className="bottom-nav" aria-label="Navegacion principal" style={{ gridTemplateColumns: `repeat(${visibleNavItems.length}, minmax(0, 1fr))` }}>
-        {visibleNavItems.map((item) => {
+      {!!mobileNavItems.length && <nav className="bottom-nav" aria-label="Navegación móvil" style={{ gridTemplateColumns: `repeat(${mobileNavItems.length + (mobileMoreItems.length ? 1 : 0)}, minmax(0, 1fr))` }}>
+        {mobileNavItems.map((item) => {
           const Icon = item.icon;
           return (
             <button
               className={activeView === item.id ? "nav-item active" : "nav-item"}
               key={item.id}
               type="button"
-              onClick={() => setActiveView(item.id)}
+              onClick={() => navigateTo(item.id)}
             >
               <Icon size={20} />
               <span>{item.label}</span>
             </button>
           );
         })}
-      </nav>
+        {mobileMoreItems.length > 0 && <button className={mobileMoreItems.some((item) => item.id === activeView) || activeView === "settings" ? "nav-item active" : "nav-item"} type="button" onClick={() => setIsMobileMenuOpen(true)}><Menu size={20}/><span>Más</span></button>}
+      </nav>}
+
+      {isMobileMenuOpen && <div className="mobile-menu-backdrop" role="presentation" onClick={() => setIsMobileMenuOpen(false)}>
+        <section className="mobile-menu-sheet" role="dialog" aria-modal="true" aria-label="Más opciones" onClick={(event) => event.stopPropagation()}>
+          <div className="mobile-menu-heading"><div><span>Más opciones</span><strong>{tenant?.name ?? "Localito"}</strong></div><button className="icon-button" type="button" onClick={() => setIsMobileMenuOpen(false)} aria-label="Cerrar"><X size={20}/></button></div>
+          <div className="mobile-menu-grid">
+            {mobileMoreItems.map((item) => { const Icon = item.icon; return <button className={activeView === item.id ? "mobile-menu-item active" : "mobile-menu-item"} key={item.id} type="button" onClick={() => navigateTo(item.id)}><Icon size={21}/><span>{item.label}</span></button>; })}
+            <button className={activeView === "settings" ? "mobile-menu-item active" : "mobile-menu-item"} type="button" onClick={() => navigateTo("settings")}><Settings size={21}/><span>{isOwner ? "Configuración" : "Mi cuenta"}</span></button>
+            <button className="mobile-menu-item danger" type="button" onClick={logout}><LogOut size={21}/><span>Cerrar sesión</span></button>
+          </div>
+        </section>
+      </div>}
 
       <main className="content">
         {notice && <section className={`notice ${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
@@ -1274,8 +1326,9 @@ function App() {
             topDebtor={topDebtor}
             cancelledSalesCount={cancelledSales.length}
             canViewManagementMetrics={isOwner}
-            onStartSale={() => setActiveView("sale")}
-            onOpenScan={() => setActiveView("scan")}
+            onStartSale={() => navigateTo("sale")}
+            onOpenScan={() => navigateTo("scan")}
+            onOpenStock={() => navigateTo("products")}
           />
         )}
 
@@ -1451,12 +1504,12 @@ function App() {
 function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
   const labels: Record<View, string> = {
     dashboard: "Panel del dia",
-    sale: "Nueva venta",
-    scan: "Camara IA",
+    sale: "Vender",
+    scan: "Escanear producto",
     product_create: "Crear producto",
-    products: "Stock actual",
+    products: "Inventario",
     customers: "Clientes y fiado",
-    operations: "Gestion del negocio",
+    operations: "Tu negocio",
     reports: isOwner ? "Reportes" : "Cierre de caja",
     settings: isOwner ? "Configuracion" : "Mi perfil",
     platform: isSystemAdmin ? "Locales y usuarios" : "Administración"
@@ -1492,7 +1545,7 @@ function LoginView({
   const [recoveryEmail, setRecoveryEmail] = useState(loginForm.email);
   const [resetForm, setResetForm] = useState({ password: "", confirmation: "" });
   const firstFieldRef = useRef<HTMLInputElement>(null);
-  const title = mode === "reset" ? "Nueva contraseña" : mode === "forgot" ? "Recuperar acceso" : "Acceso del local";
+  const title = mode === "reset" ? "Nueva contraseña" : mode === "forgot" ? "Recuperar acceso" : "Bienvenido de vuelta";
 
   useEffect(() => {
     firstFieldRef.current?.focus();
@@ -1500,6 +1553,19 @@ function LoginView({
   }, [mode]);
   return (
     <main className="login-shell">
+      <section className="login-story" aria-label="Bienvenida a Localito">
+        <div className="story-brand"><span className="brand-mark"><ShoppingCart size={24}/></span><strong>Localito</strong></div>
+        <div className="story-copy">
+          <span>EL CORAZÓN DE TU NEGOCIO</span>
+          <h2>Vende, ordena y decide con tranquilidad.</h2>
+          <p>Una plataforma cercana para tener tus ventas, productos y caja siempre claros.</p>
+        </div>
+        <div className="story-features">
+          <span><ShoppingCart size={18}/> Ventas simples</span>
+          <span><Package size={18}/> Stock al día</span>
+          <span><BarChart3 size={18}/> Decisiones claras</span>
+        </div>
+      </section>
       <section className="login-panel">
         <div className="login-brand">
           <div className="login-icon">
@@ -1644,7 +1710,8 @@ function DashboardView({
   cancelledSalesCount,
   canViewManagementMetrics,
   onStartSale,
-  onOpenScan
+  onOpenScan,
+  onOpenStock
 }: {
   lowStockProducts: Product[];
   summary: ReportSummary;
@@ -1656,27 +1723,32 @@ function DashboardView({
   canViewManagementMetrics: boolean;
   onStartSale: () => void;
   onOpenScan: () => void;
+  onOpenStock: () => void;
 }) {
   const heroAmount = canViewManagementMetrics ? summary.totalSales : cashRegister.receivedTotal;
 
   return (
-    <div className="stack">
+    <div className="stack dashboard-stack">
       <section className="hero-panel dashboard-hero">
         <div className="hero-copy">
-          <span>{canViewManagementMetrics ? "Ventas del dia" : "Caja recibida"}</span>
-          <strong>{formatCLP(heroAmount)}</strong>
+          <span>HOY EN TU NEGOCIO</span>
+          <strong>¿Qué quieres hacer ahora?</strong>
           <p>
-            {cashRegister.salesCount} tickets registrados - {lowStockProducts.length} alertas de stock
+            Hoy llevas {formatCLP(heroAmount)} en {cashRegister.salesCount} ventas y tienes {lowStockProducts.length} productos por revisar.
           </p>
         </div>
         <div className="hero-actions">
-          <button className="primary-action" type="button" onClick={onStartSale}>
+          <button className="quick-action sell" type="button" onClick={onStartSale}>
             <ShoppingCart size={22} />
             <span>Nueva venta</span>
           </button>
-          <button className="secondary-action" type="button" onClick={onOpenScan}>
+          <button className="quick-action scan" type="button" onClick={onOpenScan}>
             <Camera size={22} />
             <span>Escanear</span>
+          </button>
+          <button className="quick-action stock" type="button" onClick={onOpenStock}>
+            <Package size={22} />
+            <span>Revisar stock</span>
           </button>
         </div>
       </section>
@@ -1817,19 +1889,26 @@ function SaleView({
         <div className="list product-list">
           {products.map((product) => (
             <button className="product-button" type="button" key={product.id} onClick={() => onAdd(product)}>
-              <div>
+              <span className="product-thumb"><Package size={22}/></span>
+              <div className="product-button-copy">
                 <strong>{product.name}</strong>
                 <p>
                   {product.category} - Stock {product.stock}
                 </p>
               </div>
-              <span>{formatCLP(product.salePrice)}</span>
+              <span className="product-price">{formatCLP(product.salePrice)}</span>
             </button>
           ))}
         </div>
       </section>
 
-      <section className="panel ticket-panel">
+      {ticket.length > 0 && <button className="mobile-cart-summary" type="button" onClick={() => document.getElementById("sale-ticket")?.scrollIntoView({ behavior: "smooth" })}>
+        <span><ShoppingCart size={20}/><strong>{ticket.reduce((sum, item) => sum + item.quantity, 0)} productos</strong></span>
+        <strong>{formatCLP(discountedTotal)}</strong>
+        <span>Ver carrito</span>
+      </button>}
+
+      <section className="panel ticket-panel" id="sale-ticket">
         <div className="section-heading">
           <h2>Ticket</h2>
           <span>{ticket.length} items</span>
@@ -1846,7 +1925,7 @@ function SaleView({
               <div className="row-actions">
                 <span className="amount">{formatCLP(item.subtotal)}</span>
                 <button className="icon-button danger" type="button" onClick={() => onRemoveOne(item.productId)} aria-label="Quitar uno">
-                  <Trash2 size={17} />
+                  <Minus size={17} />
                 </button>
               </div>
             </div>
@@ -1895,7 +1974,7 @@ function SaleView({
 
         <button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy}>
           <CheckCircle2 size={20} />
-          <span>{isBusy ? "Registrando..." : "Confirmar venta"}</span>
+          <span>{isBusy ? "Registrando..." : `Cobrar ${formatCLP(discountedTotal)}`}</span>
         </button>
         <div className="action-grid"><button className="secondary-action" type="button" onClick={onSuspend} disabled={!ticket.length}>Guardar carrito</button><button className="secondary-action" type="button" onClick={onRestore}>Recuperar carrito</button></div>
 
