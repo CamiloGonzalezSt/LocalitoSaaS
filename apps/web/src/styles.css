@@ -2145,6 +2145,21 @@ textarea:focus {
   align-items: center;
   gap: 11px;
 }
+.official-logo {
+  display: block;
+  flex: none;
+  width: auto;
+  object-fit: contain;
+}
+
+.story-logo {
+  height: 112px;
+}
+
+.login-logo {
+  width: 62px;
+  height: 62px;
+}
 
 .brand-mark {
   display: grid;
@@ -2391,9 +2406,8 @@ textarea:focus {
     padding: 4px 2px 0;
   }
 
-  .story-brand .brand-mark {
-    width: 40px;
-    height: 40px;
+  .story-logo {
+    height: 72px;
   }
 
   .story-copy {
@@ -2523,6 +2537,10 @@ textarea:focus {
 
   .sidebar-brand {
     padding: 0 7px;
+  }
+  .sidebar-logo {
+    width: 58px;
+    height: 58px;
   }
 
   .sidebar-brand .brand-mark {

@@ -1231,7 +1231,7 @@ function App() {
     <div className={`app-shell ${isSystemAdmin ? "platform-shell" : "business-shell"}`}>
       <aside className="desktop-sidebar">
         <div className="sidebar-brand">
-          <span className="brand-mark"><ShoppingCart size={22} /></span>
+          <img className="official-logo sidebar-logo" src="/logo.png" alt="Localito" />
           <div><strong>Localito</strong><small>Tu negocio, más claro</small></div>
         </div>
         <div className="store-switcher">
@@ -1558,7 +1558,7 @@ function LoginView({
   return (
     <main className="login-shell">
       <section className="login-story" aria-label="Bienvenida a Localito">
-        <div className="story-brand"><span className="brand-mark"><ShoppingCart size={24}/></span><strong>Localito</strong></div>
+        <div className="story-brand"><img className="official-logo story-logo" src="/logo.png" alt="Localito" /></div>
         <div className="story-copy">
           <span>EL CORAZÓN DE TU NEGOCIO</span>
           <h2>Vende, ordena y decide con tranquilidad.</h2>
@@ -1572,9 +1572,7 @@ function LoginView({
       </section>
       <section className="login-panel">
         <div className="login-brand">
-          <div className="login-icon">
-            <ShoppingCart size={30} />
-          </div>
+          <img className="official-logo login-logo" src="/logo.png" alt="" aria-hidden="true" />
           <div>
             <p className="eyebrow">Localito</p>
             <h1>{title}</h1>
