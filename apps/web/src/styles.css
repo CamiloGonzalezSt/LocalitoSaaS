@@ -364,6 +364,15 @@ button:active:not(:disabled) {
   width: 100%;
 }
 
+.platform-user-row > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.platform-user-row p {
+  overflow-wrap: anywhere;
+}
+
 .section-heading {
   display: flex;
   align-items: center;
