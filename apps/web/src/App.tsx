@@ -281,7 +281,7 @@ function App() {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [recognition, setRecognition] = useState<RecognitionResult | null>(null);
-  const [notice, setNotice] = useState<NoticeState>({
+  const [notice, setNotice] = useState<NoticeState | null>({
     message: "Cargando Localito...",
     tone: "success"
   });
@@ -412,6 +412,16 @@ function App() {
       email: currentUser.email
     });
   }, [currentUser?.id, currentUser?.name, currentUser?.email]);
+
+  useEffect(() => {
+    if (!notice) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setNotice((current) => current === notice ? null : current);
+    }, 2_000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [notice]);
 
   async function login() {
     if (!loginForm.email.trim() || !loginForm.password.trim()) {
@@ -1137,10 +1147,10 @@ function App() {
       </nav>
 
       <main className="content">
-        <section className={`notice ${notice.tone}`} aria-live="polite">
+        {notice && <section className={`notice ${notice.tone}`} aria-live="polite">
           <CheckCircle2 size={18} />
           <span>{notice.message}</span>
-        </section>
+        </section>}
 
         {isLoading && <p className="empty-state">Conectando con la API de Localito...</p>}
 
@@ -1355,7 +1365,7 @@ function LoginView({
   onRegister
 }: {
   loginForm: LoginFormState;
-  notice: NoticeState;
+  notice: NoticeState | null;
   isBusy: boolean;
   onForm: (value: LoginFormState) => void;
   onLogin: () => void;
@@ -1376,10 +1386,10 @@ function LoginView({
           </div>
         </div>
 
-        <section className={`notice ${notice.tone}`} aria-live="polite">
+        {notice && <section className={`notice ${notice.tone}`} aria-live="polite">
           <CheckCircle2 size={18} />
           <span>{notice.message}</span>
-        </section>
+        </section>}
 
         {!registering ? <form
           className="login-form"

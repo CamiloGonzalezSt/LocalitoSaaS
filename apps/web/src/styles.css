@@ -300,6 +300,25 @@ button:active:not(:disabled) {
   border-radius: 8px;
   box-shadow: var(--shadow-soft);
   font-weight: 700;
+  animation: notice-lifecycle 2s ease both;
+}
+
+@keyframes notice-lifecycle {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  10%,
+  82% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 
 .notice.warning {
