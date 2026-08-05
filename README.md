@@ -60,11 +60,14 @@ WEB_ORIGIN=http://localhost:5173
 DATABASE_URL=postgresql://localito:localito@localhost:5432/localito
 OWNER_DEMO_PASSWORD=Duoc2026
 SELLER_DEMO_PASSWORD=Duoc2026V
+SESSION_SECRET=change-this-in-production-with-a-long-random-value
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
 ```
 
 `OPENAI_API_KEY` es opcional. La imagen se reduce en el navegador antes de enviarse y el backend compara la respuesta con el catálogo del negocio. La clave nunca debe exponerse en el frontend ni subirse al repositorio.
+
+`SESSION_SECRET` firma las sesiones del modo demostración serverless. En Vercel, configure además `DATABASE_URL` para que registros, ventas y cambios sobrevivan entre invocaciones; sin base externa la publicación funciona únicamente como demo con los usuarios precargados.
 
 ## Acceso demo
 

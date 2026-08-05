@@ -5,7 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import type { Customer, PaymentMethod, Product, User } from "@localito/shared";
 import { createRepository } from "./repository.js";
-import { createSessionToken, hashSessionToken, passwordPolicyError } from "./auth.js";
+import { createSessionToken, createSignedSessionToken, hashSessionToken, passwordPolicyError, verifySignedSessionToken } from "./auth.js";
 import { identifyProductImage } from "./vision.js";
 
 const app = express();
@@ -18,6 +18,8 @@ const configuredWebOrigins = (process.env.WEB_ORIGIN ?? "http://localhost:5173,h
 const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
 const repository = await createRepository();
 const sessionDurationMs = 7 * 24 * 60 * 60 * 1000;
+const usesServerlessMemory = process.env.VERCEL === "1" && repository.mode === "memory";
+const signedSessionSecret = process.env.SESSION_SECRET ?? process.env.JWT_SECRET ?? process.env.OWNER_DEMO_PASSWORD ?? "localito-demo-session-change-me";
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
 app.use(helmet());
@@ -69,13 +71,22 @@ function tokenUserIdFromRequest(req: express.Request) {
 }
 
 async function userFromRequest(req: express.Request) {
-  const userId = tokenUserIdFromRequest(req);
-  if (!userId) return null;
+  const token = tokenUserIdFromRequest(req);
+  if (!token) return null;
   const request = req as AuthenticatedRequest;
   if (request.localitoUser) return request.localitoUser;
-  const user = await repository.getSession(hashSessionToken(userId));
+  const user = usesServerlessMemory && token.startsWith("v1.")
+    ? verifySignedSessionToken(token, signedSessionSecret)
+    : await repository.getSession(hashSessionToken(token));
   if (user) request.localitoUser = user;
   return user;
+}
+
+async function createAuthToken(user: User) {
+  if (usesServerlessMemory) return createSignedSessionToken(user, sessionDurationMs, signedSessionSecret);
+  const token = createSessionToken();
+  await repository.createSession(user.id, hashSessionToken(token), new Date(Date.now() + sessionDurationMs).toISOString());
+  return token;
 }
 
 async function requireRoles(req: express.Request, res: express.Response, roles: Array<User["role"]>) {
@@ -189,11 +200,14 @@ app.post("/auth/register", loginRateLimit, asyncRoute(async (req, res) => {
     res.status(400).json({ message: "Faltan datos obligatorios para registrar el negocio." });
     return;
   }
+  if (usesServerlessMemory) {
+    res.status(503).json({ message: "El registro de negocios en Vercel requiere configurar DATABASE_URL para conservar los datos." });
+    return;
+  }
   const policyError = passwordPolicyError(password);
   if (policyError) { res.status(400).json({ message: policyError }); return; }
   const { tenant, user } = await repository.registerTenant({ name, email: email.trim().toLowerCase(), password, businessName, businessType });
-  const token = createSessionToken();
-  await repository.createSession(user.id, hashSessionToken(token), new Date(Date.now() + sessionDurationMs).toISOString());
+  const token = await createAuthToken(user);
 
   res.status(201).json({
     data: {
@@ -216,8 +230,7 @@ app.post(
       res.status(401).json({ message: "Credenciales invalidas." });
       return;
     }
-    const token = createSessionToken();
-    await repository.createSession(authenticated.user.id, hashSessionToken(token), new Date(Date.now() + sessionDurationMs).toISOString());
+    const token = await createAuthToken(authenticated.user);
 
     res.json({
       data: {
@@ -231,7 +244,7 @@ app.post(
 
 app.post("/auth/logout", asyncRoute(async (req, res) => {
   const token = tokenUserIdFromRequest(req);
-  if (token) await repository.revokeSession(hashSessionToken(token));
+  if (token && !token.startsWith("v1.")) await repository.revokeSession(hashSessionToken(token));
   res.status(204).send();
 }));
 

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createSessionToken, hashPassword, hashSessionToken, verifyPassword } from "./auth.js";
+import { createSessionToken, createSignedSessionToken, hashPassword, hashSessionToken, verifyPassword, verifySignedSessionToken } from "./auth.js";
 import { MemoryRepository } from "./repository.js";
 import { demoOwnerId, demoTenantId } from "./store.js";
 
@@ -10,6 +10,10 @@ test("passwords and sessions use non-predictable hashes", () => {
   assert.equal(verifyPassword("incorrecta", hash), false);
   const first = createSessionToken(); const second = createSessionToken();
   assert.notEqual(first, second); assert.equal(hashSessionToken(first).length, 64);
+  const user = { id: "user-test", tenantId: "tenant-test", name: "Prueba", email: "prueba@localito.test", role: "owner" as const, active: true };
+  const signed = createSignedSessionToken(user, 60_000, "secreto-de-prueba");
+  assert.deepEqual(verifySignedSessionToken(signed, "secreto-de-prueba"), user);
+  assert.equal(verifySignedSessionToken(signed, "secreto-incorrecto"), null);
 });
 
 test("tenant registration is isolated and rejects duplicate emails", async () => {

@@ -1,4 +1,5 @@
-import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import type { User } from "@localito/shared";
 
 const KEY_LENGTH = 64;
 
@@ -31,6 +32,29 @@ export function createSessionToken() {
 
 export function hashSessionToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
+}
+
+export function createSignedSessionToken(user: User, durationMs: number, secret: string) {
+  const payload = Buffer.from(JSON.stringify({ user, exp: Date.now() + durationMs })).toString("base64url");
+  const value = `v1.${payload}`;
+  const signature = createHmac("sha256", secret).update(value).digest("base64url");
+  return `${value}.${signature}`;
+}
+
+export function verifySignedSessionToken(token: string, secret: string): User | null {
+  const [version, payload, signature] = token.split(".");
+  if (version !== "v1" || !payload || !signature) return null;
+  const expected = createHmac("sha256", secret).update(`${version}.${payload}`).digest("base64url");
+  if (!timingSafeTextEqual(signature, expected)) return null;
+
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { user?: Partial<User>; exp?: number };
+    const user = parsed.user;
+    if (!parsed.exp || parsed.exp <= Date.now() || !user?.id || !user.tenantId || !user.name || !user.email || !["owner", "seller"].includes(String(user.role))) return null;
+    return { id: user.id, tenantId: user.tenantId, name: user.name, email: user.email, role: user.role as User["role"], active: user.active !== false };
+  } catch {
+    return null;
+  }
 }
 
 export function passwordPolicyError(password: string) {
