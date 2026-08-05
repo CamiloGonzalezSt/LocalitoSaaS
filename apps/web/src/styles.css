@@ -341,6 +341,29 @@ button:active:not(:disabled) {
   box-shadow: var(--shadow-soft);
 }
 
+.panel.hero-panel {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.98), rgba(37, 99, 235, 0.98));
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 20px 42px rgba(37, 99, 235, 0.18);
+}
+
+.platform-admin-hero {
+  gap: 12px;
+}
+
+.platform-admin-hero .hero-copy strong {
+  font-size: clamp(1.5rem, 7vw, 2.25rem);
+}
+
+.platform-admin-hero .hero-actions {
+  grid-template-columns: 1fr;
+}
+
+.platform-admin-hero .hero-actions .secondary-action {
+  width: 100%;
+}
+
 .section-heading {
   display: flex;
   align-items: center;
@@ -1549,6 +1572,15 @@ button:active:not(:disabled) {
   .hero-panel {
     grid-template-columns: minmax(0, 1fr) minmax(320px, 0.46fr);
     align-items: end;
+  }
+
+  .platform-admin-hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .platform-admin-hero .hero-actions {
+    grid-template-columns: auto;
   }
 
   .stats-grid {

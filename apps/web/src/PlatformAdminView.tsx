@@ -81,7 +81,7 @@ export function PlatformAdminView() {
   }
 
   return <div className="stack">
-    <section className="panel hero-panel">
+    <section className="panel hero-panel platform-admin-hero">
       <div className="hero-copy"><span>ADMINISTRACIÓN DE PLATAFORMA</span><strong>Control general de Localito</strong><p>Desde aquí creas locales y administras sus dueños y vendedores, sin mezclar este rol con la operación de caja.</p></div>
       <div className="hero-actions"><button className="secondary-action" type="button" onClick={() => void loadTenants()} disabled={busy}><RefreshCw size={18}/> Actualizar</button></div>
     </section>

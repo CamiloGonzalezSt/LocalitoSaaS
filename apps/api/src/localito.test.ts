@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSessionToken, createSignedSessionToken, hashPassword, hashSessionToken, passwordPolicyError, verifyPassword, verifySignedSessionToken } from "./auth.js";
+import { resolveTransactionalEmailProvider } from "./email.js";
 import { MemoryRepository } from "./repository.js";
 import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 
@@ -15,6 +16,34 @@ test("passwords and sessions use non-predictable hashes", () => {
   assert.deepEqual(verifySignedSessionToken(signed, "secreto-de-prueba"), user);
   assert.equal(verifySignedSessionToken(signed, "secreto-incorrecto"), null);
   assert.match(passwordPolicyError(`${"A".repeat(128)}1`) ?? "", /128/);
+});
+
+test("transactional email selects only a fully configured provider", () => {
+  assert.equal(resolveTransactionalEmailProvider({}), null);
+  assert.equal(
+    resolveTransactionalEmailProvider({
+      EMAIL_PROVIDER: "gmail",
+      GMAIL_USER: "localito@gmail.com",
+      GMAIL_APP_PASSWORD: "abcd efgh ijkl mnop"
+    }),
+    "gmail"
+  );
+  assert.equal(
+    resolveTransactionalEmailProvider({ EMAIL_PROVIDER: "gmail", GMAIL_USER: "localito@gmail.com" }),
+    null
+  );
+  assert.equal(
+    resolveTransactionalEmailProvider({ RESEND_API_KEY: "re_test", EMAIL_FROM: "Localito <no-reply@localito.cl>" }),
+    "resend"
+  );
+  assert.equal(
+    resolveTransactionalEmailProvider({
+      EMAIL_PROVIDER: "desconocido",
+      RESEND_API_KEY: "re_test",
+      EMAIL_FROM: "Localito <no-reply@localito.cl>"
+    }),
+    null
+  );
 });
 
 test("tenant registration is isolated and rejects duplicate emails", async () => {

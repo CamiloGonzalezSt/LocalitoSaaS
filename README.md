@@ -67,8 +67,11 @@ PLATFORM_ADMIN_EMAIL=caj.gonzalez.st@gmail.com
 PLATFORM_ADMIN_PASSWORD=change-this-before-production
 SESSION_SECRET=change-this-in-production-with-a-long-random-value
 APP_URL=http://localhost:5173
+EMAIL_PROVIDER=gmail
+GMAIL_USER=tu-correo@gmail.com
+GMAIL_APP_PASSWORD=
+EMAIL_FROM=Localito <tu-correo@gmail.com>
 RESEND_API_KEY=
-EMAIL_FROM=Localito <no-reply@auth.tudominio.cl>
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
 ```
@@ -79,7 +82,7 @@ OPENAI_VISION_MODEL=gpt-5.6
 
 `PLATFORM_ADMIN_PASSWORD` es obligatoria para crear inicialmente el administrador en producción. Una vez creada la cuenta, su clave se cambia mediante recuperación por correo; modificar esta variable no sobrescribe la contraseña existente. Nunca publique la clave en el frontend ni en el repositorio.
 
-La recuperación de contraseña usa Resend desde la API. En producción configure `APP_URL=https://localito-saas.vercel.app`, una `RESEND_API_KEY` con permiso de envío y `EMAIL_FROM` con un remitente de un dominio verificado. Estas variables son privadas y nunca deben llevar el prefijo `VITE_`.
+La recuperación de contraseña admite dos proveedores desde la API. Para el envío temporal con Gmail configure `EMAIL_PROVIDER=gmail`, `GMAIL_USER`, una `GMAIL_APP_PASSWORD` generada por Google, `EMAIL_FROM=Localito <el-mismo-correo@gmail.com>` y `APP_URL=https://localito-saas.vercel.app`. La cuenta de Google debe tener verificación en dos pasos; no use su contraseña normal. Como opción definitiva, configure `EMAIL_PROVIDER=resend`, `RESEND_API_KEY` y un `EMAIL_FROM` perteneciente a un dominio verificado. Todas estas variables son privadas y nunca deben llevar el prefijo `VITE_`.
 
 ## Migración a Supabase
 
