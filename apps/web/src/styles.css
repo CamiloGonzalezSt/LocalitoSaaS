@@ -2380,6 +2380,45 @@ textarea:focus {
 }
 
 @media (max-width: 519px) {
+  .login-shell {
+    align-content: start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .login-story {
+    gap: 10px;
+    padding: 4px 2px 0;
+  }
+
+  .story-brand .brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .story-copy {
+    gap: 5px;
+  }
+
+  .story-copy h2 {
+    font-size: clamp(1.85rem, 9vw, 2.4rem);
+    line-height: 1;
+  }
+
+  .story-copy p,
+  .story-features {
+    display: none;
+  }
+
+  .login-panel {
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .login-brand h1 {
+    font-size: 1.55rem;
+  }
+
   .topbar {
     grid-template-columns: minmax(0, 1fr) auto;
   }
