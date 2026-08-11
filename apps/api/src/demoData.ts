@@ -1,7 +1,12 @@
-import type { Product, User } from "@localito/shared";
+import type { Customer, Product, Supplier, Tenant, User } from "@localito/shared";
+
+type DemoTenantSeed = Tenant & {
+  emailContact: string;
+};
 
 type DemoUserSeed = {
   id: string;
+  tenantId: string;
   name: string;
   email: string;
   role: User["role"];
@@ -16,6 +21,10 @@ type DemoProductSeed = {
   barcode?: string;
   stock?: number;
   minimumStock?: number;
+  unit?: Product["unit"];
+  unitsPerPack?: number;
+  trackStock?: boolean;
+  supplierId?: string;
 };
 
 type ProductGroup = {
@@ -23,41 +32,101 @@ type ProductGroup = {
   items: DemoProductSeed[];
 };
 
+export const demoTenantIds = {
+  dondeJuanita: "00000000-0000-4000-8000-000000000001",
+  donPepe: "00000000-0000-4000-8000-000000000002",
+  peluqueria: "00000000-0000-4000-8000-000000000003"
+} as const;
+
+export const demoUserIds = {
+  dondeJuanitaOwner: "00000000-0000-4000-8000-000000000101",
+  donPepeOwner: "00000000-0000-4000-8000-000000000102",
+  peluqueriaOwner: "00000000-0000-4000-8000-000000000103",
+  dondeJuanitaSeller: "00000000-0000-4000-8000-000000000201",
+  donPepeSeller: "00000000-0000-4000-8000-000000000202",
+  peluqueriaSeller: "00000000-0000-4000-8000-000000000203"
+} as const;
+
+export const previousDemoUserEmails = [
+  "caj.gonzalezs@duocuc.cl",
+  "sam.solis@duocuc.cl",
+  "al.patino@duocuc.cl",
+  "caj.gonzalezs+vendedor@duocuc.cl",
+  "sam.solis+vendedor@duocuc.cl",
+  "al.patino+vendedor@duocuc.cl"
+];
+
+export const demoTenantSeeds: DemoTenantSeed[] = [
+  {
+    id: demoTenantIds.dondeJuanita,
+    name: "Donde Juanita",
+    businessType: "Minimarket",
+    address: "Pasaje Los Aromos 123",
+    phone: "+56 9 1234 5678",
+    emailContact: "juanita@localito.demo",
+    active: true
+  },
+  {
+    id: demoTenantIds.donPepe,
+    name: "Botilleria Don Pepe",
+    businessType: "Botilleria",
+    address: "Avenida Las Parcelas 456",
+    phone: "+56 9 2233 4455",
+    emailContact: "donpepe@localito.demo",
+    active: true
+  },
+  {
+    id: demoTenantIds.peluqueria,
+    name: "Peluqueria La Esquina",
+    businessType: "Peluqueria",
+    address: "Calle Los Naranjos 78",
+    phone: "+56 9 3344 5566",
+    emailContact: "peluqueria@localito.demo",
+    active: true
+  }
+];
+
 const demoUsers: DemoUserSeed[] = [
   {
-    id: "00000000-0000-4000-8000-000000000101",
-    name: "Caj Gonzalez",
-    email: "caj.gonzalezs@duocuc.cl",
+    id: demoUserIds.dondeJuanitaOwner,
+    tenantId: demoTenantIds.dondeJuanita,
+    name: "Juanita Morales",
+    email: "juanita@localito.demo",
     role: "owner"
   },
   {
-    id: "00000000-0000-4000-8000-000000000102",
-    name: "Sam Solis",
-    email: "sam.solis@duocuc.cl",
+    id: demoUserIds.donPepeOwner,
+    tenantId: demoTenantIds.donPepe,
+    name: "Jose Perez",
+    email: "donpepe@localito.demo",
     role: "owner"
   },
   {
-    id: "00000000-0000-4000-8000-000000000103",
-    name: "Al Patino",
-    email: "al.patino@duocuc.cl",
+    id: demoUserIds.peluqueriaOwner,
+    tenantId: demoTenantIds.peluqueria,
+    name: "Carla Rojas",
+    email: "peluqueria@localito.demo",
     role: "owner"
   },
   {
-    id: "00000000-0000-4000-8000-000000000201",
-    name: "Caj Gonzalez Vendedor",
-    email: "caj.gonzalezs+vendedor@duocuc.cl",
+    id: demoUserIds.dondeJuanitaSeller,
+    tenantId: demoTenantIds.dondeJuanita,
+    name: "Marco Silva",
+    email: "juanita+vendedor@localito.demo",
     role: "seller"
   },
   {
-    id: "00000000-0000-4000-8000-000000000202",
-    name: "Sam Solis Vendedor",
-    email: "sam.solis+vendedor@duocuc.cl",
+    id: demoUserIds.donPepeSeller,
+    tenantId: demoTenantIds.donPepe,
+    name: "Claudia Soto",
+    email: "donpepe+vendedor@localito.demo",
     role: "seller"
   },
   {
-    id: "00000000-0000-4000-8000-000000000203",
-    name: "Al Patino Vendedor",
-    email: "al.patino+vendedor@duocuc.cl",
+    id: demoUserIds.peluqueriaSeller,
+    tenantId: demoTenantIds.peluqueria,
+    name: "Nicolas Vega",
+    email: "peluqueria+vendedor@localito.demo",
     role: "seller"
   }
 ];
@@ -370,16 +439,222 @@ const productGroups: ProductGroup[] = [
   }
 ];
 
-export function buildDemoUsers(tenantId: string): User[] {
-  return demoUsers.map((user) => ({
-    ...user,
-    tenantId,
+const botilleriaProductGroups: ProductGroup[] = [
+  {
+    category: "Cervezas",
+    items: [
+      { id: "prod-bot-cristal-lata", name: "Cerveza Lager Lata 470 ml", brand: "Cristal", salePrice: 990, costPrice: 680, stock: 96, minimumStock: 24 },
+      { name: "Cerveza Lager Pack 6 Latas 470 ml", brand: "Cristal", salePrice: 5790, stock: 24, minimumStock: 8 },
+      { name: "Cerveza Escudo Lata 470 ml", brand: "Escudo", salePrice: 990 },
+      { name: "Cerveza Royal Guard Lata 470 ml", brand: "Royal Guard", salePrice: 1190 },
+      { name: "Cerveza Torobayo Botella 330 ml", brand: "Kunstmann", salePrice: 1590 },
+      { name: "Cerveza Austral Calafate Botella 330 ml", brand: "Austral", salePrice: 1690 },
+      { name: "Cerveza Corona Botella 355 ml", brand: "Corona", salePrice: 1490 },
+      { name: "Cerveza Heineken Botella 330 ml", brand: "Heineken", salePrice: 1390 }
+    ]
+  },
+  {
+    category: "Vinos y espumantes",
+    items: [
+      { id: "prod-bot-vino-gato", name: "Vino Cabernet Sauvignon 750 ml", brand: "Gato", salePrice: 3490, stock: 30, minimumStock: 8 },
+      { name: "Vino Carmenere 750 ml", brand: "Casillero del Diablo", salePrice: 5990 },
+      { name: "Vino Sauvignon Blanc 750 ml", brand: "Santa Helena", salePrice: 3990 },
+      { name: "Vino Late Harvest 500 ml", brand: "Concha y Toro", salePrice: 4490 },
+      { name: "Espumante Brut 750 ml", brand: "Valdivieso", salePrice: 6990 },
+      { name: "Espumante Moscato 750 ml", brand: "Undurraga", salePrice: 5990 }
+    ]
+  },
+  {
+    category: "Destilados y cocteles",
+    items: [
+      { id: "prod-bot-pisco-alto", name: "Pisco Especial 35 grados 750 ml", brand: "Alto del Carmen", salePrice: 7990, stock: 18, minimumStock: 6 },
+      { name: "Pisco Reservado 40 grados 750 ml", brand: "Mistral", salePrice: 10990 },
+      { name: "Ron Anejo 750 ml", brand: "Mitjans", salePrice: 6990 },
+      { name: "Vodka 750 ml", brand: "Eristoff", salePrice: 7990 },
+      { name: "Whisky Red Label 750 ml", brand: "Johnnie Walker", salePrice: 13990 },
+      { name: "Tequila Silver 750 ml", brand: "Sombrero Negro", salePrice: 11990 },
+      { name: "Cocktail Pina Colada 700 ml", brand: "Campanario", salePrice: 4990 },
+      { name: "Fernet 750 ml", brand: "Branca", salePrice: 11990 }
+    ]
+  },
+  {
+    category: "Bebidas y refrescos",
+    items: [
+      { id: "prod-bot-coca-2l", name: "Bebida Original Botella 2 L", brand: "Coca-Cola", salePrice: 2190, stock: 40, minimumStock: 12 },
+      { name: "Bebida Zero Botella 2 L", brand: "Coca-Cola", salePrice: 2190 },
+      { name: "Bebida Ginger Ale Botella 1,5 L", brand: "Canada Dry", salePrice: 1990 },
+      { name: "Bebida Tonica Lata 350 ml", brand: "Nordic Mist", salePrice: 890 },
+      { name: "Agua Mineral Sin Gas Botella 1,6 L", brand: "Cachantun", salePrice: 990 },
+      { name: "Agua Mineral Con Gas Botella 1,6 L", brand: "Cachantun", salePrice: 990 },
+      { name: "Energetica Lata 473 ml", brand: "Monster", salePrice: 1990 },
+      { name: "Jugo Naranja Caja 1,5 L", brand: "Watts", salePrice: 1890 }
+    ]
+  },
+  {
+    category: "Insumos y snacks",
+    items: [
+      { id: "prod-bot-hielo", name: "Hielo Cubo Bolsa 1 kg", brand: "Polar Ice", salePrice: 1490, costPrice: 850, stock: 35, minimumStock: 10 },
+      { name: "Vaso Plastico 300 cc 20 Un", brand: "Virutex", salePrice: 1590 },
+      { name: "Saca Corchos Metalico", brand: "Generico", salePrice: 2490 },
+      { name: "Papas Fritas Original Bolsa 230 g", brand: "Evercrisp", salePrice: 2990 },
+      { name: "Mani Salado Bolsa 180 g", brand: "Marco Polo", salePrice: 1890 },
+      { name: "Limones Malla 1 kg", brand: "Feria", salePrice: 1990 }
+    ]
+  }
+];
+
+const peluqueriaProductGroups: ProductGroup[] = [
+  {
+    category: "Servicios",
+    items: [
+      { id: "prod-pel-corte-varon", name: "Corte de pelo varon", salePrice: 8000, costPrice: 0, stock: 0, minimumStock: 0, trackStock: false },
+      { id: "prod-pel-corte-dama", name: "Corte de pelo dama", salePrice: 12000, costPrice: 0, stock: 0, minimumStock: 0, trackStock: false },
+      { name: "Corte infantil", salePrice: 7000, costPrice: 0, stock: 0, minimumStock: 0, trackStock: false },
+      { name: "Perfilado de barba", salePrice: 6000, costPrice: 0, stock: 0, minimumStock: 0, trackStock: false },
+      { name: "Lavado y brushing", salePrice: 10000, costPrice: 0, stock: 0, minimumStock: 0, trackStock: false },
+      { name: "Tintura raiz", salePrice: 25000, costPrice: 0, stock: 0, minimumStock: 0, trackStock: false },
+      { name: "Masaje capilar hidratante", salePrice: 18000, costPrice: 0, stock: 0, minimumStock: 0, trackStock: false }
+    ]
+  },
+  {
+    category: "Shampoo y acondicionador",
+    items: [
+      { id: "prod-pel-shampoo-keratina", name: "Shampoo Keratina 400 ml", brand: "Salon Pro", salePrice: 6990, costPrice: 4300, stock: 18, minimumStock: 5 },
+      { name: "Shampoo Hidratacion 400 ml", brand: "Salon Pro", salePrice: 6490 },
+      { name: "Shampoo Anticaspa 350 ml", brand: "Clear", salePrice: 5490 },
+      { name: "Acondicionador Reparacion 400 ml", brand: "Elvive", salePrice: 5990 },
+      { name: "Acondicionador Coco 400 ml", brand: "Ballerina", salePrice: 2990 },
+      { name: "Mascarilla Capilar Argan 300 ml", brand: "Novex", salePrice: 8990 }
+    ]
+  },
+  {
+    category: "Coloracion",
+    items: [
+      { id: "prod-pel-tintura-rubio", name: "Tintura Rubio Oscuro 6.0", brand: "Issue", salePrice: 4990, costPrice: 2900, stock: 10, minimumStock: 3 },
+      { name: "Tintura Castano Claro 5.0", brand: "Issue", salePrice: 4990 },
+      { name: "Tintura Negro 1.0", brand: "Issue", salePrice: 4990 },
+      { name: "Oxidante 20 Vol 900 ml", brand: "Silkey", salePrice: 3990 },
+      { name: "Polvo Decolorante 50 g", brand: "Issue", salePrice: 2490 },
+      { name: "Matizante Violeta 250 ml", brand: "Fidelite", salePrice: 7990 }
+    ]
+  },
+  {
+    category: "Peinado y fijacion",
+    items: [
+      { id: "prod-pel-gel", name: "Gel Fijador 250 g", brand: "Moco de Gorila", salePrice: 3990, stock: 16, minimumStock: 4 },
+      { name: "Cera Modeladora 100 g", brand: "Old Spice", salePrice: 5990 },
+      { name: "Spray Fijador 250 ml", brand: "Elnett", salePrice: 6990 },
+      { name: "Crema para Peinar Rizos 300 ml", brand: "Sedal", salePrice: 3490 },
+      { name: "Serum Puntas Argan 60 ml", brand: "Elvive", salePrice: 6990 }
+    ]
+  },
+  {
+    category: "Insumos de salon",
+    items: [
+      { id: "prod-pel-capa", name: "Capa de corte impermeable", brand: "Salon Tools", salePrice: 6990, costPrice: 4200, stock: 6, minimumStock: 2 },
+      { name: "Guantes Nitrilo Caja 100 Un", brand: "MediPro", salePrice: 7990 },
+      { name: "Peineta Carbono Antiestatica", brand: "Salon Tools", salePrice: 2490 },
+      { name: "Brocha para Tintura", brand: "Salon Tools", salePrice: 1490 },
+      { name: "Navajin Desechable 10 Un", brand: "Derby", salePrice: 3990 },
+      { name: "Toalla Microfibra Unidad", brand: "Salon Tools", salePrice: 2990 }
+    ]
+  }
+];
+
+const demoSuppliers: Supplier[] = [
+  {
+    id: "supplier-demo-001",
+    tenantId: demoTenantIds.dondeJuanita,
+    name: "Distribuidora Barrio Sur",
+    contactName: "Maria Soto",
+    phone: "+56 9 5555 1200",
     active: true
-  }));
+  },
+  {
+    id: "supplier-donpepe-001",
+    tenantId: demoTenantIds.donPepe,
+    name: "Bebidas y Licores Central",
+    contactName: "Ramon Silva",
+    phone: "+56 9 6677 8899",
+    active: true
+  },
+  {
+    id: "supplier-peluqueria-001",
+    tenantId: demoTenantIds.peluqueria,
+    name: "Insumos Salon Pro",
+    contactName: "Paula Herrera",
+    phone: "+56 9 7788 9900",
+    active: true
+  }
+];
+
+const demoCustomers: Customer[] = [
+  {
+    id: "cust-ana",
+    tenantId: demoTenantIds.dondeJuanita,
+    name: "Ana Riquelme",
+    phone: "+56 9 8765 4321",
+    debtBalance: 14500,
+    active: true
+  },
+  {
+    id: "cust-juan",
+    tenantId: demoTenantIds.dondeJuanita,
+    name: "Juan Perez",
+    phone: "+56 9 1122 3344",
+    debtBalance: 6200,
+    active: true
+  },
+  {
+    id: "cust-donpepe-marta",
+    tenantId: demoTenantIds.donPepe,
+    name: "Marta Leiva",
+    phone: "+56 9 5555 2211",
+    debtBalance: 0,
+    active: true
+  },
+  {
+    id: "cust-peluqueria-lorena",
+    tenantId: demoTenantIds.peluqueria,
+    name: "Lorena Pizarro",
+    phone: "+56 9 4444 1122",
+    debtBalance: 0,
+    active: true
+  }
+];
+
+const productCatalogs: Record<string, { prefix: string; groups: ProductGroup[] }> = {
+  [demoTenantIds.dondeJuanita]: { prefix: "juanita", groups: productGroups },
+  [demoTenantIds.donPepe]: { prefix: "donpepe", groups: botilleriaProductGroups },
+  [demoTenantIds.peluqueria]: { prefix: "peluqueria", groups: peluqueriaProductGroups }
+};
+
+export function buildDemoUsers(tenantId?: string): User[] {
+  return demoUsers
+    .filter((user) => !tenantId || user.tenantId === tenantId)
+    .map((user) => ({
+      ...user,
+      active: true
+    }));
 }
 
-export function buildDemoProducts(tenantId: string): Product[] {
-  const seeds = productGroups.flatMap((group) =>
+export function buildDemoProducts(tenantId?: string): Product[] {
+  const tenantIds = tenantId ? [tenantId] : demoTenantSeeds.map((tenant) => tenant.id);
+  return tenantIds.flatMap((currentTenantId) => buildTenantProducts(currentTenantId));
+}
+
+export function buildDemoSuppliers(tenantId?: string): Supplier[] {
+  return demoSuppliers.filter((supplier) => !tenantId || supplier.tenantId === tenantId);
+}
+
+export function buildDemoCustomers(tenantId?: string): Customer[] {
+  return demoCustomers.filter((customer) => !tenantId || customer.tenantId === tenantId);
+}
+
+function buildTenantProducts(tenantId: string): Product[] {
+  const catalog = productCatalogs[tenantId];
+  if (!catalog) return [];
+  const seeds = catalog.groups.flatMap((group) =>
     group.items.map((item) => ({
       ...item,
       category: group.category
@@ -388,20 +663,24 @@ export function buildDemoProducts(tenantId: string): Product[] {
 
   return seeds.map((seed, index) => {
     const minimumStock = seed.minimumStock ?? 4 + (index % 7);
-    const stock = seed.stock ?? (index % 19 === 0 ? Math.max(0, minimumStock - 1) : minimumStock + 5 + ((index * 7) % 36));
+    const stock = seed.stock ?? (seed.trackStock === false ? 0 : index % 19 === 0 ? Math.max(0, minimumStock - 1) : minimumStock + 5 + ((index * 7) % 36));
     const salePrice = roundToTen(seed.salePrice);
 
     return {
-      id: seed.id ?? `prod-demo-${String(index + 1).padStart(3, "0")}`,
+      id: seed.id ?? `prod-${catalog.prefix}-${String(index + 1).padStart(3, "0")}`,
       tenantId,
       name: `${seed.brand ? `${seed.brand} ` : ""}${seed.name}`,
       brand: seed.brand,
       category: seed.category,
-      barcode: seed.barcode ?? buildDemoBarcode(index + 1),
+      barcode: seed.trackStock === false ? undefined : seed.barcode ?? buildDemoBarcode(catalog.prefix, index + 1),
       costPrice: seed.costPrice ?? roundToTen(salePrice * 0.72),
       salePrice,
       stock,
       minimumStock,
+      unit: seed.unit ?? "unit",
+      unitsPerPack: seed.unitsPerPack ?? 1,
+      supplierId: seed.supplierId,
+      trackStock: seed.trackStock ?? true,
       active: true
     };
   });
@@ -411,8 +690,14 @@ function roundToTen(value: number) {
   return Math.max(10, Math.round(value / 10) * 10);
 }
 
-function buildDemoBarcode(index: number) {
-  const body = `780${String(index).padStart(9, "0")}`;
+function buildDemoBarcode(prefix: string, index: number) {
+  const prefixSeed = prefix
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0)
+    .toString()
+    .slice(-3)
+    .padStart(3, "0");
+  const body = `780${prefixSeed}${String(index).padStart(6, "0")}`;
   return `${body}${calculateEan13CheckDigit(body)}`;
 }
 

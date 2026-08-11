@@ -21,7 +21,15 @@ import type {
   Tenant,
   User
 } from "@localito/shared";
-import { buildDemoProducts, buildDemoUsers } from "./demoData.js";
+import {
+  buildDemoCustomers,
+  buildDemoProducts,
+  buildDemoSuppliers,
+  buildDemoUsers,
+  demoTenantIds,
+  demoTenantSeeds,
+  demoUserIds
+} from "./demoData.js";
 import { hashPassword } from "./auth.js";
 
 export interface PaymentRecord {
@@ -66,25 +74,37 @@ export interface Store {
   idempotencyKeys: Record<string, string>;
 }
 
-export const demoTenantId = "00000000-0000-4000-8000-000000000001";
-export const demoOwnerId = "00000000-0000-4000-8000-000000000101";
-export const demoSellerId = "00000000-0000-4000-8000-000000000201";
+export const demoTenantId = demoTenantIds.dondeJuanita;
+export const demoOwnerId = demoUserIds.dondeJuanitaOwner;
+export const demoSellerId = demoUserIds.dondeJuanitaSeller;
 export const systemTenantId = "00000000-0000-4000-8000-000000009999";
 export const systemAdminId = "00000000-0000-4000-8000-000000009901";
 export const systemAdminEmail = process.env.PLATFORM_ADMIN_EMAIL ?? "caj.gonzalez.st@gmail.com";
 const systemAdminPassword =
   process.env.PLATFORM_ADMIN_PASSWORD ??
   (process.env.NODE_ENV === "production" ? randomUUID() : "AdminLocalito2026");
+const demoUsers = buildDemoUsers();
+const demoPasswordHashes = Object.fromEntries(
+  demoUsers.map((user) => [
+    user.id,
+    hashPassword(
+      user.role === "seller"
+        ? process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V"
+        : process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026"
+    )
+  ])
+);
 
 export const store: Store = {
   tenants: [
-    {
-      id: demoTenantId,
-      name: "Almacen Don Pepe",
-      businessType: "Almacen",
-      address: "Pasaje Los Aromos 123",
-      phone: "+56 9 1234 5678"
-    },
+    ...demoTenantSeeds.map((tenant) => ({
+      id: tenant.id,
+      name: tenant.name,
+      businessType: tenant.businessType,
+      address: tenant.address,
+      phone: tenant.phone,
+      active: tenant.active
+    })),
     {
       id: systemTenantId,
       name: "Administración Localito",
@@ -93,28 +113,11 @@ export const store: Store = {
     }
   ],
   users: [
-    ...buildDemoUsers(demoTenantId),
+    ...demoUsers,
     { id: systemAdminId, tenantId: systemTenantId, name: "Camilo Gonzalez", email: systemAdminEmail, role: "system_admin", active: true }
   ],
-  products: buildDemoProducts(demoTenantId),
-  customers: [
-    {
-      id: "cust-ana",
-      tenantId: demoTenantId,
-      name: "Ana Riquelme",
-      phone: "+56 9 8765 4321",
-      debtBalance: 14500,
-      active: true
-    },
-    {
-      id: "cust-juan",
-      tenantId: demoTenantId,
-      name: "Juan Perez",
-      phone: "+56 9 1122 3344",
-      debtBalance: 6200,
-      active: true
-    }
-  ],
+  products: buildDemoProducts(),
+  customers: buildDemoCustomers(),
   sales: [
     {
       id: "sale-001",
@@ -162,22 +165,12 @@ export const store: Store = {
   recognitionLogs: [],
   cashClosures: [],
   passwordHashes: {
-    [demoOwnerId]: hashPassword(process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026"),
-    [demoSellerId]: hashPassword(process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V"),
+    ...demoPasswordHashes,
     [systemAdminId]: hashPassword(systemAdminPassword)
   },
   sessions: [],
   passwordResetTokens: [],
-  suppliers: [
-    {
-      id: "supplier-demo-001",
-      tenantId: demoTenantId,
-      name: "Distribuidora Barrio Sur",
-      contactName: "María Soto",
-      phone: "+56 9 5555 1200",
-      active: true
-    }
-  ],
+  suppliers: buildDemoSuppliers(),
   purchaseOrders: [],
   debts: [
     {

@@ -115,7 +115,7 @@ test("system admin manages tenants and their users without entering store operat
 
 test("critical business flows are consistent and idempotent", async () => {
   const repository = new MemoryRepository();
-  const authentication = await repository.authenticate("caj.gonzalezs@duocuc.cl", process.env.OWNER_DEMO_PASSWORD ?? "Duoc2026");
+  const authentication = await repository.authenticate("juanita@localito.demo", process.env.OWNER_DEMO_PASSWORD ?? "Duoc2026");
   assert.equal(authentication?.user.id, demoOwnerId);
 
   const product = (await repository.getProducts(demoTenantId)).find((candidate) => candidate.stock >= 2);

@@ -29,6 +29,14 @@ import type {
   User
 } from "@localito/shared";
 import {
+  buildDemoCustomers,
+  buildDemoProducts,
+  buildDemoSuppliers,
+  buildDemoUsers,
+  demoTenantSeeds,
+  previousDemoUserEmails
+} from "./demoData.js";
+import {
   demoOwnerId,
   demoSellerId,
   demoTenantId,
@@ -2249,35 +2257,170 @@ class PostgresRepository implements DataRepository {
   }
 
   private async seedDemoData() {
-    const result = await this.pool.query(`select count(*)::int as count from negocios`);
-    if (Number(result.rows[0]?.count ?? 0) > 0) return;
+    const demoUsers = buildDemoUsers();
+    const demoUserIds = demoUsers.map((user) => user.id);
+    const client = await this.pool.connect();
 
-    await this.pool.query(
-      `insert into negocios (id, nombre, rubro, direccion, telefono, email_contacto, estado)
-       values ($1, 'Almacen Don Pepe', 'Almacen', 'Pasaje Los Aromos 123', '+56 9 1234 5678', 'demo@localito.cl', 'activo')`,
-      [demoTenantId]
-    );
-    for (const user of store.users.filter((candidate) => candidate.tenantId === demoTenantId)) {
-      await this.pool.query(
-        `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
-         values ($1, $2, $3, $4, $5, $6, 'activo')`,
-        [user.id, demoTenantId, user.name, user.email, hashPassword(user.role === "seller" ? (process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V") : (process.env.OWNER_DEMO_PASSWORD ?? "Duoc2026")), user.role]
-      );
-    }
+    try {
+      await client.query("begin");
 
-    for (const product of store.products) {
-      await this.createProduct(demoTenantId, product);
-    }
-
-    for (const customer of store.customers) {
-      const created = await this.createCustomer(demoTenantId, customer);
-      if (customer.debtBalance > 0) {
-        await this.pool.query(
-          `insert into cuentas_fiado (id, negocio_id, cliente_id, venta_id, monto_original, saldo_pendiente, estado)
-           values ($1, $2, $3, null, $4, $4, 'pendiente')`,
-          [randomUUID(), demoTenantId, created.id, customer.debtBalance]
+      for (const tenant of demoTenantSeeds) {
+        await client.query(
+          `insert into negocios (id, nombre, rubro, direccion, telefono, email_contacto, estado)
+           values ($1, $2, $3, $4, $5, $6, 'activo')
+           on conflict (id) do update
+           set nombre = excluded.nombre,
+               rubro = excluded.rubro,
+               direccion = excluded.direccion,
+               telefono = excluded.telefono,
+               email_contacto = excluded.email_contacto,
+               estado = 'activo'`,
+          [tenant.id, tenant.name, tenant.businessType, tenant.address, tenant.phone, tenant.emailContact]
         );
       }
+
+      for (const user of demoUsers) {
+        const password = user.role === "seller"
+          ? process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V"
+          : process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026";
+        await client.query(
+          `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
+           values ($1, $2, $3, $4, $5, $6, 'activo')
+           on conflict (id) do update
+           set negocio_id = excluded.negocio_id,
+               nombre = excluded.nombre,
+               email = excluded.email,
+               password_hash = excluded.password_hash,
+               rol = excluded.rol,
+               estado = 'activo'`,
+          [user.id, user.tenantId, user.name, user.email, hashPassword(password), user.role]
+        );
+      }
+
+      await client.query(
+        `update usuarios
+         set estado = 'inactivo'
+         where lower(email) = any($1::text[])
+           and not (id = any($2::uuid[]))`,
+        [previousDemoUserEmails.map((email) => email.toLowerCase()), demoUserIds]
+      );
+
+      for (const supplier of buildDemoSuppliers()) {
+        await client.query(
+          `insert into proveedores (id, negocio_id, nombre, nombre_contacto, telefono, email, observacion, activo)
+           values ($1, $2, $3, $4, $5, $6, $7, true)
+           on conflict (id) do update
+           set negocio_id = excluded.negocio_id,
+               nombre = excluded.nombre,
+               nombre_contacto = excluded.nombre_contacto,
+               telefono = excluded.telefono,
+               email = excluded.email,
+               observacion = excluded.observacion,
+               activo = true`,
+          [supplier.id, supplier.tenantId, supplier.name, supplier.contactName, supplier.phone, supplier.email, supplier.notes]
+        );
+      }
+
+      for (const product of buildDemoProducts()) {
+        await client.query(
+          `insert into productos (
+            id, negocio_id, nombre, marca, categoria_id, descripcion, codigo_barras,
+            precio_costo, precio_venta, stock_actual, stock_minimo, imagen_url, activo,
+            sku, variante, unidad, unidades_por_pack, proveedor_id, fecha_vencimiento, controla_stock
+          ) values ($1, $2, $3, $4, null, $5, $6, $7, $8, $9, $10, $11, true, $12, $13, $14, $15, $16, $17, $18)
+          on conflict (id) do update
+          set negocio_id = excluded.negocio_id,
+              nombre = excluded.nombre,
+              marca = excluded.marca,
+              descripcion = excluded.descripcion,
+              codigo_barras = excluded.codigo_barras,
+              precio_costo = excluded.precio_costo,
+              precio_venta = excluded.precio_venta,
+              stock_actual = excluded.stock_actual,
+              stock_minimo = excluded.stock_minimo,
+              imagen_url = excluded.imagen_url,
+              activo = true,
+              sku = excluded.sku,
+              variante = excluded.variante,
+              unidad = excluded.unidad,
+              unidades_por_pack = excluded.unidades_por_pack,
+              proveedor_id = excluded.proveedor_id,
+              fecha_vencimiento = excluded.fecha_vencimiento,
+              controla_stock = excluded.controla_stock`,
+          [
+            product.id,
+            product.tenantId,
+            product.name,
+            product.brand,
+            product.category,
+            product.barcode,
+            product.costPrice,
+            product.salePrice,
+            product.stock,
+            product.minimumStock,
+            product.imageUrl,
+            product.sku,
+            product.variant,
+            product.unit ?? "unit",
+            product.unitsPerPack ?? 1,
+            product.supplierId,
+            product.expiryDate,
+            product.trackStock ?? true
+          ]
+        );
+      }
+
+      for (const customer of buildDemoCustomers()) {
+        await client.query(
+          `insert into clientes (id, negocio_id, nombre, telefono, email, direccion, observacion, limite_credito, dias_credito, credito_bloqueado, activo)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
+           on conflict (id) do update
+           set negocio_id = excluded.negocio_id,
+               nombre = excluded.nombre,
+               telefono = excluded.telefono,
+               email = excluded.email,
+               direccion = excluded.direccion,
+               observacion = excluded.observacion,
+               limite_credito = excluded.limite_credito,
+               dias_credito = excluded.dias_credito,
+               credito_bloqueado = excluded.credito_bloqueado,
+               activo = true`,
+          [
+            customer.id,
+            customer.tenantId,
+            customer.name,
+            customer.phone,
+            customer.email,
+            customer.address,
+            customer.notes,
+            customer.creditLimit ?? 0,
+            customer.creditDays ?? 30,
+            customer.creditBlocked ?? false
+          ]
+        );
+      }
+
+      for (const debt of store.debts.filter((candidate) => demoTenantSeeds.some((tenant) => tenant.id === candidate.tenantId))) {
+        await client.query(
+          `insert into cuentas_fiado (id, negocio_id, cliente_id, venta_id, monto_original, saldo_pendiente, estado, fecha_vencimiento)
+           values ($1, $2, $3, null, $4, $5, $6, $7)
+           on conflict (id) do update
+           set negocio_id = excluded.negocio_id,
+               cliente_id = excluded.cliente_id,
+               monto_original = excluded.monto_original,
+               saldo_pendiente = excluded.saldo_pendiente,
+               estado = excluded.estado,
+               fecha_vencimiento = excluded.fecha_vencimiento`,
+          [debt.id, debt.tenantId, debt.customerId, debt.originalAmount, debt.balance, debt.status === "overdue" ? "pendiente" : debt.status, debt.dueDate]
+        );
+      }
+
+      await client.query("commit");
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
     }
   }
 

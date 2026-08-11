@@ -1534,12 +1534,12 @@ Para probar el acceso de usuarios del local:
 
 | Rol | Correo | Clave |
 | --- | --- | --- |
-| Duena/admin | `caj.gonzalezs@duocuc.cl` | `Duoc2026` |
-| Duena/admin | `sam.solis@duocuc.cl` | `Duoc2026` |
-| Duena/admin | `al.patino@duocuc.cl` | `Duoc2026` |
-| Vendedor | `caj.gonzalezs+vendedor@duocuc.cl` | `Duoc2026V` |
-| Vendedor | `sam.solis+vendedor@duocuc.cl` | `Duoc2026V` |
-| Vendedor | `al.patino+vendedor@duocuc.cl` | `Duoc2026V` |
+| Duena Donde Juanita | `juanita@localito.demo` | `Duoc2026` |
+| Vendedor Donde Juanita | `juanita+vendedor@localito.demo` | `Duoc2026V` |
+| Dueno Botilleria Don Pepe | `donpepe@localito.demo` | `Duoc2026` |
+| Vendedor Botilleria Don Pepe | `donpepe+vendedor@localito.demo` | `Duoc2026V` |
+| Duena Peluqueria La Esquina | `peluqueria@localito.demo` | `Duoc2026` |
+| Vendedor Peluqueria La Esquina | `peluqueria+vendedor@localito.demo` | `Duoc2026V` |
 
 El dueno/admin representa a la persona responsable del negocio, con acceso a gestion general. El vendedor representa al usuario operativo que registra ventas, revisa productos y atiende clientes. Los correos de vendedor usan `+vendedor` para mantener usuarios separados sin inventar dominios externos.
 

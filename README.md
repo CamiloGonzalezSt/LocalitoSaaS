@@ -96,12 +96,12 @@ Las tablas tienen RLS activado y sin políticas públicas: Localito accede exclu
 
 | Rol | Correo | Clave |
 | --- | --- | --- |
-| Dueño | `caj.gonzalezs@duocuc.cl` | `Duoc2026` |
-| Dueño | `sam.solis@duocuc.cl` | `Duoc2026` |
-| Dueño | `al.patino@duocuc.cl` | `Duoc2026` |
-| Vendedor | `caj.gonzalezs+vendedor@duocuc.cl` | `Duoc2026V` |
-| Vendedor | `sam.solis+vendedor@duocuc.cl` | `Duoc2026V` |
-| Vendedor | `al.patino+vendedor@duocuc.cl` | `Duoc2026V` |
+| Dueño Donde Juanita | `juanita@localito.demo` | `Duoc2026` |
+| Vendedor Donde Juanita | `juanita+vendedor@localito.demo` | `Duoc2026V` |
+| Dueño Botilleria Don Pepe | `donpepe@localito.demo` | `Duoc2026` |
+| Vendedor Botilleria Don Pepe | `donpepe+vendedor@localito.demo` | `Duoc2026V` |
+| Dueño Peluqueria La Esquina | `peluqueria@localito.demo` | `Duoc2026` |
+| Vendedor Peluqueria La Esquina | `peluqueria+vendedor@localito.demo` | `Duoc2026V` |
 
 Los negocios nuevos solo se crean desde la cuenta administradora. En la pantalla de acceso, cada usuario puede solicitar por correo el restablecimiento de su contraseña; la nueva clave debe tener al menos 10 caracteres, una letra y un número.
 
