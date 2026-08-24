@@ -243,6 +243,17 @@ function numberFromInput(value: string, fallback = 0) {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 }
 
+function productImageUrl(product: Product) {
+  if (product.imageUrl) return product.imageUrl;
+
+  const category = product.category.toLocaleLowerCase("es");
+  if (category.includes("cerveza")) return "/products/cerveza.png";
+  if (category.includes("vino") || category.includes("espumante")) return "/products/vino.png";
+  if (category.includes("destilado") || category.includes("coctel")) return "/products/destilado.png";
+  if (category.includes("bebida") || category.includes("refresco") || category.includes("jugo")) return "/products/bebida.png";
+  return "/products/snack.png";
+}
+
 function paymentMethodLabel(method: PaymentMethod) {
   const labels: Record<PaymentMethod, string> = {
     cash: "Efectivo",
@@ -1892,7 +1903,9 @@ function SaleView({
         <div className="list product-list">
           {products.map((product) => (
             <button className="product-button" type="button" key={product.id} onClick={() => onAdd(product)}>
-              <span className="product-thumb"><Package size={22}/></span>
+              <span className="product-thumb">
+                <img src={productImageUrl(product)} alt="" aria-hidden="true" />
+              </span>
               <div className="product-button-copy">
                 <strong>{product.name}</strong>
                 <p>
@@ -3077,7 +3090,7 @@ function ProductRow({
   return (
     <div className={isLow ? "product-row stock-card low" : "product-row stock-card"}>
       <div className="product-visual">
-        <Package size={24} />
+        <img src={productImageUrl(product)} alt="" aria-hidden="true" />
       </div>
       <div className="product-main">
         <div className="product-title-line">
