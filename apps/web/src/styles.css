@@ -32,6 +32,11 @@
   --app-pad: clamp(12px, 4vw, 28px);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -46,8 +51,15 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
+}
+
+input,
+select,
+textarea {
+  font-size: 1rem;
 }
 
 button {
@@ -68,7 +80,7 @@ button:active:not(:disabled) {
   width: min(1140px, 100%);
   min-height: 100vh;
   margin: 0 auto;
-  padding-bottom: 104px;
+  padding-bottom: calc(104px + env(safe-area-inset-bottom));
 }
 
 .login-shell {
@@ -1485,7 +1497,7 @@ button:active:not(:disabled) {
 .bottom-nav {
   position: fixed;
   right: 10px;
-  bottom: 9px;
+  bottom: calc(9px + env(safe-area-inset-bottom));
   left: 10px;
   z-index: 6;
   display: grid;
@@ -1494,7 +1506,7 @@ button:active:not(:disabled) {
   width: auto;
   max-width: 1140px;
   margin: 0 auto;
-  padding: 7px 6px calc(7px + env(safe-area-inset-bottom));
+  padding: 7px 6px;
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(226, 232, 240, 0.92);
   border-radius: 8px;
@@ -1668,7 +1680,7 @@ button:active:not(:disabled) {
 
 @media (min-width: 780px) {
   .app-shell {
-    padding-bottom: 32px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
   }
 
   .topbar {
@@ -2142,11 +2154,11 @@ textarea:focus {
 
 .bottom-nav {
   right: 12px;
-  bottom: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
   left: 12px;
   gap: 4px;
   max-width: 520px;
-  padding: 7px 6px calc(7px + env(safe-area-inset-bottom));
+  padding: 7px 6px;
   background: rgba(255, 253, 249, 0.96);
   border-color: var(--line);
   border-radius: 22px;
@@ -2481,7 +2493,7 @@ textarea:focus {
 .mobile-cart-summary {
   position: fixed;
   right: 14px;
-  bottom: 90px;
+  bottom: calc(90px + env(safe-area-inset-bottom));
   left: 14px;
   z-index: 5;
   display: grid;
@@ -2628,7 +2640,7 @@ textarea:focus {
     position: fixed;
     top: auto;
     right: 12px;
-    bottom: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
     left: 12px;
     width: auto;
     max-width: 620px;

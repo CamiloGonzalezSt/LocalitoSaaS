@@ -1552,7 +1552,8 @@ function LoginView({
   const title = mode === "reset" ? "Nueva contraseña" : mode === "forgot" ? "Recuperar acceso" : "Bienvenido de vuelta";
 
   useEffect(() => {
-    firstFieldRef.current?.focus();
+    const usesPrecisePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (usesPrecisePointer) firstFieldRef.current?.focus();
     if (mode !== "reset") setResetForm({ password: "", confirmation: "" });
   }, [mode]);
   return (
