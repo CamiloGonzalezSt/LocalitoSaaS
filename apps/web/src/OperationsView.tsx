@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { AuditEvent, CashMovement, CashSession, DebtAccount, Product, PurchaseOrder, StockMovement, Supplier } from "@localito/shared";
 import { api } from "./lib/api";
+import { InvoiceImportPanel } from "./InvoiceImportPanel";
+import { readProductImportFile, validateProductImportRows } from "./productImport";
 
 const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
 
@@ -85,20 +87,19 @@ export function OperationsView({ products, onRefresh, canManage }: { products: P
     const file = event.target.files?.[0]; if (!file) return;
     setBusy(true);
     try {
-      const lines = (await file.text()).split(/\r?\n/).filter(Boolean); const headers = lines.shift()?.split(",").map((value) => value.replace(/^"|"$/g, "").trim()) ?? [];
-      let created = 0;
-      for (const line of lines) {
-        const values = line.match(/("(?:[^"]|"")*"|[^,]*)/g)?.filter((_, index) => index % 2 === 0).map((value) => value.replace(/^"|"$/g, "").replace(/""/g, '"')) ?? [];
-        const row = Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
-        if (!row.nombre || !row.precio) continue;
-        await api.createProduct({ name: row.nombre, brand: row.marca, category: row.categoria || "General", barcode: row.codigo_barras, costPrice: Number(row.costo) || 0, salePrice: Number(row.precio), stock: Number(row.stock) || 0, minimumStock: Number(row.minimo) || 0 }); created += 1;
-      }
-      await Promise.all([load(), onRefresh()]); setMessage(`${created} productos importados.`);
+      const parsed = await readProductImportFile(file);
+      const validation = validateProductImportRows(parsed);
+      if (!validation.validRows.length) throw new Error(validation.issues[0]?.reason ?? "El archivo no contiene productos válidos.");
+      const response = await api.importProducts({ clientImportId: crypto.randomUUID(), rows: validation.validRows });
+      await Promise.all([load(), onRefresh()]);
+      setMessage(`${response.data.created.length} productos importados${response.data.skipped.length || validation.issues.length ? `; ${response.data.skipped.length + validation.issues.length} filas omitidas` : ""}.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "No se pudo importar el CSV."); } finally { setBusy(false); event.target.value = ""; }
   }
 
   return <div className="stack">
     <section className="panel"><div className="section-heading"><h2>{canManage ? "Centro de gestión" : "Operación de caja"}</h2><span>{message}</span></div><p className="helper-text">{canManage ? "Caja por turno, compras, reposición, vencimientos, fiado y trazabilidad en un mismo lugar." : "Apertura, movimientos, cierre de turno y recordatorios de fiado."}</p></section>
+
+    {canManage && <InvoiceImportPanel products={products} suppliers={suppliers} onImported={async () => { await Promise.all([load(), onRefresh()]); }} />}
 
     <section className="panel">
       <div className="section-heading"><h2>Caja por turno</h2><span>{cashSession ? `Abierta ${new Date(cashSession.openedAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}` : "Cerrada"}</span></div>

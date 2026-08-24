@@ -8,10 +8,16 @@ import type {
   CashSession,
   Customer,
   DebtAccount,
+  InvoiceAnalysis,
+  InvoiceImportPayload,
+  InvoiceImportResult,
   PaymentMethod,
   PlatformTenantSummary,
   Product,
+  ProductBulkImportPayload,
+  ProductBulkImportResult,
   PurchaseOrder,
+  QuickSaleAnalysis,
   RecognitionLog,
   RecognitionResult,
   Sale,
@@ -169,6 +175,13 @@ export const api = {
     });
   },
 
+  async importProducts(payload: ProductBulkImportPayload) {
+    return request<ProductBulkImportResult>("/products/import", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  },
+
   async updateProduct(productId: string, product: Partial<Product>) {
     return request<Product>(`/products/${productId}`, {
       method: "PATCH",
@@ -241,6 +254,18 @@ export const api = {
 
   async recognizeProductImage(imageDataUrl: string, hint?: string) {
     return request<RecognitionResult>("/ai/recognize", { method: "POST", body: JSON.stringify({ imageDataUrl, hint }) });
+  },
+
+  async analyzeQuickSaleImage(imageDataUrl: string) {
+    return request<QuickSaleAnalysis>("/ai/quick-sale/analyze", { method: "POST", body: JSON.stringify({ imageDataUrl }) });
+  },
+
+  async analyzeInvoiceImage(imageDataUrl: string) {
+    return request<InvoiceAnalysis>("/ai/invoices/analyze", { method: "POST", body: JSON.stringify({ imageDataUrl }) });
+  },
+
+  async importInvoice(payload: InvoiceImportPayload) {
+    return request<InvoiceImportResult>("/ai/invoices/import", { method: "POST", body: JSON.stringify(payload) });
   },
 
   async getRecognitionHistory() {

@@ -12,7 +12,7 @@ Localito es una plataforma PWA de tipo SaaS orientada a pequenos negocios de bar
 
 La propuesta central es entregar una "caja inteligente de bolsillo" que funcione desde el celular, sin exigir infraestructura compleja ni conocimientos tecnicos avanzados. Al ser una PWA, el sistema puede instalarse desde el navegador, funcionar con una experiencia similar a una aplicacion movil y adaptarse a dispositivos de bajo costo.
 
-El elemento diferenciador de Localito es el uso de IA y camara del celular para reconocer productos, consultar stock y agregarlos a un ticket de venta. La camara se plantea como una interfaz natural para el negocio: el vendedor apunta al producto, el sistema lo identifica, muestra informacion relevante y permite venderlo rapidamente. Cuando existe codigo de barras, este se usa como apoyo; cuando no existe o no se puede leer, la IA visual entrega una sugerencia que el usuario puede confirmar o corregir.
+El elemento diferenciador de Localito es **Venta Rápida**: el vendedor fotografía varios productos en una sola toma, el sistema propone productos y cantidades contra el catálogo del negocio y, después de una revisión humana, los agrega al ticket POS existente. El código de barras continúa disponible como alternativa exacta. La IA nunca fija precios, crea productos ni descuenta stock.
 
 El proyecto busca resolver una necesidad real de digitalizacion en negocios pequenos, con una solucion cercana, economica, progresiva y centrada en el uso diario.
 
@@ -65,7 +65,7 @@ Desarrollar una PWA SaaS inteligente para apoyar la gestion de ventas, inventari
 - Disenar una plataforma multi-tenant que separe la informacion de cada negocio.
 - Implementar la gestion de productos, stock, ventas, clientes y fiados.
 - Integrar pagos digitales mediante Webpay en ambiente de pruebas.
-- Incorporar camara del celular para escaneo y reconocimiento de productos.
+- Incorporar Venta Rápida con cámara para reconocer varios productos y cantidades en una fotografía.
 - Usar IA visual para sugerir productos y agilizar la venta.
 - Generar alertas de stock bajo, deudas pendientes y eventos relevantes.
 - Construir reportes simples para apoyar la toma de decisiones.
@@ -97,7 +97,7 @@ Localito entrega valor mediante cuatro ideas principales:
 1. **Digitalizacion simple:** permite pasar de cuaderno o memoria a una plataforma ordenada.
 2. **Operacion desde celular:** no exige computador ni caja fisica tradicional.
 3. **Control del fiado:** ayuda a registrar, recordar y cobrar deudas.
-4. **IA con camara:** permite consultar productos, stock y agregarlos al ticket de venta de manera rapida.
+4. **Venta Rápida:** convierte una fotografía multiproducto revisada por el vendedor en líneas del ticket POS.
 
 La frase guia del producto es:
 
@@ -121,7 +121,7 @@ El MVP debe permitir que un negocio pequeno pueda operar sus procesos principale
 - Pagos parciales o totales de deudas.
 - Alertas de stock bajo.
 - Reportes basicos.
-- Escaneo con camara e IA.
+- Venta Rápida multiproducto con cámara e IA.
 - Integracion con Webpay en ambiente de pruebas.
 
 ### 7.2 Fuera de alcance inicial
@@ -176,7 +176,7 @@ Usuario operativo del local.
 Responsabilidades:
 
 - Registrar ventas.
-- Escanear productos.
+- Preparar una venta fotografiando varios productos.
 - Consultar stock.
 - Registrar clientes en una venta.
 - Marcar ventas como pagadas o fiadas.
@@ -510,7 +510,7 @@ Reportes iniciales:
 
 **Postcondiciones:** La deuda del cliente queda actualizada.
 
-### CU-07 - Escanear producto con IA
+### CU-07 - Preparar Venta Rápida con una fotografía
 
 **Actor principal:** Vendedor  
 **Objetivo:** Identificar un producto usando la camara y agregarlo a la venta o consultar stock.  
@@ -650,7 +650,7 @@ Reportes iniciales:
 | HU-01 | Como dueno, quiero registrar mi negocio para comenzar a usar Localito. | El negocio queda creado y separado de otros negocios. |
 | HU-02 | Como vendedor, quiero iniciar sesion para acceder solo a las funciones permitidas. | El sistema carga el panel segun mi rol. |
 | HU-03 | Como dueno, quiero registrar productos para venderlos desde la app. | El producto aparece disponible en el inventario. |
-| HU-04 | Como vendedor, quiero escanear un producto con la camara para vender mas rapido. | El producto reconocido se puede agregar al ticket. |
+| HU-04 | Como vendedor, quiero fotografiar varios productos para preparar una venta con menos pasos. | Los productos y cantidades revisados se agregan al ticket POS existente. |
 | HU-05 | Como vendedor, quiero registrar una venta para actualizar el stock automaticamente. | La venta queda guardada y el stock disminuye. |
 | HU-06 | Como dueno, quiero ver alertas de stock bajo para reponer a tiempo. | El sistema muestra productos bajo el minimo configurado. |
 | HU-07 | Como vendedor, quiero registrar una venta fiada para un cliente frecuente. | La deuda queda asociada al cliente. |
@@ -916,34 +916,35 @@ sequenceDiagram
 - El sistema debe guardar solo identificadores de transaccion, montos, fechas y estados.
 - Una deuda solo debe reducirse cuando el pago sea aprobado.
 
-## 19. Flujo de escaneo con IA
+## 19. Flujo de Venta Rápida con IA
 
 ```mermaid
 flowchart TD
-    A["Abrir camara"] --> B["Capturar imagen"]
-    B --> C["Intentar leer codigo de barras"]
-    C --> D{Codigo encontrado}
-    D -->|Si| E["Buscar producto por codigo"]
-    D -->|No| F["Enviar imagen a IA visual"]
-    E --> G{Producto encontrado}
-    G -->|Si| H["Mostrar producto, precio y stock"]
-    G -->|No| F
-    F --> I["IA sugiere producto"]
-    I --> J{Confianza suficiente}
-    J -->|Si| H
-    J -->|No| K["Mostrar opciones o busqueda manual"]
-    K --> L["Usuario confirma o corrige"]
-    L --> H
-    H --> M["Agregar al ticket o consultar stock"]
+    A["Abrir cámara o subir foto"] --> B["Comprimir y previsualizar"]
+    B --> C["Backend entrega catálogo aislado a visión"]
+    C --> D["IA propone IDs y cantidades estructuradas"]
+    D --> E["Backend valida IDs contra catálogo"]
+    E --> F["Localito completa precio y stock desde base de datos"]
+    F --> G{Coincidencia clara}
+    G -->|Sí| H["Preseleccionar producto"]
+    G -->|No| I["Confirmar, buscar o ignorar"]
+    H --> J["Revisión de cantidades y stock"]
+    I --> J
+    J --> K["Agregar líneas al ticket POS existente"]
+    K --> L["Cobrar con flujo normal"]
+    L --> M["Venta confirmada descuenta stock una vez"]
 ```
 
 ### Reglas del reconocimiento
 
-- La IA debe mostrar nivel de confianza cuando sea posible.
-- El usuario siempre debe poder confirmar o corregir.
+- La interfaz evita porcentajes técnicos; utiliza estados claros: listo, confirmar o no reconocido.
+- El usuario siempre puede corregir cantidad, reemplazar, buscar o ignorar un producto.
+- Solo se aceptan IDs existentes y activos del catálogo del negocio autenticado.
+- Los precios y el stock provienen de Localito, nunca de la imagen ni del modelo.
 - El reconocimiento no debe modificar stock por si solo.
 - El stock solo cambia cuando se confirma una venta, entrada o ajuste.
 - Si la IA falla, el sistema debe permitir busqueda manual.
+- Las imágenes se reducen en el navegador, se procesan con `store: false` y no se persisten en Localito.
 
 ### Datos que puede usar la IA
 
@@ -1165,7 +1166,7 @@ Escenarios sugeridos para usuarios:
 
 1. Crear un producto nuevo.
 2. Registrar una venta.
-3. Escanear un producto con la camara.
+3. Fotografiar varios productos con Venta Rápida, revisar la propuesta y enviarla al ticket.
 4. Registrar una venta fiada.
 5. Ver cuanto debe un cliente.
 6. Revisar productos con bajo stock.
@@ -1271,7 +1272,7 @@ Disena una experiencia completa para:
 2. Dashboard principal con ventas del dia, alertas y accesos rapidos.
 3. Gestion de productos e inventario.
 4. Nueva venta con ticket.
-5. Escaneo con camara e IA para reconocer productos.
+5. Venta Rápida con cámara e IA para proponer productos y cantidades del catálogo.
 6. Consulta de stock desde camara.
 7. Clientes y fiado.
 8. Detalle de deuda de cliente y registro de abono.
@@ -1342,7 +1343,7 @@ Si generas codigo:
 - Mantiene el codigo claro y facil de explicar en una tesis.
 
 Resultado esperado:
-Entrega un prototipo o diseno completo de Localito que permita entender como funcionara la PWA en un negocio real, especialmente el flujo de venta, el manejo de fiado y el escaneo con IA desde la camara.
+Entrega un prototipo o diseno completo de Localito que permita entender como funcionara la PWA en un negocio real, especialmente el flujo de venta, el manejo de fiado y Venta Rápida multiproducto desde la cámara.
 ```
 
 ## 31. Estado actual de desarrollo
@@ -1385,7 +1386,7 @@ La autenticacion usa contrasenas derivadas con `scrypt`, tokens aleatorios de se
 | --- | --- | --- |
 | Registrar ventas | Si | Si |
 | Generar, imprimir y compartir comprobante | Si | Si |
-| Escanear productos con camara/IA | Si | Si |
+| Venta Rápida multiproducto con cámara/IA | Si | Si |
 | Ver inventario | Si | Si, solo lectura |
 | Crear, editar o desactivar productos | Si | No |
 | Ajustar stock manualmente | Si | No |

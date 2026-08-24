@@ -48,9 +48,9 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-12 | Clientes | Crear cliente | Ir a Fiado, ingresar nombre y contacto. | Cliente aparece en cuentas por cobrar. | Pendiente evidencia |
 | CP-13 | Clientes | Editar cliente | Seleccionar editar, cambiar telefono y guardar. | Cliente refleja el nuevo dato. | Pendiente evidencia |
 | CP-14 | Clientes | Registrar abono | Ingresar monto y presionar abono. | Deuda disminuye. | Pendiente evidencia |
-| CP-15 | IA | Reconocer por pista | Ir a Camara, escribir `pan`, detectar. | Devuelve producto, confianza y pide confirmacion. | Pendiente evidencia |
-| CP-16 | Codigo de barras | Reconocer por codigo | Crear producto con codigo real, entrar a Camara y usar **Tomar foto** o ingresar `7801610001347`. | La app lee o recibe el codigo, busca el producto y devuelve confianza alta con fuente `barcode`. | Pendiente evidencia |
-| CP-17 | IA | Guardar correccion | Detectar producto, elegir correccion y guardar. | Historial IA registra confirmacion/correccion. | Pendiente evidencia |
+| CP-15 | Venta Rápida | Reconocer una fotografía | Fotografiar uno o más productos desde Venta Rápida. | Propone productos y cantidades usando exclusivamente el catálogo del negocio. | Normalización automatizada aprobada; visual pendiente |
+| CP-16 | Codigo de barras | Reconocer por codigo | Crear producto con código real, abrir **Venta Rápida → Vender con código de barras** y leer o ingresar `7801610001347`. | Localito encuentra el producto exacto sin depender del análisis visual. | Pendiente evidencia |
+| CP-17 | Venta Rápida | Corregir propuesta | Cambiar cantidad, reemplazar un producto ambiguo y eliminar otro. | El total se recalcula con precios del inventario y la propuesta queda bajo control del vendedor. | Pendiente evidencia |
 | CP-18 | Caja | Caja en vivo | Ir a Reportes. | Muestra efectivo, tarjeta, transferencia, fiado, total y anuladas. | Pendiente evidencia |
 | CP-19 | Caja | Cierre manual | Escribir observacion y presionar Cerrar caja. | Se guarda un cierre con totales, usuario, fecha/hora y observacion. | Pendiente evidencia |
 | CP-20 | Usuarios | Crear usuario interno | Ir a Configuracion, crear vendedor. | Usuario aparece en lista de usuarios activos. | Pendiente evidencia |
@@ -80,6 +80,26 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-44 | Offline | Venta sin conexion | Perder red al confirmar y recuperarla. | La venta queda en cola y se sincroniza sin duplicarse. | Pendiente evidencia |
 | CP-45 | Vision | Reconocer envase | Configurar `OPENAI_API_KEY`, fotografiar un producto catalogado. | La API propone coincidencia con confianza y permite corregir. | Pendiente evidencia |
 | CP-46 | Seguridad | Recuperar contraseña | Solicitar el enlace, cambiar la clave y volver a usar el enlace. | La nueva clave funciona, sesiones anteriores quedan revocadas y el enlace no puede reutilizarse. | Automatizada aprobada |
+| CP-47 | Factura IA | Extraer factura | Fotografiar una factura legible desde Negocio. | Propone proveedor, folio, fecha, totales y líneas con confianza y advertencias. | Esquema automatizado aprobado; visual aprobado |
+| CP-48 | Factura IA | Reutilizar catálogo | Leer una línea cuyo código o nombre corresponde a un producto activo. | La línea queda marcada En inventario y no crea otro producto. | Automatizada aprobada |
+| CP-49 | Factura IA | Crear producto faltante | Confirmar una línea marcada Producto nuevo con nombre, categoría y precio de venta. | Crea el producto y lo recibe con el stock y costo confirmados. | Automatizada aprobada |
+| CP-50 | Factura IA | Exigir revisión | Vaciar cantidad o precio de venta de una línea. | Confirmar e ingresar queda deshabilitado y la API rechaza valores inválidos. | Automatizada aprobada |
+| CP-51 | Factura IA | Evitar doble ingreso | Reintentar con la misma clave o volver a cargar el mismo folio. | Devuelve la compra previa o rechaza el duplicado; el stock aumenta una sola vez. | Automatizada aprobada |
+| CP-52 | Factura IA | Permisos | Intentar analizar o importar con token de vendedor. | La API responde 403 y no cambia inventario. | Importación CSV comprobada con 403; factura pendiente evidencia |
+| CP-53 | Carga inicial | Apertura automática | Crear un local sin productos e iniciar sesión como dueño. | Abre automáticamente el asistente y sugiere categorías según el rubro. | Visual aprobada a 320 px |
+| CP-54 | Carga inicial | Importación masiva | Subir una plantilla CSV con dos productos válidos y una fila inválida. | Muestra vista previa, omite la fila inválida y crea los dos productos válidos. | Automatizada y visual aprobadas |
+| CP-55 | Carga inicial | Evitar duplicados | Reintentar la misma carga y subir un producto con código o nombre ya existente. | No crea duplicados e informa las filas ya existentes. | Automatizada aprobada |
+| CP-56 | Carga inicial | Reanudar o posponer | Elegir un método, recargar y luego presionar Hacerlo después. | Recupera el método elegido; al posponer no fuerza nuevamente el asistente y permanece accesible desde el menú. | Reanudación y acceso posterior aprobados |
+| CP-57 | Venta Rápida A | Un producto | Analizar una foto con un producto catalogado. | Muestra una línea lista con cantidad 1 y precio obtenido del inventario. | Automatizada aprobada |
+| CP-58 | Venta Rápida B | Varios productos | Analizar una foto con productos distintos. | Devuelve líneas separadas y calcula el total con precios locales. | Automatizada aprobada |
+| CP-59 | Venta Rápida C | Unidades repetidas | Analizar varias unidades iguales o una respuesta repetida para el mismo ID. | Agrupa el producto y suma las cantidades. | Automatizada aprobada |
+| CP-60 | Venta Rápida D | Producto no encontrado | Analizar un objeto sin coincidencia de catálogo. | Lo marca Producto no reconocido y permite buscar o ignorar; no crea inventario. | Automatizada y visual aprobadas mediante código desconocido y corrección manual |
+| CP-61 | Venta Rápida E | Detección ambigua | Devolver una coincidencia de confianza media con varias alternativas. | Exige selección o confirmación antes de habilitar Agregar a la venta. | Automatizada aprobada; visual pendiente |
+| CP-62 | Venta Rápida F | Stock insuficiente | Detectar cantidad superior al stock registrado. | Advierte detectado versus stock y aplica la misma regla del POS al agregar. | Automatizada y visual aprobadas; el POS rechazó cantidad 29 con stock 28 |
+| CP-63 | Venta Rápida G | Falla de IA | Simular error o servicio no configurado. | Mantiene la foto y ofrece reintentar sin modificar ticket ni stock. | Endpoint aprobado sin clave (503 controlado); interacción visual pendiente |
+| CP-64 | Venta Rápida H | Cámara rechazada | Rechazar permiso de cámara. | Explica brevemente el permiso y ofrece cámara del teléfono o subir foto. | Pendiente dispositivo real |
+| CP-65 | Venta Rápida I | Foto sin productos | Analizar una imagen sin productos claros. | Muestra No encontramos productos claramente visibles y permite otra foto. | Automatizada aprobada; visual pendiente |
+| CP-66 | Venta Rápida J | Integración POS | Confirmar productos revisados y presionar Agregar a la venta. | Abre el ticket POS existente; stock y kardex no cambian hasta confirmar el cobro. | Automatizada y visual aprobadas; cantidad 2 llegó al ticket y el stock permaneció en 28 |
 
 ## 5. Pruebas no funcionales sugeridas
 
@@ -90,6 +110,9 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | PNF-03 | Seguridad basica | Intentar login con clave incorrecta. | Acceso rechazado. |
 | PNF-04 | Separacion por negocio | Alterar o inventar `x-tenant-id` con un token valido. | No cambia el negocio: el tenant se deriva de la sesion. |
 | PNF-05 | Disponibilidad demo | Reiniciar frontend manteniendo API. | PWA vuelve a cargar datos. |
+| PNF-06 | Factura IA movil | Revisar extracción a 320, 390 y 768 px. | Sin zoom automático, desborde horizontal ni controles tapados permanentemente. |
+| PNF-07 | Carga inicial movil | Revisar asistente y vista previa CSV a 320, 390 y 1280 px. | Las tarjetas se apilan, la tabla desplaza solo dentro de su contenedor y la página no produce zoom ni desborde horizontal. |
+| PNF-08 | Venta Rápida movil | Revisar captura y revisión a 320, 390, 768 y 1280 px. | Botones táctiles, cantidades editables, barra inferior libre y sin desborde horizontal. |
 
 ## 6. Evidencias recomendadas
 
@@ -100,8 +123,9 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 - Captura del dialogo de impresion.
 - Captura de venta anulada.
 - Captura de cierre de caja.
-- Captura de IA con confianza y correccion.
+- Captura de Venta Rápida con varios productos, una coincidencia ambigua y total detectado.
 - Captura de lectura de codigo de barras desde foto en celular.
+- Captura de factura con productos coincidentes, nuevos y precio de venta confirmado.
 - Captura desde iPhone.
 
 ## 7. Observaciones

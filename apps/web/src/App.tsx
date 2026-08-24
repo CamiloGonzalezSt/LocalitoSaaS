@@ -2,7 +2,6 @@ import {
   AlertTriangle,
   Banknote,
   BarChart3,
-  Bot,
   Camera,
   CheckCircle2,
   Copy,
@@ -11,6 +10,7 @@ import {
   Home,
   LogIn,
   LogOut,
+  ListPlus,
   Menu,
   MessageCircle,
   Minus,
@@ -34,9 +34,7 @@ import {
   X
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ChangeEvent } from "react";
 import type {
   BootstrapData,
   CashRegisterClosure,
@@ -44,20 +42,21 @@ import type {
   Customer,
   PaymentMethod,
   Product,
-  RecognitionLog,
-  RecognitionResult,
   ReportSummary,
   Sale,
   SaleItem,
   Tenant,
   User
 } from "@localito/shared";
+import { mergeQuickSaleTicket } from "@localito/shared";
 import { api, flushOfflineQueue } from "./lib/api";
 import type { AuthSession } from "./lib/api";
 import { OperationsView } from "./OperationsView";
 import { PlatformAdminView } from "./PlatformAdminView";
+import { InventorySetupView } from "./InventorySetupView";
+import { QuickSaleView } from "./QuickSaleView";
 
-type View = "dashboard" | "sale" | "scan" | "product_create" | "products" | "customers" | "operations" | "reports" | "settings" | "platform";
+type View = "dashboard" | "sale" | "scan" | "product_create" | "setup" | "products" | "customers" | "operations" | "reports" | "settings" | "platform";
 
 type NoticeTone = "success" | "warning" | "error";
 
@@ -131,8 +130,9 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: "dashboard", label: "Inicio", icon: Home },
   { id: "sale", label: "Vender", icon: ShoppingCart },
-  { id: "scan", label: "Escanear", icon: Camera },
+  { id: "scan", label: "Venta Rápida", icon: Camera },
   { id: "product_create", label: "Nuevo producto", icon: PackagePlus },
+  { id: "setup", label: "Carga inicial", icon: ListPlus },
   { id: "products", label: "Inventario", icon: Package },
   { id: "customers", label: "Clientes", icon: Users },
   { id: "operations", label: "Negocio", icon: Settings },
@@ -296,6 +296,15 @@ function readPasswordResetToken() {
   return fragmentToken || "";
 }
 
+function inventorySetupWasDismissed(tenantId: string) {
+  try {
+    const progress = JSON.parse(localStorage.getItem(`localito-inventory-setup:${tenantId}`) ?? "null") as { status?: string } | null;
+    return progress?.status === "dismissed" || progress?.status === "completed";
+  } catch {
+    return false;
+  }
+}
+
 function removePasswordResetTokenFromUrl() {
   const url = new URL(window.location.href);
   const fragmentParams = new URLSearchParams(url.hash.replace(/^#/, ""));
@@ -315,7 +324,6 @@ function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
-  const [recognitionHistory, setRecognitionHistory] = useState<RecognitionLog[]>([]);
   const [cashRegister, setCashRegister] = useState<CashRegisterSummary>(emptyCashRegister);
   const [cashClosures, setCashClosures] = useState<CashRegisterClosure[]>([]);
   const [summary, setSummary] = useState<ReportSummary>(emptySummary);
@@ -324,7 +332,6 @@ function App() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [recognition, setRecognition] = useState<RecognitionResult | null>(null);
   const [notice, setNotice] = useState<NoticeState | null>({
     message: "Cargando Localito...",
     tone: "success"
@@ -344,9 +351,6 @@ function App() {
   const [userForm, setUserForm] = useState<UserFormState>(emptyUserForm);
   const [profileForm, setProfileForm] = useState<ProfileFormState>(emptyProfileForm);
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
-  const [scanHint, setScanHint] = useState("");
-  const [scanBarcode, setScanBarcode] = useState("");
-  const [correctionProductId, setCorrectionProductId] = useState("");
   const [cashClosureNote, setCashClosureNote] = useState("");
   const [lastDebtCharge, setLastDebtCharge] = useState<DebtChargeState | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -387,7 +391,7 @@ function App() {
   const visibleNavItems: NavItem[] = isSystemAdmin
     ? [{ id: "platform", label: "Locales y usuarios", icon: Store }]
     : navItems
-        .filter((item) => (isOwner || item.id !== "reports") && (isOwner || item.id !== "product_create"))
+        .filter((item) => (isOwner || item.id !== "reports") && (isOwner || item.id !== "product_create") && (isOwner || item.id !== "setup"))
         .map((item) => item.id === "operations" && !isOwner ? { ...item, label: "Caja", icon: Banknote } : item);
   const mobilePrimaryIds: View[] = isOwner
     ? ["dashboard", "sale", "scan", "products"]
@@ -417,6 +421,9 @@ function App() {
       const syncResult = await flushOfflineQueue();
       const response = await api.bootstrap();
       applyWorkspace(response.data);
+      if (sessionUser?.role === "owner" && response.data.products.length === 0 && !inventorySetupWasDismissed(response.data.tenant.id)) {
+        setActiveView("setup");
+      }
       if (message || syncResult.synced > 0) setNotice({ message: syncResult.synced > 0 ? `${syncResult.synced} operaciones pendientes sincronizadas.` : message!, tone: "success" });
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo cargar la API.", tone: "error" });
@@ -431,7 +438,6 @@ function App() {
     setProducts(data.products);
     setCustomers(data.customers);
     setSales(data.sales);
-    setRecognitionHistory(data.recognitionHistory);
     setCashRegister(data.cashRegister);
     setCashClosures(data.cashClosures);
     setSummary(data.summary);
@@ -583,7 +589,6 @@ function App() {
     setProducts([]);
     setCustomers([]);
     setSales([]);
-    setRecognitionHistory([]);
     setCashRegister(emptyCashRegister);
     setCashClosures([]);
     setSummary(emptySummary);
@@ -623,6 +628,19 @@ function App() {
     });
 
     setNotice({ message: `${product.name} agregado al ticket.`, tone: "success" });
+  }
+
+  function addQuickSaleToTicket(detectedItems: Array<{ productId: string; quantity: number }>) {
+    try {
+      const result = mergeQuickSaleTicket(products, ticket, detectedItems);
+      setTicket(result.ticket);
+      setNotice({ message: `${result.units} ${result.units === 1 ? "producto agregado" : "productos agregados"} al ticket. Revisa y cobra con el flujo habitual.`, tone: "success" });
+      navigateTo("sale");
+      return true;
+    } catch (error) {
+      setNotice({ message: error instanceof Error ? error.message : "No se pudieron agregar los productos al ticket.", tone: "warning" });
+      return false;
+    }
   }
 
   function removeOneFromTicket(productId: string) {
@@ -1146,25 +1164,6 @@ function App() {
     }
   }
 
-  async function recognizeProduct(payload?: { barcode?: string; hint?: string }) {
-    setIsBusy(true);
-    try {
-      const response = await api.recognizeProduct(payload ?? {
-        hint: scanHint.trim() || undefined,
-        barcode: scanBarcode.trim() || undefined
-      });
-      setRecognition(response.data);
-      setCorrectionProductId(response.data.productId ?? "");
-      const history = await api.getRecognitionHistory();
-      setRecognitionHistory(history.data);
-      setNotice({ message: "Producto detectado.", tone: "success" });
-    } catch (error) {
-      setNotice({ message: error instanceof Error ? error.message : "No se pudo reconocer el producto.", tone: "error" });
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
   async function returnSale(sale: Sale) {
     if (!isOwner || sale.status === "cancelled" || sale.status === "refunded") return;
     const item = sale.items[0]; if (!item) return;
@@ -1175,49 +1174,6 @@ function App() {
     try { await api.returnSale(sale.id, [{ productId: item.productId, quantity }], reason); await loadWorkspace("Devolución registrada y stock restaurado."); }
     catch (error) { setNotice({ message: error instanceof Error ? error.message : "No se pudo devolver la venta.", tone: "error" }); }
     finally { setIsBusy(false); }
-  }
-
-  async function recognizeProductImage(imageDataUrl: string) {
-    setIsBusy(true);
-    try {
-      const response = await api.recognizeProductImage(imageDataUrl, scanHint.trim() || undefined);
-      setRecognition(response.data); setCorrectionProductId(response.data.productId ?? "");
-      const history = await api.getRecognitionHistory(); setRecognitionHistory(history.data);
-      setNotice({ message: "Imagen analizada con visión. Confirma el resultado antes de vender.", tone: "success" });
-    } catch (error) { setNotice({ message: error instanceof Error ? error.message : "No se pudo analizar la imagen.", tone: "error" }); }
-    finally { setIsBusy(false); }
-  }
-
-  async function confirmRecognition(confirmed: boolean) {
-    if (!recognition) return;
-
-    setIsBusy(true);
-    try {
-      const product = products.find((candidate) => candidate.id === correctionProductId);
-      const response = await api.confirmRecognition(recognition.id, {
-        confirmed,
-        productId: correctionProductId || undefined,
-        userCorrection: confirmed ? undefined : product?.name ?? "Correccion manual"
-      });
-      setRecognition(response.data);
-      const history = await api.getRecognitionHistory();
-      setRecognitionHistory(history.data);
-      setNotice({ message: confirmed ? "Reconocimiento confirmado." : "Correccion guardada para evidencia de IA.", tone: "success" });
-    } catch (error) {
-      setNotice({ message: error instanceof Error ? error.message : "No se pudo guardar la confirmacion.", tone: "error" });
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  function addRecognizedProduct() {
-    const product = products.find((candidate) => candidate.id === recognition?.productId);
-    if (!product) {
-      setNotice({ message: "No se pudo agregar el producto reconocido.", tone: "error" });
-      return;
-    }
-    addToTicket(product);
-    setActiveView("sale");
   }
 
   if (!currentUser) {
@@ -1380,25 +1336,7 @@ function App() {
         )}
 
         {!isLoading && activeView === "scan" && (
-          <ScanView
-            recognition={recognition}
-            scanHint={scanHint}
-            scanBarcode={scanBarcode}
-            products={products}
-            recognitionHistory={recognitionHistory}
-            correctionProductId={correctionProductId}
-            isBusy={isBusy}
-            onHint={setScanHint}
-            onBarcode={setScanBarcode}
-            onRecognize={() => void recognizeProduct()}
-            onRecognizeBarcode={(barcode) => void recognizeProduct({ barcode })}
-            onRecognizeImage={(imageDataUrl) => void recognizeProductImage(imageDataUrl)}
-            onCorrectionProduct={setCorrectionProductId}
-            onConfirmRecognition={() => void confirmRecognition(true)}
-            onCorrectRecognition={() => void confirmRecognition(false)}
-            onAdd={addRecognizedProduct}
-            onManualSearch={() => setActiveView("sale")}
-          />
+          <QuickSaleView products={products} onAddToSale={addQuickSaleToTicket} onOpenSale={() => navigateTo("sale")} />
         )}
 
         {!isLoading && activeView === "product_create" && isOwner && (
@@ -1420,6 +1358,17 @@ function App() {
             onEdit={startEditProduct}
             onDeactivate={(product) => void deactivateProduct(product)}
             onAdjustStock={(product, delta) => void adjustStock(product, delta)}
+          />
+        )}
+
+        {!isLoading && activeView === "setup" && isOwner && tenant && (
+          <InventorySetupView
+            tenant={tenant}
+            products={products}
+            onRefresh={() => loadWorkspace()}
+            onNavigate={navigateTo}
+            onFinish={() => { navigateTo("dashboard"); setNotice({ message: "Inventario inicial configurado. Ya puedes comenzar a vender.", tone: "success" }); }}
+            onSkip={() => { navigateTo("dashboard"); setNotice({ message: "Puedes retomar la carga inicial desde el menú cuando quieras.", tone: "success" }); }}
           />
         )}
 
@@ -1520,8 +1469,9 @@ function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
   const labels: Record<View, string> = {
     dashboard: "Panel del día",
     sale: "Vender",
-    scan: "Escanear producto",
+    scan: "Venta Rápida",
     product_create: "Crear producto",
+    setup: "Configurar inventario",
     products: "Inventario",
     customers: "Clientes y fiado",
     operations: "Tu negocio",
@@ -1758,7 +1708,7 @@ function DashboardView({
           </button>
           <button className="quick-action scan" type="button" onClick={onOpenScan}>
             <Camera size={22} />
-            <span>Escanear</span>
+            <span>Venta Rápida</span>
           </button>
           <button className="quick-action stock" type="button" onClick={onOpenStock}>
             <Package size={22} />
@@ -1898,7 +1848,7 @@ function SaleView({
         </div>
         <button className="inline-command" type="button" onClick={onScan}>
           <Camera size={18} />
-          <span>Usar camara IA</span>
+          <span>Venta Rápida con foto</span>
         </button>
         <div className="list product-list">
           {products.map((product) => (
@@ -2012,289 +1962,6 @@ function SaleView({
             </button>
           </div>
         )}
-      </section>
-    </div>
-  );
-}
-
-function ScanView({
-  recognition,
-  scanHint,
-  scanBarcode,
-  products,
-  recognitionHistory,
-  correctionProductId,
-  isBusy,
-  onHint,
-  onBarcode,
-  onRecognize,
-  onRecognizeBarcode,
-  onRecognizeImage,
-  onCorrectionProduct,
-  onConfirmRecognition,
-  onCorrectRecognition,
-  onAdd,
-  onManualSearch
-}: {
-  recognition: RecognitionResult | null;
-  scanHint: string;
-  scanBarcode: string;
-  products: Product[];
-  recognitionHistory: RecognitionLog[];
-  correctionProductId: string;
-  isBusy: boolean;
-  onHint: (value: string) => void;
-  onBarcode: (value: string) => void;
-  onRecognize: () => void;
-  onRecognizeBarcode: (barcode: string) => void;
-  onRecognizeImage: (imageDataUrl: string) => void;
-  onCorrectionProduct: (value: string) => void;
-  onConfirmRecognition: () => void;
-  onCorrectRecognition: () => void;
-  onAdd: () => void;
-  onManualSearch: () => void;
-}) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const scannerControlsRef = useRef<IScannerControls | null>(null);
-  const barcodeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
-  const detectedCodeRef = useRef("");
-  const photoInputRef = useRef<HTMLInputElement | null>(null);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [scannerMessage, setScannerMessage] = useState("Camara lista para iniciar.");
-  const [capturedPhotoName, setCapturedPhotoName] = useState("");
-
-  async function getBarcodeReader() {
-    if (!barcodeReaderRef.current) {
-      const { BrowserMultiFormatReader: Reader } = await import("@zxing/browser");
-      barcodeReaderRef.current = new Reader(undefined, {
-        delayBetweenScanAttempts: 120,
-        delayBetweenScanSuccess: 600
-      });
-    }
-
-    return barcodeReaderRef.current;
-  }
-
-  function submitDetectedBarcode(rawBarcode: string, source: "photo" | "live") {
-    const barcode = rawBarcode.trim();
-    if (!barcode) return;
-
-    detectedCodeRef.current = barcode;
-    onBarcode(barcode);
-    onRecognizeBarcode(barcode);
-    setScannerMessage(
-      source === "photo"
-        ? `Codigo leido desde foto: ${barcode}. Buscando producto...`
-        : `Codigo detectado: ${barcode}. Buscando producto...`
-    );
-  }
-
-  function stopCamera() {
-    scannerControlsRef.current?.stop();
-    scannerControlsRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
-    setIsCameraActive(false);
-  }
-
-  async function startBarcodeScanner() {
-    if (!window.isSecureContext && window.location.hostname !== "localhost") {
-      setScannerMessage("En iPhone la camara en vivo requiere HTTPS. Usa Tomar foto para la demo o publica la app con HTTPS.");
-      return;
-    }
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setScannerMessage("Este navegador no permite camara en vivo. Usa Tomar foto o ingresa codigo/pista manual.");
-      return;
-    }
-
-    try {
-      detectedCodeRef.current = "";
-      setIsCameraActive(true);
-      setScannerMessage("Buscando codigo de barras...");
-
-      const reader = await getBarcodeReader();
-      const controls = await reader.decodeFromConstraints(
-        {
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
-          audio: false
-        },
-        videoRef.current ?? undefined,
-        (result, _error, controlsFromCallback) => {
-          const rawValue = result?.getText();
-          if (!rawValue || rawValue.trim() === detectedCodeRef.current) return;
-
-          submitDetectedBarcode(rawValue, "live");
-          controlsFromCallback.stop();
-          scannerControlsRef.current = null;
-          setIsCameraActive(false);
-        }
-      );
-
-      scannerControlsRef.current = controls;
-    } catch {
-      setScannerMessage("No se pudo abrir la camara. Usa Tomar foto o revisa permisos del navegador.");
-      stopCamera();
-    }
-  }
-
-  function openPhotoCapture() {
-    photoInputRef.current?.click();
-  }
-
-  async function handlePhotoCapture(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setCapturedPhotoName(file.name || "Foto capturada");
-    setScannerMessage("Leyendo codigo de barras desde la foto...");
-
-    const imageUrl = URL.createObjectURL(file);
-
-    try {
-      const reader = await getBarcodeReader();
-      const result = await reader.decodeFromImageUrl(imageUrl);
-      submitDetectedBarcode(result.getText(), "photo");
-    } catch {
-      setScannerMessage("No encontré un código. Analizando el envase con visión...");
-      try {
-        const bitmap = await createImageBitmap(file);
-        const scale = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height));
-        const canvas = document.createElement("canvas"); canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
-        canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close();
-        onRecognizeImage(canvas.toDataURL("image/jpeg", 0.82));
-      } catch {
-        setScannerMessage("No pude preparar la imagen. Intenta otra foto con mejor luz.");
-      }
-    } finally {
-      URL.revokeObjectURL(imageUrl);
-      event.target.value = "";
-    }
-  }
-
-  function detectFromInputs() {
-    if (!scanHint.trim() && !scanBarcode.trim()) {
-      setScannerMessage("Para la demo local, escribe una pista real: nombre, marca, categoria o codigo del producto creado.");
-      return;
-    }
-
-    onRecognize();
-  }
-
-  useEffect(() => stopCamera, []);
-
-  return (
-    <div className="stack">
-      <section className="camera-frame">
-        <div className="scan-line" />
-        <video className={isCameraActive ? "scanner-video active" : "scanner-video"} ref={videoRef} playsInline muted />
-        <input
-          className="capture-input"
-          ref={photoInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={(event) => void handlePhotoCapture(event)}
-        />
-        {!isCameraActive && <Camera size={42} />}
-        <p>Apunta al codigo de barras o escribe una pista para validar el flujo de reconocimiento.</p>
-        <p className="scanner-message">{scannerMessage}</p>
-        {capturedPhotoName && <p className="capture-summary">Foto lista: {capturedPhotoName}</p>}
-        <div className="scan-controls">
-          <input value={scanHint} onChange={(event) => onHint(event.target.value)} placeholder="Pista: coca, pan, arroz..." />
-          <input value={scanBarcode} onChange={(event) => onBarcode(event.target.value)} placeholder="Codigo de barras opcional" />
-        </div>
-        <div className="action-grid scan-actions">
-          <button className="primary-action compact" type="button" onClick={detectFromInputs} disabled={isBusy}>
-            <Bot size={19} />
-            <span>{isBusy ? "Detectando..." : "Detectar"}</span>
-          </button>
-          <button className="secondary-action compact" type="button" onClick={openPhotoCapture}>
-            <Camera size={19} />
-            <span>Tomar foto</span>
-          </button>
-          <button className="secondary-action compact" type="button" onClick={isCameraActive ? stopCamera : () => void startBarcodeScanner()}>
-            <Camera size={19} />
-            <span>{isCameraActive ? "Detener" : "Leer codigo"}</span>
-          </button>
-        </div>
-      </section>
-
-      {recognition && (
-        <section className="panel detection-panel">
-          <div className="section-heading">
-            <h2>Producto detectado</h2>
-            <span>{Math.round(recognition.confidence * 100)}% confianza</span>
-          </div>
-          <div className="detected-product">
-            <div className="product-visual">
-              <Package size={32} />
-            </div>
-            <div>
-              <strong>{recognition.productName}</strong>
-              <p>
-                Stock {recognition.stock ?? "-"} - {formatCLP(recognition.salePrice ?? 0)}
-              </p>
-              <p className={recognition.needsConfirmation ? "warning-text" : "success-text"}>
-                {recognition.needsConfirmation ? "Confirmacion recomendada" : "Listo para agregar"}
-              </p>
-            </div>
-          </div>
-          <label className="field">
-            Confirmar o corregir producto
-            <select value={correctionProductId} onChange={(event) => onCorrectionProduct(event.target.value)}>
-              <option value="">Sin correccion</option>
-              {products.map((product) => (
-                <option value={product.id} key={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="action-grid">
-            <button className="primary-action" type="button" onClick={onAdd}>
-              <Plus size={19} />
-              <span>Agregar</span>
-            </button>
-            <button className="secondary-action" type="button" onClick={onConfirmRecognition}>
-              <CheckCircle2 size={19} />
-              <span>Confirmar</span>
-            </button>
-            <button className="secondary-action" type="button" onClick={onCorrectRecognition}>
-              <Save size={19} />
-              <span>Corregir</span>
-            </button>
-            <button className="secondary-action" type="button" onClick={onManualSearch}>
-              <Search size={19} />
-              <span>Buscar</span>
-            </button>
-          </div>
-        </section>
-      )}
-
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Historial IA</h2>
-          <span>{recognitionHistory.length} registros</span>
-        </div>
-        <div className="list">
-          {recognitionHistory.slice(0, 5).map((item) => (
-            <div className="row" key={item.id}>
-              <div>
-                <strong>{item.productName}</strong>
-                <p>
-                  {item.source} - {Math.round(item.confidence * 100)}% - {item.confirmed ? "confirmado" : "pendiente"}
-                </p>
-                {item.userCorrection && <p>Correccion: {item.userCorrection}</p>}
-              </div>
-              <span className={item.needsConfirmation ? "debt" : "paid"}>{item.needsConfirmation ? "Revisar" : "OK"}</span>
-            </div>
-          ))}
-          {recognitionHistory.length === 0 && <p className="empty-state">Aun no hay reconocimientos registrados.</p>}
-        </div>
       </section>
     </div>
   );

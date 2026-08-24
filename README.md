@@ -21,11 +21,13 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 - Proveedores, órdenes de compra, recepción de mercadería y actualización del costo promedio ponderado.
 - Caja por turno: apertura, ingresos, gastos, retiros, cierre, efectivo esperado, contado y diferencia.
 - Historial de auditoría para operaciones críticas.
-- Importación y exportación de productos en CSV.
+- Asistente automático de carga inicial para locales nuevos, con categorías sugeridas por rubro, progreso reanudable y acceso posterior desde el menú.
+- Importación masiva y exportación de productos en CSV: plantilla compatible con Excel, vista previa, validación por fila y prevención de duplicados, hasta 500 productos por carga.
 - Cola local para ventas y ajustes de stock cuando se pierde la conexión.
 - PWA instalable con caché de aplicación y navegación sin conexión.
 - Lectura de códigos con ZXing cargado bajo demanda.
-- Reconocimiento real de envases mediante OpenAI cuando se configura una clave; sin clave conserva el flujo controlado por código o pista.
+- **Venta Rápida**: una fotografía puede proponer varios productos y cantidades usando exclusivamente el catálogo del negocio; el vendedor corrige la propuesta y la agrega al ticket POS existente. La lectura de códigos de barras continúa disponible como alternativa.
+- Ingreso de mercadería desde una foto de factura: extracción estructurada, coincidencia con catálogo, revisión obligatoria de cantidades/costos/precios, creación de productos y recepción de stock sin duplicar la factura.
 - Webpay simulado para la demostración académica y cobro compartible de deudas.
 
 ## Requisitos
@@ -76,7 +78,7 @@ OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
 ```
 
-`OPENAI_API_KEY` es opcional. La imagen se reduce en el navegador antes de enviarse y el backend compara la respuesta con el catálogo del negocio. La clave nunca debe exponerse en el frontend ni subirse al repositorio.
+`OPENAI_API_KEY` es opcional y habilita tanto el reconocimiento de envases como la lectura de facturas. Las imágenes se reducen en el navegador, se procesan sin guardarlas en Localito y el backend pide una respuesta con esquema estricto, validándola nuevamente antes de escribir inventario. La clave nunca debe exponerse en el frontend ni subirse al repositorio.
 
 `SESSION_SECRET` firma las sesiones del modo demostración serverless. En Vercel, configure además `DATABASE_URL` (o `POSTGRES_URL` mediante la integración de Supabase) para que registros, ventas y cambios sobrevivan entre invocaciones. Use la URL del **Transaction pooler** de Supabase para funciones serverless.
 
@@ -110,22 +112,32 @@ En desarrollo local, si no se define otra clave, el administrador usa `caj.gonza
 ## Flujo sugerido de demostración
 
 1. Iniciar sesión como administrador, crear un local y su usuario dueño.
-2. Iniciar sesión como dueño y agregar un vendedor.
-3. Entrar en **Productos** para crear o editar un artículo y en **Stock** para revisar sus existencias.
+2. Iniciar sesión como dueño: si el catálogo está vacío, Localito abre **Carga inicial** automáticamente para elegir factura con IA, plantilla CSV o carga manual.
+3. Confirmar los productos importados, agregar un vendedor y revisar existencias en **Productos**.
 4. Abrir una caja con el monto inicial.
-5. Registrar una venta con descuento o pago dividido.
+5. Abrir **Venta Rápida**, fotografiar varios productos, revisar cantidades y agregarlos al ticket; luego cobrar con el POS normal, descuento o pago dividido.
 6. Crear un cliente con cupo y realizar una venta fiada.
 7. Revisar cuentas vencidas y abrir el recordatorio por WhatsApp.
-8. Crear un proveedor y una orden; recibirla para actualizar stock y costo promedio.
+8. En **Negocio**, fotografiar una factura, revisar sus coincidencias y precios de venta, y confirmarla para actualizar stock y costo promedio.
 9. Anular una venta o registrar una devolución parcial.
 10. Importar/exportar catálogo y revisar movimientos de stock y auditoría.
 11. Contar el efectivo y cerrar la caja para ver la diferencia.
 
-## Cámara y reconocimiento
+## Venta Rápida, cámara y código de barras
 
-El sistema intenta primero leer el código de barras. Si no encuentra uno y existe `OPENAI_API_KEY`, envía una versión reducida de la foto al backend para identificar el artículo contra el catálogo. Siempre muestra confianza y permite confirmación o corrección manual.
+**Venta Rápida** permite tomar o subir una foto con varios productos. El navegador reduce la imagen y la API solicita una respuesta estructurada contra el catálogo aislado del negocio. Los IDs que no pertenecen al catálogo se descartan; precios y stock siempre se completan desde la base de Localito. Coincidencias ambiguas y productos no reconocidos deben confirmarse, cambiarse, buscarse o ignorarse antes de continuar.
 
-La cámara en vivo requiere HTTPS en iPhone y en la mayoría de los navegadores móviles. En una red local HTTP se puede usar **Tomar foto**. Para probar un producto físico, guarde antes su código real en el catálogo.
+Al presionar **Agregar a la venta**, Localito incorpora las cantidades al ticket existente. La detección no crea una venta, no descuenta stock y no escribe kardex: esas operaciones siguen ocurriendo únicamente cuando el POS confirma el cobro. Si la cantidad supera el stock y el producto controla existencias, se muestra una advertencia y se aplica la misma restricción del POS.
+
+La lectura exacta de código de barras con ZXing se mantiene dentro de Venta Rápida y puede utilizarse sin análisis visual. El reconocimiento multiproducto necesita conexión y `OPENAI_API_KEY`; búsqueda, código, ticket y el resto del soporte offline continúan funcionando sin ella.
+
+La cámara en vivo requiere HTTPS en iPhone y en la mayoría de los navegadores móviles. Como alternativa se puede usar **Cámara del teléfono** o **Subir foto**. Para probar un código físico, guarde antes su valor real en el catálogo.
+
+### Ingreso desde factura
+
+El dueño puede abrir **Negocio → Factura con IA** y tomar una foto JPG, PNG o WebP. La IA propone proveedor, folio, fecha, productos, categorías, cantidades y costos; los productos de baja confianza quedan advertidos y cada precio de venta debe quedar confirmado antes de ingresar. Al confirmar, Localito reutiliza o crea el proveedor, reutiliza o crea productos, registra una orden recibida y aumenta el stock. El folio y una clave de importación evitan dobles ingresos por reintentos.
+
+Este flujo organiza inventario a partir de un documento comercial; no emite, valida ni contabiliza facturas electrónicas ante el SII.
 
 ## Webpay
 
@@ -139,7 +151,7 @@ npm run build
 npm run test -w apps/api
 ```
 
-Las pruebas automatizadas cubren hashes de contraseñas y sesiones, idempotencia de ventas, límites de crédito, caja, compras, costo promedio e inventario. La matriz manual vive en [docs/Matriz-Pruebas-Localito.md](docs/Matriz-Pruebas-Localito.md).
+Las pruebas automatizadas cubren hashes de contraseñas y sesiones, idempotencia de ventas, límites de crédito, caja, compras, costo promedio, inventario, importación masiva reintentable, Venta Rápida multiproducto, rechazo de IDs ajenos al catálogo, cantidades agrupadas, esquemas estrictos de visión, extracción de facturas, recepción de stock y prevención de duplicados. La matriz manual vive en [docs/Matriz-Pruebas-Localito.md](docs/Matriz-Pruebas-Localito.md).
 
 ## Estructura
 

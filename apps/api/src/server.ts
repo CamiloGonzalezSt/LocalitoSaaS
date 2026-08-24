@@ -7,7 +7,9 @@ import type { Customer, PaymentMethod, Product, Tenant, User } from "@localito/s
 import { createRepository } from "./repository.js";
 import { createSessionToken, createSignedSessionToken, hashSessionToken, passwordPolicyError, verifySignedSessionToken } from "./auth.js";
 import { isTransactionalEmailConfigured, sendPasswordResetEmail } from "./email.js";
-import { identifyProductImage } from "./vision.js";
+import { importInvoice } from "./invoiceImport.js";
+import { bulkImportProducts } from "./productImport.js";
+import { extractInvoiceImage, extractQuickSaleImage, identifyProductImage, isInvoiceAiConfigured, isQuickSaleAiConfigured } from "./vision.js";
 
 const app = express();
 const port = Number(process.env.API_PORT ?? 3000);
@@ -24,6 +26,8 @@ const signedSessionSecret = process.env.SESSION_SECRET ?? process.env.JWT_SECRET
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 const passwordResetRequests = new Map<string, { count: number; resetAt: number }>();
 const passwordResetConfirmations = new Map<string, { count: number; resetAt: number }>();
+const invoiceAiRequests = new Map<string, { count: number; resetAt: number }>();
+const quickSaleAiRequests = new Map<string, { count: number; resetAt: number }>();
 const passwordResetDurationMs = 30 * 60 * 1000;
 
 app.set("trust proxy", 1);
@@ -35,7 +39,7 @@ app.use(
     }
   })
 );
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "8mb" }));
 app.use(morgan("dev"));
 
 function isPrivateLanHost(hostname: string) {
@@ -125,6 +129,30 @@ function registerFailedLogin(req: express.Request) {
   const key = req.ip || req.socket.remoteAddress || "unknown";
   const attempt = loginAttempts.get(key);
   if (attempt) attempt.count += 1;
+}
+
+function consumeInvoiceAiRequest(userId: string) {
+  const now = Date.now();
+  const current = invoiceAiRequests.get(userId);
+  if (!current || current.resetAt <= now) {
+    invoiceAiRequests.set(userId, { count: 1, resetAt: now + 60 * 60_000 });
+    return true;
+  }
+  if (current.count >= 20) return false;
+  current.count += 1;
+  return true;
+}
+
+function consumeQuickSaleAiRequest(userId: string) {
+  const now = Date.now();
+  const current = quickSaleAiRequests.get(userId);
+  if (!current || current.resetAt <= now) {
+    quickSaleAiRequests.set(userId, { count: 1, resetAt: now + 60 * 60_000 });
+    return true;
+  }
+  if (current.count >= 40) return false;
+  current.count += 1;
+  return true;
 }
 
 function rateLimitPasswordReset(
@@ -514,6 +542,19 @@ app.post(
   })
 );
 
+app.post(
+  "/products/import",
+  asyncRoute(async (req, res) => {
+    const actor = await requireRoles(req, res, ["owner"]);
+    if (!actor) return;
+    const result = await bulkImportProducts(repository, actor.tenantId, { id: actor.id, name: actor.name }, req.body);
+    res.status(result.created.length ? 201 : 200).json({
+      data: result,
+      message: result.created.length ? `${result.created.length} productos importados.` : "El archivo no agregó productos nuevos."
+    });
+  })
+);
+
 app.patch(
   "/products/:id",
   asyncRoute(async (req, res) => {
@@ -732,6 +773,67 @@ app.post(
     }
     const result = await repository.recognizeProduct(tenantId, { barcode, hint: visionHint });
     res.json({ data: result });
+  })
+);
+
+app.post(
+  "/ai/quick-sale/analyze",
+  asyncRoute(async (req, res) => {
+    const actor = await requireRoles(req, res, ["owner", "seller"]);
+    if (!actor) return;
+    if (!isQuickSaleAiConfigured()) {
+      res.status(503).json({ message: "Venta Rápida aún no está configurada en el servidor." });
+      return;
+    }
+    const { imageDataUrl } = req.body as { imageDataUrl?: unknown };
+    if (typeof imageDataUrl !== "string" || !imageDataUrl) {
+      res.status(400).json({ message: "Debes adjuntar una foto de los productos." });
+      return;
+    }
+    if (!consumeQuickSaleAiRequest(actor.id)) {
+      res.status(429).json({ message: "Alcanzaste el límite de 40 análisis por hora. Intenta nuevamente más tarde." });
+      return;
+    }
+    const products = await repository.getProducts(actor.tenantId);
+    const analysis = await extractQuickSaleImage(imageDataUrl, products);
+    res.json({ data: analysis });
+  })
+);
+
+app.post(
+  "/ai/invoices/analyze",
+  asyncRoute(async (req, res) => {
+    const actor = await requireRoles(req, res, ["owner"]);
+    if (!actor) return;
+    if (!isInvoiceAiConfigured()) {
+      res.status(503).json({ message: "La lectura de facturas con IA aún no está configurada en el servidor." });
+      return;
+    }
+    const { imageDataUrl } = req.body as { imageDataUrl?: unknown };
+    if (typeof imageDataUrl !== "string" || !imageDataUrl) {
+      res.status(400).json({ message: "Debes adjuntar una foto de la factura." });
+      return;
+    }
+    if (!consumeInvoiceAiRequest(actor.id)) {
+      res.status(429).json({ message: "Alcanzaste el límite de 20 lecturas por hora. Intenta nuevamente más tarde." });
+      return;
+    }
+    const products = await repository.getProducts(actor.tenantId);
+    const analysis = await extractInvoiceImage(imageDataUrl, products);
+    res.json({ data: analysis });
+  })
+);
+
+app.post(
+  "/ai/invoices/import",
+  asyncRoute(async (req, res) => {
+    const actor = await requireRoles(req, res, ["owner"]);
+    if (!actor) return;
+    const result = await importInvoice(repository, actor.tenantId, { id: actor.id, name: actor.name }, req.body);
+    res.status(result.alreadyImported ? 200 : 201).json({
+      data: result,
+      message: result.alreadyImported ? "Esta importación ya estaba registrada." : "Factura ingresada y stock actualizado."
+    });
   })
 );
 
@@ -967,8 +1069,11 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   const message = error instanceof Error ? error.message : "Error interno del servidor.";
   const normalized = message.toLocaleLowerCase("es");
   const databaseCode = typeof error === "object" && error && "code" in error ? String(error.code) : undefined;
+  const explicitStatus = typeof error === "object" && error && "status" in error ? Number(error.status) : undefined;
   const status =
-    databaseCode === "23505"
+    explicitStatus === 413
+      ? 413
+      : databaseCode === "23505"
       ? 409
       : databaseCode === "23503" || databaseCode === "22P02"
         ? 400
@@ -987,7 +1092,9 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
               "monto",
               "no coincide",
               "no permite",
-              "agotad"
+              "agotad",
+              "formato",
+              "demasiado pesada"
             ].some((fragment) => normalized.includes(fragment))
           ? 400
           : 500;
@@ -995,7 +1102,7 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   if (status === 500) {
     console.error(error);
   }
-  const publicMessage = databaseCode === "23505" ? "Ya existe un registro con esos datos." : status === 500 ? "Error interno del servidor." : message;
+  const publicMessage = status === 413 ? "La imagen es demasiado pesada. Usa una foto de menor resolución." : databaseCode === "23505" ? "Ya existe un registro con esos datos." : status === 500 ? "Error interno del servidor." : message;
   res.status(status).json({ message: publicMessage });
 });
 
