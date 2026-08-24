@@ -2262,11 +2262,13 @@ textarea:focus {
 
 .product-button {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-height: 105px;
-  padding: 12px;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-rows: minmax(48px, auto) auto;
+  align-items: start;
+  column-gap: 12px;
+  row-gap: 8px;
+  min-height: 116px;
+  padding: 14px;
   color: var(--ink);
   text-align: left;
   background: #ffffff;
@@ -2284,8 +2286,8 @@ textarea:focus {
 .product-thumb {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   color: #13735c;
   background: var(--green-soft);
   border-radius: 14px;
@@ -2295,13 +2297,31 @@ textarea:focus {
   min-width: 0;
 }
 
+.product-button-copy strong {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: normal;
+  font-size: 0.9rem;
+  line-height: 1.28;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .product-button-copy p {
+  overflow: hidden;
+  margin-top: 5px;
   font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-price {
-  grid-column: 1 / -1;
+  grid-column: 2;
+  justify-self: start;
+  padding: 5px 10px;
   color: var(--green);
+  background: #eef7f2;
+  border-radius: 999px;
   font-size: 0.95rem;
   font-weight: 950;
 }
@@ -2708,8 +2728,7 @@ textarea:focus {
   }
 
   .product-button {
-    grid-template-columns: 52px minmax(0, 1fr);
-    min-height: 118px;
+    min-height: 116px;
   }
 
   .product-thumb {
@@ -2728,7 +2747,7 @@ textarea:focus {
   }
 
   .product-list {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
