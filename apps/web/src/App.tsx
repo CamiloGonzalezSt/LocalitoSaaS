@@ -1415,7 +1415,7 @@ function App() {
         {!isLoading && activeView === "products" && (
           <ProductsView
             mode="stock"
-            products={filteredProducts}
+            products={products}
             searchTerm={searchTerm}
             productForm={productForm}
             isBusy={isBusy}
@@ -2317,8 +2317,47 @@ function ProductsView({
   onDeactivate: (product: Product) => void;
   onAdjustStock: (product: Product, delta: number) => void;
 }) {
-  const visibleLowStock = products.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock).length;
-  const visibleStockValue = products.reduce((sum, product) => sum + product.stock * product.salePrice, 0);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const categoryOptions = useMemo(() => {
+    const categories = new Map<string, { label: string; count: number }>();
+
+    for (const product of products) {
+      const label = product.category.trim() || "Sin categoria";
+      const id = label.toLocaleLowerCase("es");
+      const current = categories.get(id);
+      categories.set(id, { label: current?.label ?? label, count: (current?.count ?? 0) + 1 });
+    }
+
+    return [...categories.entries()]
+      .map(([id, category]) => ({ id, ...category }))
+      .sort((a, b) => a.label.localeCompare(b.label, "es"));
+  }, [products]);
+  const inventoryProducts = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase("es");
+
+    return products.filter((product) => {
+      const productCategory = (product.category.trim() || "Sin categoria").toLocaleLowerCase("es");
+      const matchesCategory = selectedCategory === "all" || productCategory === selectedCategory;
+      const matchesSearch = !normalizedSearch || [product.name, product.brand, product.category, product.barcode, product.sku]
+        .filter(Boolean)
+        .some((value) => value?.toLocaleLowerCase("es").includes(normalizedSearch));
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, searchTerm, selectedCategory]);
+  const visibleLowStock = inventoryProducts.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock).length;
+  const visibleStockValue = inventoryProducts.reduce((sum, product) => sum + product.stock * product.salePrice, 0);
+
+  useEffect(() => {
+    if (selectedCategory !== "all" && !categoryOptions.some((category) => category.id === selectedCategory)) {
+      setSelectedCategory("all");
+    }
+  }, [categoryOptions, selectedCategory]);
+
+  function clearInventoryFilters() {
+    setSelectedCategory("all");
+    onSearch("");
+  }
 
   return (
     <div className="stack">
@@ -2331,7 +2370,10 @@ function ProductsView({
           <div className="form-grid">
             <input value={productForm.name} onChange={(event) => onForm({ ...productForm, name: event.target.value })} placeholder="Nombre" />
             <input value={productForm.brand} onChange={(event) => onForm({ ...productForm, brand: event.target.value })} placeholder="Marca" />
-            <input value={productForm.category} onChange={(event) => onForm({ ...productForm, category: event.target.value })} placeholder="Categoria" />
+            <input value={productForm.category} onChange={(event) => onForm({ ...productForm, category: event.target.value })} placeholder="Categoria" list="product-category-options" />
+            <datalist id="product-category-options">
+              {categoryOptions.map((category) => <option value={category.label} key={category.id} />)}
+            </datalist>
             <input value={productForm.barcode} onChange={(event) => onForm({ ...productForm, barcode: event.target.value })} placeholder="Codigo de barras" />
             <input value={productForm.costPrice} onChange={(event) => onForm({ ...productForm, costPrice: event.target.value })} placeholder="Costo" inputMode="numeric" />
             <input value={productForm.salePrice} onChange={(event) => onForm({ ...productForm, salePrice: event.target.value })} placeholder="Precio venta" inputMode="numeric" />
@@ -2361,17 +2403,46 @@ function ProductsView({
       {mode === "stock" && <section className="panel inventory-panel">
         <div className="section-heading compact-heading">
           <h2>Inventario</h2>
-          <span>{products.length} productos</span>
+          <span>{inventoryProducts.length === products.length ? `${products.length} productos` : `${inventoryProducts.length} de ${products.length}`}</span>
         </div>
         <div className="search-box">
           <Search size={18} />
-          <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar en inventario" />
+          <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o codigo" />
+        </div>
+        <div className="inventory-filters">
+          <div className="inventory-filter-heading">
+            <strong>Categorias</strong>
+            {(selectedCategory !== "all" || searchTerm) && <button type="button" onClick={clearInventoryFilters}>Limpiar filtros</button>}
+          </div>
+          <div className="category-filter-list" role="group" aria-label="Filtrar inventario por categoria">
+            <button
+              className={selectedCategory === "all" ? "category-filter active" : "category-filter"}
+              type="button"
+              aria-pressed={selectedCategory === "all"}
+              onClick={() => setSelectedCategory("all")}
+            >
+              <span>Todos</span>
+              <small>{products.length}</small>
+            </button>
+            {categoryOptions.map((category) => (
+              <button
+                className={selectedCategory === category.id ? "category-filter active" : "category-filter"}
+                type="button"
+                aria-pressed={selectedCategory === category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                key={category.id}
+              >
+                <span>{category.label}</span>
+                <small>{category.count}</small>
+              </button>
+            ))}
+          </div>
         </div>
         {!canManageProducts && <p className="helper-text">Vista solo lectura para vendedores.</p>}
         <div className="inventory-strip" aria-label="Resumen de inventario visible">
           <div>
             <span>Visibles</span>
-            <strong>{products.length}</strong>
+            <strong>{inventoryProducts.length}</strong>
           </div>
           <div>
             <span>Stock bajo</span>
@@ -2383,7 +2454,7 @@ function ProductsView({
           </div>
         </div>
         <div className="list stock-list">
-          {products.map((product) => (
+          {inventoryProducts.map((product) => (
             <ProductRow
               product={product}
               key={product.id}
@@ -2393,6 +2464,16 @@ function ProductsView({
               onDeactivate={onDeactivate}
             />
           ))}
+          {inventoryProducts.length === 0 && (
+            <div className="inventory-empty-state">
+              <Search size={22} />
+              <div>
+                <strong>No encontramos productos</strong>
+                <p>Prueba otra busqueda o vuelve a ver todo el inventario.</p>
+              </div>
+              <button className="secondary-action small" type="button" onClick={clearInventoryFilters}>Ver todos</button>
+            </div>
+          )}
         </div>
       </section>}
     </div>
@@ -3022,8 +3103,9 @@ function ProductRow({
       {isLow && <p className="stock-warning">Faltan {stockGap} para llegar al minimo.</p>}
       {canManageProducts && (
         <div className="stock-actions">
-          <button className="icon-button" type="button" onClick={() => onEdit(product)} aria-label="Editar producto">
+          <button className="icon-button stock-edit-action" type="button" onClick={() => onEdit(product)} aria-label={`Editar ${product.name}`}>
             <Edit3 size={17} />
+            <span>Editar</span>
           </button>
           <button className="icon-button" type="button" onClick={() => onAdjustStock(product, -1)} aria-label="Bajar stock">
             <Minus size={17} />

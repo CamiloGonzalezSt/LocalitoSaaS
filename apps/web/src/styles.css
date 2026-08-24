@@ -843,6 +843,108 @@ button:active:not(:disabled) {
   white-space: nowrap;
 }
 
+.inventory-filters {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.inventory-filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inventory-filter-heading strong {
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.inventory-filter-heading button {
+  padding: 2px 0;
+  color: var(--green);
+  background: transparent;
+  border: 0;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.category-filter-list {
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+  padding: 1px 1px 5px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.category-filter {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 9px 7px 12px;
+  color: var(--muted);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.category-filter small {
+  display: grid;
+  place-items: center;
+  min-width: 23px;
+  height: 23px;
+  padding: 0 6px;
+  color: #526071;
+  background: #f1f4f2;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 950;
+}
+
+.category-filter:hover,
+.category-filter.active {
+  color: #ffffff;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.category-filter.active small {
+  color: var(--green);
+  background: #ffffff;
+}
+
+.inventory-empty-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 12px;
+  padding: 18px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  border: 1px dashed var(--line);
+  border-radius: 15px;
+}
+
+.inventory-empty-state strong {
+  color: var(--ink);
+}
+
+.inventory-empty-state p {
+  margin: 3px 0 0;
+  font-size: 0.8rem;
+}
+
+.inventory-empty-state .secondary-action {
+  grid-column: 1 / -1;
+}
+
 .form-grid,
 .scan-controls {
   display: grid;
@@ -1221,6 +1323,16 @@ button:active:not(:disabled) {
   height: 42px;
 }
 
+.stock-actions .stock-edit-action {
+  gap: 7px;
+  padding-inline: 12px;
+  color: var(--green);
+  background: #f1f8f4;
+  border-color: #cde6d9;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
 .amount-input {
   max-width: none;
   font-weight: 800;
@@ -1548,6 +1660,10 @@ button:active:not(:disabled) {
   .action-grid {
     grid-template-columns: 1fr;
   }
+
+  .stock-edit-action span {
+    display: none;
+  }
 }
 
 @media (min-width: 780px) {
@@ -1676,6 +1792,10 @@ button:active:not(:disabled) {
 
   .stock-actions .icon-button {
     width: 42px;
+  }
+
+  .stock-actions .stock-edit-action {
+    width: auto;
   }
 
   .stock-warning {
