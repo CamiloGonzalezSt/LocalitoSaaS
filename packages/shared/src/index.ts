@@ -188,6 +188,7 @@ export interface CashMovement {
   type: CashMovementType;
   amount: number;
   reason: string;
+  category?: string;
   createdByUserId?: string;
   createdByName?: string;
   createdAt: string;

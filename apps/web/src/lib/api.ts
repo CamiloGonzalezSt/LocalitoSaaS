@@ -319,7 +319,7 @@ export const api = {
   async getDebtReminders() { return request<Array<{ debt: DebtAccount; customer?: Customer; message: string; whatsappUrl?: string }>>("/debts/reminders"); },
   async getCashSession() { return request<CashSession | null>("/cash/session"); },
   async openCashSession(openingAmount: number) { return request<CashSession>("/cash/session/open", { method: "POST", body: JSON.stringify({ openingAmount }) }); },
-  async addCashMovement(type: CashMovement["type"], amount: number, reason: string) { return request<CashMovement>("/cash/movements", { method: "POST", body: JSON.stringify({ type, amount, reason }) }); },
+  async addCashMovement(type: CashMovement["type"], amount: number, reason: string, category?: string) { return request<CashMovement>("/cash/movements", { method: "POST", body: JSON.stringify({ type, amount, reason, category }) }); },
   async getCashMovements() { return request<CashMovement[]>("/cash/movements"); },
   async closeCashSession(countedAmount: number, note?: string) { return request<CashSession>("/cash/session/close", { method: "POST", body: JSON.stringify({ countedAmount, note }) }); },
   async getStockMovements(productId?: string) { return request<StockMovement[]>(`/stock-movements${productId ? `?productId=${encodeURIComponent(productId)}` : ""}`); },

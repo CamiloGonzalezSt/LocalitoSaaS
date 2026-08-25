@@ -976,10 +976,10 @@ app.post("/cash/session/open", asyncRoute(async (req, res) => {
 
 app.post("/cash/movements", asyncRoute(async (req, res) => {
   const actor = await requireRoles(req, res, ["owner", "seller"]); if (!actor) return;
-  const { type, amount: rawAmount, reason } = req.body as { type?: "deposit" | "withdrawal" | "expense"; amount?: number; reason?: string };
+  const { type, amount: rawAmount, reason, category } = req.body as { type?: "deposit" | "withdrawal" | "expense"; amount?: number; reason?: string; category?: string };
   const amount = readPositiveNumber(rawAmount);
   if (!type || !["deposit", "withdrawal", "expense"].includes(type) || !amount || !reason?.trim()) { res.status(400).json({ message: "Tipo, monto y motivo son obligatorios." }); return; }
-  const movement = await repository.addCashMovement(actor.tenantId, { type, amount, reason, userId: actor.id });
+  const movement = await repository.addCashMovement(actor.tenantId, { type, amount, reason, category, userId: actor.id });
   await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: type, entity: "cash_movement", entityId: movement.id, details: { amount } });
   res.status(201).json({ data: movement });
 }));

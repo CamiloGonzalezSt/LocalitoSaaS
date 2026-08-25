@@ -136,7 +136,7 @@ export interface DataRepository {
   getDebts(tenantId: string): Promise<DebtAccount[]>;
   getOpenCashSession(tenantId: string): Promise<CashSession | undefined>;
   openCashSession(tenantId: string, amount: number, userId: string): Promise<CashSession>;
-  addCashMovement(tenantId: string, movement: { type: CashMovement["type"]; amount: number; reason: string; userId: string }): Promise<CashMovement>;
+  addCashMovement(tenantId: string, movement: { type: CashMovement["type"]; amount: number; reason: string; category?: string; userId: string }): Promise<CashMovement>;
   closeCashSession(tenantId: string, countedAmount: number, note: string | undefined, userId: string): Promise<CashSession | null>;
   getCashMovements(tenantId: string): Promise<CashMovement[]>;
   getStockMovements(tenantId: string, productId?: string): Promise<StockMovement[]>;
@@ -1040,11 +1040,11 @@ export class MemoryRepository implements DataRepository {
     return session;
   }
 
-  async addCashMovement(tenantId: string, body: { type: CashMovement["type"]; amount: number; reason: string; userId: string }) {
+  async addCashMovement(tenantId: string, body: { type: CashMovement["type"]; amount: number; reason: string; category?: string; userId: string }) {
     const session = await this.getOpenCashSession(tenantId);
     if (!session) throw new Error("Debes abrir la caja antes de registrar movimientos.");
     const user = store.users.find((candidate) => candidate.id === body.userId);
-    const movement: CashMovement = { id: randomUUID(), tenantId, sessionId: session.id, type: body.type, amount: body.amount, reason: body.reason, createdByUserId: body.userId, createdByName: user?.name, createdAt: new Date().toISOString() };
+    const movement: CashMovement = { id: randomUUID(), tenantId, sessionId: session.id, type: body.type, amount: body.amount, reason: body.reason, category: body.category?.trim() || "Operación general", createdByUserId: body.userId, createdByName: user?.name, createdAt: new Date().toISOString() };
     store.cashMovements.push(movement);
     return movement;
   }
@@ -2150,9 +2150,9 @@ class PostgresRepository implements DataRepository {
     return mapCashSession({...result.rows[0],opened_by_name:user?.name});
   }
 
-  async addCashMovement(tenantId: string, body: { type: CashMovement["type"]; amount: number; reason: string; userId: string }) {
+  async addCashMovement(tenantId: string, body: { type: CashMovement["type"]; amount: number; reason: string; category?: string; userId: string }) {
     const session=await this.getOpenCashSession(tenantId); if(!session) throw new Error("Debes abrir la caja antes de registrar movimientos.");
-    const result=await this.pool.query(`insert into movimientos_caja (id,negocio_id,sesion_caja_id,usuario_id,tipo,monto,motivo) values ($1,$2,$3,$4,$5,$6,$7) returning *`,[randomUUID(),tenantId,session.id,body.userId,body.type,body.amount,body.reason]);
+    const result=await this.pool.query(`insert into movimientos_caja (id,negocio_id,sesion_caja_id,usuario_id,tipo,monto,motivo,categoria) values ($1,$2,$3,$4,$5,$6,$7,$8) returning *`,[randomUUID(),tenantId,session.id,body.userId,body.type,body.amount,body.reason,body.category?.trim() || "Operación general"]);
     const user=(await this.getUsers(tenantId)).find((candidate)=>candidate.id===body.userId);
     return mapCashMovement({...result.rows[0],created_by_name:user?.name});
   }
@@ -2582,7 +2582,7 @@ function mapCashSession(row: Record<string, unknown>): CashSession {
 }
 
 function mapCashMovement(row: Record<string, unknown>): CashMovement {
-  return { id: String(row.id), tenantId: String(row.negocio_id), sessionId: toOptional(row.sesion_caja_id), type: String(row.tipo) as CashMovement["type"], amount: Number(row.monto), reason: String(row.motivo), createdByUserId: toOptional(row.usuario_id), createdByName: toOptional(row.created_by_name), createdAt: new Date(String(row.fecha_creacion)).toISOString() };
+  return { id: String(row.id), tenantId: String(row.negocio_id), sessionId: toOptional(row.sesion_caja_id), type: String(row.tipo) as CashMovement["type"], amount: Number(row.monto), reason: String(row.motivo), category: toOptional(row.categoria) ?? "Operación general", createdByUserId: toOptional(row.usuario_id), createdByName: toOptional(row.created_by_name), createdAt: new Date(String(row.fecha_creacion)).toISOString() };
 }
 
 function mapStockMovement(row: Record<string, unknown>): StockMovement {

@@ -251,8 +251,11 @@ CREATE TABLE IF NOT EXISTS movimientos_caja (
   tipo VARCHAR(30) NOT NULL,
   monto INTEGER NOT NULL,
   motivo TEXT NOT NULL,
+  categoria VARCHAR(80) NOT NULL DEFAULT 'Operación general',
   fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE movimientos_caja ADD COLUMN IF NOT EXISTS categoria VARCHAR(80) NOT NULL DEFAULT 'Operación general';
 
 CREATE TABLE IF NOT EXISTS auditoria (
   id UUID PRIMARY KEY,
