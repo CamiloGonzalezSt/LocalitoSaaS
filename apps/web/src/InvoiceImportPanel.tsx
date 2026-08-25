@@ -104,8 +104,16 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
     setFileName(file.name || "Factura fotografiada");
     setMessage("Preparando la foto y leyendo productos, cantidades y costos...");
     try {
-      const imageDataUrl = await prepareInvoiceImage(file);
-      const response = await api.analyzeInvoiceImage(imageDataUrl);
+      let imageDataUrl = await prepareInvoiceImage(file);
+      let response;
+      try {
+        response = await api.analyzeInvoiceImage(imageDataUrl);
+      } catch (error) {
+        if (!(error instanceof Error) || !/foto o el catálogo superan el límite/i.test(error.message)) throw error;
+        setMessage("La factura necesita una reducción adicional. Reintentando automáticamente...");
+        imageDataUrl = await prepareInvoiceImage(file, true);
+        response = await api.analyzeInvoiceImage(imageDataUrl);
+      }
       const next = response.data;
       const matchingSupplier = suppliers.find((supplier) => normalizedText(supplier.name) === normalizedText(next.supplierName));
       setAnalysis(next);

@@ -17,7 +17,8 @@ async function drawImageFile(file: File, maxDimension: number, quality: number) 
 }
 
 const MAX_UPLOAD_DATA_URL_LENGTH = 3_200_000;
-const MAX_INVOICE_DATA_URL_LENGTH = 1_400_000;
+const MAX_INVOICE_DATA_URL_LENGTH = 650_000;
+const MAX_INVOICE_RETRY_DATA_URL_LENGTH = 320_000;
 
 async function compressForUpload(file: File, attempts: Array<{ maxDimension: number; quality: number }>, maxDataUrlLength = MAX_UPLOAD_DATA_URL_LENGTH) {
   for (const attempt of attempts) {
@@ -38,7 +39,7 @@ export async function prepareQuickSaleImage(file: File) {
   ]);
 }
 
-export async function prepareInvoiceImage(file: File) {
+export async function prepareInvoiceImage(file: File, compactRetry = false) {
   if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) throw new Error("Usa una foto JPG, PNG o WebP.");
   if (file.size > 30_000_000) throw new Error("La imagen supera 30 MB y el teléfono no puede procesarla con seguridad. Usa la cámara normal en vez del modo de máxima resolución.");
   return compressForUpload(file, [
@@ -48,8 +49,11 @@ export async function prepareInvoiceImage(file: File) {
     { maxDimension: 1500, quality: 0.66 },
     { maxDimension: 1300, quality: 0.6 },
     { maxDimension: 1100, quality: 0.54 },
-    { maxDimension: 1000, quality: 0.48 }
-  ], MAX_INVOICE_DATA_URL_LENGTH);
+    { maxDimension: 1000, quality: 0.48 },
+    { maxDimension: 900, quality: 0.44 },
+    { maxDimension: 800, quality: 0.4 },
+    { maxDimension: 700, quality: 0.36 }
+  ], compactRetry ? MAX_INVOICE_RETRY_DATA_URL_LENGTH : MAX_INVOICE_DATA_URL_LENGTH);
 }
 
 export function captureVideoFrame(video: HTMLVideoElement) {
