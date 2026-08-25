@@ -32,6 +32,11 @@ export function OperationsView({ products, onRefresh, canManage }: { products: P
   const [busy, setBusy] = useState(false);
 
   const overdue = useMemo(() => debts.filter((debt) => debt.status === "overdue" && debt.balance > 0), [debts]);
+  const expenseTotals = useMemo(() => {
+    const totals = new Map<string, number>();
+    cashMovements.filter((movement) => movement.type === "expense").forEach((movement) => totals.set(movement.category ?? "Operación general", (totals.get(movement.category ?? "Operación general") ?? 0) + movement.amount));
+    return [...totals.entries()].sort((left, right) => right[1] - left[1]);
+  }, [cashMovements]);
   const reorderSuggestions = useMemo(
     () =>
       products
@@ -110,6 +115,8 @@ export function OperationsView({ products, onRefresh, canManage }: { products: P
         <div className="form-grid"><input inputMode="numeric" value={countedAmount} onChange={(event) => setCountedAmount(event.target.value)} placeholder="Efectivo contado"/><button className="primary-action" disabled={busy} onClick={() => run(() => api.closeCashSession(Number(countedAmount), "Cierre desde gestión"), "Caja cerrada y conciliada.")}>Cerrar y conciliar</button></div>
       </>}
     </section>
+
+    <section className="panel"><div className="section-heading"><h2>Gastos operativos</h2><span>{money(expenseTotals.reduce((sum, [, amount]) => sum + amount, 0))}</span></div><div className="list">{expenseTotals.map(([category, amount]) => <div className="row" key={category}><strong>{category}</strong><strong className="debt">{money(amount)}</strong></div>)}{!expenseTotals.length && <p className="empty-state">Registra gastos en una caja abierta para ver el resumen por categoría.</p>}</div></section>
 
     {canManage && <section className="panel"><div className="section-heading"><h2>Proveedores</h2><span>{suppliers.length}</span></div><div className="form-grid"><input value={supplierName} onChange={(event) => setSupplierName(event.target.value)} placeholder="Nombre del proveedor"/><input value={supplierPhone} onChange={(event) => setSupplierPhone(event.target.value)} placeholder="Teléfono"/><button className="primary-action" disabled={busy || !supplierName.trim()} onClick={() => run(() => api.createSupplier({ name: supplierName, phone: supplierPhone }), "Proveedor creado.")}>Agregar proveedor</button></div><div className="list">{suppliers.map((supplier) => <div className="row" key={supplier.id}><div><strong>{supplier.name}</strong><p>{supplier.phone ?? "Sin teléfono"}</p></div></div>)}</div></section>}
 
