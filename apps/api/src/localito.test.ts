@@ -35,6 +35,7 @@ test("PostgreSQL demo seeds use stable UUIDs", () => {
   assert.notEqual(first, persistentDemoId("prod-arroz"));
   assert.match(first, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   assert.equal(persistentDemoId(demoTenantId), demoTenantId);
+  assert.notEqual(persistentDemoId("demo-user:donpepe@localito.demo"), "00000000-0000-4000-8000-000000000102");
 });
 
 test("passwords and sessions use non-predictable hashes", () => {

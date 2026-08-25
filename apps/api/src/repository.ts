@@ -2302,10 +2302,11 @@ class PostgresRepository implements DataRepository {
       await client.query("begin");
 
       for (const tenant of demoTenantSeeds) {
-        await client.query(
+        const insertedTenant = await client.query(
           `insert into negocios (id, nombre, rubro, direccion, telefono, email_contacto, estado)
            values ($1, $2, $3, $4, $5, $6, 'activo')
-           on conflict (id) do nothing`,
+           on conflict (id) do nothing
+           returning id`,
           [tenant.id, tenant.name, tenant.businessType, tenant.address, tenant.phone, tenant.emailContact]
         );
         for (const user of buildDemoUsers(tenant.id)) {
@@ -2316,9 +2317,11 @@ class PostgresRepository implements DataRepository {
             `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
              values ($1, $2, $3, $4, $5, $6, 'activo')
              on conflict (id) do nothing`,
-            [user.id, user.tenantId, user.name, user.email, hashPassword(password), user.role]
+            [persistentDemoId(`demo-user:${user.email}`), user.tenantId, user.name, user.email, hashPassword(password), user.role]
           );
         }
+
+        if (!insertedTenant.rows[0]) continue;
 
         for (const supplier of buildDemoSuppliers(tenant.id)) {
           await client.query(
