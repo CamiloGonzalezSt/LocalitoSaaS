@@ -54,6 +54,8 @@ npm run dev:web
 
 Abrir `http://localhost:5173`. La API escucha por defecto en `http://localhost:3000` y su estado se consulta en `http://localhost:3000/health`.
 
+El procedimiento de monitoreo, respaldo e incidentes está documentado en [docs/Operacion-Produccion.md](docs/Operacion-Produccion.md).
+
 La API ejecuta [db/schema.sql](db/schema.sql) al conectarse a PostgreSQL. El modo `memory` se permite solamente durante desarrollo sin una base configurada. En producción o Vercel, una URL ausente o una inicialización fallida detiene el backend: nunca se aceptan ventas o productos que puedan desaparecer al reiniciar la función.
 
 ## Variables de entorno

@@ -259,6 +259,9 @@ app.get("/health", (_req, res) => {
       status: "ok",
       service: "localito-api",
       storage: repository.mode,
+      persistentStorage: repository.mode === "postgres",
+      quickSaleConfigured: isQuickSaleAiConfigured(),
+      invoiceAiConfigured: isInvoiceAiConfigured(),
       timestamp: new Date().toISOString()
     }
   });
