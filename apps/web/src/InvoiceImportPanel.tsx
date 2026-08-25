@@ -62,11 +62,21 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
   const [busy, setBusy] = useState(false);
   const categories = useMemo(() => [...new Set(products.map((product) => product.category).filter(Boolean))].sort((left, right) => left.localeCompare(right, "es")), [products]);
   const draftTotal = useMemo(() => lines.reduce((sum, line) => sum + (Number(line.quantity) || 0) * (Number(line.unitCost) || 0), 0), [lines]);
-  const canConfirm = Boolean(
-    lines.length &&
-    (supplierId || supplierName.trim()) &&
-    lines.every((line) => Number(line.quantity) > 0 && line.unitCost.trim() !== "" && Number(line.unitCost) >= 0 && Number(line.salePrice) > 0 && (line.existingProductId || (line.name.trim() && line.category.trim())))
-  );
+  const validationIssues = useMemo(() => {
+    const issues: string[] = [];
+    if (!lines.length) issues.push("debe quedar al menos un producto");
+    if (!supplierId && !supplierName.trim()) issues.push("confirma el proveedor");
+    lines.forEach((line, index) => {
+      const label = `línea ${index + 1}`;
+      if (!Number.isInteger(Number(line.quantity)) || Number(line.quantity) <= 0) issues.push(`${label}: cantidad debe ser un número entero mayor que cero`);
+      if (line.unitCost.trim() === "" || !Number.isFinite(Number(line.unitCost)) || Number(line.unitCost) < 0) issues.push(`${label}: confirma el costo unitario`);
+      if (!Number.isFinite(Number(line.salePrice)) || Number(line.salePrice) <= 0) issues.push(`${label}: confirma el precio de venta`);
+      if (!line.existingProductId && !line.name.trim()) issues.push(`${label}: confirma el nombre`);
+      if (!line.existingProductId && !line.category.trim()) issues.push(`${label}: confirma la categoría`);
+    });
+    return issues;
+  }, [lines, supplierId, supplierName]);
+  const canConfirm = validationIssues.length === 0;
 
   function updateLine(clientItemId: string, patch: Partial<DraftLine>) {
     setLines((current) => current.map((line) => line.clientItemId === clientItemId ? { ...line, ...patch } : line));
@@ -148,7 +158,11 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
   }
 
   async function confirmImport() {
-    if (!canConfirm || !analysis) return;
+    if (!analysis) return;
+    if (!canConfirm) {
+      setMessage(`Falta revisar: ${validationIssues.slice(0, 3).join("; ")}${validationIssues.length > 3 ? ` y ${validationIssues.length - 3} campo${validationIssues.length - 3 === 1 ? "" : "s"} más` : ""}.`);
+      return;
+    }
     setBusy(true);
     setMessage("Registrando la compra y actualizando el stock...");
     const payload: InvoiceImportPayload = {
@@ -173,10 +187,16 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
     };
     try {
       const response = await api.importInvoice(payload);
-      await onImported();
+      let refreshFailed = false;
+      try {
+        await onImported();
+      } catch {
+        refreshFailed = true;
+      }
       const created = response.data.createdProductIds.length;
       reset();
-      setMessage(response.data.alreadyImported ? "La factura ya estaba ingresada; no se duplicó el stock." : `Factura ingresada. Stock actualizado${created ? ` y ${created} producto${created === 1 ? " nuevo creado" : "s nuevos creados"}` : ""}.`);
+      const successMessage = response.data.alreadyImported ? "La factura ya estaba ingresada; no se duplicó el stock." : `Factura ingresada. Stock actualizado${created ? ` y ${created} producto${created === 1 ? " nuevo creado" : "s nuevos creados"}` : ""}.`;
+      setMessage(`${successMessage}${refreshFailed ? " Los datos se guardaron, pero la pantalla no pudo actualizarse; vuelve a Inventario o recarga la app." : ""}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo ingresar la factura.");
     } finally {
@@ -228,7 +248,7 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
               <label><span>Código de barras</span><input inputMode="numeric" value={line.barcode} onChange={(event) => updateLine(line.clientItemId, { barcode: event.target.value })} placeholder="Opcional" /></label>
             </div>}
             <div className="invoice-number-fields">
-              <label><span>Cantidad recibida</span><input type="number" min="0.001" step="any" inputMode="decimal" value={line.quantity} onChange={(event) => updateLine(line.clientItemId, { quantity: event.target.value })} /></label>
+              <label><span>Cantidad recibida</span><input type="number" min="1" step="1" inputMode="numeric" value={line.quantity} onChange={(event) => updateLine(line.clientItemId, { quantity: event.target.value })} /></label>
               <label><span>Costo unitario</span><input type="number" min="0" step="any" inputMode="decimal" value={line.unitCost} onChange={(event) => updateLine(line.clientItemId, { unitCost: event.target.value })} /></label>
               <label className="sale-price-confirm"><span>Precio venta · confirma</span><input type="number" min="1" step="any" inputMode="decimal" value={line.salePrice} onChange={(event) => updateLine(line.clientItemId, { salePrice: event.target.value })} /></label>
               <div className="invoice-line-total"><span>Subtotal</span><strong>{money((Number(line.quantity) || 0) * (Number(line.unitCost) || 0))}</strong></div>
@@ -242,7 +262,7 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
       <div className="invoice-confirm-bar">
         <div><span>Compra a ingresar</span><strong>{money(draftTotal)}</strong><small>El stock aumenta solo después de confirmar.</small></div>
         <button className="secondary-action" type="button" disabled={busy} onClick={reset}><RotateCcw size={18} /> Otra foto</button>
-        <button className="primary-action" type="button" disabled={busy || !canConfirm} onClick={() => void confirmImport()}>{busy ? <LoaderCircle className="spin" size={19} /> : <CheckCircle2 size={19} />} Confirmar e ingresar</button>
+        <button className="primary-action" type="button" disabled={busy} aria-disabled={!canConfirm} onClick={() => void confirmImport()}>{busy ? <LoaderCircle className="spin" size={19} /> : <CheckCircle2 size={19} />} Confirmar e ingresar</button>
       </div>
     </>}
     {!analysis && <div className="invoice-privacy"><PackagePlus size={17} /><span>La foto se usa para extraer datos y no se guarda en Localito. La confirmación siempre es manual.</span></div>}

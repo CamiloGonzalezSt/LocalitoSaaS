@@ -619,4 +619,12 @@ test("invoice import rejects unsafe quantities and unconfirmed sale prices befor
     }),
     /cantidad|precio/i
   );
+  const normalized = normalizeInvoiceImportPayload({
+    clientImportId: "rounded-import",
+    supplierName: "Proveedor",
+    items: [{ clientItemId: "line-1", name: "Producto", category: "General", quantity: 2.2, unitCost: 100.6, salePrice: 151.7 }]
+  });
+  assert.equal(normalized.items[0].quantity, 2);
+  assert.equal(normalized.items[0].unitCost, 101);
+  assert.equal(normalized.items[0].salePrice, 152);
 });

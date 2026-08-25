@@ -23,6 +23,12 @@ function positiveNumber(value: unknown, label: string, allowZero = false) {
   return number;
 }
 
+function wholeNumber(value: unknown, label: string, allowZero = false) {
+  const rounded = Math.round(positiveNumber(value, label, allowZero));
+  if (!allowZero && rounded <= 0) throw new Error(`${label} es inválido.`);
+  return rounded;
+}
+
 function normalizedText(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es").replace(/[^a-z0-9]+/g, " ").trim();
 }
@@ -37,9 +43,9 @@ function normalizeItem(value: unknown, index: number): InvoiceImportItem {
     brand: optionalText(item.brand, 100),
     category: requiredText(item.category, `La categoría del producto ${index + 1}`, 100),
     barcode: optionalText(item.barcode, 80),
-    quantity: positiveNumber(item.quantity, `La cantidad del producto ${index + 1}`),
-    unitCost: positiveNumber(item.unitCost, `El costo del producto ${index + 1}`, true),
-    salePrice: positiveNumber(item.salePrice, `El precio de venta del producto ${index + 1}`)
+    quantity: wholeNumber(item.quantity, `La cantidad del producto ${index + 1}`),
+    unitCost: wholeNumber(item.unitCost, `El costo del producto ${index + 1}`, true),
+    salePrice: wholeNumber(item.salePrice, `El precio de venta del producto ${index + 1}`)
   };
 }
 
