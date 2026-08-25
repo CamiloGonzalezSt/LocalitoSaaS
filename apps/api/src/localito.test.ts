@@ -4,6 +4,7 @@ import { mergeQuickSaleTicket } from "@localito/shared";
 import { createSessionToken, createSignedSessionToken, hashPassword, hashSessionToken, passwordPolicyError, verifyPassword, verifySignedSessionToken } from "./auth.js";
 import { resolveTransactionalEmailProvider } from "./email.js";
 import { importInvoice, invoiceFingerprint, normalizeInvoiceImportPayload } from "./invoiceImport.js";
+import { describeHttpError } from "./httpError.js";
 import { bulkImportProducts, normalizeProductImportRow } from "./productImport.js";
 import {
   MemoryRepository,
@@ -14,6 +15,24 @@ import {
 import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 import { extractInvoiceImage, extractQuickSaleImage, normalizeInvoiceAnalysis, normalizeQuickSaleAnalysis } from "./vision.js";
 import { requestVisionJson, resolveVisionProvider } from "./visionProvider.js";
+
+test("expected domain errors do not leak as internal server failures", () => {
+  assert.deepEqual(describeHttpError(new Error("Producto no encontrado: missing")), {
+    status: 404,
+    publicMessage: "Producto no encontrado: missing",
+    shouldLog: false
+  });
+  assert.equal(describeHttpError(new Error("Proveedor no encontrado.")).status, 404);
+  assert.equal(describeHttpError(new Error("Stock insuficiente.")).status, 409);
+  assert.equal(describeHttpError(new Error("El identificador es obligatorio.")).status, 400);
+  assert.equal(describeHttpError(new Error("La importación no contiene productos.")).status, 400);
+  assert.equal(describeHttpError(new Error("Puedes importar un máximo de 500 productos.")).status, 400);
+  assert.equal(describeHttpError(new Error("El fiado de este cliente está bloqueado.")).status, 409);
+  assert.equal(describeHttpError(new Error("La venta supera el límite de crédito.")).status, 409);
+  assert.equal(describeHttpError(new Error("Venta Rápida no está configurada.")).status, 503);
+  assert.equal(describeHttpError(new Error("La IA no devolvió una venta estructurada.")).status, 502);
+  assert.equal(describeHttpError(new Error("Fallo inesperado")).status, 500);
+});
 
 test("production and Vercel require persistent storage", () => {
   assert.equal(requiresPersistentRepository({ NODE_ENV: "development" }), false);

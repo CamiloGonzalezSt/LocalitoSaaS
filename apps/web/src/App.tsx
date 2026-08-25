@@ -317,6 +317,10 @@ function removePasswordResetTokenFromUrl() {
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
+function suspendedCartStorageKey(tenantId: string) {
+  return `localito-suspended-cart:${tenantId}`;
+}
+
 function App() {
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -595,6 +599,18 @@ function App() {
     setSummary(emptySummary);
     setTicket([]);
     setLastReceipt(null);
+    setPaymentMethod("cash");
+    setSelectedCustomerId("");
+    setSearchTerm("");
+    setEditingProductId(null);
+    setEditingCustomerId(null);
+    setProductForm(emptyProductForm);
+    setCustomerForm(emptyCustomerForm);
+    setUserForm(emptyUserForm);
+    setPaymentAmounts({});
+    setCashClosureNote("");
+    setLastDebtCharge(null);
+    setIsMobileMenuOpen(false);
     setActiveView("dashboard");
     setNotice({ message: "Sesion cerrada. Puedes iniciar como dueno o vendedor.", tone: "success" });
   }
@@ -1320,12 +1336,29 @@ function App() {
             onCustomer={setSelectedCustomerId}
             onConfirm={(options) => void confirmSale(options)}
             onSuspend={() => {
-              localStorage.setItem("localito-suspended-cart", JSON.stringify(ticket));
+              if (!tenant) return;
+              localStorage.setItem(
+                suspendedCartStorageKey(tenant.id),
+                JSON.stringify(ticket.map((item) => ({ productId: item.productId, quantity: item.quantity })))
+              );
               setTicket([]);
               setNotice({ message: "Carrito guardado para retomarlo después.", tone: "success" });
             }}
             onRestore={() => {
-              try { setTicket(JSON.parse(localStorage.getItem("localito-suspended-cart") ?? "[]") as SaleItem[]); setNotice({ message: "Carrito recuperado.", tone: "success" }); } catch { setNotice({ message: "No se pudo recuperar el carrito.", tone: "error" }); }
+              if (!tenant) return;
+              try {
+                const stored = JSON.parse(localStorage.getItem(suspendedCartStorageKey(tenant.id)) ?? "[]") as Array<{ productId: string; quantity: number }>;
+                if (!Array.isArray(stored) || stored.length === 0) {
+                  setTicket([]);
+                  setNotice({ message: "No hay un carrito guardado para este local.", tone: "warning" });
+                  return;
+                }
+                const restored = mergeQuickSaleTicket(products, [], stored);
+                setTicket(restored.ticket);
+                setNotice({ message: "Carrito recuperado.", tone: "success" });
+              } catch {
+                setNotice({ message: "El carrito guardado ya no coincide con el inventario actual.", tone: "error" });
+              }
             }}
             onScan={() => setActiveView("scan")}
             lastReceipt={lastReceipt}
@@ -1830,6 +1863,7 @@ function SaleView({
   const [discount, setDiscount] = useState("");
   const [notes, setNotes] = useState("");
   const [cashPart, setCashPart] = useState("");
+  const visibleProducts = products.slice(0, 60);
   const discountedTotal = Math.max(0, ticketTotal - numberFromInput(discount));
   const cardPart = Math.max(0, discountedTotal - numberFromInput(cashPart));
 
@@ -1854,7 +1888,7 @@ function SaleView({
           <span>Venta Rápida con foto</span>
         </button>
         <div className="list product-list">
-          {products.map((product) => (
+          {visibleProducts.map((product) => (
             <button className="product-button" type="button" key={product.id} onClick={() => onAdd(product)}>
               <span className="product-thumb">
                 <img src={productImageUrl(product)} alt="" aria-hidden="true" />
@@ -1868,6 +1902,9 @@ function SaleView({
               <span className="product-price">{formatCLP(product.salePrice)}</span>
             </button>
           ))}
+          {products.length > visibleProducts.length && (
+            <p className="helper-text">Mostrando los primeros {visibleProducts.length} de {products.length}. Escribe el nombre, marca o código para encontrar otro producto.</p>
+          )}
         </div>
       </section>
 
@@ -2031,6 +2068,7 @@ function ProductsView({
   }, [products, searchTerm, selectedCategory]);
   const visibleLowStock = inventoryProducts.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock).length;
   const visibleStockValue = inventoryProducts.reduce((sum, product) => sum + product.stock * product.salePrice, 0);
+  const renderedInventoryProducts = inventoryProducts.slice(0, 60);
 
   useEffect(() => {
     if (selectedCategory !== "all" && !categoryOptions.some((category) => category.id === selectedCategory)) {
@@ -2138,7 +2176,7 @@ function ProductsView({
           </div>
         </div>
         <div className="list stock-list">
-          {inventoryProducts.map((product) => (
+          {renderedInventoryProducts.map((product) => (
             <ProductRow
               product={product}
               key={product.id}
@@ -2148,6 +2186,9 @@ function ProductsView({
               onDeactivate={onDeactivate}
             />
           ))}
+          {inventoryProducts.length > renderedInventoryProducts.length && (
+            <p className="helper-text">Mostrando los primeros {renderedInventoryProducts.length} de {inventoryProducts.length}. Usa las categorías o el buscador para llegar al producto que necesitas.</p>
+          )}
           {inventoryProducts.length === 0 && (
             <div className="inventory-empty-state">
               <Search size={22} />

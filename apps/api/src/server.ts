@@ -8,6 +8,7 @@ import { createRepository } from "./repository.js";
 import { createSessionToken, createSignedSessionToken, hashSessionToken, passwordPolicyError, verifySignedSessionToken } from "./auth.js";
 import { isTransactionalEmailConfigured, sendPasswordResetEmail } from "./email.js";
 import { importInvoice } from "./invoiceImport.js";
+import { describeHttpError } from "./httpError.js";
 import { bulkImportProducts } from "./productImport.js";
 import { extractInvoiceImage, extractQuickSaleImage, identifyProductImage, isInvoiceAiConfigured, isQuickSaleAiConfigured } from "./vision.js";
 
@@ -1080,54 +1081,9 @@ app.use((_req, res) => {
 });
 
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  const message = error instanceof Error ? error.message : "Error interno del servidor.";
-  const normalized = message.toLocaleLowerCase("es");
-  const databaseCode = typeof error === "object" && error && "code" in error ? String(error.code) : undefined;
-  const explicitStatus = typeof error === "object" && error && "status" in error ? Number(error.status) : undefined;
-  const status =
-    explicitStatus && [400, 413, 422, 429, 502, 503].includes(explicitStatus)
-      ? explicitStatus
-      : databaseCode === "23505"
-      ? 409
-      : databaseCode === "23503" || databaseCode === "22P02"
-        ? 400
-        : ["no se encontro", "no existe"].some((fragment) => normalized.includes(fragment))
-      ? 404
-      : ["no se detectaron", "respuesta vacía", "respuesta vacia"].some((fragment) => normalized.includes(fragment))
-        ? 422
-      : ["stock insuficiente", "cupo", "deuda pendiente", "caja ya", "caja cerrada", "ya fue", "ya está registrad", "ya esta registrad"].some((fragment) =>
-            normalized.includes(fragment)
-          )
-        ? 409
-        : [
-              "requerid",
-              "inval",
-              "incorrect",
-              "debe",
-              "cantidad",
-              "monto",
-              "no coincide",
-              "no permite",
-              "agotad",
-              "formato",
-              "demasiado pesada"
-            ].some((fragment) => normalized.includes(fragment))
-          ? 400
-          : 500;
-
-  if (status === 500) {
-    console.error(error);
-  }
-  const publicMessage = status === 413
-    ? explicitStatus === 413
-      ? message
-      : "La imagen es demasiado pesada. Usa una foto de menor resolución."
-    : databaseCode === "23505"
-      ? "Ya existe un registro con esos datos."
-      : status === 500
-        ? "Error interno del servidor."
-        : message;
-  res.status(status).json({ message: publicMessage });
+  const description = describeHttpError(error);
+  if (description.shouldLog) console.error(error);
+  res.status(description.status).json({ message: description.publicMessage });
 });
 
 if (process.env.VERCEL !== "1") {

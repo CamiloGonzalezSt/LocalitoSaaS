@@ -702,6 +702,15 @@ button:active:not(:disabled) {
   justify-content: space-between;
 }
 
+.user-list .row {
+  flex-wrap: wrap;
+}
+
+.user-list .row > div {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
 .selected-row {
   border-color: #93c5fd;
   background: #eff6ff;
