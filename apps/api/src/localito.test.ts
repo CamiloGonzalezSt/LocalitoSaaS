@@ -50,6 +50,19 @@ test("vision provider explains the free quota retry time", async () => {
   }
 });
 
+test("vision provider distinguishes its payload limit from a browser upload limit", async () => {
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: "request too large" } }), { status: 413, headers: { "Content-Type": "application/json" } });
+  try {
+    await assert.rejects(requestVisionJson({
+      provider: { name: "groq", apiKey: "test", endpoint: "https://example.test", model: "test" },
+      imageDataUrl: "data:image/jpeg;base64,AAAA", systemPrompt: "test", userPrompt: "test", schemaName: "test", schema: {}, maxOutputTokens: 10, timeoutMs: 1_000, operationLabel: "Prueba"
+    }), /foto o el catálogo superan el límite gratuito del proveedor/i);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test("PostgreSQL demo seeds use stable UUIDs", () => {
   const first = persistentDemoId("prod-coca-15");
   assert.equal(first, persistentDemoId("prod-coca-15"));

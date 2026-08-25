@@ -1116,7 +1116,15 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   if (status === 500) {
     console.error(error);
   }
-  const publicMessage = status === 413 ? "La imagen es demasiado pesada. Usa una foto de menor resolución." : databaseCode === "23505" ? "Ya existe un registro con esos datos." : status === 500 ? "Error interno del servidor." : message;
+  const publicMessage = status === 413
+    ? explicitStatus === 413
+      ? message
+      : "La imagen es demasiado pesada. Usa una foto de menor resolución."
+    : databaseCode === "23505"
+      ? "Ya existe un registro con esos datos."
+      : status === 500
+        ? "Error interno del servidor."
+        : message;
   res.status(status).json({ message: publicMessage });
 });
 
