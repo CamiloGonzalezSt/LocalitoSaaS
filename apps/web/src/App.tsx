@@ -141,9 +141,9 @@ const navItems: NavItem[] = [
 
 const paymentOptions: Array<{ id: PaymentMethod; label: string; icon: LucideIcon }> = [
   { id: "cash", label: "Efectivo", icon: Banknote },
-  { id: "card", label: "Tarjeta", icon: CreditCard },
-  { id: "transfer", label: "Transferencia", icon: Smartphone },
-  { id: "webpay", label: "Webpay", icon: WalletCards },
+  { id: "card", label: "Tarjeta · terminal externo", icon: CreditCard },
+  { id: "transfer", label: "Transferencia / QR externo", icon: Smartphone },
+  { id: "webpay", label: "Webpay · externo", icon: WalletCards },
   { id: "credit", label: "Fiado", icon: ReceiptText },
   { id: "mixed", label: "Mixto", icon: CreditCard }
 ];
@@ -255,9 +255,9 @@ function productImageUrl(product: Product) {
 function paymentMethodLabel(method: PaymentMethod) {
   const labels: Record<PaymentMethod, string> = {
     cash: "Efectivo",
-    card: "Tarjeta",
-    transfer: "Transferencia",
-  webpay: "Webpay",
+    card: "Tarjeta · terminal externo",
+    transfer: "Transferencia / QR externo",
+  webpay: "Webpay · externo",
   credit: "Fiado",
   mixed: "Pago mixto"
   };
@@ -676,15 +676,13 @@ function App() {
       });
       setLastReceipt(saleResponse.data);
 
-      if (paymentMethod === "webpay") {
-        const webpay = await api.createWebpayPayment(saleResponse.data.total, undefined, saleResponse.data.id);
-        setNotice({
-          message: `Venta registrada. Link Webpay demo: ${webpay.data.redirectUrl}`,
-          tone: "success"
-        });
-      } else {
-        setNotice({ message: `Venta registrada por ${formatCLP(saleResponse.data.total)}.`, tone: "success" });
-      }
+      const externalPayment = paymentMethod === "card" || paymentMethod === "transfer" || paymentMethod === "webpay";
+      setNotice({
+        message: externalPayment
+          ? `Venta registrada por ${formatCLP(saleResponse.data.total)}. Confirma el pago en el terminal o aplicación externa.`
+          : `Venta registrada por ${formatCLP(saleResponse.data.total)}.`,
+        tone: "success"
+      });
 
       setTicket([]);
       await loadWorkspace();
