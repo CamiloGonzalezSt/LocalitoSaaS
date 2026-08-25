@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import pg from "pg";
 import type {
   AuditEvent,
@@ -33,8 +32,7 @@ import {
   buildDemoProducts,
   buildDemoSuppliers,
   buildDemoUsers,
-  demoTenantSeeds,
-  previousDemoUserEmails
+  demoTenantSeeds
 } from "./demoData.js";
 import {
   demoOwnerId,
@@ -165,10 +163,48 @@ export type PurchaseCreationPayload = {
   items: Array<{ productId: string; quantity: number; unitCost: number }>;
 };
 
+type RepositoryEnvironment = Partial<
+  Pick<NodeJS.ProcessEnv, "DATABASE_URL" | "POSTGRES_URL" | "SUPABASE_DB_URL" | "NODE_ENV" | "VERCEL">
+>;
+
+export function resolveDatabaseUrl(environment: RepositoryEnvironment = process.env) {
+  return [environment.DATABASE_URL, environment.POSTGRES_URL, environment.SUPABASE_DB_URL]
+    .find((value) => typeof value === "string" && value.trim().length > 0)
+    ?.trim();
+}
+
+export function requiresPersistentRepository(environment: RepositoryEnvironment = process.env) {
+  return environment.NODE_ENV === "production" || environment.VERCEL === "1";
+}
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Convierte los identificadores legibles de las semillas en UUID estables para PostgreSQL. */
+export function persistentDemoId(sourceId: string) {
+  if (uuidPattern.test(sourceId)) return sourceId;
+  const hash = createHash("sha256").update(`localito-demo:${sourceId}`).digest("hex");
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-5${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
+}
+
+export function shouldSeedDemoData(existingNonSystemTenants: number) {
+  return existingNonSystemTenants === 0;
+}
+
+function persistentRepositoryError(reason: string, cause?: unknown) {
+  return new Error(
+    `[localito-api] PostgreSQL es obligatorio en producción. ${reason} Configure DATABASE_URL (o POSTGRES_URL/SUPABASE_DB_URL) con una conexión PostgreSQL persistente.`,
+    cause === undefined ? undefined : { cause }
+  );
+}
+
 export async function createRepository() {
-  const databaseUrl = process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.SUPABASE_DB_URL;
+  const databaseUrl = resolveDatabaseUrl();
+  const persistenceRequired = requiresPersistentRepository();
 
   if (!databaseUrl) {
+    if (persistenceRequired) {
+      throw persistentRepositoryError("No se encontró una URL de base de datos.");
+    }
     return new MemoryRepository();
   }
 
@@ -189,6 +225,12 @@ export async function createRepository() {
     return repository;
   } catch (error) {
     await pool.end().catch(() => undefined);
+    if (persistenceRequired) {
+      throw persistentRepositoryError(
+        `No fue posible conectar o inicializar la base de datos: ${error instanceof Error ? error.message : "error desconocido"}.`,
+        error
+      );
+    }
     console.warn(
       `[localito-api] PostgreSQL no disponible, usando memoria. Motivo: ${
         error instanceof Error ? error.message : "error desconocido"
@@ -1048,8 +1090,9 @@ class PostgresRepository implements DataRepository {
   constructor(private readonly pool: pg.Pool) {}
 
   async init() {
-    const schemaPath = join(process.cwd(), "db", "schema.sql");
-    const schema = readFileSync(schemaPath, "utf8");
+    // La URL literal permite que el empaquetador serverless incluya el esquema
+    // junto a la función, independientemente de su directorio de ejecución.
+    const schema = readFileSync(new URL("../../../db/schema.sql", import.meta.url), "utf8");
     await this.pool.query(schema);
     await this.seedDemoData();
     await this.ensureSystemAdmin();
@@ -2257,8 +2300,13 @@ class PostgresRepository implements DataRepository {
   }
 
   private async seedDemoData() {
+    const tenantCount = await this.pool.query(
+      `select count(*)::int as count from negocios where id <> $1`,
+      [systemTenantId]
+    );
+    if (!shouldSeedDemoData(Number(tenantCount.rows[0]?.count ?? 0))) return;
+
     const demoUsers = buildDemoUsers();
-    const demoUserIds = demoUsers.map((user) => user.id);
     const client = await this.pool.connect();
 
     try {
@@ -2268,13 +2316,7 @@ class PostgresRepository implements DataRepository {
         await client.query(
           `insert into negocios (id, nombre, rubro, direccion, telefono, email_contacto, estado)
            values ($1, $2, $3, $4, $5, $6, 'activo')
-           on conflict (id) do update
-           set nombre = excluded.nombre,
-               rubro = excluded.rubro,
-               direccion = excluded.direccion,
-               telefono = excluded.telefono,
-               email_contacto = excluded.email_contacto,
-               estado = 'activo'`,
+           on conflict (id) do nothing`,
           [tenant.id, tenant.name, tenant.businessType, tenant.address, tenant.phone, tenant.emailContact]
         );
       }
@@ -2286,38 +2328,17 @@ class PostgresRepository implements DataRepository {
         await client.query(
           `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
            values ($1, $2, $3, $4, $5, $6, 'activo')
-           on conflict (id) do update
-           set negocio_id = excluded.negocio_id,
-               nombre = excluded.nombre,
-               email = excluded.email,
-               password_hash = excluded.password_hash,
-               rol = excluded.rol,
-               estado = 'activo'`,
+           on conflict (id) do nothing`,
           [user.id, user.tenantId, user.name, user.email, hashPassword(password), user.role]
         );
       }
-
-      await client.query(
-        `update usuarios
-         set estado = 'inactivo'
-         where lower(email) = any($1::text[])
-           and not (id = any($2::uuid[]))`,
-        [previousDemoUserEmails.map((email) => email.toLowerCase()), demoUserIds]
-      );
 
       for (const supplier of buildDemoSuppliers()) {
         await client.query(
           `insert into proveedores (id, negocio_id, nombre, nombre_contacto, telefono, email, observacion, activo)
            values ($1, $2, $3, $4, $5, $6, $7, true)
-           on conflict (id) do update
-           set negocio_id = excluded.negocio_id,
-               nombre = excluded.nombre,
-               nombre_contacto = excluded.nombre_contacto,
-               telefono = excluded.telefono,
-               email = excluded.email,
-               observacion = excluded.observacion,
-               activo = true`,
-          [supplier.id, supplier.tenantId, supplier.name, supplier.contactName, supplier.phone, supplier.email, supplier.notes]
+           on conflict (id) do nothing`,
+          [persistentDemoId(supplier.id), supplier.tenantId, supplier.name, supplier.contactName, supplier.phone, supplier.email, supplier.notes]
         );
       }
 
@@ -2328,27 +2349,9 @@ class PostgresRepository implements DataRepository {
             precio_costo, precio_venta, stock_actual, stock_minimo, imagen_url, activo,
             sku, variante, unidad, unidades_por_pack, proveedor_id, fecha_vencimiento, controla_stock
           ) values ($1, $2, $3, $4, null, $5, $6, $7, $8, $9, $10, $11, true, $12, $13, $14, $15, $16, $17, $18)
-          on conflict (id) do update
-          set negocio_id = excluded.negocio_id,
-              nombre = excluded.nombre,
-              marca = excluded.marca,
-              descripcion = excluded.descripcion,
-              codigo_barras = excluded.codigo_barras,
-              precio_costo = excluded.precio_costo,
-              precio_venta = excluded.precio_venta,
-              stock_actual = excluded.stock_actual,
-              stock_minimo = excluded.stock_minimo,
-              imagen_url = excluded.imagen_url,
-              activo = true,
-              sku = excluded.sku,
-              variante = excluded.variante,
-              unidad = excluded.unidad,
-              unidades_por_pack = excluded.unidades_por_pack,
-              proveedor_id = excluded.proveedor_id,
-              fecha_vencimiento = excluded.fecha_vencimiento,
-              controla_stock = excluded.controla_stock`,
+          on conflict (id) do nothing`,
           [
-            product.id,
+            persistentDemoId(product.id),
             product.tenantId,
             product.name,
             product.brand,
@@ -2363,7 +2366,7 @@ class PostgresRepository implements DataRepository {
             product.variant,
             product.unit ?? "unit",
             product.unitsPerPack ?? 1,
-            product.supplierId,
+            product.supplierId ? persistentDemoId(product.supplierId) : undefined,
             product.expiryDate,
             product.trackStock ?? true
           ]
@@ -2374,19 +2377,9 @@ class PostgresRepository implements DataRepository {
         await client.query(
           `insert into clientes (id, negocio_id, nombre, telefono, email, direccion, observacion, limite_credito, dias_credito, credito_bloqueado, activo)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
-           on conflict (id) do update
-           set negocio_id = excluded.negocio_id,
-               nombre = excluded.nombre,
-               telefono = excluded.telefono,
-               email = excluded.email,
-               direccion = excluded.direccion,
-               observacion = excluded.observacion,
-               limite_credito = excluded.limite_credito,
-               dias_credito = excluded.dias_credito,
-               credito_bloqueado = excluded.credito_bloqueado,
-               activo = true`,
+           on conflict (id) do nothing`,
           [
-            customer.id,
+            persistentDemoId(customer.id),
             customer.tenantId,
             customer.name,
             customer.phone,
@@ -2404,14 +2397,8 @@ class PostgresRepository implements DataRepository {
         await client.query(
           `insert into cuentas_fiado (id, negocio_id, cliente_id, venta_id, monto_original, saldo_pendiente, estado, fecha_vencimiento)
            values ($1, $2, $3, null, $4, $5, $6, $7)
-           on conflict (id) do update
-           set negocio_id = excluded.negocio_id,
-               cliente_id = excluded.cliente_id,
-               monto_original = excluded.monto_original,
-               saldo_pendiente = excluded.saldo_pendiente,
-               estado = excluded.estado,
-               fecha_vencimiento = excluded.fecha_vencimiento`,
-          [debt.id, debt.tenantId, debt.customerId, debt.originalAmount, debt.balance, debt.status === "overdue" ? "pendiente" : debt.status, debt.dueDate]
+           on conflict (id) do nothing`,
+          [persistentDemoId(debt.id), debt.tenantId, persistentDemoId(debt.customerId), debt.originalAmount, debt.balance, debt.status === "overdue" ? "pendiente" : debt.status, debt.dueDate]
         );
       }
 

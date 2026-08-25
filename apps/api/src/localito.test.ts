@@ -5,9 +5,40 @@ import { createSessionToken, createSignedSessionToken, hashPassword, hashSession
 import { resolveTransactionalEmailProvider } from "./email.js";
 import { importInvoice, invoiceFingerprint, normalizeInvoiceImportPayload } from "./invoiceImport.js";
 import { bulkImportProducts, normalizeProductImportRow } from "./productImport.js";
-import { MemoryRepository } from "./repository.js";
+import {
+  MemoryRepository,
+  persistentDemoId,
+  requiresPersistentRepository,
+  resolveDatabaseUrl,
+  shouldSeedDemoData
+} from "./repository.js";
 import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 import { extractInvoiceImage, extractQuickSaleImage, normalizeInvoiceAnalysis, normalizeQuickSaleAnalysis } from "./vision.js";
+
+test("production and Vercel require persistent storage", () => {
+  assert.equal(requiresPersistentRepository({ NODE_ENV: "development" }), false);
+  assert.equal(requiresPersistentRepository({ NODE_ENV: "production" }), true);
+  assert.equal(requiresPersistentRepository({ VERCEL: "1" }), true);
+});
+
+test("database URL resolution ignores blank values and supports Vercel aliases", () => {
+  assert.equal(
+    resolveDatabaseUrl({ DATABASE_URL: "  ", POSTGRES_URL: " postgres://pooler/localito " }),
+    "postgres://pooler/localito"
+  );
+  assert.equal(resolveDatabaseUrl({ SUPABASE_DB_URL: "postgres://supabase/localito" }), "postgres://supabase/localito");
+  assert.equal(resolveDatabaseUrl({}), undefined);
+});
+
+test("PostgreSQL demo seeds use stable UUIDs and never reseed an existing tenant", () => {
+  const first = persistentDemoId("prod-coca-15");
+  assert.equal(first, persistentDemoId("prod-coca-15"));
+  assert.notEqual(first, persistentDemoId("prod-arroz"));
+  assert.match(first, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.equal(persistentDemoId(demoTenantId), demoTenantId);
+  assert.equal(shouldSeedDemoData(0), true);
+  assert.equal(shouldSeedDemoData(1), false);
+});
 
 test("passwords and sessions use non-predictable hashes", () => {
   const hash = hashPassword("ClaveSegura2026");
@@ -368,6 +399,53 @@ test("quick sale vision uses strict structured output, catalog context and provi
     assert.match(input, /catalog-cola/);
     assert.match(input, /No inventes productos/i);
     assert.doesNotMatch(input, /"salePrice"|"stock"/);
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousKey == null) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
+});
+
+test("quick sale reads a product created immediately before the analysis from the current tenant catalog", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const registered = await repository.registerTenant({
+    name: "Dueña catálogo dinámico",
+    email: `catalogo-${suffix}@localito.test`,
+    password: "CatalogoSeguro2026",
+    businessName: `Almacén catálogo ${suffix}`,
+    businessType: "Almacén"
+  });
+  const created = await repository.createProduct(registered.tenant.id, {
+    name: "Galletas recién agregadas 120 g",
+    brand: "Marca Nueva",
+    category: "Snacks",
+    barcode: "7809999999991",
+    salePrice: 990,
+    stock: 12
+  });
+  const currentCatalog = await repository.getProducts(registered.tenant.id);
+  const previousKey = process.env.OPENAI_API_KEY;
+  const previousFetch = globalThis.fetch;
+  let providerInput = "";
+  process.env.OPENAI_API_KEY = "test-only-key";
+  globalThis.fetch = async (_input, init) => {
+    const request = JSON.parse(String(init?.body)) as { input?: unknown };
+    providerInput = JSON.stringify(request.input);
+    return new Response(JSON.stringify({
+      output_text: JSON.stringify({
+        items: [{ observedLabel: "Galletas Marca Nueva", matchedProductId: created.id, candidateProductIds: [created.id], quantity: 1, confidence: 0.96 }],
+        warnings: []
+      })
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+
+  try {
+    const result = await extractQuickSaleImage("data:image/jpeg;base64,AAAA", currentCatalog);
+    assert.match(providerInput, new RegExp(created.id));
+    assert.match(providerInput, /Galletas recién agregadas 120 g/);
+    assert.equal(result.items[0]?.productId, created.id);
+    assert.equal(result.items[0]?.salePrice, 990);
   } finally {
     globalThis.fetch = previousFetch;
     if (previousKey == null) delete process.env.OPENAI_API_KEY;

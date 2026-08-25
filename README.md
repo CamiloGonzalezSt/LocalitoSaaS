@@ -53,7 +53,7 @@ npm run dev:web
 
 Abrir `http://localhost:5173`. La API escucha por defecto en `http://localhost:3000` y su estado se consulta en `http://localhost:3000/health`.
 
-La API ejecuta [db/schema.sql](db/schema.sql) al conectarse a PostgreSQL. Si PostgreSQL no responde, continúa en modo `memory`; ese modo no conserva información después de reiniciar el proceso.
+La API ejecuta [db/schema.sql](db/schema.sql) al conectarse a PostgreSQL. El modo `memory` se permite solamente durante desarrollo sin una base configurada. En producción o Vercel, una URL ausente o una inicialización fallida detiene el backend: nunca se aceptan ventas o productos que puedan desaparecer al reiniciar la función.
 
 ## Variables de entorno
 
@@ -81,6 +81,8 @@ OPENAI_VISION_MODEL=gpt-5.6
 `OPENAI_API_KEY` es opcional y habilita tanto el reconocimiento de envases como la lectura de facturas. Las imágenes se reducen en el navegador, se procesan sin guardarlas en Localito y el backend pide una respuesta con esquema estricto, validándola nuevamente antes de escribir inventario. La clave nunca debe exponerse en el frontend ni subirse al repositorio.
 
 `SESSION_SECRET` firma las sesiones del modo demostración serverless. En Vercel, configure además `DATABASE_URL` (o `POSTGRES_URL` mediante la integración de Supabase) para que registros, ventas y cambios sobrevivan entre invocaciones. Use la URL del **Transaction pooler** de Supabase para funciones serverless.
+
+Los datos demo se insertan únicamente cuando PostgreSQL no contiene ningún negocio operativo. Sus identificadores legibles se convierten en UUID estables y los conflictos nunca sobrescriben precios, stock, contraseñas ni datos modificados por el usuario durante un cold start.
 
 `PLATFORM_ADMIN_PASSWORD` es obligatoria para crear inicialmente el administrador en producción. Una vez creada la cuenta, su clave se cambia mediante recuperación por correo; modificar esta variable no sobrescribe la contraseña existente. Nunca publique la clave en el frontend ni en el repositorio.
 
