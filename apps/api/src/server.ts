@@ -28,6 +28,7 @@ const passwordResetRequests = new Map<string, { count: number; resetAt: number }
 const passwordResetConfirmations = new Map<string, { count: number; resetAt: number }>();
 const invoiceAiRequests = new Map<string, { count: number; resetAt: number }>();
 const quickSaleAiRequests = new Map<string, { count: number; resetAt: number }>();
+const quickSaleAiHourlyLimit = 40;
 const passwordResetDurationMs = 30 * 60 * 1000;
 
 app.set("trust proxy", 1);
@@ -147,12 +148,13 @@ function consumeQuickSaleAiRequest(userId: string) {
   const now = Date.now();
   const current = quickSaleAiRequests.get(userId);
   if (!current || current.resetAt <= now) {
-    quickSaleAiRequests.set(userId, { count: 1, resetAt: now + 60 * 60_000 });
-    return true;
+    const fresh = { count: 1, resetAt: now + 60 * 60_000 };
+    quickSaleAiRequests.set(userId, fresh);
+    return { allowed: true, remaining: quickSaleAiHourlyLimit - 1, resetAt: fresh.resetAt };
   }
-  if (current.count >= 40) return false;
+  if (current.count >= quickSaleAiHourlyLimit) return { allowed: false, remaining: 0, resetAt: current.resetAt };
   current.count += 1;
-  return true;
+  return { allowed: true, remaining: quickSaleAiHourlyLimit - current.count, resetAt: current.resetAt };
 }
 
 function rateLimitPasswordReset(
@@ -790,8 +792,14 @@ app.post(
       res.status(400).json({ message: "Debes adjuntar una foto de los productos." });
       return;
     }
-    if (!consumeQuickSaleAiRequest(actor.id)) {
-      res.status(429).json({ message: "Alcanzaste el límite de 40 análisis por hora. Intenta nuevamente más tarde." });
+    const quota = consumeQuickSaleAiRequest(actor.id);
+    res.setHeader("X-RateLimit-Limit", String(quickSaleAiHourlyLimit));
+    res.setHeader("X-RateLimit-Remaining", String(quota.remaining));
+    res.setHeader("X-RateLimit-Reset", String(Math.ceil(quota.resetAt / 1000)));
+    if (!quota.allowed) {
+      const waitMinutes = Math.max(1, Math.ceil((quota.resetAt - Date.now()) / 60_000));
+      res.setHeader("Retry-After", String(Math.max(1, Math.ceil((quota.resetAt - Date.now()) / 1000))));
+      res.status(429).json({ message: `Alcanzaste el límite de ${quickSaleAiHourlyLimit} análisis por hora. Podrás volver a probar en aproximadamente ${waitMinutes} minutos.` });
       return;
     }
     const products = await repository.getProducts(actor.tenantId);

@@ -13,7 +13,7 @@ import {
 } from "./repository.js";
 import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 import { extractInvoiceImage, extractQuickSaleImage, normalizeInvoiceAnalysis, normalizeQuickSaleAnalysis } from "./vision.js";
-import { resolveVisionProvider } from "./visionProvider.js";
+import { requestVisionJson, resolveVisionProvider } from "./visionProvider.js";
 
 test("production and Vercel require persistent storage", () => {
   assert.equal(requiresPersistentRepository({ NODE_ENV: "development" }), false);
@@ -35,6 +35,19 @@ test("vision provider prefers Groq and supports an explicit OpenAI fallback", ()
   assert.equal(resolveVisionProvider({ GROQ_API_KEY: "groq-test" })?.model, "qwen/qwen3.6-27b");
   assert.equal(resolveVisionProvider({ VISION_PROVIDER: "openai", OPENAI_API_KEY: "openai-test" })?.name, "openai");
   assert.equal(resolveVisionProvider({ VISION_PROVIDER: "groq", OPENAI_API_KEY: "openai-test" }), null);
+});
+
+test("vision provider explains the free quota retry time", async () => {
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: "rate limit" } }), { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "45" } });
+  try {
+    await assert.rejects(requestVisionJson({
+      provider: { name: "groq", apiKey: "test", endpoint: "https://example.test", model: "test" },
+      imageDataUrl: "data:image/jpeg;base64,AAAA", systemPrompt: "test", userPrompt: "test", schemaName: "test", schema: {}, maxOutputTokens: 10, timeoutMs: 1_000, operationLabel: "Prueba"
+    }), /45 segundos/);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
 });
 
 test("PostgreSQL demo seeds use stable UUIDs", () => {

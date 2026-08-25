@@ -29,6 +29,13 @@ function publicProviderError(message: string, status: number) {
   return Object.assign(new Error(message), { status });
 }
 
+function providerRetryMessage(response: Response) {
+  const retryAfter = Number(response.headers.get("retry-after"));
+  if (!Number.isFinite(retryAfter) || retryAfter <= 0) return "Intenta nuevamente en uno o dos minutos.";
+  const seconds = Math.max(1, Math.ceil(retryAfter));
+  return seconds < 60 ? `Intenta nuevamente en unos ${seconds} segundos.` : `Intenta nuevamente en aproximadamente ${Math.ceil(seconds / 60)} minutos.`;
+}
+
 async function providerErrorDetail(response: Response) {
   try {
     const payload = await response.json() as { error?: { message?: unknown } };
@@ -137,7 +144,7 @@ export async function requestVisionJson(request: VisionJsonRequest): Promise<unk
 
   if (!response.ok) {
     const detail = await providerErrorDetail(response);
-    if (response.status === 429) throw publicProviderError("La cuota gratuita de reconocimiento está temporalmente agotada. Intenta nuevamente más tarde.", 429);
+    if (response.status === 429) throw publicProviderError(`La cuota gratuita de reconocimiento está temporalmente agotada. ${providerRetryMessage(response)}`, 429);
     if (response.status === 401 || response.status === 403) throw publicProviderError("La credencial del servicio de reconocimiento no es válida o no tiene acceso al modelo.", 503);
     if (response.status === 413) throw publicProviderError("La foto o el catálogo superan el límite gratuito del proveedor. Intenta con una foto más simple o menos productos visibles.", 413);
     const suffix = detail ? ` ${detail}` : "";
