@@ -25,6 +25,20 @@ type ProviderPayload = {
   choices?: Array<{ message?: { content?: string | Array<{ type?: string; text?: string }> } }>;
 };
 
+function publicProviderError(message: string, status: number) {
+  return Object.assign(new Error(message), { status });
+}
+
+async function providerErrorDetail(response: Response) {
+  try {
+    const payload = await response.json() as { error?: { message?: unknown } };
+    const message = payload.error?.message;
+    return typeof message === "string" ? message.replace(/\s+/g, " ").trim().slice(0, 240) : "";
+  } catch {
+    return "";
+  }
+}
+
 export function resolveVisionProvider(environment: Environment = process.env): VisionProvider | null {
   const requested = environment.VISION_PROVIDER?.trim().toLowerCase();
   const groqKey = environment.GROQ_API_KEY?.trim();
@@ -122,10 +136,12 @@ export async function requestVisionJson(request: VisionJsonRequest): Promise<unk
   });
 
   if (!response.ok) {
-    if (response.status === 429) throw new Error("La cuota gratuita de reconocimiento está temporalmente agotada. Intenta nuevamente más tarde.");
-    if (response.status === 401 || response.status === 403) throw new Error("La credencial del servicio de reconocimiento no es válida o no tiene acceso al modelo.");
-    if (response.status === 413) throw new Error("La foto o el catálogo superan el límite gratuito del proveedor. Intenta con una foto más simple o menos productos visibles.");
-    throw new Error(`${request.operationLabel} respondió ${response.status}.`);
+    const detail = await providerErrorDetail(response);
+    if (response.status === 429) throw publicProviderError("La cuota gratuita de reconocimiento está temporalmente agotada. Intenta nuevamente más tarde.", 429);
+    if (response.status === 401 || response.status === 403) throw publicProviderError("La credencial del servicio de reconocimiento no es válida o no tiene acceso al modelo.", 503);
+    if (response.status === 413) throw publicProviderError("La foto o el catálogo superan el límite gratuito del proveedor. Intenta con una foto más simple o menos productos visibles.", 413);
+    const suffix = detail ? ` ${detail}` : "";
+    throw publicProviderError(`${request.operationLabel} rechazó la solicitud.${suffix}`, 502);
   }
 
   const payload = await response.json() as ProviderPayload;
