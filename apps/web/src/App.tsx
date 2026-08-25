@@ -214,20 +214,18 @@ const emptyCashRegister: CashRegisterSummary = {
   }
 };
 
-const demoCredentials = import.meta.env.DEV
-  ? [
-      {
-        label: "Dueño demo",
-        email: String(import.meta.env.VITE_DEMO_OWNER_EMAIL ?? ""),
-        password: String(import.meta.env.VITE_DEMO_OWNER_PASSWORD ?? "")
-      },
-      {
-        label: "Vendedor demo",
-        email: String(import.meta.env.VITE_DEMO_SELLER_EMAIL ?? ""),
-        password: String(import.meta.env.VITE_DEMO_SELLER_PASSWORD ?? "")
-      }
-    ].filter((credential) => credential.email && credential.password)
-  : [];
+const demoCredentials = [
+  {
+    label: "Dueño Don Pepe",
+    email: String(import.meta.env.VITE_DEMO_OWNER_EMAIL ?? "donpepe@localito.demo"),
+    password: String(import.meta.env.VITE_DEMO_OWNER_PASSWORD ?? "Duoc2026")
+  },
+  {
+    label: "Vendedor Don Pepe",
+    email: String(import.meta.env.VITE_DEMO_SELLER_EMAIL ?? "donpepe+vendedor@localito.demo"),
+    password: String(import.meta.env.VITE_DEMO_SELLER_PASSWORD ?? "Duoc2026V")
+  }
+].filter((credential) => credential.email && credential.password);
 const showDemoCredentials = demoCredentials.length > 0;
 
 function formatCLP(value: number) {
@@ -1654,7 +1652,11 @@ function LoginView({
               onClick={() => onForm({ email: credential.email, password: credential.password })}
             >
               <Users size={18} />
-              <span>{credential.label}</span>
+              <span className="quick-login-copy">
+                <strong>{credential.label}</strong>
+                <small>{credential.email}</small>
+                <small>Clave: {credential.password}</small>
+              </span>
             </button>
           ))}
         </div>}

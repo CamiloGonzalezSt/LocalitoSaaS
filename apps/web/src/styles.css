@@ -145,6 +145,31 @@ button:active:not(:disabled) {
   gap: 10px;
 }
 
+.quick-login .secondary-action {
+  align-items: flex-start;
+  min-width: 0;
+  text-align: left;
+}
+
+.quick-login-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.quick-login-copy small {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .quick-login {
+    grid-template-columns: 1fr;
+  }
+}
+
 .topbar {
   position: sticky;
   top: 0;

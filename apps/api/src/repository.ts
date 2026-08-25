@@ -186,10 +186,6 @@ export function persistentDemoId(sourceId: string) {
   return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-5${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
 }
 
-export function shouldSeedDemoData(existingNonSystemTenants: number) {
-  return existingNonSystemTenants === 0;
-}
-
 function persistentRepositoryError(reason: string, cause?: unknown) {
   return new Error(
     `[localito-api] PostgreSQL es obligatorio en producción. ${reason} Configure DATABASE_URL (o POSTGRES_URL/SUPABASE_DB_URL) con una conexión PostgreSQL persistente.`,
@@ -2300,13 +2296,6 @@ class PostgresRepository implements DataRepository {
   }
 
   private async seedDemoData() {
-    const tenantCount = await this.pool.query(
-      `select count(*)::int as count from negocios where id <> $1`,
-      [systemTenantId]
-    );
-    if (!shouldSeedDemoData(Number(tenantCount.rows[0]?.count ?? 0))) return;
-
-    const demoUsers = buildDemoUsers();
     const client = await this.pool.connect();
 
     try {
@@ -2319,87 +2308,66 @@ class PostgresRepository implements DataRepository {
            on conflict (id) do nothing`,
           [tenant.id, tenant.name, tenant.businessType, tenant.address, tenant.phone, tenant.emailContact]
         );
-      }
+        for (const user of buildDemoUsers(tenant.id)) {
+          const password = user.role === "seller"
+            ? process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V"
+            : process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026";
+          await client.query(
+            `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
+             values ($1, $2, $3, $4, $5, $6, 'activo')
+             on conflict (id) do nothing`,
+            [user.id, user.tenantId, user.name, user.email, hashPassword(password), user.role]
+          );
+        }
 
-      for (const user of demoUsers) {
-        const password = user.role === "seller"
-          ? process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V"
-          : process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026";
-        await client.query(
-          `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
-           values ($1, $2, $3, $4, $5, $6, 'activo')
-           on conflict (id) do nothing`,
-          [user.id, user.tenantId, user.name, user.email, hashPassword(password), user.role]
-        );
-      }
+        for (const supplier of buildDemoSuppliers(tenant.id)) {
+          await client.query(
+            `insert into proveedores (id, negocio_id, nombre, nombre_contacto, telefono, email, observacion, activo)
+             values ($1, $2, $3, $4, $5, $6, $7, true)
+             on conflict (id) do nothing`,
+            [persistentDemoId(supplier.id), supplier.tenantId, supplier.name, supplier.contactName, supplier.phone, supplier.email, supplier.notes]
+          );
+        }
 
-      for (const supplier of buildDemoSuppliers()) {
-        await client.query(
-          `insert into proveedores (id, negocio_id, nombre, nombre_contacto, telefono, email, observacion, activo)
-           values ($1, $2, $3, $4, $5, $6, $7, true)
-           on conflict (id) do nothing`,
-          [persistentDemoId(supplier.id), supplier.tenantId, supplier.name, supplier.contactName, supplier.phone, supplier.email, supplier.notes]
-        );
-      }
+        for (const product of buildDemoProducts(tenant.id)) {
+          await client.query(
+            `insert into productos (
+              id, negocio_id, nombre, marca, categoria_id, descripcion, codigo_barras,
+              precio_costo, precio_venta, stock_actual, stock_minimo, imagen_url, activo,
+              sku, variante, unidad, unidades_por_pack, proveedor_id, fecha_vencimiento, controla_stock
+            ) values ($1, $2, $3, $4, null, $5, $6, $7, $8, $9, $10, $11, true, $12, $13, $14, $15, $16, $17, $18)
+            on conflict (id) do nothing`,
+            [
+              persistentDemoId(product.id), product.tenantId, product.name, product.brand, product.category,
+              product.barcode, product.costPrice, product.salePrice, product.stock, product.minimumStock,
+              product.imageUrl, product.sku, product.variant, product.unit ?? "unit", product.unitsPerPack ?? 1,
+              product.supplierId ? persistentDemoId(product.supplierId) : undefined,
+              product.expiryDate, product.trackStock ?? true
+            ]
+          );
+        }
 
-      for (const product of buildDemoProducts()) {
-        await client.query(
-          `insert into productos (
-            id, negocio_id, nombre, marca, categoria_id, descripcion, codigo_barras,
-            precio_costo, precio_venta, stock_actual, stock_minimo, imagen_url, activo,
-            sku, variante, unidad, unidades_por_pack, proveedor_id, fecha_vencimiento, controla_stock
-          ) values ($1, $2, $3, $4, null, $5, $6, $7, $8, $9, $10, $11, true, $12, $13, $14, $15, $16, $17, $18)
-          on conflict (id) do nothing`,
-          [
-            persistentDemoId(product.id),
-            product.tenantId,
-            product.name,
-            product.brand,
-            product.category,
-            product.barcode,
-            product.costPrice,
-            product.salePrice,
-            product.stock,
-            product.minimumStock,
-            product.imageUrl,
-            product.sku,
-            product.variant,
-            product.unit ?? "unit",
-            product.unitsPerPack ?? 1,
-            product.supplierId ? persistentDemoId(product.supplierId) : undefined,
-            product.expiryDate,
-            product.trackStock ?? true
-          ]
-        );
-      }
+        for (const customer of buildDemoCustomers(tenant.id)) {
+          await client.query(
+            `insert into clientes (id, negocio_id, nombre, telefono, email, direccion, observacion, limite_credito, dias_credito, credito_bloqueado, activo)
+             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
+             on conflict (id) do nothing`,
+            [
+              persistentDemoId(customer.id), customer.tenantId, customer.name, customer.phone, customer.email,
+              customer.address, customer.notes, customer.creditLimit ?? 0, customer.creditDays ?? 30,
+              customer.creditBlocked ?? false
+            ]
+          );
+        }
 
-      for (const customer of buildDemoCustomers()) {
-        await client.query(
-          `insert into clientes (id, negocio_id, nombre, telefono, email, direccion, observacion, limite_credito, dias_credito, credito_bloqueado, activo)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
-           on conflict (id) do nothing`,
-          [
-            persistentDemoId(customer.id),
-            customer.tenantId,
-            customer.name,
-            customer.phone,
-            customer.email,
-            customer.address,
-            customer.notes,
-            customer.creditLimit ?? 0,
-            customer.creditDays ?? 30,
-            customer.creditBlocked ?? false
-          ]
-        );
-      }
-
-      for (const debt of store.debts.filter((candidate) => demoTenantSeeds.some((tenant) => tenant.id === candidate.tenantId))) {
-        await client.query(
-          `insert into cuentas_fiado (id, negocio_id, cliente_id, venta_id, monto_original, saldo_pendiente, estado, fecha_vencimiento)
-           values ($1, $2, $3, null, $4, $5, $6, $7)
-           on conflict (id) do nothing`,
-          [persistentDemoId(debt.id), debt.tenantId, persistentDemoId(debt.customerId), debt.originalAmount, debt.balance, debt.status === "overdue" ? "pendiente" : debt.status, debt.dueDate]
-        );
+        for (const debt of store.debts.filter((candidate) => candidate.tenantId === tenant.id)) {
+          await client.query(
+            `insert into cuentas_fiado (id, negocio_id, cliente_id, venta_id, monto_original, saldo_pendiente, estado, fecha_vencimiento)
+             values ($1, $2, $3, null, $4, $5, $6, $7)
+             on conflict (id) do nothing`,
+            [persistentDemoId(debt.id), debt.tenantId, persistentDemoId(debt.customerId), debt.originalAmount, debt.balance, debt.status === "overdue" ? "pendiente" : debt.status, debt.dueDate]
+          );
+        }
       }
 
       await client.query("commit");

@@ -9,8 +9,7 @@ import {
   MemoryRepository,
   persistentDemoId,
   requiresPersistentRepository,
-  resolveDatabaseUrl,
-  shouldSeedDemoData
+  resolveDatabaseUrl
 } from "./repository.js";
 import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 import { extractInvoiceImage, extractQuickSaleImage, normalizeInvoiceAnalysis, normalizeQuickSaleAnalysis } from "./vision.js";
@@ -30,14 +29,12 @@ test("database URL resolution ignores blank values and supports Vercel aliases",
   assert.equal(resolveDatabaseUrl({}), undefined);
 });
 
-test("PostgreSQL demo seeds use stable UUIDs and never reseed an existing tenant", () => {
+test("PostgreSQL demo seeds use stable UUIDs", () => {
   const first = persistentDemoId("prod-coca-15");
   assert.equal(first, persistentDemoId("prod-coca-15"));
   assert.notEqual(first, persistentDemoId("prod-arroz"));
   assert.match(first, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   assert.equal(persistentDemoId(demoTenantId), demoTenantId);
-  assert.equal(shouldSeedDemoData(0), true);
-  assert.equal(shouldSeedDemoData(1), false);
 });
 
 test("passwords and sessions use non-predictable hashes", () => {
