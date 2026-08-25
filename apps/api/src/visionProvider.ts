@@ -146,10 +146,10 @@ export async function requestVisionJson(request: VisionJsonRequest): Promise<unk
 
   const payload = await response.json() as ProviderPayload;
   const text = providerText(payload).replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-  if (!text) throw new Error("El servicio de reconocimiento devolvió una respuesta vacía.");
+  if (!text) throw publicProviderError("El servicio de reconocimiento devolvió una respuesta vacía. Intenta nuevamente.", 502);
   try {
     return JSON.parse(text) as unknown;
   } catch {
-    throw new Error("El servicio de reconocimiento no devolvió JSON válido.");
+    throw publicProviderError("El servicio de reconocimiento devolvió una respuesta inválida. Intenta nuevamente.", 502);
   }
 }

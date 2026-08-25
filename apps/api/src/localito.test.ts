@@ -366,7 +366,10 @@ test("quick sale normalizes multiple products, groups quantities and never trust
   assert.equal(analysis.items[2]?.status, "unrecognized");
   assert.equal(analysis.items[2]?.productId, undefined);
   assert.match(analysis.warnings.join(" "), /asociar|Confirma/i);
-  assert.throws(() => normalizeQuickSaleAnalysis({ items: [], warnings: [] }, products), /No encontramos productos/i);
+  assert.throws(
+    () => normalizeQuickSaleAnalysis({ items: [], warnings: [] }, products),
+    (error: unknown) => error instanceof Error && error.message.includes("No encontramos productos") && (error as Error & { status?: number }).status === 422
+  );
 });
 
 test("quick sale vision uses strict structured output, catalog context and provider privacy controls", async () => {

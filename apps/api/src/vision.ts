@@ -289,7 +289,9 @@ export function normalizeQuickSaleAnalysis(raw: unknown, products: Product[]): Q
     }
   }
 
-  if (!detected.length) throw new Error("No encontramos productos claramente visibles.");
+  if (!detected.length) {
+    throw Object.assign(new Error("No encontramos productos claramente visibles."), { status: 422 });
+  }
   return { items: detected, warnings: [...new Set(warnings)].slice(0, 20) };
 }
 

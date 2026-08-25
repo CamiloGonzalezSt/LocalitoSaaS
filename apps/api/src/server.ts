@@ -1071,7 +1071,7 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   const databaseCode = typeof error === "object" && error && "code" in error ? String(error.code) : undefined;
   const explicitStatus = typeof error === "object" && error && "status" in error ? Number(error.status) : undefined;
   const status =
-    explicitStatus && [400, 413, 429, 502, 503].includes(explicitStatus)
+    explicitStatus && [400, 413, 422, 429, 502, 503].includes(explicitStatus)
       ? explicitStatus
       : databaseCode === "23505"
       ? 409
