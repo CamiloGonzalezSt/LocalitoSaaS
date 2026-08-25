@@ -1093,6 +1093,8 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
         ? 400
         : ["no se encontro", "no existe"].some((fragment) => normalized.includes(fragment))
       ? 404
+      : ["no se detectaron", "respuesta vacía", "respuesta vacia"].some((fragment) => normalized.includes(fragment))
+        ? 422
       : ["stock insuficiente", "cupo", "deuda pendiente", "caja ya", "caja cerrada", "ya fue", "ya está registrad", "ya esta registrad"].some((fragment) =>
             normalized.includes(fragment)
           )

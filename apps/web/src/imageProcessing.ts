@@ -43,11 +43,10 @@ export async function prepareInvoiceImage(file: File, compactRetry = false) {
   if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) throw new Error("Usa una foto JPG, PNG o WebP.");
   if (file.size > 30_000_000) throw new Error("La imagen supera 30 MB y el teléfono no puede procesarla con seguridad. Usa la cámara normal en vez del modo de máxima resolución.");
   return compressForUpload(file, [
-    { maxDimension: 2200, quality: 0.86 },
-    { maxDimension: 1900, quality: 0.78 },
-    { maxDimension: 1700, quality: 0.72 },
-    { maxDimension: 1500, quality: 0.66 },
-    { maxDimension: 1300, quality: 0.6 },
+    { maxDimension: 1800, quality: 0.82 },
+    { maxDimension: 1600, quality: 0.74 },
+    { maxDimension: 1450, quality: 0.68 },
+    { maxDimension: 1300, quality: 0.62 },
     { maxDimension: 1100, quality: 0.54 },
     { maxDimension: 1000, quality: 0.48 },
     { maxDimension: 900, quality: 0.44 },
