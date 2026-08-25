@@ -1,0 +1,54 @@
+Issue Type,Summary,Description,Epic Name,Epic Link,Priority,Story Points,Labels,Sprint
+Epic,Plataforma SaaS,"Administración de locales y aislamiento multi-tenant.",EPIC-01,,Highest,,"mvp multi-tenant thesis",Sprint 1
+Epic,Identidad y seguridad,"Autenticación, sesiones, recuperación y roles.",EPIC-02,,Highest,,"security thesis",Sprint 1
+Epic,Onboarding y catálogo,"Carga inicial, importación masiva y catálogo.",EPIC-03,,High,,"mvp inventory",Sprint 2
+Epic,Inventario y abastecimiento,"Stock, kardex, compras, proveedores y facturas.",EPIC-04,,High,,"inventory ai",Sprint 3
+Epic,POS y pagos manuales,"Venta y registro de medios externos sin integración POS.",EPIC-05,,Highest,,"mvp pos",Sprint 4
+Epic,Clientes y fiado,"Clientes, cupos, deudas, abonos y recordatorios.",EPIC-06,,High,,"mvp credit",Sprint 5
+Epic,Caja y gastos,"Turnos, conciliación y gastos operativos.",EPIC-07,,Highest,,"cash expenses",Sprint 6
+Epic,Venta Rápida e IA,"Reconocimiento multiproducto con confirmación humana.",EPIC-08,,Highest,,"ai mobile-first",Sprint 7
+Epic,Reportes,"Ventas, margen, gastos y resultado estimado.",EPIC-09,,High,,"reports thesis",Sprint 8
+Epic,PWA y experiencia móvil,"Responsive, instalación y continuidad offline.",EPIC-10,,Highest,,"pwa mobile-first offline",Sprint 9
+Epic,Calidad y producción,"Pruebas, persistencia, monitoreo y documentación.",EPIC-11,,Highest,,"production security thesis",Sprint 10
+Story,Administrar locales,"Como administrador quiero crear y desactivar locales para gestionar el SaaS.",,EPIC-01,High,5,"multi-tenant",Sprint 1
+Story,Aislar datos por negocio,"Como dueño quiero que ningún otro local pueda leer o modificar mis datos.",,EPIC-01,Highest,8,"multi-tenant security",Sprint 1
+Story,Autenticar usuarios y sesiones,"Como usuario quiero iniciar y cerrar sesión de forma segura.",,EPIC-02,Highest,8,"security",Sprint 1
+Story,Aplicar permisos por rol,"Como dueño quiero limitar las funciones y métricas visibles al vendedor.",,EPIC-02,Highest,5,"security roles",Sprint 1
+Story,Importar catálogo CSV,"Como dueño quiero importar hasta 500 productos con validación y prevención de duplicados.",,EPIC-03,High,8,"inventory onboarding",Sprint 2
+Story,Buscar y filtrar productos,"Como usuario quiero buscar por nombre marca código SKU y categoría.",,EPIC-03,High,3,"inventory mobile-first",Sprint 2
+Story,Controlar stock y kardex,"Como dueño quiero ajustes y movimientos de stock trazables.",,EPIC-04,Highest,5,"inventory audit",Sprint 3
+Story,Gestionar compras y proveedores,"Como dueño quiero órdenes y recepción de mercadería con costo promedio.",,EPIC-04,High,8,"purchases inventory",Sprint 3
+Story,Ingresar factura con IA,"Como dueño quiero fotografiar una factura y confirmar sus productos antes de recibir stock.",,EPIC-04,High,13,"ai inventory",Sprint 7
+Story,Armar ticket POS,"Como vendedor quiero agregar corregir y eliminar productos antes de cobrar.",,EPIC-05,Highest,8,"pos mvp",Sprint 4
+Story,Registrar pagos externos manuales,"Como vendedor quiero registrar tarjeta transferencia QR o Webpay sin enviar montos a terminales.",,EPIC-05,Highest,5,"pos payments",Sprint 8
+Story,Evitar ventas duplicadas,"Como negocio quiero idempotencia para no descontar stock dos veces.",,EPIC-05,Highest,5,"pos integrity",Sprint 4
+Story,Anular y devolver ventas,"Como dueño quiero devolver o anular restaurando stock y deuda correctamente.",,EPIC-05,High,8,"pos inventory",Sprint 4
+Story,Administrar fiado,"Como dueño quiero cupo plazo bloqueo deuda y abonos por cliente.",,EPIC-06,High,8,"credit customers",Sprint 5
+Story,Recordar deudas vencidas,"Como dueño quiero preparar recordatorios por WhatsApp.",,EPIC-06,Medium,3,"credit",Sprint 5
+Story,Abrir y cerrar caja,"Como vendedor quiero conciliar efectivo esperado y contado por turno.",,EPIC-07,Highest,8,"cash audit",Sprint 6
+Story,Clasificar gastos operativos,"Como dueño quiero registrar y resumir gastos por categoría.",,EPIC-07,High,5,"expenses reports",Sprint 8
+Story,Reconocer varios productos,"Como vendedor quiero que una foto proponga productos y cantidades de mi catálogo.",,EPIC-08,Highest,13,"ai quick-sale",Sprint 7
+Story,Confirmar toda detección humana,"Como vendedor quiero confirmar producto y cantidad antes de enviarlos al ticket.",,EPIC-08,Highest,5,"ai human-in-loop",Sprint 8
+Story,Mantener código de barras,"Como vendedor quiero escanear o ingresar un código sin depender de IA.",,EPIC-08,High,5,"barcode offline",Sprint 7
+Story,Informar errores y cuota IA,"Como usuario quiero mensajes claros y tiempo de espera cuando se agote la cuota.",,EPIC-08,High,5,"ai usability",Sprint 8
+Story,Mostrar resultado financiero,"Como dueño quiero ventas margen gastos y resultado estimado.",,EPIC-09,High,5,"reports expenses",Sprint 8
+Story,Optimizar experiencia móvil,"Como usuario quiero operar sin zoom desbordes ni controles tapados.",,EPIC-10,Highest,8,"mobile-first responsive",Sprint 9
+Story,Soportar PWA y offline,"Como usuario quiero instalar Localito y conservar operaciones básicas sin conexión.",,EPIC-10,High,8,"pwa offline",Sprint 9
+Story,Monitorear producción,"Como equipo quiero health checks persistencia obligatoria y estado seguro de IA.",,EPIC-11,Highest,8,"production observability",Sprint 10
+Story,Mantener pruebas y documentación,"Como tesista quiero evidencia repetible y documentos consistentes con producción.",,EPIC-11,Highest,8,"testing documentation thesis",Sprint 10
+Story,Administrar vendedores,"HU-003: Como dueño quiero crear editar rol y desactivar vendedores de mi local.",,EPIC-01,High,5,"multi-tenant users",Sprint 1
+Story,Recuperar contraseña,"HU-005: Como usuario quiero recuperar acceso mediante un token temporal y de un uso.",,EPIC-02,High,5,"security recovery",Sprint 1
+Story,Completar asistente inicial,"HU-007: Como local nuevo quiero una carga inicial guiada y reanudable.",,EPIC-03,High,5,"onboarding inventory",Sprint 2
+Story,Crear y editar productos completos,"HU-009: Como dueño quiero mantener nombre marca categoría código SKU variante unidad costos precios y stock.",,EPIC-03,High,5,"inventory catalog",Sprint 2
+Story,Consultar movimientos de inventario,"HU-012: Como dueño quiero consultar venta devolución compra ajuste merma traslado y conteo.",,EPIC-04,High,5,"inventory audit",Sprint 3
+Story,Alertar reposición y vencimiento,"HU-015: Como dueño quiero alertas de stock bajo agotado y vencimiento próximo.",,EPIC-04,Medium,5,"inventory alerts",Sprint 3
+Story,Aplicar descuento y nota,"HU-017: Como vendedor quiero aplicar un descuento válido y guardar una nota de venta.",,EPIC-05,High,3,"pos",Sprint 4
+Story,Dividir un pago,"HU-019: Como vendedor quiero dividir el total entre medios y validar que las partes coincidan.",,EPIC-05,High,5,"pos payments",Sprint 4
+Story,Imprimir y compartir comprobante,"HU-022: Como vendedor quiero imprimir o compartir un ticket interno no tributario.",,EPIC-05,Medium,3,"pos receipt",Sprint 4
+Story,Crear clientes para fiado,"HU-023: Como vendedor quiero crear rápidamente un cliente aislado por local.",,EPIC-06,High,3,"credit customers",Sprint 5
+Story,Registrar abonos,"HU-025: Como vendedor quiero registrar abonos parciales o totales sin superar la deuda.",,EPIC-06,High,5,"credit payments",Sprint 5
+Story,Registrar movimientos de caja,"HU-028: Como vendedor quiero registrar ingresos retiros y gastos con caja abierta.",,EPIC-07,High,5,"cash audit",Sprint 6
+Story,Conciliar por medio de pago,"HU-030: Como dueño quiero totales por efectivo tarjeta transferencia Webpay fiado y mixto.",,EPIC-07,High,5,"cash reports",Sprint 6
+Story,Corregir propuestas de IA,"HU-032: Como vendedor quiero cambiar producto o cantidad eliminar buscar o repetir la foto.",,EPIC-08,Highest,8,"ai human-in-loop",Sprint 7
+Story,Consultar reportes de venta y caja,"HU-036: Como dueño quiero ventas netas ticket promedio medios cierres y anulaciones.",,EPIC-09,High,5,"reports cash",Sprint 6
+Story,Mantener documentación de tesis,"HU-042: Como tesista quiero arquitectura requisitos backlog sprints pruebas costos operación y demo actualizados.",,EPIC-11,High,5,"documentation thesis",Sprint 10

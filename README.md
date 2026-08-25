@@ -149,9 +149,9 @@ El dueño puede abrir **Negocio → Factura con IA** y tomar una foto JPG, PNG o
 
 Este flujo organiza inventario a partir de un documento comercial; no emite, valida ni contabiliza facturas electrónicas ante el SII.
 
-## Webpay
+## Medios de pago presenciales
 
-El flujo actual crea links y permite confirmar el pago en modo demostración. Activar Transbank real requiere credenciales de comercio, una URL pública HTTPS de retorno y validar el `commit` en el backend; esas credenciales no forman parte del repositorio. Localito no almacena datos de tarjeta.
+Localito registra efectivo, tarjeta en terminal externa, transferencia o QR, Webpay externo, fiado y pago mixto. El vendedor cobra fuera de Localito, ingresa manualmente el monto en el terminal o aplicación correspondiente y confirma en la app que recibió el pago. El MVP no envía montos a un POS, no crea links de cobro, no contrata una pasarela y nunca almacena datos de tarjeta.
 
 ## Calidad y verificación
 
@@ -172,8 +172,11 @@ apps/
 db/
   schema.sql  Esquema PostgreSQL multi-negocio
 docs/
+  Backlog-Scrum-Jira.md
   Documento-Proyecto-Localito.md
+  Jira-Import.csv
   Matriz-Pruebas-Localito.md
+  Operacion-Produccion.md
 packages/
   shared/     Tipos compartidos
 ```
@@ -181,7 +184,7 @@ packages/
 ## Alcance pendiente
 
 - Cumplimiento tributario chileno, excluido por decisión de esta iteración.
-- Activación de Transbank real, bloqueada hasta contar con credenciales y URL pública de retorno.
+- Integración automática con terminales o pasarelas, excluida del MVP: los pagos externos se registran manualmente para evitar costos y depender de hardware específico.
 - Avisos automáticos por correo distintos de la recuperación de contraseña.
 - Múltiples sucursales, e-commerce público, fidelización y facturación de la suscripción SaaS; son expansiones de producto y no forman parte del núcleo operacional entregado aquí.
 

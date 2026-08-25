@@ -2,13 +2,13 @@
 
 **Proyecto:** Localito  
 **Tipo de solucion:** PWA SaaS para gestion inteligente de pequenos negocios  
-**Version del documento:** 1.0  
-**Estado:** Documento base para tesis, planificacion y diseno  
-**Fecha:** 08-07-2026  
+**Version del documento:** 2.0
+**Estado:** Documento actualizado para tesis, trazabilidad Scrum y operación
+**Fecha:** 25-08-2026
 
 ## 1. Resumen ejecutivo
 
-Localito es una plataforma PWA de tipo SaaS orientada a pequenos negocios de barrio, tales como almacenes, botillerias, peluquerias, bazares, minimarkets, ferias y comercios familiares. Su objetivo es digitalizar procesos que normalmente se realizan en cuadernos, planillas, memoria o mensajes informales, entregando una herramienta simple para registrar ventas, controlar stock, administrar clientes, manejar fiados, generar alertas y recibir pagos digitales mediante Webpay.
+Localito es una plataforma PWA de tipo SaaS orientada a pequenos negocios de barrio, tales como almacenes, botillerias, peluquerias, bazares, minimarkets, ferias y comercios familiares. Su objetivo es digitalizar procesos que normalmente se realizan en cuadernos, planillas, memoria o mensajes informales, entregando una herramienta simple para registrar ventas, controlar stock, administrar clientes, manejar fiados, generar alertas y registrar pagos presenciales realizados mediante medios externos.
 
 La propuesta central es entregar una "caja inteligente de bolsillo" que funcione desde el celular, sin exigir infraestructura compleja ni conocimientos tecnicos avanzados. Al ser una PWA, el sistema puede instalarse desde el navegador, funcionar con una experiencia similar a una aplicacion movil y adaptarse a dispositivos de bajo costo.
 
@@ -64,7 +64,7 @@ Desarrollar una PWA SaaS inteligente para apoyar la gestion de ventas, inventari
 - Analizar las necesidades operativas de pequenos negocios de barrio.
 - Disenar una plataforma multi-tenant que separe la informacion de cada negocio.
 - Implementar la gestion de productos, stock, ventas, clientes y fiados.
-- Integrar pagos digitales mediante Webpay en ambiente de pruebas.
+- Registrar medios de pago presenciales externos sin contratar ni acoplar una pasarela al MVP.
 - Incorporar Venta Rápida con cámara para reconocer varios productos y cantidades en una fotografía.
 - Usar IA visual para sugerir productos y agilizar la venta.
 - Generar alertas de stock bajo, deudas pendientes y eventos relevantes.
@@ -122,7 +122,7 @@ El MVP debe permitir que un negocio pequeno pueda operar sus procesos principale
 - Alertas de stock bajo.
 - Reportes basicos.
 - Venta Rápida multiproducto con cámara e IA.
-- Integracion con Webpay en ambiente de pruebas.
+- Registro de efectivo, tarjeta en terminal externa, transferencia/QR, Webpay externo, fiado y pago mixto.
 
 ### 7.2 Fuera de alcance inicial
 
@@ -136,7 +136,7 @@ Para mantener el proyecto realizable en contexto de tesis, quedan fuera del MVP:
 - Integracion con impresoras fiscales.
 - Marketplace publico de productos.
 - Sistema de delivery propio.
-- Integracion real con bancos fuera de Webpay.
+- Integracion automática con bancos, Transbank, Mercado Pago o terminales POS.
 
 Estas funciones pueden considerarse como roadmap futuro.
 
@@ -167,7 +167,7 @@ Responsabilidades:
 - Revisar ventas y reportes.
 - Administrar clientes y fiados.
 - Configurar alertas.
-- Revisar pagos Webpay.
+- Revisar ventas, caja y conciliación por medio de pago.
 
 ### 8.3 Vendedor
 
@@ -191,8 +191,7 @@ Puede:
 
 - Comprar productos.
 - Quedar asociado a una deuda fiada.
-- Recibir un link de pago.
-- Pagar mediante Webpay.
+- Pagar presencialmente mediante el medio acordado con el negocio.
 
 ## 9. Modulos funcionales
 
@@ -271,19 +270,19 @@ Funciones:
 - Cerrar deuda.
 - Ver historial.
 - Generar recordatorio.
-- Crear link de pago para deuda.
+- Preparar recordatorio de deuda por WhatsApp.
 
-### 9.6 Pagos Webpay
+### 9.6 Medios de pago externos
 
-Permite pagar ventas o deudas mediante Webpay.
+Localito es operado por el dueño o vendedor; el cliente no interactúa con la aplicación. En el MVP, los cobros presenciales se realizan fuera de Localito y el vendedor registra manualmente el medio utilizado.
 
 Funciones:
 
-- Crear solicitud de pago.
-- Redirigir a Webpay.
-- Recibir confirmacion.
-- Actualizar estado de venta o deuda.
-- Guardar identificador de transaccion.
+- Registrar efectivo, tarjeta en terminal externa, transferencia o QR, Webpay externo, fiado y pago mixto.
+- Mostrar claramente que las terminales y aplicaciones son externas.
+- Permitir que el vendedor ingrese manualmente el total en el POS que ya tenga el negocio.
+- No transmitir montos a terminales ni almacenar datos de tarjeta.
+- Conservar la posibilidad de una integración automática como evolución futura opcional.
 
 ### 9.7 Camara e IA
 
@@ -310,7 +309,7 @@ Tipos de alerta:
 - Producto agotado.
 - Deuda vencida.
 - Producto proximo a vencer.
-- Error en pago Webpay.
+- Pago externo pendiente de confirmación.
 - Producto no reconocido por IA.
 
 ### 9.9 Reportes
@@ -339,7 +338,7 @@ Reportes iniciales:
 | RF-06 | El sistema debe permitir registrar stock actual y stock minimo por producto. | Alta |
 | RF-07 | El sistema debe permitir registrar ventas con uno o mas productos. | Alta |
 | RF-08 | El sistema debe descontar automaticamente el stock al confirmar una venta. | Alta |
-| RF-09 | El sistema debe permitir seleccionar metodo de pago: efectivo, tarjeta, transferencia, Webpay o fiado. | Alta |
+| RF-09 | El sistema debe permitir registrar efectivo, tarjeta en terminal externa, transferencia/QR, Webpay externo, fiado o pago mixto. | Alta |
 | RF-10 | El sistema debe permitir crear clientes asociados a un negocio. | Alta |
 | RF-11 | El sistema debe permitir registrar una venta como fiada a un cliente. | Alta |
 | RF-12 | El sistema debe permitir registrar abonos o pagos totales de una deuda. | Alta |
@@ -352,10 +351,19 @@ Reportes iniciales:
 | RF-19 | El sistema debe mostrar stock, precio y nombre del producto reconocido. | Alta |
 | RF-20 | El sistema debe permitir agregar el producto reconocido al ticket de venta. | Alta |
 | RF-21 | El sistema debe solicitar confirmacion cuando la IA no tenga confianza suficiente. | Alta |
-| RF-22 | El sistema debe permitir iniciar pagos Webpay en ambiente de integracion. | Alta |
-| RF-23 | El sistema debe actualizar el estado de pago cuando Webpay confirme una transaccion. | Alta |
+| RF-22 | El sistema debe registrar medios de pago externos sin enviar automáticamente el monto a un POS o pasarela. | Alta |
+| RF-23 | El vendedor debe confirmar el cobro externo antes de finalizar la operación en Localito. | Alta |
 | RF-24 | El sistema debe permitir administrar usuarios internos del negocio. | Media |
 | RF-25 | El sistema debe permitir filtrar ventas por fecha, metodo de pago y vendedor. | Media |
+| RF-26 | El sistema debe permitir importar hasta 500 productos mediante CSV con vista previa, validación e idempotencia. | Alta |
+| RF-27 | El sistema debe permitir abrir y cerrar caja por turno, mostrando efectivo esperado, contado y diferencia. | Alta |
+| RF-28 | El sistema debe registrar y categorizar gastos operativos. | Alta |
+| RF-29 | El sistema debe mostrar ventas netas, margen estimado, gastos y resultado estimado al dueño. | Alta |
+| RF-30 | Venta Rápida debe analizar varios productos y agrupar cantidades visibles. | Alta |
+| RF-31 | Cada producto y cantidad propuestos por IA deben requerir confirmación humana. | Alta |
+| RF-32 | El sistema debe permitir ingresar mercadería desde una factura fotografiada, con revisión previa e idempotencia. | Alta |
+| RF-33 | El sistema debe mantener kardex para ventas, devoluciones, compras y ajustes. | Alta |
+| RF-34 | El sistema debe exponer un estado de salud sin revelar secretos y usar almacenamiento persistente en producción. | Alta |
 
 ## 11. Requerimientos no funcionales
 
@@ -506,61 +514,55 @@ Reportes iniciales:
 **Flujos alternativos:**
 
 - Si el monto supera la deuda, el sistema solicita correccion.
-- Si el pago es por Webpay, se inicia el flujo de pago digital.
+- Si el abono se realiza mediante un servicio externo, el vendedor confirma manualmente que recibió el pago.
 
 **Postcondiciones:** La deuda del cliente queda actualizada.
 
 ### CU-07 - Preparar Venta Rápida con una fotografía
 
 **Actor principal:** Vendedor  
-**Objetivo:** Identificar un producto usando la camara y agregarlo a la venta o consultar stock.  
+**Objetivo:** Reconocer productos y cantidades desde una fotografía y preparar el ticket existente.
 **Precondiciones:** El dispositivo debe tener camara disponible y permisos concedidos.  
 **Flujo principal:**
 
-1. El usuario abre el modo camara.
-2. El sistema solicita permiso de camara si no existe.
-3. El usuario apunta al producto.
-4. El sistema captura imagen o video frame.
-5. El sistema intenta leer codigo de barras si esta visible.
-6. El sistema ejecuta reconocimiento visual con IA.
-7. El sistema muestra el producto sugerido, confianza, precio y stock.
-8. El usuario confirma el producto.
-9. El sistema permite agregarlo al ticket.
+1. El usuario abre Venta Rápida y toma o selecciona una fotografía.
+2. El sistema comprime la imagen y la envía al backend.
+3. El backend entrega a la IA únicamente el catálogo del negocio como contexto.
+4. La IA propone todos los productos visibles y agrupa cantidades.
+5. El backend valida la respuesta, descarta identificadores ajenos y obtiene precios y stock desde Localito.
+6. El sistema muestra una revisión editable con advertencias de ambigüedad, cantidad y stock.
+7. El vendedor confirma cada línea, corrige cantidades o cambia el producto.
+8. El vendedor agrega el resultado al ticket POS existente.
 
 **Flujos alternativos:**
 
 - Si la confianza es baja, el sistema muestra opciones similares o permite busqueda manual.
 - Si no hay conexion, el sistema informa que la IA no esta disponible.
-- Si no existe el producto en inventario, el sistema ofrece crearlo.
+- Si no existe el producto en inventario, el sistema permite buscar otro o ignorarlo; nunca lo crea automáticamente.
 
 **Postcondiciones:** El producto queda identificado y puede ser usado en venta o consulta.
 
-### CU-08 - Pagar con Webpay
+### CU-08 - Registrar un pago externo manual
 
-**Actor principal:** Cliente del negocio  
-**Objetivo:** Pagar una venta o deuda mediante Webpay.  
-**Precondiciones:** Debe existir una venta o deuda pendiente.  
+**Actor principal:** Vendedor
+**Objetivo:** Registrar el medio con que se cobró una venta sin integrar una pasarela o terminal.
+**Precondiciones:** Debe existir un ticket listo para cobrar.
 **Flujo principal:**
 
-1. El vendedor selecciona pago Webpay.
-2. El sistema crea una solicitud de pago.
-3. El sistema genera una URL de pago.
-4. El sistema prepara un mensaje de cobro con monto y enlace.
-5. El vendedor comparte el enlace por el menu nativo del celular, WhatsApp, correo, SMS o copia manual.
-6. El cliente abre el enlace o escanea un QR.
-7. Webpay procesa el pago.
-8. Webpay redirige al sistema con el resultado.
-9. El sistema valida la transaccion.
-10. El sistema marca la venta o deuda como pagada.
+1. El vendedor revisa el total calculado por Localito.
+2. Selecciona efectivo, tarjeta, transferencia/QR, Webpay externo, fiado o mixto.
+3. Si corresponde, digita el monto manualmente en el terminal o aplicación externa.
+4. Verifica la confirmación del pago fuera de Localito.
+5. Confirma en Localito que recibió el pago.
+6. El sistema registra venta, medio de pago, caja y movimiento de stock una sola vez.
 
 **Flujos alternativos:**
 
-- Si el pago falla, el sistema mantiene el estado pendiente.
-- Si el navegador no permite compartir automaticamente, el sistema deja visible el link para copiarlo o enviarlo por WhatsApp.
-- Si el cliente abandona el pago, el sistema permite reintentar.
-- Si la confirmacion tarda, el sistema deja la transaccion en estado pendiente de verificacion.
+- Si el pago externo falla, el vendedor no confirma la venta y puede elegir otro medio.
+- Si el pago es mixto, la suma de los montos debe coincidir con el total.
+- Si es fiado, debe asociarse un cliente y respetarse la regla de crédito vigente.
 
-**Postcondiciones:** El estado de pago queda actualizado.
+**Postcondiciones:** La venta queda registrada con trazabilidad del medio informado por el vendedor.
 
 ### CU-09 - Ver alertas de stock
 
@@ -655,7 +657,7 @@ Reportes iniciales:
 | HU-06 | Como dueno, quiero ver alertas de stock bajo para reponer a tiempo. | El sistema muestra productos bajo el minimo configurado. |
 | HU-07 | Como vendedor, quiero registrar una venta fiada para un cliente frecuente. | La deuda queda asociada al cliente. |
 | HU-08 | Como dueno, quiero ver cuanto debe cada cliente para controlar los fiados. | El sistema muestra deuda total e historial. |
-| HU-09 | Como cliente, quiero pagar una deuda con Webpay para no tener que ir al local. | El sistema actualiza la deuda al confirmarse el pago. |
+| HU-09 | Como vendedor, quiero registrar el medio de un abono recibido para conciliar la deuda. | El sistema actualiza la deuda y conserva el medio informado. |
 | HU-10 | Como dueno, quiero ver reportes simples para saber como va mi negocio. | El sistema muestra ventas, productos mas vendidos y fiado pendiente. |
 | HU-11 | Como administrador, quiero crear usuarios vendedores para delegar la atencion. | El vendedor puede iniciar sesion con permisos limitados. |
 | HU-12 | Como dueno, quiero crear productos desde una foto para ahorrar tiempo. | La IA sugiere datos y el usuario puede confirmarlos. |
@@ -672,7 +674,7 @@ Localito se propone como una arquitectura web moderna de tres capas, complementa
 | Logica de negocio | Reglas de venta, stock, fiado, autenticacion, roles, pagos, validaciones e integracion con servicios externos. | Node.js + API REST |
 | Datos | Persistencia de negocios, usuarios, productos, clientes, ventas, fiados, pagos, alertas y registros de IA. | PostgreSQL |
 
-Ademas de estas tres capas, el sistema se comunica con servicios externos para funciones especializadas: Webpay para pagos digitales, un servicio de IA visual para reconocimiento de productos y almacenamiento de imagenes cuando sea necesario.
+Ademas de estas tres capas, el backend se comunica con un proveedor de IA visual para reconocimiento de productos y extracción de facturas. Los cobros con tarjeta, transferencia, QR o Webpay se realizan externamente y Localito solo registra el medio confirmado por el vendedor.
 
 ### 14.2 Componentes principales
 
@@ -680,7 +682,7 @@ Ademas de estas tres capas, el sistema se comunica con servicios externos para f
 - **Backend API REST:** Servicio Node.js responsable de reglas de negocio, autenticacion e integraciones.
 - **Base de datos PostgreSQL:** Persistencia de usuarios, negocios, productos, ventas, clientes, deudas y pagos.
 - **Servicio de IA:** Componente encargado de reconocimiento visual de productos.
-- **Webpay:** Integracion externa para pagos digitales.
+- **Medios de pago externos:** Terminal o aplicación independiente; no existe integración automática en el MVP.
 - **Almacenamiento de imagenes:** Servicio para fotos de productos y capturas necesarias.
 
 ### 14.3 Diagrama de arquitectura
@@ -691,11 +693,10 @@ flowchart TD
     B --> C["API REST Node.js"]
     C --> D["PostgreSQL"]
     C --> E["Servicio de IA visual"]
-    C --> F["Transbank Webpay Plus"]
+    B -. "Confirmación manual" .-> F["Terminal o app de pago externa"]
     B --> G["Camara del dispositivo"]
     G --> B
     E --> C
-    F --> C
     C --> H["Almacenamiento de imagenes"]
 ```
 
@@ -707,7 +708,7 @@ flowchart TD
 - Priorizar flujos rapidos para celular.
 - Evitar que un usuario pueda acceder a datos de otro negocio.
 - Disenar la IA como ayuda, no como unica fuente de verdad.
-- Mantener Webpay desacoplado mediante estados de pago.
+- Mantener los pagos externos desacoplados y exigir confirmación humana antes de registrar la venta.
 
 ## 15. Modelo de datos conceptual
 
@@ -726,7 +727,7 @@ flowchart TD
 | Cliente | Persona que compra o puede quedar con deuda. |
 | CuentaFiado | Registro agrupado de deuda de un cliente. |
 | AbonoFiado | Pago parcial o total de una deuda. |
-| Pago | Registro de pagos por efectivo, transferencia, tarjeta o Webpay. |
+| Pago | Registro del medio informado: efectivo, transferencia/QR, tarjeta externa, Webpay externo, fiado o mixto. |
 | Alerta | Evento que requiere atencion del usuario. |
 | ReconocimientoIA | Registro de intentos de reconocimiento de productos. |
 
@@ -841,12 +842,9 @@ flowchart TD
     B --> C["Calcular total"]
     C --> D["Seleccionar metodo de pago"]
     D --> E{Metodo}
-    E -->|Efectivo, tarjeta o transferencia| F["Confirmar venta"]
+    E -->|Efectivo o medio externo confirmado| F["Confirmar venta"]
     E -->|Fiado| G["Seleccionar cliente"]
-    E -->|Webpay| H["Crear solicitud de pago"]
     G --> F
-    H --> I["Esperar resultado Webpay"]
-    I --> F
     F --> J["Registrar venta"]
     J --> K["Descontar stock"]
     K --> L["Generar comprobante"]
@@ -857,7 +855,7 @@ flowchart TD
 - Una venta solo se confirma si contiene al menos un producto.
 - El stock se descuenta al confirmar la venta.
 - Si el metodo es fiado, debe existir un cliente asociado.
-- Si el metodo es Webpay, la venta puede quedar pendiente hasta confirmacion.
+- Si se usa tarjeta, transferencia, QR o Webpay externo, el vendedor verifica el pago y luego confirma manualmente la venta.
 - Si no hay stock suficiente, el sistema debe impedir o advertir segun configuracion definida.
 
 ## 17. Flujo de fiado
@@ -878,43 +876,42 @@ flowchart TD
 - Toda venta fiada debe estar asociada a un cliente.
 - El sistema debe permitir pagos parciales.
 - El historial no debe eliminarse aunque la deuda quede pagada.
-- Una deuda puede pagarse por efectivo, transferencia o Webpay.
+- Una deuda puede abonarse con efectivo o con un medio externo registrado manualmente.
 - El administrador debe poder ver deuda total por cliente.
 
-## 18. Flujo de pago Webpay
+## 18. Flujo de pago externo manual
 
 ```mermaid
 sequenceDiagram
     participant V as Vendedor
     participant L as Localito
-    participant W as Webpay
+    participant P as POS/App externa
     participant C as Cliente
 
-    V->>L: Selecciona pago Webpay
-    L->>L: Crea venta o deuda pendiente
-    L->>W: Solicita transaccion
-    W-->>L: Retorna URL/token de pago
-    L-->>C: Muestra link o QR de pago
-    C->>W: Realiza pago
-    W-->>L: Retorna resultado
-    L->>L: Valida y actualiza estado
-    L-->>V: Muestra pago aprobado o rechazado
+    V->>L: Revisa el total y elige el medio
+    V->>P: Ingresa manualmente el monto
+    C->>P: Paga con tarjeta, transferencia o QR
+    P-->>V: Muestra confirmación externa
+    V->>L: Confirma pago recibido
+    L->>L: Registra venta, medio y stock
+    L-->>V: Muestra comprobante interno
 ```
 
-### Estados de pago
+### Medios disponibles
 
-- `pendiente`: pago creado, aun sin confirmacion.
-- `aprobado`: Webpay confirma pago exitoso.
-- `rechazado`: Webpay informa pago no exitoso.
-- `cancelado`: usuario abandona o cancela el proceso.
-- `expirado`: el link o intento de pago deja de ser valido.
+- Efectivo.
+- Tarjeta en terminal externa.
+- Transferencia o QR externo, incluido Mercado Pago estático.
+- Webpay externo.
+- Fiado.
+- Pago mixto.
 
 ### Consideraciones
 
-- Para la tesis se usara ambiente de integracion o pruebas.
-- Nunca se deben guardar datos sensibles de tarjeta en Localito.
-- El sistema debe guardar solo identificadores de transaccion, montos, fechas y estados.
-- Una deuda solo debe reducirse cuando el pago sea aprobado.
+- El vendedor digita el monto en el equipo externo; Localito no requiere integración pagada.
+- Nunca se guardan datos sensibles de tarjeta.
+- El cliente no necesita cuenta ni acceso a Localito.
+- Una integración automática con Transbank o Mercado Pago queda fuera del MVP y requeriría contratación y credenciales propias de cada negocio.
 
 ## 19. Flujo de Venta Rápida con IA
 
@@ -976,7 +973,7 @@ El sistema debe mostrar una tarjeta de resultado con:
 | Producto agotado | stock_actual igual a 0 | Ocultar de venta o reponer |
 | Deuda pendiente | cliente mantiene deuda abierta | Registrar abono o enviar recordatorio |
 | Deuda antigua | deuda supera dias definidos | Contactar cliente |
-| Pago rechazado | Webpay retorna rechazo | Reintentar o usar otro metodo |
+| Pago externo no confirmado | El vendedor no observa confirmación en el terminal o aplicación | No registrar la venta y usar otro medio |
 | IA con baja confianza | reconocimiento bajo umbral | Confirmar manualmente |
 
 ### 20.2 Reportes iniciales
@@ -1009,7 +1006,7 @@ El sistema debe mostrar una tarjeta de resultado con:
 - El backend debe validar permisos en cada operacion.
 - La autenticacion debe usar tokens o sesiones seguras.
 - Las contrasenas deben almacenarse usando hash seguro.
-- Los pagos deben delegarse a Webpay sin almacenar datos de tarjeta.
+- Los pagos con tarjeta se procesan fuera de Localito y nunca se almacenan datos sensibles.
 - Las imagenes usadas por IA deben manejarse con criterio de privacidad.
 
 ### 21.2 Riesgos de seguridad
@@ -1025,7 +1022,7 @@ El sistema debe mostrar una tarjeta de resultado con:
 - Validar `negocio_id` en consultas y operaciones.
 - Usar roles y permisos.
 - Registrar acciones criticas.
-- Validar confirmaciones de Webpay desde backend.
+- Exigir confirmación explícita del vendedor e idempotencia al registrar ventas.
 - Usar HTTPS en despliegue.
 - Limitar informacion sensible visible para vendedores.
 - Definir politicas de eliminacion o anonimizado de datos.
@@ -1112,7 +1109,7 @@ Una historia se considera terminada cuando:
 | Alta | Camara | Acceso a camara desde PWA. |
 | Alta | IA visual | Reconocer productos mediante imagen. |
 | Media | Codigo de barras | Leer codigo como apoyo al reconocimiento. |
-| Alta | Webpay pruebas | Crear flujo de pago en ambiente de integracion. |
+| Alta | Pagos externos manuales | Registrar terminal, transferencia/QR, Webpay externo y pago mixto sin enviar montos. |
 | Media | Alertas | Stock bajo, deuda antigua y pago fallido. |
 | Media | Reportes | Ventas, productos vendidos y fiado pendiente. |
 | Media | Usuarios internos | Crear vendedores, editar perfil propio y validar permisos. |
@@ -1132,7 +1129,7 @@ Los sprints se planifican con duracion de 2 semanas.
 | Sprint 3 | Ventas | Ticket de venta, agregar productos, confirmar venta, descuento de stock y comprobante simple. |
 | Sprint 4 | Clientes y fiado | CRUD de clientes, venta fiada, deuda por cliente, abonos e historial. |
 | Sprint 5 | Camara e IA | Acceso a camara, captura de imagen, reconocimiento visual, confirmacion de producto y agregado al ticket. |
-| Sprint 6 | Webpay y alertas | Flujo Webpay en pruebas, estados de pago, alertas de stock bajo y deuda pendiente. |
+| Sprint 6 | Caja, pagos y alertas | Medios externos manuales, cierre de caja, gastos, alertas de stock y deuda pendiente. |
 | Sprint 7 | Reportes y PWA | Reportes basicos, instalabilidad PWA, ajustes responsive y mejoras de experiencia movil. |
 | Sprint 8 | Pruebas, documentacion y cierre | Pruebas funcionales, correcciones, documentacion final, preparacion de demo y memoria. |
 
@@ -1147,7 +1144,7 @@ Los sprints se planifican con duracion de 2 semanas.
 - Registro de venta fiada.
 - Registro de abono.
 - Generacion de alerta de stock bajo.
-- Pago Webpay aprobado, rechazado y abandonado.
+- Registro de efectivo, terminal externa, transferencia/QR, fiado y pago mixto.
 - Reconocimiento de producto con IA.
 - Correccion manual de producto reconocido.
 
@@ -1193,7 +1190,7 @@ El MVP se considerara aceptado si:
 - Se pueden consultar reportes basicos.
 - La camara puede reconocer o sugerir productos mediante IA.
 - El usuario puede corregir una sugerencia de IA.
-- Se puede simular pago Webpay en ambiente de pruebas.
+- Se puede registrar y conciliar cada medio de pago manual admitido.
 - La PWA funciona correctamente en dispositivos moviles modernos.
 - Existe documentacion suficiente para explicar arquitectura, uso y metodologia.
 
@@ -1202,7 +1199,7 @@ El MVP se considerara aceptado si:
 | Riesgo | Impacto | Probabilidad | Mitigacion |
 | --- | --- | --- | --- |
 | La IA no reconoce productos con precision suficiente. | Alto | Media | Usar confirmacion manual, codigo de barras como apoyo y dataset controlado para demo. |
-| Webpay requiere configuracion mas compleja de lo esperado. | Medio | Media | Usar ambiente de integracion y aislar pagos en un modulo propio. |
+| El vendedor confirma como recibido un pago externo que falló. | Alto | Media | Mensajes explícitos, doble confirmación operativa y conciliación de caja. |
 | El alcance crece demasiado. | Alto | Alta | Mantener MVP claro y dejar funciones avanzadas en roadmap. |
 | Problemas con permisos de camara en algunos dispositivos. | Medio | Media | Probar en navegadores moviles modernos y ofrecer busqueda manual. |
 | Inconsistencias de stock. | Alto | Media | Registrar movimientos de stock y actualizar desde backend. |
@@ -1238,7 +1235,7 @@ Despues del MVP, Localito podria evolucionar con:
 | Stock | Cantidad disponible de un producto. |
 | Stock minimo | Cantidad definida como umbral para generar alerta de reposicion. |
 | Ticket | Resumen de productos incluidos en una venta. |
-| Webpay | Servicio de pagos digitales de Transbank. |
+| Pago externo | Cobro realizado en efectivo, terminal o aplicación independiente y registrado manualmente en Localito. |
 | IA visual | Inteligencia artificial aplicada al reconocimiento de imagenes. |
 | CRUD | Crear, leer, actualizar y eliminar datos. |
 | API REST | Interfaz de comunicacion entre frontend y backend usando HTTP. |
@@ -1254,7 +1251,7 @@ El siguiente prompt puede usarse en una herramienta de IA para generar diseno UI
 Actua como un equipo senior de producto, UX/UI y frontend especializado en aplicaciones SaaS moviles para pequenos negocios. Necesito disenar y prototipar "Localito", una PWA SaaS para negocios de barrio como almacenes, botillerias, peluquerias, bazares, minimarkets y comercios familiares.
 
 Contexto del producto:
-Localito es una caja inteligente de bolsillo. Permite registrar ventas, controlar stock, administrar clientes, manejar fiados, recibir pagos por Webpay y usar la camara del celular con IA para reconocer productos, consultar unidades disponibles y agregarlos a un ticket de venta.
+Localito es una caja inteligente de bolsillo. Permite registrar ventas, controlar stock, administrar clientes, manejar fiados, registrar medios de pago presenciales y usar la camara del celular con IA para reconocer productos, consultar unidades disponibles y agregarlos a un ticket de venta.
 
 Publico objetivo:
 Usuarios no tecnicos, duenos y vendedores de pequenos negocios. La app debe sentirse simple, rapida, clara y confiable. Debe priorizar el uso desde celular, con botones grandes, textos comprensibles y flujos cortos.
@@ -1264,7 +1261,7 @@ Stack objetivo:
 - PWA instalable.
 - Backend Node.js con API REST.
 - Base de datos PostgreSQL.
-- Integracion Webpay en ambiente de pruebas.
+- Registro manual de pagos realizados en medios externos.
 - IA visual para reconocimiento de productos con camara.
 
 Disena una experiencia completa para:
@@ -1276,7 +1273,7 @@ Disena una experiencia completa para:
 6. Consulta de stock desde camara.
 7. Clientes y fiado.
 8. Detalle de deuda de cliente y registro de abono.
-9. Pago con Webpay mediante link o QR.
+9. Cobro presencial con efectivo o medio externo confirmado por el vendedor.
 10. Alertas de stock bajo y deudas pendientes.
 11. Reportes basicos.
 12. Configuracion del negocio y usuarios.
@@ -1314,7 +1311,7 @@ Pantallas minimas a entregar:
 - Resultado de producto detectado.
 - Clientes.
 - Detalle de cliente y fiado.
-- Pago Webpay.
+- Selector de medio de pago y confirmación manual.
 - Reportes.
 - Configuracion.
 
@@ -1366,8 +1363,9 @@ La version actual deja un nucleo operacional conectado entre frontend, API REST 
 - Cola local para ventas y ajustes de stock cuando se pierde la conexion.
 - Reconocimiento visual real opcional mediante OpenAI, con historial, confianza, confirmacion y correccion.
 - Lector de codigo de barras con ZXing: lectura desde foto en celular y camara en vivo cuando el navegador permite `getUserMedia`.
-- Generacion de link Webpay demo mediante `/payments/webpay/create`, mensaje compartible y confirmacion demo mediante `/payments/webpay/:id/confirm`.
-- Reportes basicos calculados desde API.
+- Registro manual de pagos externos: tarjeta, transferencia/QR y Webpay; Localito no envía montos a terminales.
+- Gastos operativos categorizados y conciliación de caja por turno.
+- Reportes de ventas netas, margen bruto estimado, gastos y resultado estimado calculados desde API.
 - Capa de persistencia preparada para PostgreSQL mediante `DATABASE_URL`.
 - Acceso desde celular en red local usando la IP del computador de desarrollo.
 - Catalogo demo amplio con cientos de productos de supermercado chileno para probar ventas, stock, busqueda, fiado y escaneo por codigo.
@@ -1642,10 +1640,14 @@ Variables de entorno minimas:
 NODE_ENV=production
 OWNER_DEMO_PASSWORD=Duoc2026
 SELLER_DEMO_PASSWORD=Duoc2026V
-WEBPAY_ENV=integration
+SESSION_SECRET=reemplazar-por-un-secreto-largo
+DATABASE_URL=postgresql://usuario:clave@host:5432/localito
+VISION_PROVIDER=groq
+GROQ_API_KEY=reemplazar-por-la-clave-del-proyecto
+GROQ_VISION_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
 ```
 
-Para una demo rapida se puede desplegar sin `DATABASE_URL`; la API funcionara en modo memoria y cargara los datos demo al iniciar. Para uso real o pruebas persistentes, se debe crear una base PostgreSQL externa, por ejemplo Neon o Supabase, y configurar `DATABASE_URL` en Vercel.
+El modo memoria se admite únicamente en desarrollo local y pierde sus datos al reiniciar. En Vercel y cualquier entorno productivo, `DATABASE_URL` o `POSTGRES_URL` es obligatorio: la API falla de forma explícita si no dispone de almacenamiento persistente. La integración de Supabase debe usar una URL compatible con funciones serverless.
 
 HTTPS es relevante para la PWA porque iOS y otros navegadores bloquean `getUserMedia` en origenes inseguros. Al estar en Vercel, el boton **Leer codigo** puede solicitar camara en vivo en dispositivos compatibles. El boton **Tomar foto** sigue funcionando como respaldo.
 
@@ -1653,6 +1655,17 @@ HTTPS es relevante para la PWA porque iOS y otros navegadores bloquean `getUserM
 
 Localito propone una solucion concreta para un problema cotidiano de pequenos negocios: la dificultad de controlar ventas, stock, fiados y pagos de manera ordenada. Su enfoque como PWA permite reducir barreras de instalacion, mientras que el modelo SaaS facilita escalar la plataforma a multiples negocios.
 
-La incorporacion de IA visual convierte la camara del celular en una herramienta de trabajo, no solo en un accesorio. Esto diferencia al proyecto frente a sistemas tradicionales de punto de venta y permite plantear una tesis con valor practico y tecnologico.
+La incorporacion de IA visual convierte la camara del celular en una herramienta de trabajo, no solo en un accesorio. Esto diferencia al proyecto frente a sistemas tradicionales de punto de venta y permite plantear una tesis con valor practico y tecnologico. La IA propone y el vendedor confirma siempre producto y cantidad.
 
-El MVP definido es ambicioso, pero realizable si se mantiene una priorizacion estricta y se desarrolla por sprints. La clave sera validar primero los flujos centrales: productos, ventas, stock, fiado y reconocimiento con camara. A partir de esos fundamentos, Webpay, reportes y alertas complementan la propuesta para convertir Localito en una herramienta integral para negocios de barrio.
+El MVP se desarrolló por incrementos: plataforma multi-tenant, catálogo, inventario, ventas, caja, fiado, compras, Venta Rápida, gastos, reportes, PWA y producción persistente. Los pagos externos permanecen manuales por decisión de alcance y costos. El backlog ejecutable, la reconstrucción de sprints y la guía de importación a Jira viven en `docs/Backlog-Scrum-Jira.md` y `docs/Jira-Import.csv`.
+
+## 34. Trazabilidad Scrum y Jira
+
+La documentación de gestión se separa de este documento extenso para mantenerla operativa:
+
+- `docs/Backlog-Scrum-Jira.md`: configuración de Jira, épicas, 42 historias, Story Points, prioridades, sprints, Definition of Ready, Definition of Done y roadmap.
+- `docs/Jira-Import.csv`: 11 épicas y 42 historias para importación mediante CSV.
+- `docs/Matriz-Pruebas-Localito.md`: casos funcionales y no funcionales que sirven como evidencia de aceptación.
+- `docs/Operacion-Produccion.md`: monitoreo, respaldos, incidentes, costos y seguridad.
+
+Cada historia Jira debe enlazar su requerimiento funcional, caso de prueba, commit y evidencia de Sprint Review. El estado `Terminado` exige cumplir la Definition of Done y no solamente disponer de código implementado.
