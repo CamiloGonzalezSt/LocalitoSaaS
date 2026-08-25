@@ -3,6 +3,7 @@ import type { ChangeEvent } from "react";
 import type { InvoiceAnalysis, InvoiceImportPayload, Product, Supplier } from "@localito/shared";
 import { AlertTriangle, Camera, CheckCircle2, LoaderCircle, PackagePlus, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 import { api } from "./lib/api";
+import { prepareInvoiceImage } from "./imageProcessing";
 
 type DraftLine = {
   clientItemId: string;
@@ -26,32 +27,6 @@ function normalizedText(value: string) {
 
 function suggestedSalePrice(unitCost: number) {
   return Math.max(10, Math.ceil((unitCost * 1.3) / 10) * 10);
-}
-
-async function drawCompressedImage(file: File, maxDimension: number, quality: number) {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  const context = canvas.getContext("2d");
-  if (!context) {
-    bitmap.close();
-    throw new Error("El navegador no pudo preparar la foto.");
-  }
-  context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return canvas.toDataURL("image/jpeg", quality);
-}
-
-async function prepareInvoiceImage(file: File) {
-  if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) throw new Error("Usa una foto JPG, PNG o WebP.");
-  let imageDataUrl = await drawCompressedImage(file, 2200, 0.86);
-  if (imageDataUrl.length > 6_300_000) imageDataUrl = await drawCompressedImage(file, 1700, 0.72);
-  if (imageDataUrl.length > 6_300_000) throw new Error("La foto es demasiado pesada. Baja la resolución e intenta nuevamente.");
-  return imageDataUrl;
 }
 
 function initialDraft(analysis: InvoiceAnalysis, products: Product[]): DraftLine[] {
@@ -210,7 +185,7 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
 
     {!analysis && <label className={`invoice-capture ${busy ? "disabled" : ""}`}>
       {busy ? <LoaderCircle className="spin" size={28} /> : <Camera size={28} />}
-      <span><strong>{busy ? "Leyendo factura..." : "Tomar foto o elegir imagen"}</strong><small>{fileName || "JPG, PNG o WebP · imagen completa y con buena luz"}</small></span>
+      <span><strong>{busy ? "Optimizando y leyendo factura..." : "Tomar foto o elegir imagen"}</strong><small>{fileName || "JPG, PNG o WebP · se reduce automáticamente antes de enviarla"}</small></span>
       <input className="capture-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={busy} onChange={(event) => void analyzeFile(event)} />
     </label>}
 

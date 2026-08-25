@@ -16,13 +16,38 @@ async function drawImageFile(file: File, maxDimension: number, quality: number) 
   return canvas.toDataURL("image/jpeg", quality);
 }
 
+const MAX_UPLOAD_DATA_URL_LENGTH = 3_200_000;
+
+async function compressForUpload(file: File, attempts: Array<{ maxDimension: number; quality: number }>) {
+  for (const attempt of attempts) {
+    const imageDataUrl = await drawImageFile(file, attempt.maxDimension, attempt.quality);
+    if (imageDataUrl.length <= MAX_UPLOAD_DATA_URL_LENGTH) return imageDataUrl;
+  }
+  throw new Error("No pudimos optimizar la foto para enviarla. Intenta acercarte al documento y evita incluir el mesón o el fondo.");
+}
+
 export async function prepareQuickSaleImage(file: File) {
   if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) throw new Error("Usa una foto JPG, PNG o WebP.");
   if (file.size > 20_000_000) throw new Error("La foto es demasiado pesada. Usa una imagen de menos de 20 MB.");
-  let imageDataUrl = await drawImageFile(file, 1800, 0.82);
-  if (imageDataUrl.length > 6_300_000) imageDataUrl = await drawImageFile(file, 1400, 0.7);
-  if (imageDataUrl.length > 6_300_000) throw new Error("No pudimos reducir la foto. Intenta con una resolución menor.");
-  return imageDataUrl;
+  return compressForUpload(file, [
+    { maxDimension: 1800, quality: 0.82 },
+    { maxDimension: 1500, quality: 0.72 },
+    { maxDimension: 1300, quality: 0.64 },
+    { maxDimension: 1100, quality: 0.56 }
+  ]);
+}
+
+export async function prepareInvoiceImage(file: File) {
+  if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) throw new Error("Usa una foto JPG, PNG o WebP.");
+  if (file.size > 30_000_000) throw new Error("La imagen supera 30 MB y el teléfono no puede procesarla con seguridad. Usa la cámara normal en vez del modo de máxima resolución.");
+  return compressForUpload(file, [
+    { maxDimension: 2200, quality: 0.86 },
+    { maxDimension: 1900, quality: 0.78 },
+    { maxDimension: 1700, quality: 0.72 },
+    { maxDimension: 1500, quality: 0.66 },
+    { maxDimension: 1300, quality: 0.6 },
+    { maxDimension: 1100, quality: 0.54 }
+  ]);
 }
 
 export function captureVideoFrame(video: HTMLVideoElement) {
