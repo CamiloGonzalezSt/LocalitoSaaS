@@ -74,11 +74,14 @@ GMAIL_USER=tu-correo@gmail.com
 GMAIL_APP_PASSWORD=
 EMAIL_FROM=Localito <tu-correo@gmail.com>
 RESEND_API_KEY=
+VISION_PROVIDER=groq
+GROQ_API_KEY=
+GROQ_VISION_MODEL=qwen/qwen3.6-27b
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
 ```
 
-`OPENAI_API_KEY` es opcional y habilita tanto el reconocimiento de envases como la lectura de facturas. Las imágenes se reducen en el navegador, se procesan sin guardarlas en Localito y el backend pide una respuesta con esquema estricto, validándola nuevamente antes de escribir inventario. La clave nunca debe exponerse en el frontend ni subirse al repositorio.
+Para la demostración académica configure `VISION_PROVIDER=groq`, `GROQ_API_KEY` y `GROQ_VISION_MODEL=qwen/qwen3.6-27b`. Groq se usa desde el backend y permite ejecutar reconocimiento real sujeto a la cuota de su plan gratuito. `OPENAI_API_KEY` y `OPENAI_VISION_MODEL` se conservan como alternativa opcional; si no se fuerza un proveedor, Localito prefiere Groq cuando ambas claves existen. Las imágenes se reducen en el navegador, se procesan sin guardarlas en Localito y toda respuesta externa vuelve a validarse antes de afectar el flujo. Ninguna clave debe exponerse en el frontend, llevar el prefijo `VITE_` ni subirse al repositorio.
 
 `SESSION_SECRET` firma las sesiones del modo demostración serverless. En Vercel, configure además `DATABASE_URL` (o `POSTGRES_URL` mediante la integración de Supabase) para que registros, ventas y cambios sobrevivan entre invocaciones. Use la URL del **Transaction pooler** de Supabase para funciones serverless.
 
@@ -131,7 +134,7 @@ En desarrollo local, si no se define otra clave, el administrador usa `caj.gonza
 
 Al presionar **Agregar a la venta**, Localito incorpora las cantidades al ticket existente. La detección no crea una venta, no descuenta stock y no escribe kardex: esas operaciones siguen ocurriendo únicamente cuando el POS confirma el cobro. Si la cantidad supera el stock y el producto controla existencias, se muestra una advertencia y se aplica la misma restricción del POS.
 
-La lectura exacta de código de barras con ZXing se mantiene dentro de Venta Rápida y puede utilizarse sin análisis visual. El reconocimiento multiproducto necesita conexión y `OPENAI_API_KEY`; búsqueda, código, ticket y el resto del soporte offline continúan funcionando sin ella.
+La lectura exacta de código de barras con ZXing se mantiene dentro de Venta Rápida y puede utilizarse sin análisis visual. El reconocimiento multiproducto necesita conexión y un proveedor configurado (`GROQ_API_KEY` recomendado para la tesis u `OPENAI_API_KEY` como alternativa); búsqueda, código, ticket y el resto del soporte offline continúan funcionando sin ella.
 
 La cámara en vivo requiere HTTPS en iPhone y en la mayoría de los navegadores móviles. Como alternativa se puede usar **Cámara del teléfono** o **Subir foto**. Para probar un código físico, guarde antes su valor real en el catálogo.
 

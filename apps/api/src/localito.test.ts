@@ -13,6 +13,7 @@ import {
 } from "./repository.js";
 import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 import { extractInvoiceImage, extractQuickSaleImage, normalizeInvoiceAnalysis, normalizeQuickSaleAnalysis } from "./vision.js";
+import { resolveVisionProvider } from "./visionProvider.js";
 
 test("production and Vercel require persistent storage", () => {
   assert.equal(requiresPersistentRepository({ NODE_ENV: "development" }), false);
@@ -27,6 +28,13 @@ test("database URL resolution ignores blank values and supports Vercel aliases",
   );
   assert.equal(resolveDatabaseUrl({ SUPABASE_DB_URL: "postgres://supabase/localito" }), "postgres://supabase/localito");
   assert.equal(resolveDatabaseUrl({}), undefined);
+});
+
+test("vision provider prefers Groq and supports an explicit OpenAI fallback", () => {
+  assert.equal(resolveVisionProvider({ GROQ_API_KEY: "groq-test" })?.name, "groq");
+  assert.equal(resolveVisionProvider({ GROQ_API_KEY: "groq-test" })?.model, "qwen/qwen3.6-27b");
+  assert.equal(resolveVisionProvider({ VISION_PROVIDER: "openai", OPENAI_API_KEY: "openai-test" })?.name, "openai");
+  assert.equal(resolveVisionProvider({ VISION_PROVIDER: "groq", OPENAI_API_KEY: "openai-test" }), null);
 });
 
 test("PostgreSQL demo seeds use stable UUIDs", () => {
@@ -401,6 +409,50 @@ test("quick sale vision uses strict structured output, catalog context and provi
     globalThis.fetch = previousFetch;
     if (previousKey == null) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previousKey;
+  }
+});
+
+test("quick sale uses Groq vision JSON mode without sending prices or stock", async () => {
+  const previousGroqKey = process.env.GROQ_API_KEY;
+  const previousOpenAiKey = process.env.OPENAI_API_KEY;
+  const previousProvider = process.env.VISION_PROVIDER;
+  const previousFetch = globalThis.fetch;
+  let requestUrl = "";
+  let requestBody: Record<string, unknown> | undefined;
+  process.env.VISION_PROVIDER = "groq";
+  process.env.GROQ_API_KEY = "groq-test-only-key";
+  delete process.env.OPENAI_API_KEY;
+  globalThis.fetch = async (input, init) => {
+    requestUrl = String(input);
+    requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({
+        items: [{ observedLabel: "Bebida cola", matchedProductId: "groq-cola", candidateProductIds: ["groq-cola"], quantity: 2, confidence: 0.94 }],
+        warnings: []
+      }) } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+
+  try {
+    const result = await extractQuickSaleImage("data:image/jpeg;base64,AAAA", [{
+      id: "groq-cola", tenantId: "tenant", name: "Bebida cola 1.5 L", brand: "Marca", category: "Bebidas",
+      costPrice: 1_000, salePrice: 1_500, stock: 8, minimumStock: 2, active: true
+    }]);
+    assert.equal(result.items[0]?.productId, "groq-cola");
+    assert.equal(result.items[0]?.salePrice, 1_500);
+    assert.equal(requestUrl, "https://api.groq.com/openai/v1/chat/completions");
+    assert.equal(requestBody?.model, "qwen/qwen3.6-27b");
+    assert.equal((requestBody?.response_format as { type?: string }).type, "json_object");
+    assert.equal(requestBody?.reasoning_effort, "none");
+    const messages = JSON.stringify(requestBody?.messages);
+    assert.match(messages, /groq-cola/);
+    assert.match(messages, /No inventes productos/i);
+    assert.doesNotMatch(messages, /"salePrice"|"stock"/);
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousGroqKey == null) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = previousGroqKey;
+    if (previousOpenAiKey == null) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = previousOpenAiKey;
+    if (previousProvider == null) delete process.env.VISION_PROVIDER; else process.env.VISION_PROVIDER = previousProvider;
   }
 });
 

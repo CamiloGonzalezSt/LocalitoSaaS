@@ -1374,7 +1374,7 @@ La version actual deja un nucleo operacional conectado entre frontend, API REST 
 
 La API puede operar en dos modos. En modo `memory`, usa almacenamiento en memoria para demos rapidas y desarrollo sin base de datos local. En modo `postgres`, cuando existe `DATABASE_URL` y la base responde, inicializa tablas desde `db/schema.sql`, siembra datos demo si la base esta vacia y persiste las entidades operacionales. Los datos se aislan por negocio usando el usuario de la sesion; el cliente ya no envia ni decide el identificador del negocio.
 
-El reconocimiento intenta primero leer el codigo de barras mediante ZXing. Si no lo encuentra y existe `OPENAI_API_KEY`, el frontend reduce la imagen y el backend usa un modelo con vision para compararla contra el catalogo del negocio. Sin clave externa se conserva el flujo controlado por pista o codigo. En iPhone, la camara en vivo requiere HTTPS; por eso la prueba local prioriza el boton **Tomar foto**.
+El reconocimiento intenta primero leer el codigo de barras mediante ZXing. Si no lo encuentra y existe `GROQ_API_KEY` (o `OPENAI_API_KEY` como alternativa), el frontend reduce la imagen y el backend usa un modelo con vision para compararla contra el catalogo del negocio. Para la tesis se recomienda Groq con su cuota gratuita. Sin clave externa se conserva el flujo controlado por pista o codigo. En iPhone, la camara en vivo requiere HTTPS; por eso la prueba local prioriza el boton **Tomar foto**.
 
 La lectura de codigos de barra se implementa en el frontend con la libreria `@zxing/browser`. Si el navegador permite camara en vivo en un contexto seguro, el sistema puede leer el codigo desde video. Si se prueba desde iPhone por HTTP local, se usa captura de foto porque iOS bloquea `getUserMedia` fuera de HTTPS. Si la foto no permite leer el codigo, la PWA mantiene entrada manual de codigo y pista como respaldo. Esto permite defender el flujo sin contratar servicios externos.
 
@@ -1452,6 +1452,10 @@ DATABASE_URL=postgresql://localito:localito@localhost:5432/localito
 OWNER_DEMO_PASSWORD=Duoc2026
 SELLER_DEMO_PASSWORD=Duoc2026V
 SESSION_SECRET=change-this-in-production-with-a-long-random-value
+VISION_PROVIDER=groq
+GROQ_API_KEY=
+GROQ_VISION_MODEL=qwen/qwen3.6-27b
+# Alternativa opcional:
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
 ```
@@ -1579,7 +1583,7 @@ Para instalar Localito como PWA real desde el iPhone se requiere una URL con HTT
 
 ### 32.9 Validacion del reconocimiento por camara e IA
 
-La version actual puede reconocer el envase con un modelo de vision cuando el backend tiene `OPENAI_API_KEY`. Sin esa variable, la lectura de codigo de barras y la pista manual permiten demostrar el mismo flujo con un resultado controlado.
+La version actual puede reconocer el envase con un modelo de vision cuando el backend tiene `GROQ_API_KEY` o, alternativamente, `OPENAI_API_KEY`. Groq es el proveedor recomendado para la demostracion academica sin costo, sujeto a su cuota gratuita. Sin una clave externa, la lectura de codigo de barras y la pista manual permiten demostrar el flujo controlado.
 
 Pruebas sugeridas:
 

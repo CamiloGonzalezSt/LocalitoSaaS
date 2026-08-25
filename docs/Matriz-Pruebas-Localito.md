@@ -78,7 +78,7 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-42 | Inventario | Alerta de vencimiento | Asignar vencimiento dentro de 30 dias. | Gestion muestra alerta del producto. | Pendiente evidencia |
 | CP-43 | Datos | Importar y exportar CSV | Exportar catalogo e importar un archivo valido. | Se descarga CSV y se crean filas validas. | Pendiente evidencia |
 | CP-44 | Offline | Venta sin conexion | Perder red al confirmar y recuperarla. | La venta queda en cola y se sincroniza sin duplicarse. | Pendiente evidencia |
-| CP-45 | Vision | Reconocer envase | Configurar `OPENAI_API_KEY`, fotografiar un producto catalogado. | La API propone coincidencia con confianza y permite corregir. | Pendiente evidencia |
+| CP-45 | Vision | Reconocer envase | Configurar `GROQ_API_KEY` (o `OPENAI_API_KEY`), fotografiar un producto catalogado. | La API propone coincidencia con confianza y permite corregir. | Pendiente evidencia |
 | CP-46 | Seguridad | Recuperar contraseña | Solicitar el enlace, cambiar la clave y volver a usar el enlace. | La nueva clave funciona, sesiones anteriores quedan revocadas y el enlace no puede reutilizarse. | Automatizada aprobada |
 | CP-47 | Factura IA | Extraer factura | Fotografiar una factura legible desde Negocio. | Propone proveedor, folio, fecha, totales y líneas con confianza y advertencias. | Esquema automatizado aprobado; visual aprobado |
 | CP-48 | Factura IA | Reutilizar catálogo | Leer una línea cuyo código o nombre corresponde a un producto activo. | La línea queda marcada En inventario y no crea otro producto. | Automatizada aprobada |
