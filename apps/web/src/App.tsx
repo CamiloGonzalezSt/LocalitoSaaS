@@ -191,6 +191,9 @@ const emptyProfileForm: ProfileFormState = {
 const emptySummary: ReportSummary = {
   totalSales: 0,
   salesCount: 0,
+  operatingExpenses: 0,
+  estimatedGrossProfit: 0,
+  estimatedNetResult: 0,
   pendingDebt: 0,
   lowStockCount: 0,
   stockValue: 0
@@ -2351,9 +2354,9 @@ function ReportsView({
       {canViewFullReports && (
         <div className="stats-grid">
           <StatCard label="Vendido" value={formatCLP(summary.totalSales)} icon={BarChart3} tone="green" />
-          <StatCard label="Stock valorizado" value={formatCLP(summary.stockValue)} icon={Package} tone="blue" />
-          <StatCard label="Fiado pendiente" value={formatCLP(summary.pendingDebt)} icon={ReceiptText} tone="amber" />
-          <StatCard label="Caja recibida" value={formatCLP(cashRegister.receivedTotal)} icon={Banknote} tone="red" />
+          <StatCard label="Margen estimado" value={formatCLP(summary.estimatedGrossProfit)} icon={Package} tone="blue" />
+          <StatCard label="Gastos operativos" value={formatCLP(summary.operatingExpenses)} icon={ReceiptText} tone="amber" />
+          <StatCard label="Resultado estimado" value={formatCLP(summary.estimatedNetResult)} icon={Banknote} tone={summary.estimatedNetResult >= 0 ? "green" : "red"} />
         </div>
       )}
 

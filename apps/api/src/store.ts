@@ -231,10 +231,22 @@ export function getReportSummary(tenantId: string): ReportSummary {
   const customers = getTenantCustomers(tenantId);
   const sales = store.sales.filter((sale) => sale.tenantId === tenantId && sale.status !== "cancelled");
   const netSales = sales.map((sale) => ({ sale, total: netSaleTotal(sale) })).filter((entry) => entry.total > 0);
+  const productCosts = new Map(products.map((product) => [product.id, product.costPrice]));
+  const estimatedCost = netSales.reduce((sum, entry) => {
+    const originalCost = entry.sale.items.reduce((saleCost, item) => saleCost + (productCosts.get(item.productId) ?? 0) * item.quantity, 0);
+    const retainedRatio = entry.sale.total > 0 ? entry.total / entry.sale.total : 0;
+    return sum + Math.round(originalCost * retainedRatio);
+  }, 0);
+  const totalSales = netSales.reduce((sum, entry) => sum + entry.total, 0);
+  const operatingExpenses = store.cashMovements.filter((movement) => movement.tenantId === tenantId && movement.type === "expense").reduce((sum, movement) => sum + movement.amount, 0);
+  const estimatedGrossProfit = totalSales - estimatedCost;
 
   return {
-    totalSales: netSales.reduce((sum, entry) => sum + entry.total, 0),
+    totalSales,
     salesCount: netSales.length,
+    operatingExpenses,
+    estimatedGrossProfit,
+    estimatedNetResult: estimatedGrossProfit - operatingExpenses,
     pendingDebt: customers.reduce((sum, customer) => sum + customer.debtBalance, 0),
     lowStockCount: getStockAlerts(tenantId).length,
     stockValue: products.reduce((sum, product) => sum + product.stock * product.salePrice, 0)

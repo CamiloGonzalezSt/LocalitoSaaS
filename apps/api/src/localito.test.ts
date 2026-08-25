@@ -253,6 +253,9 @@ test("critical business flows are consistent and idempotent", async () => {
   const cashSummary = await repository.getCashRegister(demoTenantId);
   const closed = await repository.closeCashSession(demoTenantId, cashSummary.expectedCash ?? 0, "Prueba automática", demoOwnerId);
   assert.equal(session.id, closed?.id); assert.equal(closed?.difference, 0);
+  const financialSummary = (await repository.bootstrap(demoTenantId)).summary;
+  assert.ok(financialSummary.operatingExpenses >= 1_000);
+  assert.equal(financialSummary.estimatedNetResult, financialSummary.estimatedGrossProfit - financialSummary.operatingExpenses);
 
   const supplier = await repository.createSupplier(demoTenantId, { name: "Proveedor prueba" });
   const purchase = await repository.createPurchaseOrder(demoTenantId, { supplierId: supplier.id, items: [{ productId: product.id, quantity: 2, unitCost: product.costPrice }] });

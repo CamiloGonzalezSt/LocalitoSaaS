@@ -422,6 +422,9 @@ export interface ProductBulkImportResult {
 export interface ReportSummary {
   totalSales: number;
   salesCount: number;
+  operatingExpenses: number;
+  estimatedGrossProfit: number;
+  estimatedNetResult: number;
   pendingDebt: number;
   lowStockCount: number;
   stockValue: number;

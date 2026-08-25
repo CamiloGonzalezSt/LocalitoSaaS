@@ -1107,6 +1107,15 @@ class PostgresRepository implements DataRepository {
     const returnRows = await this.pool.query(`select venta_id, coalesce(sum(total), 0) as total from devoluciones_venta where negocio_id = $1 group by venta_id`, [tenant.id]);
     const returnedTotals = new Map(returnRows.rows.map((row) => [String(row.venta_id), Number(row.total)]));
     const netSales = activeSales.map((sale) => ({ sale, total: Math.max(0, sale.total - (returnedTotals.get(sale.id) ?? 0)) })).filter((entry) => entry.total > 0);
+    const productCosts = new Map(products.map((product) => [product.id, product.costPrice]));
+    const totalSales = netSales.reduce((sum, entry) => sum + entry.total, 0);
+    const estimatedCost = netSales.reduce((sum, entry) => {
+      const originalCost = entry.sale.items.reduce((saleCost, item) => saleCost + (productCosts.get(item.productId) ?? 0) * item.quantity, 0);
+      return sum + Math.round(originalCost * (entry.sale.total > 0 ? entry.total / entry.sale.total : 0));
+    }, 0);
+    const expenseRows = await this.pool.query(`select coalesce(sum(monto), 0) as total from movimientos_caja where negocio_id = $1 and tipo = 'expense'`, [tenant.id]);
+    const operatingExpenses = Number(expenseRows.rows[0]?.total ?? 0);
+    const estimatedGrossProfit = totalSales - estimatedCost;
     const cashSession = await this.getOpenCashSession(tenant.id);
 
     return {
@@ -1137,8 +1146,11 @@ class PostgresRepository implements DataRepository {
           severity: product.stock === 0 ? ("critical" as const) : ("warning" as const)
         })),
       summary: {
-        totalSales: netSales.reduce((sum, entry) => sum + entry.total, 0),
+        totalSales,
         salesCount: netSales.length,
+        operatingExpenses,
+        estimatedGrossProfit,
+        estimatedNetResult: estimatedGrossProfit - operatingExpenses,
         pendingDebt: customers.reduce((sum, customer) => sum + customer.debtBalance, 0),
         lowStockCount: products.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock).length,
         stockValue: products.reduce((sum, product) => sum + product.stock * product.salePrice, 0)
