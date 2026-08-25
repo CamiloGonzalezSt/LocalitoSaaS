@@ -124,7 +124,7 @@ export async function requestVisionJson(request: VisionJsonRequest): Promise<unk
   if (!response.ok) {
     if (response.status === 429) throw new Error("La cuota gratuita de reconocimiento está temporalmente agotada. Intenta nuevamente más tarde.");
     if (response.status === 401 || response.status === 403) throw new Error("La credencial del servicio de reconocimiento no es válida o no tiene acceso al modelo.");
-    if (response.status === 413) throw new Error("La foto es demasiado pesada para analizarla. Intenta nuevamente con una imagen más liviana.");
+    if (response.status === 413) throw new Error("La foto o el catálogo superan el límite gratuito del proveedor. Intenta con una foto más simple o menos productos visibles.");
     throw new Error(`${request.operationLabel} respondió ${response.status}.`);
   }
 

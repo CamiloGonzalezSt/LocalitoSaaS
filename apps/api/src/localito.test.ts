@@ -444,6 +444,7 @@ test("quick sale uses Groq vision JSON mode without sending prices or stock", as
     assert.equal(requestBody?.model, "qwen/qwen3.6-27b");
     assert.equal((requestBody?.response_format as { type?: string }).type, "json_object");
     assert.equal(requestBody?.reasoning_effort, "none");
+    assert.equal(requestBody?.max_completion_tokens, 1_500);
     const messages = JSON.stringify(requestBody?.messages);
     assert.match(messages, /groq-cola/);
     assert.match(messages, /No inventes productos/i);

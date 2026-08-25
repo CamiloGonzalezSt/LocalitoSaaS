@@ -327,7 +327,7 @@ export async function extractQuickSaleImage(imageDataUrl: string, products: Prod
     userPrompt: `Observa todos los productos comerciales visibles sobre el mesón y compáralos exclusivamente con este catálogo del negocio: ${JSON.stringify(catalog)}. Agrupa unidades idénticas y devuelve su cantidad visible. matchedProductId debe ser null salvo que el producto corresponda claramente a un ID exacto del catálogo. Para una coincidencia dudosa, usa candidateProductIds con hasta 3 IDs reales del catálogo y reduce confidence. Si no existe coincidencia, deja matchedProductId null y candidateProductIds vacío. Nunca determines precios ni stock desde la foto.`,
     schemaName: "localito_quick_sale",
     schema: quickSaleSchema,
-    maxOutputTokens: 4_000,
+    maxOutputTokens: provider.name === "groq" ? 1_500 : 4_000,
     timeoutMs: 45_000,
     operationLabel: "El servicio de Venta Rápida"
   });
@@ -356,7 +356,7 @@ export async function extractInvoiceImage(imageDataUrl: string, products: Produc
     userPrompt: `Lee esta factura chilena y extrae proveedor, RUT, folio, fecha, totales y productos. Compara cada línea primero con el catálogo ${JSON.stringify(catalog)}. Usa existingProductId solo cuando la coincidencia sea clara y pertenezca a ese catálogo. Conserva la descripción original en rawDescription. Categorías preferidas: ${JSON.stringify(categories)}. quantity debe ser la cantidad que aumentará el stock; convierte packs a unidades solo cuando el documento y unitsPerPack lo indiquen con claridad. unitCost debe ser el costo neto por esa unidad de stock y lineTotal el total neto de la línea. Si algo no es legible usa null, baja confidence y agrega una advertencia. No calcules ni sugieras precios de venta.`,
     schemaName: "localito_invoice",
     schema: invoiceSchema,
-    maxOutputTokens: 8_000,
+    maxOutputTokens: provider.name === "groq" ? 3_000 : 8_000,
     timeoutMs: 60_000,
     operationLabel: "El servicio de lectura de facturas"
   });
