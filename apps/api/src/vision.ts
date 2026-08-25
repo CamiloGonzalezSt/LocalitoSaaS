@@ -369,7 +369,7 @@ export async function extractInvoiceImage(imageDataUrl: string, products: Produc
     userPrompt: `Lee esta factura chilena y extrae proveedor, RUT, folio, fecha, totales y productos. Compara cada línea primero con el catálogo ${JSON.stringify(catalog)}. Usa existingProductId solo cuando la coincidencia sea clara y pertenezca a ese catálogo. Conserva la descripción original en rawDescription. Categorías preferidas: ${JSON.stringify(categories)}. quantity debe ser la cantidad que aumentará el stock; convierte packs a unidades solo cuando el documento y unitsPerPack lo indiquen con claridad. unitCost debe ser el costo neto por esa unidad de stock y lineTotal el total neto de la línea. Si algo no es legible usa null, baja confidence y agrega una advertencia. No calcules ni sugieras precios de venta.`,
     schemaName: "localito_invoice",
     schema: invoiceSchema,
-    maxOutputTokens: provider.name === "groq" ? 3_000 : 8_000,
+    maxOutputTokens: provider.name === "groq" ? 1_500 : 8_000,
     timeoutMs: 60_000,
     operationLabel: "El servicio de lectura de facturas"
   });

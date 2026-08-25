@@ -146,7 +146,10 @@ export async function requestVisionJson(request: VisionJsonRequest): Promise<unk
     const detail = await providerErrorDetail(response);
     if (response.status === 429) throw publicProviderError(`La cuota gratuita de reconocimiento está temporalmente agotada. ${providerRetryMessage(response)}`, 429);
     if (response.status === 401 || response.status === 403) throw publicProviderError("La credencial del servicio de reconocimiento no es válida o no tiene acceso al modelo.", 503);
-    if (response.status === 413) throw publicProviderError("La foto o el catálogo superan el límite gratuito del proveedor. Intenta con una foto más simple o menos productos visibles.", 413);
+    if (response.status === 413) {
+      const suffix = detail ? ` Detalle del proveedor: ${detail}` : "";
+      throw publicProviderError(`El proveedor rechazó el tamaño total de la solicitud.${suffix}`, 413);
+    }
     const suffix = detail ? ` ${detail}` : "";
     throw publicProviderError(`${request.operationLabel} rechazó la solicitud.${suffix}`, 502);
   }

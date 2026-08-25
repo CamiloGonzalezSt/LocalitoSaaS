@@ -109,7 +109,7 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
       try {
         response = await api.analyzeInvoiceImage(imageDataUrl);
       } catch (error) {
-        if (!(error instanceof Error) || !/foto o el catálogo superan el límite/i.test(error.message)) throw error;
+        if (!(error instanceof Error) || !/(foto o el catálogo superan el límite|proveedor rechazó el tamaño)/i.test(error.message)) throw error;
         setMessage("La factura necesita una reducción adicional. Reintentando automáticamente...");
         imageDataUrl = await prepareInvoiceImage(file, true);
         response = await api.analyzeInvoiceImage(imageDataUrl);
