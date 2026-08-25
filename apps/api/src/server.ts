@@ -238,6 +238,9 @@ async function bootstrapForRequest(req: express.Request) {
         ...workspace.summary,
         totalSales: 0,
         salesCount: 0,
+        operatingExpenses: 0,
+        estimatedGrossProfit: 0,
+        estimatedNetResult: 0,
         pendingDebt: 0,
         stockValue: 0
       }

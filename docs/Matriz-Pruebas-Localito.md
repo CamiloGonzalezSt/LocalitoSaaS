@@ -113,6 +113,9 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | PNF-06 | Factura IA movil | Revisar extracción a 320, 390 y 768 px. | Sin zoom automático, desborde horizontal ni controles tapados permanentemente. |
 | PNF-07 | Carga inicial movil | Revisar asistente y vista previa CSV a 320, 390 y 1280 px. | Las tarjetas se apilan, la tabla desplaza solo dentro de su contenedor y la página no produce zoom ni desborde horizontal. |
 | PNF-08 | Venta Rápida movil | Revisar captura y revisión a 320, 390, 768 y 1280 px. | Botones táctiles, cantidades editables, barra inferior libre y sin desborde horizontal. |
+| PNF-09 | Privacidad por rol | Ingresar como vendedor y consultar bootstrap. | No recibe ventas históricas, deuda, stock valorizado, gastos ni resultados financieros del dueño. |
+| PNF-10 | Cuota de IA | Forzar respuesta 429 con `Retry-After`. | Venta Rápida explica cuánto esperar y no modifica ticket ni inventario. |
+| PNF-11 | Resultado financiero | Registrar una venta y un gasto operativo categorizado. | Resultado estimado = margen bruto estimado - gastos operativos. |
 
 ## 6. Evidencias recomendadas
 

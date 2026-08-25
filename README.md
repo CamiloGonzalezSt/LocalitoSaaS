@@ -19,7 +19,8 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 - Clientes con cupo, plazo, bloqueo de crédito, cuentas por cobrar, vencimientos, abonos y recordatorios por WhatsApp.
 - Anulación de venta y devoluciones parciales con reposición de stock y ajuste de deuda.
 - Proveedores, órdenes de compra, recepción de mercadería y actualización del costo promedio ponderado.
-- Caja por turno: apertura, ingresos, gastos, retiros, cierre, efectivo esperado, contado y diferencia.
+- Caja por turno: apertura, ingresos, gastos operativos categorizados, retiros, cierre, efectivo esperado, contado y diferencia.
+- Reporte financiero con ventas netas, margen bruto estimado, gastos operativos y resultado estimado. Los cálculos de utilidad se presentan como estimaciones porque usan el costo vigente del catálogo.
 - Historial de auditoría para operaciones críticas.
 - Asistente automático de carga inicial para locales nuevos, con categorías sugeridas por rubro, progreso reanudable y acceso posterior desde el menú.
 - Importación masiva y exportación de productos en CSV: plantilla compatible con Excel, vista previa, validación por fila y prevención de duplicados, hasta 500 productos por carga.
@@ -28,7 +29,7 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 - Lectura de códigos con ZXing cargado bajo demanda.
 - **Venta Rápida**: una fotografía puede proponer varios productos y cantidades usando exclusivamente el catálogo del negocio; el vendedor corrige la propuesta y la agrega al ticket POS existente. La lectura de códigos de barras continúa disponible como alternativa.
 - Ingreso de mercadería desde una foto de factura: extracción estructurada, coincidencia con catálogo, revisión obligatoria de cantidades/costos/precios, creación de productos y recepción de stock sin duplicar la factura.
-- Webpay simulado para la demostración académica y cobro compartible de deudas.
+- Cobros presenciales con medios externos manuales: efectivo, tarjeta en terminal, transferencia/QR, Webpay externo, fiado y pago mixto. Localito registra el medio; no envía montos a terminales ni requiere contratar una pasarela.
 
 ## Requisitos
 
@@ -131,6 +132,8 @@ En desarrollo local, si no se define otra clave, el administrador usa `caj.gonza
 ## Venta Rápida, cámara y código de barras
 
 **Venta Rápida** permite tomar o subir una foto con varios productos. El navegador reduce la imagen y la API solicita una respuesta estructurada contra el catálogo aislado del negocio. Los IDs que no pertenecen al catálogo se descartan; precios y stock siempre se completan desde la base de Localito. Coincidencias ambiguas y productos no reconocidos deben confirmarse, cambiarse, buscarse o ignorarse antes de continuar.
+
+Cada producto y cantidad requieren confirmación humana antes de habilitar el envío al ticket. Los conteos repetidos o visualmente dudosos muestran una alerta específica. La API aplica un límite preventivo de 40 análisis por usuario y hora y, si Groq alcanza su cuota gratuita, informa el tiempo de espera indicado por el proveedor cuando está disponible.
 
 Al presionar **Agregar a la venta**, Localito incorpora las cantidades al ticket existente. La detección no crea una venta, no descuenta stock y no escribe kardex: esas operaciones siguen ocurriendo únicamente cuando el POS confirma el cobro. Si la cantidad supera el stock y el producto controla existencias, se muestra una advertencia y se aplica la misma restricción del POS.
 
