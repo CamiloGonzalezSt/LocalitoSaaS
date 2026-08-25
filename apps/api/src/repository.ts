@@ -2309,16 +2309,22 @@ class PostgresRepository implements DataRepository {
            returning id`,
           [tenant.id, tenant.name, tenant.businessType, tenant.address, tenant.phone, tenant.emailContact]
         );
-        for (const user of buildDemoUsers(tenant.id)) {
-          const password = user.role === "seller"
-            ? process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V"
-            : process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026";
-          await client.query(
-            `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
-             values ($1, $2, $3, $4, $5, $6, 'activo')
-             on conflict (id) do nothing`,
-            [persistentDemoId(`demo-user:${user.email}`), user.tenantId, user.name, user.email, hashPassword(password), user.role]
-          );
+        const tenantIdentity = insertedTenant.rows[0]
+          ? tenant.name
+          : (await client.query(`select nombre from negocios where id = $1`, [tenant.id])).rows[0]?.nombre;
+
+        if (tenantIdentity === tenant.name) {
+          for (const user of buildDemoUsers(tenant.id)) {
+            const password = user.role === "seller"
+              ? process.env.SELLER_DEMO_PASSWORD ?? "Duoc2026V"
+              : process.env.OWNER_DEMO_PASSWORD ?? process.env.DEMO_PASSWORD ?? "Duoc2026";
+            await client.query(
+              `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado)
+               values ($1, $2, $3, $4, $5, $6, 'activo')
+               on conflict (id) do nothing`,
+              [persistentDemoId(`demo-user:${user.email}`), user.tenantId, user.name, user.email, hashPassword(password), user.role]
+            );
+          }
         }
 
         if (!insertedTenant.rows[0]) continue;
