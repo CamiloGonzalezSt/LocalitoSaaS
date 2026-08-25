@@ -358,6 +358,7 @@ test("quick sale normalizes multiple products, groups quantities and never trust
   assert.equal(analysis.items.length, 3);
   assert.equal(analysis.items[0]?.productId, "cola");
   assert.equal(analysis.items[0]?.quantity, 3);
+  assert.equal(analysis.items[0]?.quantityNeedsReview, true);
   assert.equal(analysis.items[0]?.salePrice, 2_000);
   assert.equal(analysis.items[0]?.stock, 2);
   assert.equal(analysis.items[0]?.status, "matched");
@@ -448,6 +449,9 @@ test("quick sale uses Groq vision JSON mode without sending prices or stock", as
     assert.equal((requestBody?.response_format as { type?: string }).type, "json_object");
     assert.equal(requestBody?.reasoning_effort, "none");
     assert.equal(requestBody?.max_completion_tokens, 1_500);
+    const schemaText = JSON.stringify(requestBody?.messages);
+    assert.match(schemaText, /quantityUncertain/);
+    assert.match(schemaText, /nunca adivines unidades ocultas/i);
     const messages = JSON.stringify(requestBody?.messages);
     assert.match(messages, /groq-cola/);
     assert.match(messages, /No inventes productos/i);

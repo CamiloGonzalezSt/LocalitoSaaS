@@ -11,7 +11,7 @@ type QuickSaleDraft = QuickSaleDetectedItem & { confirmed: boolean };
 const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value || 0);
 
 function draftFromAnalysis(analysis: QuickSaleAnalysis): QuickSaleDraft[] {
-  return analysis.items.map((item) => ({ ...item, confirmed: item.status === "matched" && Boolean(item.productId) }));
+  return analysis.items.map((item) => ({ ...item, confirmed: false }));
 }
 
 function cameraErrorMessage(error: unknown) {
@@ -179,16 +179,16 @@ export function QuickSaleView({
       stock: product.stock,
       trackStock: product.trackStock !== false,
       status: "matched",
-      confirmed: true
+      confirmed: false
     });
     setSearchingItemId("");
     setProductSearch("");
   }
 
-  function confirmSuggestedProduct(itemId: string) {
+  function confirmItem(itemId: string) {
     const item = drafts.find((candidate) => candidate.id === itemId);
     if (!item?.productId) return;
-    updateDraft(itemId, { confirmed: true, status: "matched" });
+    updateDraft(itemId, { confirmed: true, status: "matched", quantityNeedsReview: false });
   }
 
   function removeDraft(itemId: string) {
@@ -224,6 +224,7 @@ export function QuickSaleView({
       stock: product.stock,
       trackStock: product.trackStock !== false,
       candidates: [],
+      quantityNeedsReview: false,
       confirmed: true
     } : {
       id: `codigo-${Date.now()}`,
@@ -232,6 +233,7 @@ export function QuickSaleView({
       confidence: 0,
       status: "unrecognized",
       candidates: [],
+      quantityNeedsReview: false,
       confirmed: false
     };
     stopCamera();
@@ -341,15 +343,18 @@ export function QuickSaleView({
           {item.status === "needs_confirmation" && !item.confirmed && <div className="quick-candidate-box">
             <p>No estoy completamente seguro. Confirma una opción:</p>
             <div>{item.candidates.map((candidate) => <button type="button" key={candidate.productId} onClick={() => chooseProduct(item.id, candidate.productId)}>{candidate.name}</button>)}</div>
-            {item.productId && <button className="secondary-action full" type="button" onClick={() => confirmSuggestedProduct(item.id)}><Check size={18} /> Confirmar sugerencia</button>}
           </div>}
 
+          {item.quantityNeedsReview && <div className="quick-stock-warning"><AlertTriangle size={17} /><span><strong>Cantidad por confirmar.</strong> {item.quantityNote ?? `La cámara distingue aproximadamente ${item.quantity} unidades; revisa si hay productos ocultos.`}</span></div>}
+
           <div className="quick-item-controls">
-            <div className="quick-quantity"><button type="button" aria-label="Disminuir cantidad" onClick={() => updateDraft(item.id, { quantity: Math.max(1, item.quantity - 1) })}><Minus size={20} /></button><strong>{item.quantity}</strong><button type="button" aria-label="Aumentar cantidad" onClick={() => updateDraft(item.id, { quantity: Math.min(99, item.quantity + 1) })}><Plus size={20} /></button></div>
+            <div className="quick-quantity"><button type="button" aria-label="Disminuir cantidad" onClick={() => updateDraft(item.id, { quantity: Math.max(1, item.quantity - 1), confirmed: false })}><Minus size={20} /></button><strong>{item.quantity}</strong><button type="button" aria-label="Aumentar cantidad" onClick={() => updateDraft(item.id, { quantity: Math.min(99, item.quantity + 1), confirmed: false })}><Plus size={20} /></button></div>
             {product && <div className="quick-item-price"><span>{money(product.salePrice)} c/u</span><strong>{money(product.salePrice * item.quantity)}</strong></div>}
           </div>
 
           {stockInsufficient && <div className="quick-stock-warning"><AlertTriangle size={17} /><span><strong>Stock registrado insuficiente.</strong> Detectados: {item.quantity} · Stock: {product?.stock}</span></div>}
+
+          {product && !item.confirmed && <button className="primary-action full" type="button" onClick={() => confirmItem(item.id)}><Check size={18} /> Confirmar producto y cantidad</button>}
 
           <button className="quick-change-product" type="button" onClick={() => { setSearchingItemId(searchingItemId === item.id ? "" : item.id); setProductSearch(""); }}><Search size={17} /> {product ? "Cambiar producto" : "Buscar producto manualmente"}</button>
           {searchingItemId === item.id && <div className="quick-product-search"><input autoFocus value={productSearch} onChange={(event) => setProductSearch(event.target.value)} placeholder="Nombre, marca o código" /><div>{filteredProducts.map((candidate) => <button type="button" key={candidate.id} onClick={() => chooseProduct(item.id, candidate.id)}><span><strong>{candidate.name}</strong><small>{candidate.brand ?? candidate.category}</small></span><b>{money(candidate.salePrice)}</b></button>)}</div>{filteredProducts.length === 0 && <p>No encontramos productos con esa búsqueda.</p>}</div>}

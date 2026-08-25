@@ -280,6 +280,8 @@ export interface QuickSaleDetectedItem {
   productId?: string;
   productName?: string;
   quantity: number;
+  quantityNeedsReview: boolean;
+  quantityNote?: string;
   confidence: number;
   status: QuickSaleMatchStatus;
   salePrice?: number;
