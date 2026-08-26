@@ -81,7 +81,7 @@ export interface DataRepository {
   bootstrap(tenantId: string): Promise<BootstrapData>;
   listTenants(): Promise<PlatformTenantSummary[]>;
   getSubscription(tenantId: string): Promise<Subscription>;
-  updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string }): Promise<Subscription>;
+  updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string; pendingPlan?: SubscriptionPlan | null }): Promise<Subscription>;
   updateTenant(tenantId: string, tenant: Partial<Tenant>): Promise<Tenant | null>;
   getUsers(tenantId: string, includeInactive?: boolean): Promise<User[]>;
   createUser(tenantId: string, user: Partial<User> & { password?: string }): Promise<User>;
@@ -439,17 +439,22 @@ export class MemoryRepository implements DataRepository {
     return subscription;
   }
 
-  async updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string }) {
+  async updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string; pendingPlan?: SubscriptionPlan | null }) {
     const subscription = await this.getSubscription(tenantId);
     if (input.plan) subscription.plan = input.plan;
     if (input.status) subscription.status = input.status;
     if (input.paymentProvider) subscription.paymentProvider = input.paymentProvider;
-    if (input.plan && !input.status) subscription.status = "active";
+    if (input.pendingPlan !== undefined) {
+      subscription.pendingPlan = input.pendingPlan ?? undefined;
+      subscription.planChangeRequestedAt = input.pendingPlan ? new Date().toISOString() : undefined;
+    }
     if (subscription.status === "active") {
       const now = new Date();
       subscription.currentPeriodStartedAt = now.toISOString();
       subscription.currentPeriodEndsAt = new Date(now.getTime() + 30 * 86_400_000).toISOString();
     }
+    if (subscription.status === "cancelled") subscription.cancelledAt = new Date().toISOString();
+    if (subscription.status === "active" || subscription.status === "trialing") subscription.cancelledAt = undefined;
     subscription.updatedAt = new Date().toISOString();
     return subscription;
   }
@@ -1274,10 +1279,10 @@ class PostgresRepository implements DataRepository {
     return mapSubscription(inserted.rows[0]);
   }
 
-  async updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string }) {
+  async updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string; pendingPlan?: SubscriptionPlan | null }) {
     const current = await this.getSubscription(tenantId);
     const plan = input.plan ?? current.plan;
-    const status = input.status ?? (input.plan ? "active" : current.status);
+    const status = input.status ?? current.status;
     const now = new Date();
     const activePeriod = status === "active" ? {
       startedAt: now.toISOString(),
@@ -1285,9 +1290,11 @@ class PostgresRepository implements DataRepository {
     } : { startedAt: current.currentPeriodStartedAt, endsAt: current.currentPeriodEndsAt };
     const result = await this.pool.query(
       `update suscripciones set plan=$1, estado=$2, inicio_periodo=$3, fin_periodo=$4, proveedor_pago=$5,
-       fecha_cancelacion=case when $2='cancelled' then CURRENT_TIMESTAMP else fecha_cancelacion end,
-       fecha_actualizacion=CURRENT_TIMESTAMP where negocio_id=$6 returning *`,
-      [plan, status, activePeriod.startedAt, activePeriod.endsAt, input.paymentProvider ?? current.paymentProvider ?? "manual", tenantId]
+       fecha_cancelacion=case when $2='cancelled' then CURRENT_TIMESTAMP when $2 in ('active','trialing') then null else fecha_cancelacion end,
+       plan_solicitado=case when $6::text is null then null else $6 end,
+       fecha_solicitud_cambio=case when $6::text is null then null when $6::text <> coalesce(plan_solicitado, '') then CURRENT_TIMESTAMP else fecha_solicitud_cambio end,
+       fecha_actualizacion=CURRENT_TIMESTAMP where negocio_id=$7 returning *`,
+      [plan, status, activePeriod.startedAt, activePeriod.endsAt, input.paymentProvider ?? current.paymentProvider ?? "manual", input.pendingPlan === undefined ? current.pendingPlan ?? null : input.pendingPlan, tenantId]
     );
     return mapSubscription(result.rows[0]);
   }
@@ -2696,6 +2703,8 @@ function mapSubscription(row: Record<string, unknown>): Subscription {
     paymentProvider: toOptional(row.proveedor_pago),
     externalCustomerId: toOptional(row.cliente_externo_id),
     externalSubscriptionId: toOptional(row.suscripcion_externa_id),
+    pendingPlan: toOptional(row.plan_solicitado) as Subscription["pendingPlan"],
+    planChangeRequestedAt: row.fecha_solicitud_cambio ? new Date(String(row.fecha_solicitud_cambio)).toISOString() : undefined,
     createdAt: new Date(String(row.fecha_creacion)).toISOString(),
     updatedAt: new Date(String(row.fecha_actualizacion)).toISOString()
   };

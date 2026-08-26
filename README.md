@@ -163,7 +163,7 @@ npm run build
 npm run test -w apps/api
 ```
 
-Las pruebas automatizadas cubren hashes de contraseñas y sesiones, idempotencia de ventas, límites de crédito, caja, compras, costo promedio, inventario, importación masiva reintentable, Venta Rápida multiproducto, rechazo de IDs ajenos al catálogo, cantidades agrupadas, esquemas estrictos de visión, extracción de facturas, recepción de stock y prevención de duplicados. La matriz manual vive en [docs/Matriz-Pruebas-Localito.md](docs/Matriz-Pruebas-Localito.md).
+Las pruebas automatizadas cubren hashes de contraseñas y sesiones, idempotencia de ventas, límites de crédito, caja, compras, costo promedio, inventario, importación masiva reintentable, Venta Rápida multiproducto, rechazo de IDs ajenos al catálogo, cantidades agrupadas, esquemas estrictos de visión, extracción de facturas, recepción de stock y prevención de duplicados. La matriz manual vive en [docs/Matriz-Pruebas-Localito.md](docs/Matriz-Pruebas-Localito.md) y la trazabilidad anterior → nueva ubicación está en [docs/Matriz-Regresion-Rediseno.md](docs/Matriz-Regresion-Rediseno.md).
 
 ## Planes y permisos
 
@@ -173,7 +173,7 @@ Todo negocio nuevo recibe una prueba de **Localito Pro por 30 días**. `suscripc
 - **Pro ($19.990/mes):** agrega clientes, fiado, proveedores, compras, reportes avanzados, auditoría, alertas y Venta Rápida con foto.
 - Al vencer, los datos no se borran: quedan disponibles en modo lectura y las mutaciones responden `403` hasta reactivar.
 
-La selección manual de plan implementada deja preparada la arquitectura de entitlements y periodos. El cobro recurrente automático con un proveedor externo continúa fuera del MVP académico.
+La selección manual registra un `pendingPlan`: no activa funciones sin confirmación ni interrumpe una prueba vigente. El administrador verifica el pago fuera de Localito y activa el período desde el panel SaaS. El cobro recurrente automático con un proveedor externo continúa fuera del MVP académico.
 
 ## Estructura
 
@@ -187,6 +187,7 @@ docs/
   Backlog-Scrum-Jira.md
   Documento-Proyecto-Localito.md
   Jira-Import.csv
+  Matriz-Regresion-Rediseno.md
   Matriz-Pruebas-Localito.md
   Operacion-Produccion.md
 packages/

@@ -30,6 +30,8 @@ export interface Subscription {
   paymentProvider?: string;
   externalCustomerId?: string;
   externalSubscriptionId?: string;
+  pendingPlan?: SubscriptionPlan;
+  planChangeRequestedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -88,8 +90,6 @@ export function effectiveSubscriptionStatus(subscription: Subscription, now = ne
 }
 
 export function subscriptionEntitlements(subscription: Subscription) {
-  const status = effectiveSubscriptionStatus(subscription);
-  if (status === "expired" || status === "cancelled" || status === "past_due") return [] as EntitlementKey[];
   return [...LOCALITO_PLANS[subscription.plan].entitlements];
 }
 

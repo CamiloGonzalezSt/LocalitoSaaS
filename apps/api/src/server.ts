@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import type { Customer, EntitlementKey, PaymentMethod, Product, SubscriptionPlan, Tenant, User } from "@localito/shared";
-import { LOCALITO_PLANS, hasEntitlement, subscriptionCanMutate } from "@localito/shared";
+import { effectiveSubscriptionStatus, LOCALITO_PLANS, hasEntitlement, subscriptionCanMutate } from "@localito/shared";
 import { createRepository } from "./repository.js";
 import { createSessionToken, createSignedSessionToken, hashSessionToken, passwordPolicyError, verifySignedSessionToken } from "./auth.js";
 import { isTransactionalEmailConfigured, sendPasswordResetEmail } from "./email.js";
@@ -515,7 +515,14 @@ app.patch("/platform/tenants/:id/subscription", asyncRoute(async (req, res) => {
   if (status && !["trialing", "active", "past_due", "cancelled", "expired"].includes(status)) { res.status(400).json({ message: "El estado indicado no existe." }); return; }
   const exists = (await repository.listTenants()).some((tenant) => tenant.id === req.params.id);
   if (!exists) { res.status(404).json({ message: "Local no encontrado." }); return; }
-  const subscription = await repository.updateSubscription(req.params.id, { plan, status, paymentProvider: "manual" });
+  const current = await repository.getSubscription(req.params.id);
+  const activating = status === "active";
+  const subscription = await repository.updateSubscription(req.params.id, {
+    plan: plan ?? (activating ? current.pendingPlan : undefined),
+    status,
+    paymentProvider: "manual",
+    pendingPlan: activating ? null : undefined
+  });
   await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "subscription", entityId: subscription.id, details: { tenantId: req.params.id, plan: subscription.plan, status: subscription.status } });
   res.json({ data: subscription });
 }));
@@ -529,12 +536,35 @@ app.post("/subscription/change-plan", asyncRoute(async (req, res) => {
   const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
   const { plan } = req.body as { plan?: SubscriptionPlan };
   if (!plan || !["basic", "pro"].includes(plan)) { res.status(400).json({ message: "Elige un plan válido." }); return; }
-  const subscription = await repository.updateSubscription(actor.tenantId, { plan, status: "active", paymentProvider: "manual" });
+  const current = await repository.getSubscription(actor.tenantId);
+  if (current.plan === plan && current.status === "active" && !current.pendingPlan) { res.json({ data: current }); return; }
+  const currentStatus = effectiveSubscriptionStatus(current);
+  const nextStatus = ["expired", "cancelled", "past_due"].includes(currentStatus) ? "past_due" : current.status;
+  const subscription = await repository.updateSubscription(actor.tenantId, { status: nextStatus, paymentProvider: "manual", pendingPlan: plan });
   await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "subscription", entityId: subscription.id, details: { plan: subscription.plan, status: subscription.status } });
   res.json({ data: subscription });
 }));
 
 app.use(subscriptionGuard);
+
+app.patch("/tenant", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
+  const body = req.body as Partial<Tenant>;
+  const safeBody: Partial<Tenant> = {
+    name: body.name,
+    businessType: body.businessType,
+    address: body.address,
+    phone: body.phone
+  };
+  if (!safeBody.name?.trim() || !safeBody.businessType?.trim()) {
+    res.status(400).json({ message: "Nombre y rubro son obligatorios para guardar el negocio." });
+    return;
+  }
+  const tenant = await repository.updateTenant(actor.tenantId, safeBody);
+  if (!tenant) { res.status(404).json({ message: "Local no encontrado." }); return; }
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "tenant", entityId: tenant.id, details: { name: tenant.name, businessType: tenant.businessType } });
+  res.json({ data: tenant });
+}));
 
 app.get(
   "/users",

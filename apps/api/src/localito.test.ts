@@ -169,6 +169,41 @@ test("plan changes gate Pro features and expired subscriptions become read-only"
   const expired = createTrialSubscription(registered.tenant.id, new Date("2026-01-01T00:00:00.000Z"));
   assert.equal(effectiveSubscriptionStatus(expired, new Date("2026-02-01T00:00:00.000Z")), "expired");
   assert.equal(subscriptionCanMutate(expired), false);
+  assert.equal(hasEntitlement(expired, "customers"), true);
+});
+
+test("manual subscription requests never activate themselves and preserve data access", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const registered = await repository.registerTenant({ name: "Dueña suscripción", email: `subscription-${suffix}@localito.test`, password: "Suscripcion2026", businessName: `Local suscripción ${suffix}`, businessType: "Almacén" });
+  await repository.createCustomer(registered.tenant.id, { name: "Cliente preservado" });
+  const requestedDuringTrial = await repository.updateSubscription(registered.tenant.id, { pendingPlan: "basic", paymentProvider: "manual" });
+  assert.equal(requestedDuringTrial.plan, "pro");
+  assert.equal(requestedDuringTrial.pendingPlan, "basic");
+  assert.equal(requestedDuringTrial.status, "trialing");
+  assert.equal(subscriptionCanMutate(requestedDuringTrial), true);
+  const pending = await repository.updateSubscription(registered.tenant.id, { plan: "basic", status: "past_due", paymentProvider: "manual" });
+  assert.equal(pending.status, "past_due");
+  assert.equal(subscriptionCanMutate(pending), false);
+  assert.equal(hasEntitlement(pending, "sales"), true);
+  assert.equal(hasEntitlement(pending, "customers"), false);
+  assert.equal((await repository.getCustomers(registered.tenant.id)).length, 1);
+  const activated = await repository.updateSubscription(registered.tenant.id, { status: "active", paymentProvider: "manual" });
+  assert.equal(activated.status, "active");
+  assert.equal(subscriptionCanMutate(activated), true);
+  assert.ok(activated.currentPeriodEndsAt);
+});
+
+test("owners can update business identity without changing tenant activation", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const registered = await repository.registerTenant({ name: "Dueño negocio", email: `business-${suffix}@localito.test`, password: "NegocioSeguro2026", businessName: `Local original ${suffix}`, businessType: "Almacén" });
+  const updated = await repository.updateTenant(registered.tenant.id, { name: "Local actualizado", businessType: "Botillería", address: "Calle Uno 123", phone: "+56 9 1234 5678" });
+  assert.equal(updated?.name, "Local actualizado");
+  assert.equal(updated?.businessType, "Botillería");
+  assert.equal(updated?.address, "Calle Uno 123");
+  assert.equal(updated?.phone, "+56 9 1234 5678");
+  assert.equal(updated?.active, undefined);
 });
 
 test("initial inventory bulk import validates rows, avoids duplicates and is safe to retry", async () => {

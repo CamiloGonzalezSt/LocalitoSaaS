@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Copy,
   CreditCard,
-  Download,
   Edit3,
   Home,
   LogIn,
@@ -15,8 +14,6 @@ import {
   Menu,
   MessageCircle,
   Minus,
-  Monitor,
-  Moon,
   Package,
   Plus,
   Printer,
@@ -30,7 +27,6 @@ import {
   ShoppingCart,
   Smartphone,
   Store,
-  Sun,
   Trash2,
   Users,
   WalletCards,
@@ -53,16 +49,19 @@ import type {
   SubscriptionPlan,
   User
 } from "@localito/shared";
-import { LOCALITO_PLANS, hasEntitlement, mergeQuickSaleTicket, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
+import { effectiveSubscriptionStatus, LOCALITO_PLANS, hasEntitlement, mergeQuickSaleTicket, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
 import { api, flushOfflineQueue } from "./lib/api";
 import type { AuthSession } from "./lib/api";
+import { formatCLP, formatDateTime } from "./lib/format";
 import { OperationsView } from "./OperationsView";
 import { PlatformAdminView } from "./PlatformAdminView";
 import { InventorySetupView } from "./InventorySetupView";
 import { QuickSaleView } from "./QuickSaleView";
+import { DashboardView } from "./DashboardView";
+import { PlanView, SettingsView } from "./AccountViews";
+import type { BusinessFormState, ProfileFormState, ThemePreference, UserFormState } from "./AccountViews";
 
 type View = "dashboard" | "sale" | "scan" | "product_create" | "setup" | "invoice" | "products" | "customers" | "operations" | "reports" | "settings" | "plan" | "platform";
-type ThemePreference = "light" | "dark" | "system";
 
 type NoticeTone = "success" | "warning" | "error";
 
@@ -94,17 +93,6 @@ type CustomerFormState = {
   creditBlocked: boolean;
 };
 
-type UserFormState = {
-  name: string;
-  email: string;
-  role: User["role"];
-  password: string;
-};
-
-type ProfileFormState = {
-  name: string;
-  email: string;
-};
 
 type DebtChargeState = {
   paymentId: string;
@@ -235,14 +223,6 @@ const demoCredentials = [
 ].filter((credential) => credential.email && credential.password);
 const showDemoCredentials = demoCredentials.length > 0;
 
-function formatCLP(value: number) {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0
-  }).format(value);
-}
-
 function numberFromInput(value: string, fallback = 0) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : fallback;
@@ -269,13 +249,6 @@ function paymentMethodLabel(method: PaymentMethod) {
   mixed: "Pago mixto"
   };
   return labels[method];
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("es-CL", {
-    dateStyle: "short",
-    timeStyle: "short"
-  }).format(new Date(value));
 }
 
 function isOwnerUser(user: User | null) {
@@ -345,7 +318,7 @@ function App() {
   const [cashClosures, setCashClosures] = useState<CashRegisterClosure[]>([]);
   const [summary, setSummary] = useState<ReportSummary>(emptySummary);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [theme, setTheme] = useState<ThemePreference>("system");
+  const [theme, setTheme] = useState<ThemePreference>("light");
   const [ticket, setTicket] = useState<SaleItem[]>([]);
   const [lastReceipt, setLastReceipt] = useState<Sale | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
@@ -392,21 +365,10 @@ function App() {
   }, [products, searchTerm]);
   const activeSales = useMemo(() => sales.filter((sale) => sale.status !== "cancelled"), [sales]);
   const cancelledSales = useMemo(() => sales.filter((sale) => sale.status === "cancelled"), [sales]);
-  const topSoldProduct = useMemo(() => {
-    const totals = new Map<string, { name: string; quantity: number; amount: number }>();
-    for (const sale of activeSales) {
-      for (const item of sale.items) {
-        const current = totals.get(item.productId) ?? { name: item.productName, quantity: 0, amount: 0 };
-        current.quantity += item.quantity;
-        current.amount += item.subtotal;
-        totals.set(item.productId, current);
-      }
-    }
-    return [...totals.values()].sort((a, b) => b.quantity - a.quantity)[0];
-  }, [activeSales]);
   const topDebtor = useMemo(() => [...customers].sort((a, b) => b.debtBalance - a.debtBalance)[0], [customers]);
   const isOwner = isOwnerUser(currentUser);
   const isSystemAdmin = isSystemAdminUser(currentUser);
+  const canOperate = !subscription || subscriptionCanMutate(subscription);
   const visibleNavItems: NavItem[] = isSystemAdmin
     ? [{ id: "platform", label: "Locales y usuarios", icon: Store }]
     : navItems
@@ -482,9 +444,9 @@ function App() {
   useEffect(() => {
     if (!currentUser) return;
     const stored = localStorage.getItem(`localito-theme:${currentUser.id}`) as ThemePreference | null;
-    applyTheme(stored && ["light", "dark", "system"].includes(stored) ? stored : "system", currentUser.id);
+    applyTheme(stored && ["light", "dark", "system"].includes(stored) ? stored : "light", currentUser.id);
     const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => { if ((localStorage.getItem(`localito-theme:${currentUser.id}`) ?? "system") === "system") applyTheme("system", currentUser.id); };
+    const onChange = () => { if ((localStorage.getItem(`localito-theme:${currentUser.id}`) ?? "light") === "system") applyTheme("system", currentUser.id); };
     media.addEventListener("change", onChange);
     return () => media.removeEventListener("change", onChange);
   }, [currentUser?.id]);
@@ -1200,6 +1162,34 @@ function App() {
     }
   }
 
+  async function updateBusiness(value: BusinessFormState) {
+    if (!isOwner || !tenant) return;
+    if (!value.name.trim() || !value.businessType.trim()) {
+      setNotice({ message: "Nombre y rubro son obligatorios para guardar el negocio.", tone: "warning" });
+      return;
+    }
+    setIsBusy(true);
+    try {
+      const response = await api.updateTenant({
+        name: value.name.trim(),
+        businessType: value.businessType.trim(),
+        address: value.address?.trim(),
+        phone: value.phone?.trim()
+      });
+      setTenant(response.data);
+      const storedSession = localStorage.getItem("localito-session");
+      if (storedSession) {
+        const session = JSON.parse(storedSession) as AuthSession;
+        localStorage.setItem("localito-session", JSON.stringify({ ...session, tenant: response.data }));
+      }
+      setNotice({ message: "Datos del negocio guardados.", tone: "success" });
+    } catch (error) {
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo guardar el negocio.", tone: "error" });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   async function deactivateUser(user: User) {
     if (!isOwner) {
       setNotice({ message: "Solo el dueno/admin puede desactivar usuarios.", tone: "warning" });
@@ -1234,7 +1224,7 @@ function App() {
     try {
       const response = await api.changePlan(plan);
       setSubscription(response.data);
-      setNotice({ message: `Tu plan cambió a ${LOCALITO_PLANS[plan].name}.`, tone: "success" });
+      setNotice({ message: `Solicitud de ${LOCALITO_PLANS[plan].name} registrada. La activación quedará lista cuando se confirme el pago manual.`, tone: "success" });
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo cambiar el plan.", tone: "error" });
     } finally {
@@ -1359,7 +1349,7 @@ function App() {
           <span>{notice.message}</span>
         </section>}
 
-        {!isSystemAdmin && subscription?.status === "trialing" && <section className="subscription-banner"><div><strong>Prueba Pro · {subscriptionDaysRemaining(subscription)} días restantes</strong><span>Estás usando todas las funciones de Localito.</span></div>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Ver planes</button>}</section>}
+        {!isSystemAdmin && subscription && effectiveSubscriptionStatus(subscription) === "trialing" && <section className="subscription-banner"><div><strong>Prueba Pro · {subscriptionDaysRemaining(subscription)} días restantes</strong><span>Estás usando todas las funciones de Localito.</span></div>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Ver planes</button>}</section>}
         {!isSystemAdmin && subscription && !subscriptionCanMutate(subscription) && <section className="notice warning"><AlertTriangle size={18}/><span>Tu suscripción no está activa. Puedes revisar toda tu información, pero las acciones están pausadas.</span>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Elegir plan</button>}</section>}
 
         {isLoading && <p className="empty-state">Conectando con la API de Localito...</p>}
@@ -1368,17 +1358,20 @@ function App() {
 
         {!isLoading && activeView === "dashboard" && (
           <DashboardView
+            businessName={tenant?.name ?? "Localito"}
+            userName={currentUser.name}
             lowStockProducts={lowStockProducts}
             summary={summary}
             sales={activeSales}
             cashRegister={cashRegister}
-            topSoldProduct={topSoldProduct}
             topDebtor={topDebtor}
-            cancelledSalesCount={cancelledSales.length}
-            canViewManagementMetrics={isOwner}
+            canOperate={canOperate}
+            canViewCustomers={!subscription || hasEntitlement(subscription, "customers")}
             onStartSale={() => navigateTo("sale")}
-            onOpenScan={() => subscription && !hasEntitlement(subscription, "aiPhotoSale") ? navigateTo("plan") : navigateTo("scan")}
+            onAddProduct={() => navigateTo("product_create")}
+            onOpenCash={() => navigateTo("operations")}
             onOpenStock={() => navigateTo("products")}
+            onOpenCustomers={() => navigateTo("customers")}
           />
         )}
 
@@ -1392,6 +1385,7 @@ function App() {
             customers={customers}
             selectedCustomerId={selectedCustomerId}
             searchTerm={searchTerm}
+            canSell={canOperate}
             isBusy={isBusy}
             onSearch={setSearchTerm}
             onAdd={addToTicket}
@@ -1424,14 +1418,14 @@ function App() {
                 setNotice({ message: "El carrito guardado ya no coincide con el inventario actual.", tone: "error" });
               }
             }}
-            onScan={() => subscription && !hasEntitlement(subscription, "aiPhotoSale") ? navigateTo("plan") : setActiveView("scan")}
+            onScan={() => !canOperate || (subscription && !hasEntitlement(subscription, "aiPhotoSale")) ? navigateTo("plan") : setActiveView("scan")}
             lastReceipt={lastReceipt}
             onPrintReceipt={printLastReceipt}
             onShareReceipt={() => void shareLastReceipt()}
           />
         )}
 
-        {!isLoading && activeView === "scan" && (!subscription || hasEntitlement(subscription, "aiPhotoSale")) && (
+        {!isLoading && activeView === "scan" && canOperate && (!subscription || hasEntitlement(subscription, "aiPhotoSale")) && (
           <QuickSaleView products={products} onAddToSale={addQuickSaleToTicket} onOpenSale={() => navigateTo("sale")} />
         )}
 
@@ -1443,7 +1437,7 @@ function App() {
             productForm={productForm}
             isBusy={isBusy}
             editingProductId={editingProductId}
-            canManageProducts={isOwner}
+            canManageProducts={isOwner && canOperate}
             onSearch={setSearchTerm}
             onForm={setProductForm}
             onCreate={() => void createProduct()}
@@ -1469,14 +1463,14 @@ function App() {
         )}
 
         {!isLoading && activeView === "products" && (
-          <div className="stack"><section className="panel inventory-actions"><div><h2>Inventario y catálogo</h2><p>Busca, corrige stock o agrega productos al local.</p></div>{isOwner && <div className="action-grid"><button className="primary-action" type="button" onClick={() => navigateTo("product_create")}><Plus size={18}/>Agregar producto</button><button className="secondary-action" type="button" onClick={() => navigateTo("setup")}><ListPlus size={18}/>Importar o carga inicial</button>{(!subscription || hasEntitlement(subscription, "purchases")) && <button className="secondary-action" type="button" onClick={() => navigateTo("invoice")}><ReceiptText size={18}/>Ingresar factura</button>}</div>}</section><ProductsView
+          <div className="stack"><section className="panel inventory-actions"><div><h2>Inventario y catálogo</h2><p>Busca, corrige stock o agrega productos al local.</p></div>{isOwner && canOperate && <div className="action-grid"><button className="primary-action" type="button" onClick={() => navigateTo("product_create")}><Plus size={18}/>Agregar producto</button><button className="secondary-action" type="button" onClick={() => navigateTo("setup")}><ListPlus size={18}/>Importar o carga inicial</button>{(!subscription || hasEntitlement(subscription, "purchases")) && <button className="secondary-action" type="button" onClick={() => navigateTo("invoice")}><ReceiptText size={18}/>Ingresar factura</button>}</div>}</section><ProductsView
             mode="stock"
             products={products}
             searchTerm={searchTerm}
             productForm={productForm}
             isBusy={isBusy}
             editingProductId={editingProductId}
-            canManageProducts={isOwner}
+            canManageProducts={isOwner && canOperate}
             onSearch={setSearchTerm}
             onForm={setProductForm}
             onCreate={() => void createProduct()}
@@ -1495,7 +1489,8 @@ function App() {
             lastDebtCharge={lastDebtCharge}
             isBusy={isBusy}
             editingCustomerId={editingCustomerId}
-            canManageCustomers={isOwner}
+            canOperate={canOperate}
+            canManageCustomers={isOwner && canOperate}
             onForm={setCustomerForm}
             onPaymentAmount={(customerId, value) => setPaymentAmounts((current) => ({ ...current, [customerId]: value }))}
             onCreate={() => void createCustomer()}
@@ -1534,11 +1529,11 @@ function App() {
         )}
 
         {!isLoading && activeView === "operations" && (
-          <OperationsView products={products} canManage={isOwner && (!subscription || hasEntitlement(subscription, "purchases"))} onRefresh={() => loadWorkspace()} />
+          <OperationsView products={products} canManage={isOwner && canOperate && (!subscription || hasEntitlement(subscription, "purchases"))} onRefresh={() => loadWorkspace()} />
         )}
 
         {!isLoading && activeView === "invoice" && isOwner && (
-          <OperationsView mode="invoice" products={products} canManage={!subscription || hasEntitlement(subscription, "purchases")} onRefresh={() => loadWorkspace()} />
+          <OperationsView mode="invoice" products={products} canManage={canOperate && (!subscription || hasEntitlement(subscription, "purchases"))} onRefresh={() => loadWorkspace()} />
         )}
 
         {!isLoading && activeView === "settings" && (
@@ -1554,6 +1549,7 @@ function App() {
             onUserForm={setUserForm}
             onProfileForm={setProfileForm}
             onSaveProfile={() => void updateMyProfile()}
+            onSaveBusiness={(value) => void updateBusiness(value)}
             onCreateUser={() => void createUser()}
             onDeactivateUser={(userToDeactivate) => void deactivateUser(userToDeactivate)}
             onTheme={(value) => applyTheme(value)}
@@ -1776,121 +1772,6 @@ function LoginView({
   );
 }
 
-function DashboardView({
-  lowStockProducts,
-  summary,
-  sales,
-  cashRegister,
-  topSoldProduct,
-  topDebtor,
-  cancelledSalesCount,
-  canViewManagementMetrics,
-  onStartSale,
-  onOpenScan,
-  onOpenStock
-}: {
-  lowStockProducts: Product[];
-  summary: ReportSummary;
-  sales: Sale[];
-  cashRegister: CashRegisterSummary;
-  topSoldProduct?: { name: string; quantity: number; amount: number };
-  topDebtor?: Customer;
-  cancelledSalesCount: number;
-  canViewManagementMetrics: boolean;
-  onStartSale: () => void;
-  onOpenScan: () => void;
-  onOpenStock: () => void;
-}) {
-  const heroAmount = canViewManagementMetrics ? summary.totalSales : cashRegister.receivedTotal;
-
-  return (
-    <div className="stack dashboard-stack">
-      <section className="hero-panel dashboard-hero">
-        <div className="hero-copy">
-          <span>HOY EN TU NEGOCIO</span>
-          <strong>¿Qué quieres hacer ahora?</strong>
-          <p>
-            Hoy llevas {formatCLP(heroAmount)} en {cashRegister.salesCount} ventas y tienes {lowStockProducts.length} productos por revisar.
-          </p>
-        </div>
-        <div className="hero-actions">
-          <button className="quick-action sell" type="button" onClick={onStartSale}>
-            <ShoppingCart size={22} />
-            <span>Nueva venta</span>
-          </button>
-          <button className="quick-action scan" type="button" onClick={onOpenScan}>
-            <Camera size={22} />
-            <span>Venta Rápida</span>
-          </button>
-          <button className="quick-action stock" type="button" onClick={onOpenStock}>
-            <Package size={22} />
-            <span>Revisar stock</span>
-          </button>
-        </div>
-      </section>
-
-      <div className="stats-grid">
-        <StatCard label={canViewManagementMetrics ? "Ventas" : "Caja recibida"} value={formatCLP(canViewManagementMetrics ? summary.totalSales : cashRegister.receivedTotal)} icon={Banknote} tone="green" />
-        <StatCard label={canViewManagementMetrics ? "Fiado" : "Fiado hoy"} value={formatCLP(canViewManagementMetrics ? summary.pendingDebt : cashRegister.creditTotal)} icon={ReceiptText} tone="amber" />
-        <StatCard label="Alertas" value={String(summary.lowStockCount)} icon={AlertTriangle} tone="red" />
-        <StatCard label="Tickets" value={String(cashRegister.salesCount)} icon={ShoppingCart} tone="blue" />
-      </div>
-
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Caja de hoy</h2>
-          <span>{cashRegister.salesCount} ventas</span>
-        </div>
-        <div className="report-grid">
-          <ReportMetric label="Efectivo" value={formatCLP(cashRegister.totalsByMethod.cash)} />
-          <ReportMetric label="Tarjeta" value={formatCLP(cashRegister.totalsByMethod.card)} />
-          <ReportMetric label="Transferencia" value={formatCLP(cashRegister.totalsByMethod.transfer)} />
-          <ReportMetric label="Fiado" value={formatCLP(cashRegister.creditTotal)} tone="warning" />
-        </div>
-        {canViewManagementMetrics && (
-          <div className="report-grid two">
-            <ReportMetric label="Ticket promedio" value={formatCLP(cashRegister.averageTicket)} />
-            <ReportMetric label="Anuladas" value={String(cancelledSalesCount)} />
-            <ReportMetric label="Mas vendido" value={topSoldProduct ? `${topSoldProduct.name} (${topSoldProduct.quantity})` : "Sin datos"} />
-            <ReportMetric label="Mayor fiado" value={topDebtor && topDebtor.debtBalance > 0 ? `${topDebtor.name} ${formatCLP(topDebtor.debtBalance)}` : "Sin deuda"} tone="warning" />
-          </div>
-        )}
-      </section>
-
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Alertas de stock</h2>
-          <span>{lowStockProducts.length} pendientes</span>
-        </div>
-        <div className="list">
-          {lowStockProducts.map((product) => (
-            <ProductAlert product={product} key={product.id} />
-          ))}
-          {lowStockProducts.length === 0 && <p className="empty-state">No hay productos bajo el minimo.</p>}
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Ultimas ventas</h2>
-          <span>{sales.length} registros</span>
-        </div>
-        <div className="list">
-          {sales.slice(0, 4).map((sale) => (
-            <div className="row" key={sale.id}>
-              <div>
-                <strong>{sale.items.length} producto(s)</strong>
-                <p>{sale.paymentMethod === "credit" ? "Fiado" : sale.paymentMethod}</p>
-              </div>
-              <span className="amount">{formatCLP(sale.total)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function SaleView({
   products,
   ticket,
@@ -1900,6 +1781,7 @@ function SaleView({
   customers,
   selectedCustomerId,
   searchTerm,
+  canSell,
   isBusy,
   onSearch,
   onAdd,
@@ -1922,6 +1804,7 @@ function SaleView({
   customers: Customer[];
   selectedCustomerId: string;
   searchTerm: string;
+  canSell: boolean;
   isBusy: boolean;
   onSearch: (value: string) => void;
   onAdd: (product: Product) => void;
@@ -1969,13 +1852,13 @@ function SaleView({
           <Search size={18} />
           <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o codigo" />
         </div>
-        <button className="inline-command" type="button" onClick={onScan}>
+        <button className="inline-command" type="button" onClick={onScan} disabled={!canSell}>
           <Camera size={18} />
           <span>Venta Rápida con foto</span>
         </button>
         <div className="list product-list">
           {visibleProducts.map((product) => (
-            <button className="product-button" type="button" key={product.id} onClick={() => onAdd(product)}>
+            <button className="product-button" type="button" key={product.id} onClick={() => onAdd(product)} disabled={!canSell}>
               <span className="product-thumb">
                 <img src={productImageUrl(product)} alt="" aria-hidden="true" />
               </span>
@@ -2016,10 +1899,10 @@ function SaleView({
               </div>
               <div className="row-actions">
                 <span className="amount">{formatCLP(item.subtotal)}</span>
-                <button className="icon-button" type="button" onClick={() => { const product = products.find((entry) => entry.id === item.productId); if (product) onAdd(product); }} aria-label="Agregar uno">
+                <button className="icon-button" type="button" onClick={() => { const product = products.find((entry) => entry.id === item.productId); if (product) onAdd(product); }} aria-label="Agregar uno" disabled={!canSell}>
                   <Plus size={17} />
                 </button>
-                <button className="icon-button danger" type="button" onClick={() => onRemoveOne(item.productId)} aria-label="Quitar uno">
+                <button className="icon-button danger" type="button" onClick={() => onRemoveOne(item.productId)} aria-label="Quitar uno" disabled={!canSell}>
                   <Minus size={17} />
                 </button>
               </div>
@@ -2069,11 +1952,11 @@ function SaleView({
           <strong>{formatCLP(discountedTotal)}</strong>
         </div>
 
-        {!isChoosingPayment ? <button className="primary-action full" type="button" onClick={() => setIsChoosingPayment(true)} disabled={isBusy || ticket.length === 0}>
+        {!isChoosingPayment ? <button className="primary-action full" type="button" onClick={() => setIsChoosingPayment(true)} disabled={isBusy || !canSell || ticket.length === 0}>
           <CheckCircle2 size={20} />
           <span>{`Cobrar ${formatCLP(discountedTotal)}`}</span>
-        </button> : <div className="stack compact-stack"><button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy || (isExternalPayment && !externalPaymentConfirmed)}><CheckCircle2 size={20}/><span>{isBusy ? "Registrando..." : isExternalPayment ? "Confirmar pago y registrar venta" : `Registrar venta · ${formatCLP(discountedTotal)}`}</span></button><button className="secondary-action full" type="button" onClick={() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); }}>Volver al ticket</button></div>}
-        <div className="action-grid"><button className="secondary-action" type="button" onClick={onSuspend} disabled={!ticket.length}>Guardar carrito</button><button className="secondary-action" type="button" onClick={onRestore}>Recuperar carrito</button></div>
+        </button> : <div className="stack compact-stack"><button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy || !canSell || (isExternalPayment && !externalPaymentConfirmed)}><CheckCircle2 size={20}/><span>{isBusy ? "Registrando..." : isExternalPayment ? "Confirmar pago y registrar venta" : `Registrar venta · ${formatCLP(discountedTotal)}`}</span></button><button className="secondary-action full" type="button" onClick={() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); }}>Volver al ticket</button></div>}
+        <div className="action-grid"><button className="secondary-action" type="button" onClick={onSuspend} disabled={!canSell || !ticket.length}>Guardar carrito</button><button className="secondary-action" type="button" onClick={onRestore} disabled={!canSell}>Recuperar carrito</button></div>
 
         {lastReceipt && (
           <div className="receipt-card">
@@ -2298,6 +2181,7 @@ function CustomersView({
   lastDebtCharge,
   isBusy,
   editingCustomerId,
+  canOperate,
   canManageCustomers,
   onForm,
   onPaymentAmount,
@@ -2318,6 +2202,7 @@ function CustomersView({
   lastDebtCharge: DebtChargeState | null;
   isBusy: boolean;
   editingCustomerId: string | null;
+  canOperate: boolean;
   canManageCustomers: boolean;
   onForm: (value: CustomerFormState) => void;
   onPaymentAmount: (customerId: string, value: string) => void;
@@ -2351,7 +2236,7 @@ function CustomersView({
           <input value={customerForm.creditDays} onChange={(event) => onForm({ ...customerForm, creditDays: event.target.value })} placeholder="Dias para pagar" inputMode="numeric" />
           {canManageCustomers && <label className="field checkbox-field"><input type="checkbox" checked={customerForm.creditBlocked} onChange={(event) => onForm({ ...customerForm, creditBlocked: event.target.checked })} /> Bloquear nuevos fiados</label>}
         </div>
-        <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy}>
+        <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy || !canOperate}>
           {editingCustomerId ? <Save size={19} /> : <Plus size={19} />}
           <span>{editingCustomerId ? "Guardar cliente" : "Crear cliente"}</span>
         </button>
@@ -2385,7 +2270,7 @@ function CustomersView({
               <Copy size={17} />
               <span>Copiar</span>
             </button>
-            <button className="secondary-action compact" type="button" onClick={() => onConfirmDebtCharge(lastDebtCharge)} disabled={isBusy}>
+            <button className="secondary-action compact" type="button" onClick={() => onConfirmDebtCharge(lastDebtCharge)} disabled={isBusy || !canOperate}>
               <CheckCircle2 size={17} />
               <span>Confirmar demo</span>
             </button>
@@ -2412,7 +2297,7 @@ function CustomersView({
                 onChange={(event) => onPaymentAmount(customer.id, event.target.value)}
                 placeholder="Monto"
                 inputMode="numeric"
-                disabled={customer.debtBalance === 0}
+                disabled={!canOperate || customer.debtBalance === 0}
               />
               <div className="customer-actions">
                 {canManageCustomers && (
@@ -2421,11 +2306,11 @@ function CustomersView({
                     <span>Editar</span>
                   </button>
                 )}
-                <button className="secondary-action small" type="button" onClick={() => onPayDebt(customer)} disabled={isBusy || customer.debtBalance === 0}>
+                <button className="secondary-action small" type="button" onClick={() => onPayDebt(customer)} disabled={isBusy || !canOperate || customer.debtBalance === 0}>
                   <Banknote size={16} />
                   <span>Abono</span>
                 </button>
-                <button className="secondary-action small" type="button" onClick={() => onCreatePayment(customer)} disabled={isBusy || customer.debtBalance === 0}>
+                <button className="secondary-action small" type="button" onClick={() => onCreatePayment(customer)} disabled={isBusy || !canOperate || customer.debtBalance === 0}>
                   <Send size={16} />
                   <span>Cobrar</span>
                 </button>
@@ -2691,171 +2576,6 @@ function ReceiptPrintArea({
   );
 }
 
-function PlanView({ subscription, isBusy, onSelect }: { subscription: Subscription; isBusy: boolean; onSelect: (plan: SubscriptionPlan) => void }) {
-  const days = subscriptionDaysRemaining(subscription);
-  return <div className="stack">
-    <section className="panel hero-panel plan-hero"><div className="hero-copy"><span>MI PLAN</span><strong>{subscription.status === "trialing" ? `Prueba Pro · ${days} días restantes` : LOCALITO_PLANS[subscription.plan].name}</strong><p>Tus datos siempre siguen guardados. Al vencer, Localito queda en modo lectura hasta que reactives un plan.</p></div></section>
-    <section className="plan-grid">
-      {(Object.values(LOCALITO_PLANS)).map((plan) => <article className={plan.id === subscription.plan ? "panel plan-card current" : "panel plan-card"} key={plan.id}><div><span className="status-badge success">{plan.recommended ? "Recomendado" : "Esencial"}</span><h2>{plan.name}</h2><p>{plan.description}</p></div><strong className="plan-price">{formatCLP(plan.price)}<small>/mes</small></strong><ul>{plan.entitlements.slice(0, 7).map((feature) => <li key={feature}><CheckCircle2 size={16}/>{entitlementLabel(feature)}</li>)}</ul><button className={plan.id === subscription.plan ? "secondary-action full" : "primary-action full"} type="button" disabled={isBusy || (subscription.status === "active" && plan.id === subscription.plan)} onClick={() => onSelect(plan.id)}>{subscription.status === "active" && plan.id === subscription.plan ? "Plan actual" : `Elegir ${plan.name}`}</button></article>)}
-    </section>
-    <p className="helper-text">La activación actual se registra de forma manual. La integración de cobro recurrente puede conectarse después sin cambiar los permisos ni los datos.</p>
-  </div>;
-}
-
-function entitlementLabel(value: string) {
-  const labels: Record<string, string> = { sales: "Ventas y ticket", inventory: "Inventario", products: "Catálogo", cashRegister: "Caja", imports: "Importación masiva", customers: "Clientes", credit: "Fiado", suppliers: "Proveedores", purchases: "Compras", advancedReports: "Reportes avanzados", aiPhotoSale: "Venta con foto", advancedAnalytics: "Analítica avanzada" };
-  return labels[value] ?? value;
-}
-
-function SettingsView({
-  tenant,
-  user,
-  users,
-  userForm,
-  profileForm,
-  isBusy,
-  canManageUsers,
-  theme,
-  onUserForm,
-  onProfileForm,
-  onSaveProfile,
-  onCreateUser,
-  onDeactivateUser,
-  onTheme,
-  onOpenPlan,
-  onExport
-}: {
-  tenant: Tenant | null;
-  user: User;
-  users: User[];
-  userForm: UserFormState;
-  profileForm: ProfileFormState;
-  isBusy: boolean;
-  canManageUsers: boolean;
-  theme: ThemePreference;
-  onUserForm: (value: UserFormState) => void;
-  onProfileForm: (value: ProfileFormState) => void;
-  onSaveProfile: () => void;
-  onCreateUser: () => void;
-  onDeactivateUser: (user: User) => void;
-  onTheme: (value: ThemePreference) => void;
-  onOpenPlan: () => void;
-  onExport: () => void;
-}) {
-  return (
-    <div className="stack">
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Mi perfil</h2>
-          <span>{user.role === "owner" ? "Dueno/admin" : "Vendedor"}</span>
-        </div>
-        <div className="form-grid">
-          <input value={profileForm.name} onChange={(event) => onProfileForm({ ...profileForm, name: event.target.value })} placeholder="Nombre" />
-          <input
-            value={profileForm.email}
-            onChange={(event) => onProfileForm({ ...profileForm, email: event.target.value })}
-            placeholder="Correo"
-            inputMode="email"
-          />
-        </div>
-        <button className="primary-action full" type="button" onClick={onSaveProfile} disabled={isBusy}>
-          <Save size={19} />
-          <span>Guardar mi perfil</span>
-        </button>
-      </section>
-
-      <section className="panel">
-        <div className="section-heading"><h2>Apariencia</h2><span>Se guarda en tu cuenta</span></div>
-        <div className="theme-selector" role="group" aria-label="Tema visual">
-          {([{ id: "light", label: "Claro", icon: Sun }, { id: "dark", label: "Oscuro", icon: Moon }, { id: "system", label: "Sistema", icon: Monitor }] as const).map((option) => { const Icon = option.icon; return <button className={theme === option.id ? "secondary-action active" : "secondary-action"} type="button" aria-pressed={theme === option.id} onClick={() => onTheme(option.id)} key={option.id}><Icon size={18}/>{option.label}</button>; })}
-        </div>
-      </section>
-
-      {canManageUsers && <section className="panel more-links"><div className="section-heading"><h2>Administración</h2><span>Tu negocio</span></div><div className="list"><div className="row-main-button"><Store size={20}/><span><strong>{tenant?.name ?? "Mi negocio"}</strong><small>Datos generales del local y cuenta propietaria.</small></span></div><button className="row-main-button" type="button" onClick={onOpenPlan}><WalletCards size={20}/><span><strong>Mi plan</strong><small>Revisa tu prueba, funciones y suscripción.</small></span></button><button className="row-main-button" type="button" onClick={onExport}><Download size={20}/><span><strong>Exportar mis datos</strong><small>Descarga productos, clientes, ventas y cierres en JSON.</small></span></button></div></section>}
-
-      {canManageUsers && (
-        <section className="panel">
-          <div className="section-heading">
-            <h2>Usuarios del local</h2>
-            <span>{users.length} activos</span>
-          </div>
-          <p className="helper-text">Crea vendedores cuando cambie el personal del local. Solo el dueno/admin puede administrar estos accesos.</p>
-          <div className="form-grid">
-            <input value={userForm.name} onChange={(event) => onUserForm({ ...userForm, name: event.target.value })} placeholder="Nombre" />
-            <input value={userForm.email} onChange={(event) => onUserForm({ ...userForm, email: event.target.value })} placeholder="Correo" inputMode="email" />
-            <select value={userForm.role} onChange={(event) => onUserForm({ ...userForm, role: event.target.value as User["role"] })}>
-              <option value="seller">Vendedor</option>
-              <option value="owner">Dueno/admin</option>
-            </select>
-            <input
-              value={userForm.password}
-              onChange={(event) => onUserForm({ ...userForm, password: event.target.value })}
-              placeholder="Clave inicial segura"
-              type="password"
-              minLength={10}
-              maxLength={128}
-              autoComplete="new-password"
-            />
-          </div>
-          <button className="primary-action full" type="button" onClick={onCreateUser} disabled={isBusy}>
-            <Plus size={19} />
-            <span>Crear usuario</span>
-          </button>
-
-          <div className="list user-list">
-            {users.map((localUser) => (
-              <div className="row" key={localUser.id}>
-                <div>
-                  <strong>{localUser.name}</strong>
-                  <p>
-                    {localUser.email} - {localUser.role === "owner" ? "dueno/admin" : "vendedor"}
-                  </p>
-                </div>
-                <button
-                  className="secondary-action small danger-soft"
-                  type="button"
-                  onClick={() => onDeactivateUser(localUser)}
-                  disabled={isBusy || localUser.id === user.id}
-                >
-                  <Trash2 size={16} />
-                  <span>Desactivar</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Acerca de Localito</h2>
-          <span>Información del sistema</span>
-        </div>
-        <div className="settings-list">
-          <p>
-            <strong>Negocio:</strong> {tenant?.name ?? "Demo"}.
-          </p>
-          <p>
-            <strong>Sesion:</strong> {user.name} ({user.role === "owner" ? "dueno/admin" : "vendedor"}).
-          </p>
-          <p>
-            <strong>Aplicación:</strong> experiencia PWA segura y adaptable a celular, tablet y computador.
-          </p>
-          <p>
-            <strong>Datos:</strong> información separada por local y almacenada en PostgreSQL.
-          </p>
-          <p>
-            <strong>Reconocimiento:</strong> foto de productos y carga de facturas conectadas al catálogo del local.
-          </p>
-          <p>
-            <strong>Pagos:</strong> el vendedor confirma terminales y aplicaciones externas antes de registrar la venta.
-          </p>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function StatCard({
   label,
   value,
@@ -2883,20 +2603,6 @@ function ReportMetric({ label, value, tone = "default" }: { label: string; value
     <div className={`report-metric ${tone}`}>
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
-  );
-}
-
-function ProductAlert({ product }: { product: Product }) {
-  return (
-    <div className="alert-row">
-      <AlertTriangle size={18} />
-      <div>
-        <strong>{product.name}</strong>
-        <p>
-          Quedan {product.stock}. Minimo configurado: {product.minimumStock}.
-        </p>
-      </div>
     </div>
   );
 }

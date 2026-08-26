@@ -45,11 +45,16 @@ CREATE TABLE IF NOT EXISTS suscripciones (
   proveedor_pago VARCHAR(40),
   cliente_externo_id VARCHAR(160),
   suscripcion_externa_id VARCHAR(160),
+  plan_solicitado VARCHAR(20) CHECK (plan_solicitado IS NULL OR plan_solicitado IN ('basic', 'pro')),
+  fecha_solicitud_cambio TIMESTAMPTZ,
   fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_suscripciones_estado_plan ON suscripciones(estado, plan);
+
+ALTER TABLE suscripciones ADD COLUMN IF NOT EXISTS plan_solicitado VARCHAR(20);
+ALTER TABLE suscripciones ADD COLUMN IF NOT EXISTS fecha_solicitud_cambio TIMESTAMPTZ;
 
 -- Los negocios existentes conservan acceso Pro al incorporar billing. Las nuevas
 -- altas se crean como prueba Pro de 30 días desde la transacción de registro.

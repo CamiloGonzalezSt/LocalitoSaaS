@@ -166,6 +166,10 @@ export const api = {
     return request<Subscription>("/subscription/change-plan", { method: "POST", body: JSON.stringify({ plan }) });
   },
 
+  async updateTenant(payload: Pick<Tenant, "name" | "businessType" | "address" | "phone">) {
+    return request<Tenant>("/tenant", { method: "PATCH", body: JSON.stringify(payload) });
+  },
+
   async createUser(user: Partial<User> & { password?: string }) {
     return request<User>("/users", {
       method: "POST",

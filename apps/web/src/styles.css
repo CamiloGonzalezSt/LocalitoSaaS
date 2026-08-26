@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
   font-family:
-    Inter,
+    "Source Sans 3",
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -4764,4 +4764,226 @@ button,
   color: var(--ink);
   background: var(--surface);
   border-color: var(--line);
+}
+
+/* Segunda pasada del rediseño: Inicio, cuenta y administración SaaS. */
+.dashboard-summary {
+  display: grid;
+  gap: 22px;
+  padding: clamp(20px, 4vw, 34px);
+  overflow: hidden;
+  background: var(--surface);
+  border-top: 4px solid var(--green);
+}
+
+.dashboard-summary-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.dashboard-summary-copy > span,
+.section-heading > div > span {
+  color: var(--green);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.dashboard-summary-copy p {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.dashboard-summary-copy h2 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dashboard-summary-copy > strong {
+  color: var(--ink);
+  font-size: clamp(2.55rem, 9vw, 4.8rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+
+.dashboard-summary-copy small {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.dashboard-primary-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-content: end;
+}
+
+.dashboard-primary-actions button {
+  min-height: 52px;
+  justify-content: flex-start;
+}
+
+.dashboard-secondary-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-metric {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
+}
+
+.dashboard-metric span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dashboard-metric strong {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: clamp(1.15rem, 4vw, 1.55rem);
+  font-weight: 700;
+}
+
+.dashboard-metric.attention {
+  border-color: color-mix(in srgb, var(--amber) 38%, var(--line));
+}
+
+.attention-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.attention-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  min-height: 76px;
+  padding: 15px;
+  color: var(--ink);
+  text-align: left;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+
+.attention-card svg {
+  flex: none;
+  color: var(--amber);
+}
+
+.attention-card span,
+.attention-card small {
+  display: block;
+}
+
+.attention-card small {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.form-field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.form-field input,
+.form-field select {
+  width: 100%;
+}
+
+.account-settings > .panel {
+  display: grid;
+  gap: 16px;
+}
+
+.subscription-recovery {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-color: color-mix(in srgb, var(--amber) 42%, var(--line));
+  background: color-mix(in srgb, var(--amber-soft) 55%, var(--surface));
+}
+
+.subscription-recovery svg {
+  flex: none;
+  color: var(--amber);
+}
+
+.subscription-recovery p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.platform-subscription-summary {
+  display: grid;
+  gap: 16px;
+}
+
+.platform-metric-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.platform-metric-notes span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+[data-theme="dark"] .dashboard-summary,
+[data-theme="dark"] .dashboard-metric,
+[data-theme="dark"] .attention-card,
+[data-theme="dark"] .subscription-recovery {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+@media (min-width: 720px) {
+  .dashboard-summary {
+    grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+  }
+
+  .dashboard-secondary-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .attention-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-secondary-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-summary-copy > strong {
+    font-size: clamp(2.15rem, 14vw, 3rem);
+  }
 }

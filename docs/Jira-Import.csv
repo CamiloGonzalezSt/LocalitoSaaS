@@ -60,3 +60,7 @@ Story,Aplicar entitlements centralizados,"HU-046: Como sistema quiero proteger f
 Story,Simplificar navegación por rol,"HU-047: Como usuario quiero encontrar cada función dentro de un flujo natural y sin menús duplicados.",,EPIC-12,High,8,"ux navigation roles",Sprint 11
 Story,Confirmar pagos externos,"HU-048: Como vendedor quiero verificar el terminal o comprobante antes de registrar la venta.",,EPIC-12,Highest,8,"pos payments human-confirmation",Sprint 11
 Story,Agregar tema claro oscuro y sistema,"HU-049: Como usuario quiero una apariencia legible persistida en cualquier dispositivo.",,EPIC-12,High,5,"ux theme accessibility",Sprint 11
+Story,Priorizar el resumen diario,"HU-050: Como dueño quiero ventas acciones frecuentes atención y métricas financieras claras en Inicio.",,EPIC-12,High,5,"ux dashboard",Sprint 12
+Story,Editar datos del negocio,"HU-051: Como dueño quiero actualizar nombre rubro dirección y teléfono desde Más.",,EPIC-12,High,5,"account tenant",Sprint 12
+Story,Solicitar activación manual segura,"HU-052: Como dueño quiero solicitar plan sin recibir acceso antes de confirmar el pago.",,EPIC-12,Highest,8,"saas billing pending-plan",Sprint 12
+Story,Demostrar no regresión,"HU-053: Como equipo quiero trazabilidad de función anterior nueva ubicación y prueba.",,EPIC-12,Highest,8,"qa regression",Sprint 12

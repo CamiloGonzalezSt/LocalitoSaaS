@@ -104,11 +104,18 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-68 | POS | Medios después de Cobrar | Agregar producto y observar ticket antes de pulsar Cobrar. | Los medios de pago no aparecen hasta solicitar el cobro. | Visual móvil aprobada |
 | CP-69 | POS | Confirmación de pago externo | Elegir tarjeta, transferencia o Webpay. | Registrar venta queda deshabilitado hasta marcar pago aprobado; antes de eso no existe venta ni baja stock. | Visual y API local aprobadas con tarjeta |
 | CP-70 | Suscripción | Prueba Pro al crear local | Crear tenant desde plataforma. | Se crea suscripción Pro `trialing` por 30 días y bootstrap entrega entitlements. | Automatizada aprobada |
-| CP-71 | Suscripción | Plan Básico | Cambiar a Básico e intentar clientes, IA o compras desde UI/API. | Navegación oculta función y API responde 403; ventas, inventario y caja siguen disponibles. | Typecheck aprobado; integración API pendiente evidencia HTTP |
-| CP-72 | Suscripción | Vencimiento solo lectura | Vencer prueba/periodo y consultar/modificar datos. | Consultas del plan siguen disponibles; mutaciones responden 403 y los datos permanecen. | Automatizada de estado aprobada; integración API pendiente |
-| CP-73 | Plataforma | Métricas SaaS | Entrar como `system_admin`. | Muestra locales, pruebas activas, MRR estimado y controles de plan/estado por tenant. | Typecheck aprobado; visual pendiente |
-| CP-74 | Apariencia | Claro, oscuro y sistema | Cambiar el selector desde Más y recargar. | Tema persiste por usuario, mantiene contraste y respeta preferencia del sistema. | Oscuro móvil aprobado; claro y persistencia pendientes |
+| CP-71 | Suscripción | Plan Básico | Cambiar a Básico e intentar clientes, IA o compras desde UI/API. | Navegación oculta función y API responde 403; ventas, inventario y caja siguen disponibles. | UI y HTTP aprobados: productos 200, clientes 403 y Venta Rápida deriva a Mi plan |
+| CP-72 | Suscripción | Vencimiento solo lectura | Vencer prueba/periodo y consultar/modificar datos. | Consultas del plan siguen disponibles; mutaciones responden 403 y los datos permanecen. | HTTP/UI aprobados: productos GET 200, POST 403 y controles POS deshabilitados |
+| CP-73 | Plataforma | Métricas SaaS | Entrar como `system_admin`. | Muestra locales, pruebas activas, MRR estimado y controles de plan/estado por tenant. | Visual aprobada; activación Basic actualizó MRR de $59.970 a $49.970 |
+| CP-74 | Apariencia | Claro, oscuro y sistema | Cambiar el selector desde Más y recargar. | Tema persiste por usuario, mantiene contraste y respeta preferencia del sistema. | Claro predeterminado y Oscuro persistido tras recarga a 390 px |
 | CP-75 | Responsive | Sin zoom ni desborde | Revisar Inicio, Vender, Inventario y formularios a 390 × 844. | `scrollWidth` no supera el viewport y la navegación inferior no tapa controles esenciales. | Aprobada en 390 × 844 |
+| CP-76 | Inicio | Jerarquía diaria | Entrar como owner. | Ventas de hoy domina; muestra acciones Vender/Agregar producto/Ver caja, atención y cuatro métricas útiles. | Visual aprobada a 390 y 1440 px; sin desborde |
+| CP-77 | Negocio | Editar identidad | Cambiar nombre, rubro, dirección y teléfono desde Más. | API persiste el tenant, actualiza sesión y registra auditoría sin permitir cambiar `active`. | Automatizada y visual/HTTP aprobadas con mensaje Datos del negocio guardados |
+| CP-78 | Suscripción | Solicitud durante trial | Solicitar Basic mientras existe trial Pro. | Mantiene Pro `trialing`, registra `pendingPlan=basic` y no corta acceso. | Automatizada aprobada |
+| CP-79 | Suscripción | Activación manual | Como system_admin activar un tenant con plan solicitado. | Aplica plan solicitado, crea período, limpia pendiente y audita. | Visual/HTTP aprobada: solicitud Basic desapareció y plan quedó active |
+| CP-80 | Suscripción | Vencido con lectura | Vencer plan Pro y entrar a Clientes/Reportes. | Datos del plan siguen visibles; botones operativos deshabilitados y API rechaza mutaciones. | UI y HTTP aprobados con banner y productos del POS deshabilitados |
+| CP-81 | Plataforma | Embudo SaaS | Entrar como system_admin. | Muestra Basic, Pro, past_due, expirados, pruebas nuevas, conversión y MRR. | Visual aprobada en panel system_admin |
+| CP-82 | Apariencia | Predeterminado Claro | Iniciar con un usuario sin preferencia guardada. | Localito abre en Claro; Oscuro/Sistema quedan como selección explícita persistida. | Visual aprobada: dataset light inicial y selector Claro presionado |
 
 ## 5. Pruebas no funcionales sugeridas
 

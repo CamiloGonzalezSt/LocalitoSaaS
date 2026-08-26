@@ -90,6 +90,10 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | HU-047 | EPIC-12 | Como usuario quiero una navegación simple según mi rol. | Funciones principales en 4-7 áreas; IA dentro de Vender; altas/importaciones dentro de Inventario. | 8 | Alta | 11 | Terminado |
 | HU-048 | EPIC-12 | Como vendedor quiero confirmar pagos externos antes de registrar. | Medios aparecen tras Cobrar; pago externo requiere confirmación; venta/stock mutan una sola vez. | 8 | Crítica | 11 | Terminado |
 | HU-049 | EPIC-12 | Como usuario quiero tema claro, oscuro o del sistema. | Persistencia por usuario, contraste, Source Sans 3 y responsive sin desborde. | 5 | Alta | 11 | Terminado |
+| HU-050 | EPIC-12 | Como dueño quiero un Inicio que priorice lo que debo hacer hoy. | Venta diaria dominante, acciones frecuentes, atención y métricas financieras sin gráficos innecesarios. | 5 | Alta | 12 | Terminado |
+| HU-051 | EPIC-12 | Como dueño quiero editar los datos de mi negocio desde Más. | Nombre, rubro, dirección y teléfono tienen labels, validación, endpoint owner y auditoría. | 5 | Alta | 12 | Terminado |
+| HU-052 | EPIC-12 | Como dueño quiero solicitar un plan sin obtener acceso no pagado. | `pendingPlan` preserva acceso actual; system_admin verifica y activa el período manual. | 8 | Crítica | 12 | Terminado |
+| HU-053 | EPIC-12 | Como equipo quiero demostrar no regresión del rediseño. | Matriz anterior/nueva ubicación, pruebas y evidencia responsive actualizadas. | 8 | Crítica | 12 | Terminado |
 
 ## 5. Plan de sprints reconstruido
 
@@ -107,6 +111,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | Sprint 9 | Mobile/PWA | HU-038, HU-039 | Experiencia móvil y continuidad offline. |
 | Sprint 10 | Producción y tesis | HU-040 a HU-042 | Despliegue verificable, QA y documentación final. |
 | Sprint 11 | SaaS y rediseño profesional | HU-043 a HU-049 | Planes/entitlements, navegación por rol, pago asistido, temas y panel SaaS. |
+| Sprint 12 | Cierre de rediseño y regresión | HU-050 a HU-053 | Inicio final, negocio editable, activación manual segura y trazabilidad de regresión. |
 
 ## 6. Definition of Ready
 
@@ -131,7 +136,7 @@ Una historia puede entrar a sprint cuando tiene actor, valor, criterios comproba
 - **Retrospective:** registrar una acción concreta de mejora para el siguiente sprint.
 - **Refinement:** dividir historias de 13 SP, aclarar criterios y reestimar.
 
-Cada ticket terminado debe enlazar commit, evidencia de prueba, captura cuando corresponda y requerimiento relacionado. Los casos detallados están en [Matriz-Pruebas-Localito.md](Matriz-Pruebas-Localito.md).
+Cada ticket terminado debe enlazar commit, evidencia de prueba, captura cuando corresponda y requerimiento relacionado. Los casos detallados están en [Matriz-Pruebas-Localito.md](Matriz-Pruebas-Localito.md) y [Matriz-Regresion-Rediseno.md](Matriz-Regresion-Rediseno.md).
 
 ## 9. Pendientes recomendados para nuevos sprints
 

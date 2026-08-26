@@ -1667,6 +1667,8 @@ El administrador de plataforma puede observar locales activos, pruebas, MRR esti
 
 La navegación deja de presentar herramientas técnicas como módulos aislados. Venta Rápida se abre desde Vender; creación, importación y carga inicial viven dentro de Inventario; configuración, usuarios, plan, cuenta y exportación se agrupan en Más. El POS aplica el flujo `productos → ticket → Cobrar → medio → confirmación`: en pagos externos el vendedor debe verificar el terminal, QR o comprobante antes de que la venta y el stock se registren.
 
+El cierre del rediseño agrega un Inicio centrado en ventas y atención diaria, edición segura de los datos del negocio desde Más y solicitudes de plan mediante `pendingPlan`. Esta solicitud no concede acceso ni reemplaza el plan vigente: el administrador de plataforma verifica el pago manual y recién entonces activa el período. La matriz de no regresión documenta la ubicación nueva de cada capacidad anterior.
+
 La capa visual utiliza Source Sans 3, verde principal `#0f766e`, tema claro/oscuro/sistema persistido por usuario, controles táctiles y diseño responsive sin zoom inicial ni desborde horizontal.
 
 ## 34. Trazabilidad Scrum y Jira
