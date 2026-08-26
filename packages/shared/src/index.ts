@@ -1,4 +1,5 @@
 export type UserRole = "system_admin" | "owner" | "seller";
+export * from "./subscriptions.js";
 
 export type PaymentMethod = "cash" | "card" | "transfer" | "webpay" | "credit" | "mixed";
 
@@ -26,6 +27,7 @@ export interface PlatformTenantSummary extends Tenant {
   userCount: number;
   productCount: number;
   ownerCount: number;
+  subscription?: import("./subscriptions.js").Subscription;
 }
 
 export interface User {
@@ -480,6 +482,8 @@ export interface BootstrapData {
   cashClosures: CashRegisterClosure[];
   alerts: StockAlert[];
   summary: ReportSummary;
+  subscription: import("./subscriptions.js").Subscription;
+  entitlements: import("./subscriptions.js").EntitlementKey[];
 }
 
 export interface ApiResponse<T> {

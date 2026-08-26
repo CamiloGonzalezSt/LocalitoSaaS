@@ -18,6 +18,7 @@ import type {
   StockAlert,
   StockMovement,
   Supplier,
+  Subscription,
   Tenant,
   User
 } from "@localito/shared";
@@ -72,6 +73,7 @@ export interface Store {
   auditEvents: AuditEvent[];
   saleReturns: SaleReturn[];
   idempotencyKeys: Record<string, string>;
+  subscriptions: Subscription[];
 }
 
 export const demoTenantId = demoTenantIds.dondeJuanita;
@@ -201,7 +203,21 @@ export const store: Store = {
   stockMovements: [],
   auditEvents: [],
   saleReturns: [],
-  idempotencyKeys: {}
+  idempotencyKeys: {},
+  subscriptions: demoTenantSeeds.map((tenant) => {
+    const now = new Date();
+    return {
+      id: randomUUID(),
+      tenantId: tenant.id,
+      plan: "pro" as const,
+      status: "active" as const,
+      currentPeriodStartedAt: now.toISOString(),
+      currentPeriodEndsAt: new Date(now.getTime() + 365 * 86_400_000).toISOString(),
+      paymentProvider: "manual",
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
+    };
+  })
 };
 
 export function getTenantProducts(tenantId: string) {

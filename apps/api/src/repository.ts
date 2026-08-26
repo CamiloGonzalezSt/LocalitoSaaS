@@ -23,10 +23,13 @@ import type {
   SaleItem,
   StockMovement,
   StockMovementType,
+  Subscription,
+  SubscriptionPlan,
   Supplier,
   Tenant,
   User
 } from "@localito/shared";
+import { createTrialSubscription, subscriptionEntitlements } from "@localito/shared";
 import {
   buildDemoCustomers,
   buildDemoProducts,
@@ -77,6 +80,8 @@ export interface DataRepository {
   registerTenant(input: { name: string; email: string; password: string; businessName: string; businessType: string }): Promise<{ tenant: Tenant; user: User }>;
   bootstrap(tenantId: string): Promise<BootstrapData>;
   listTenants(): Promise<PlatformTenantSummary[]>;
+  getSubscription(tenantId: string): Promise<Subscription>;
+  updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string }): Promise<Subscription>;
   updateTenant(tenantId: string, tenant: Partial<Tenant>): Promise<Tenant | null>;
   getUsers(tenantId: string, includeInactive?: boolean): Promise<User[]>;
   createUser(tenantId: string, user: Partial<User> & { password?: string }): Promise<User>;
@@ -247,6 +252,8 @@ function buildMemoryBootstrap(tenantId: string): BootstrapData {
   const sessionMovements = store.cashMovements.filter((movement) => movement.tenantId === tenant.id && (cashSession ? movement.sessionId === cashSession.id : movement.createdAt.slice(0, 10) === cashSummary.date));
   const deposits = sessionMovements.filter((movement) => movement.type === "deposit").reduce((sum, movement) => sum + movement.amount, 0);
   const withdrawals = sessionMovements.filter((movement) => movement.type !== "deposit").reduce((sum, movement) => sum + movement.amount, 0);
+  const subscription = store.subscriptions.find((candidate) => candidate.tenantId === tenant.id) ?? createTrialSubscription(tenant.id);
+  if (!store.subscriptions.some((candidate) => candidate.tenantId === tenant.id)) store.subscriptions.push(subscription);
 
   return {
     tenant,
@@ -271,7 +278,9 @@ function buildMemoryBootstrap(tenantId: string): BootstrapData {
       .sort((a, b) => b.closedAt.localeCompare(a.closedAt))
       .slice(0, 5),
     alerts: getStockAlerts(tenant.id),
-    summary: getReportSummary(tenant.id)
+    summary: getReportSummary(tenant.id),
+    subscription,
+    entitlements: subscriptionEntitlements(subscription)
   };
 }
 
@@ -416,9 +425,33 @@ export class MemoryRepository implements DataRepository {
         active: tenant.active !== false,
         userCount: store.users.filter((user) => user.tenantId === tenant.id && user.active !== false).length,
         ownerCount: store.users.filter((user) => user.tenantId === tenant.id && user.role === "owner" && user.active !== false).length,
-        productCount: store.products.filter((product) => product.tenantId === tenant.id && product.active).length
+        productCount: store.products.filter((product) => product.tenantId === tenant.id && product.active).length,
+        subscription: store.subscriptions.find((subscription) => subscription.tenantId === tenant.id)
       }))
       .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  async getSubscription(tenantId: string) {
+    const existing = store.subscriptions.find((subscription) => subscription.tenantId === tenantId);
+    if (existing) return existing;
+    const subscription = createTrialSubscription(tenantId);
+    store.subscriptions.push(subscription);
+    return subscription;
+  }
+
+  async updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string }) {
+    const subscription = await this.getSubscription(tenantId);
+    if (input.plan) subscription.plan = input.plan;
+    if (input.status) subscription.status = input.status;
+    if (input.paymentProvider) subscription.paymentProvider = input.paymentProvider;
+    if (input.plan && !input.status) subscription.status = "active";
+    if (subscription.status === "active") {
+      const now = new Date();
+      subscription.currentPeriodStartedAt = now.toISOString();
+      subscription.currentPeriodEndsAt = new Date(now.getTime() + 30 * 86_400_000).toISOString();
+    }
+    subscription.updatedAt = new Date().toISOString();
+    return subscription;
   }
 
   async updateTenant(tenantId: string, body: Partial<Tenant>) {
@@ -460,6 +493,7 @@ export class MemoryRepository implements DataRepository {
     const tenant: Tenant = { id: randomUUID(), name: input.businessName.trim(), businessType: input.businessType.trim() };
     store.tenants.push(tenant);
     const user = await this.createUser(tenant.id, { name: input.name, email: input.email, password: input.password, role: "owner" });
+    store.subscriptions.push(createTrialSubscription(tenant.id));
     return { tenant, user };
   }
 
@@ -1117,6 +1151,7 @@ class PostgresRepository implements DataRepository {
     const operatingExpenses = Number(expenseRows.rows[0]?.total ?? 0);
     const estimatedGrossProfit = totalSales - estimatedCost;
     const cashSession = await this.getOpenCashSession(tenant.id);
+    const subscription = await this.getSubscription(tenant.id);
 
     return {
       tenant,
@@ -1154,7 +1189,9 @@ class PostgresRepository implements DataRepository {
         pendingDebt: customers.reduce((sum, customer) => sum + customer.debtBalance, 0),
         lowStockCount: products.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock).length,
         stockValue: products.reduce((sum, product) => sum + product.stock * product.salePrice, 0)
-      }
+      },
+      subscription,
+      entitlements: subscriptionEntitlements(subscription)
     };
   }
 
@@ -1219,7 +1256,40 @@ class PostgresRepository implements DataRepository {
        order by n.nombre`,
       [systemTenantId]
     );
-    return result.rows.map((row) => ({ ...mapTenant(row), active: String(row.estado) === "activo", userCount: Number(row.user_count), ownerCount: Number(row.owner_count), productCount: Number(row.product_count) }));
+    return Promise.all(result.rows.map(async (row) => {
+      const tenant = { ...mapTenant(row), active: String(row.estado) === "activo", userCount: Number(row.user_count), ownerCount: Number(row.owner_count), productCount: Number(row.product_count) };
+      return { ...tenant, subscription: await this.getSubscription(tenant.id) };
+    }));
+  }
+
+  async getSubscription(tenantId: string) {
+    const result = await this.pool.query(`select * from suscripciones where negocio_id = $1 limit 1`, [tenantId]);
+    if (result.rows[0]) return mapSubscription(result.rows[0]);
+    const trial = createTrialSubscription(tenantId);
+    const inserted = await this.pool.query(
+      `insert into suscripciones (id, negocio_id, plan, estado, inicio_prueba, fin_prueba, fecha_creacion, fecha_actualizacion)
+       values ($1,$2,$3,$4,$5,$6,$7,$8) returning *`,
+      [trial.id, tenantId, trial.plan, trial.status, trial.trialStartedAt, trial.trialEndsAt, trial.createdAt, trial.updatedAt]
+    );
+    return mapSubscription(inserted.rows[0]);
+  }
+
+  async updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string }) {
+    const current = await this.getSubscription(tenantId);
+    const plan = input.plan ?? current.plan;
+    const status = input.status ?? (input.plan ? "active" : current.status);
+    const now = new Date();
+    const activePeriod = status === "active" ? {
+      startedAt: now.toISOString(),
+      endsAt: new Date(now.getTime() + 30 * 86_400_000).toISOString()
+    } : { startedAt: current.currentPeriodStartedAt, endsAt: current.currentPeriodEndsAt };
+    const result = await this.pool.query(
+      `update suscripciones set plan=$1, estado=$2, inicio_periodo=$3, fin_periodo=$4, proveedor_pago=$5,
+       fecha_cancelacion=case when $2='cancelled' then CURRENT_TIMESTAMP else fecha_cancelacion end,
+       fecha_actualizacion=CURRENT_TIMESTAMP where negocio_id=$6 returning *`,
+      [plan, status, activePeriod.startedAt, activePeriod.endsAt, input.paymentProvider ?? current.paymentProvider ?? "manual", tenantId]
+    );
+    return mapSubscription(result.rows[0]);
   }
 
   async updateTenant(tenantId: string, body: Partial<Tenant>) {
@@ -1246,6 +1316,12 @@ class PostgresRepository implements DataRepository {
       await client.query(
         `insert into usuarios (id, negocio_id, nombre, email, password_hash, rol, estado) values ($1,$2,$3,$4,$5,'owner','activo')`,
         [user.id, tenant.id, user.name, user.email, hashPassword(input.password)]
+      );
+      const subscription = createTrialSubscription(tenant.id);
+      await client.query(
+        `insert into suscripciones (id, negocio_id, plan, estado, inicio_prueba, fin_prueba, fecha_creacion, fecha_actualizacion)
+         values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [subscription.id, tenant.id, subscription.plan, subscription.status, subscription.trialStartedAt, subscription.trialEndsAt, subscription.createdAt, subscription.updatedAt]
       );
       await client.query("commit");
       return { tenant, user };
@@ -2604,6 +2680,25 @@ function mapStockMovement(row: Record<string, unknown>): StockMovement {
 function mapAuditEvent(row: Record<string, unknown>): AuditEvent {
   const details = typeof row.detalle === "object" && row.detalle ? row.detalle as Record<string, unknown> : undefined;
   return { id: String(row.id), tenantId: String(row.negocio_id), userId: toOptional(row.usuario_id), userName: toOptional(row.user_name), action: String(row.accion), entity: String(row.entidad), entityId: toOptional(row.entidad_id), details, createdAt: new Date(String(row.fecha_creacion)).toISOString() };
+}
+
+function mapSubscription(row: Record<string, unknown>): Subscription {
+  return {
+    id: String(row.id),
+    tenantId: String(row.negocio_id),
+    plan: String(row.plan) as Subscription["plan"],
+    status: String(row.estado) as Subscription["status"],
+    trialStartedAt: row.inicio_prueba ? new Date(String(row.inicio_prueba)).toISOString() : undefined,
+    trialEndsAt: row.fin_prueba ? new Date(String(row.fin_prueba)).toISOString() : undefined,
+    currentPeriodStartedAt: row.inicio_periodo ? new Date(String(row.inicio_periodo)).toISOString() : undefined,
+    currentPeriodEndsAt: row.fin_periodo ? new Date(String(row.fin_periodo)).toISOString() : undefined,
+    cancelledAt: row.fecha_cancelacion ? new Date(String(row.fecha_cancelacion)).toISOString() : undefined,
+    paymentProvider: toOptional(row.proveedor_pago),
+    externalCustomerId: toOptional(row.cliente_externo_id),
+    externalSubscriptionId: toOptional(row.suscripcion_externa_id),
+    createdAt: new Date(String(row.fecha_creacion)).toISOString(),
+    updatedAt: new Date(String(row.fecha_actualizacion)).toISOString()
+  };
 }
 
 function mapRecognitionLog(row: Record<string, unknown>): RecognitionLog {

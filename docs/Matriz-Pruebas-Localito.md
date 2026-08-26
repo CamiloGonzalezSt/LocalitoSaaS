@@ -100,6 +100,15 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-64 | Venta Rápida H | Cámara rechazada | Rechazar permiso de cámara. | Explica brevemente el permiso y ofrece cámara del teléfono o subir foto. | Pendiente dispositivo real |
 | CP-65 | Venta Rápida I | Foto sin productos | Analizar una imagen sin productos claros. | Muestra No encontramos productos claramente visibles y permite otra foto. | Automatizada aprobada; visual pendiente |
 | CP-66 | Venta Rápida J | Integración POS | Confirmar productos revisados y presionar Agregar a la venta. | Abre el ticket POS existente; stock y kardex no cambian hasta confirmar el cobro. | Automatizada y visual aprobadas; cantidad 2 llegó al ticket y el stock permaneció en 28 |
+| CP-67 | Navegación | Menú por rol | Iniciar como dueño y vendedor en móvil/escritorio. | Dueño ve 7 áreas; vendedor ve Vender, Inventario, Clientes y Caja; funciones secundarias no duplican navegación. | Typecheck y revisión móvil aprobados |
+| CP-68 | POS | Medios después de Cobrar | Agregar producto y observar ticket antes de pulsar Cobrar. | Los medios de pago no aparecen hasta solicitar el cobro. | Visual móvil aprobada |
+| CP-69 | POS | Confirmación de pago externo | Elegir tarjeta, transferencia o Webpay. | Registrar venta queda deshabilitado hasta marcar pago aprobado; antes de eso no existe venta ni baja stock. | Visual y API local aprobadas con tarjeta |
+| CP-70 | Suscripción | Prueba Pro al crear local | Crear tenant desde plataforma. | Se crea suscripción Pro `trialing` por 30 días y bootstrap entrega entitlements. | Automatizada aprobada |
+| CP-71 | Suscripción | Plan Básico | Cambiar a Básico e intentar clientes, IA o compras desde UI/API. | Navegación oculta función y API responde 403; ventas, inventario y caja siguen disponibles. | Typecheck aprobado; integración API pendiente evidencia HTTP |
+| CP-72 | Suscripción | Vencimiento solo lectura | Vencer prueba/periodo y consultar/modificar datos. | Consultas del plan siguen disponibles; mutaciones responden 403 y los datos permanecen. | Automatizada de estado aprobada; integración API pendiente |
+| CP-73 | Plataforma | Métricas SaaS | Entrar como `system_admin`. | Muestra locales, pruebas activas, MRR estimado y controles de plan/estado por tenant. | Typecheck aprobado; visual pendiente |
+| CP-74 | Apariencia | Claro, oscuro y sistema | Cambiar el selector desde Más y recargar. | Tema persiste por usuario, mantiene contraste y respeta preferencia del sistema. | Oscuro móvil aprobado; claro y persistencia pendientes |
+| CP-75 | Responsive | Sin zoom ni desborde | Revisar Inicio, Vender, Inventario y formularios a 390 × 844. | `scrollWidth` no supera el viewport y la navegación inferior no tapa controles esenciales. | Aprobada en 390 × 844 |
 
 ## 5. Pruebas no funcionales sugeridas
 
@@ -116,6 +125,8 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | PNF-09 | Privacidad por rol | Ingresar como vendedor y consultar bootstrap. | No recibe ventas históricas, deuda, stock valorizado, gastos ni resultados financieros del dueño. |
 | PNF-10 | Cuota de IA | Forzar respuesta 429 con `Retry-After`. | Venta Rápida explica cuánto esperar y no modifica ticket ni inventario. |
 | PNF-11 | Resultado financiero | Registrar una venta y un gasto operativo categorizado. | Resultado estimado = margen bruto estimado - gastos operativos. |
+| PNF-12 | Accesibilidad visual | Revisar contraste, foco y tamaños táctiles en ambos temas. | Texto legible, foco visible y acciones principales de al menos 44 px. |
+| PNF-13 | Autorización SaaS | Alterar interfaz para invocar una función Pro desde Básico. | La API rechaza por entitlement central, aunque el botón se fuerce desde el navegador. |
 
 ## 6. Evidencias recomendadas
 

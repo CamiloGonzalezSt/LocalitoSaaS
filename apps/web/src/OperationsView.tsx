@@ -7,7 +7,7 @@ import { readProductImportFile, validateProductImportRows } from "./productImpor
 
 const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
 
-export function OperationsView({ products, onRefresh, canManage }: { products: Product[]; onRefresh: () => Promise<void>; canManage: boolean }) {
+export function OperationsView({ products, onRefresh, canManage, mode = "all" }: { products: Product[]; onRefresh: () => Promise<void>; canManage: boolean; mode?: "all" | "invoice" }) {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [purchases, setPurchases] = useState<PurchaseOrder[]>([]);
   const [debts, setDebts] = useState<DebtAccount[]>([]);
@@ -100,6 +100,10 @@ export function OperationsView({ products, onRefresh, canManage }: { products: P
       await Promise.all([load(), onRefresh()]);
       setMessage(`${response.data.created.length} productos importados${response.data.skipped.length || validation.issues.length ? `; ${response.data.skipped.length + validation.issues.length} filas omitidas` : ""}.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "No se pudo importar el CSV."); } finally { setBusy(false); event.target.value = ""; }
+  }
+
+  if (mode === "invoice") {
+    return <div className="stack"><section className="panel"><div className="section-heading"><h2>Ingresar mercadería con factura</h2><span>{message}</span></div><p className="helper-text">Toma o sube una foto, revisa cada producto y confirma sus precios de venta antes de aumentar el stock.</p></section>{canManage ? <InvoiceImportPanel products={products} suppliers={suppliers} onImported={async () => { await Promise.all([load(), onRefresh()]); }} /> : <section className="panel"><p className="empty-state">Esta función requiere Localito Pro y permisos de dueño.</p></section>}</div>;
   }
 
   return <div className="stack">

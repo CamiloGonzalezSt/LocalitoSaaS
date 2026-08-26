@@ -32,6 +32,33 @@ CREATE TABLE IF NOT EXISTS sesiones (
 CREATE INDEX IF NOT EXISTS idx_sesiones_token ON sesiones(token_hash);
 CREATE INDEX IF NOT EXISTS idx_usuarios_negocio ON usuarios(negocio_id);
 
+CREATE TABLE IF NOT EXISTS suscripciones (
+  id UUID PRIMARY KEY,
+  negocio_id UUID NOT NULL UNIQUE REFERENCES negocios(id) ON DELETE CASCADE,
+  plan VARCHAR(20) NOT NULL CHECK (plan IN ('basic', 'pro')),
+  estado VARCHAR(20) NOT NULL CHECK (estado IN ('trialing', 'active', 'past_due', 'expired', 'cancelled')),
+  inicio_prueba TIMESTAMPTZ,
+  fin_prueba TIMESTAMPTZ,
+  inicio_periodo TIMESTAMPTZ,
+  fin_periodo TIMESTAMPTZ,
+  fecha_cancelacion TIMESTAMPTZ,
+  proveedor_pago VARCHAR(40),
+  cliente_externo_id VARCHAR(160),
+  suscripcion_externa_id VARCHAR(160),
+  fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_suscripciones_estado_plan ON suscripciones(estado, plan);
+
+-- Los negocios existentes conservan acceso Pro al incorporar billing. Las nuevas
+-- altas se crean como prueba Pro de 30 días desde la transacción de registro.
+INSERT INTO suscripciones (id, negocio_id, plan, estado, inicio_periodo, fin_periodo)
+SELECT gen_random_uuid(), n.id, 'pro', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 year'
+FROM negocios n
+WHERE n.rubro <> 'Plataforma'
+ON CONFLICT (negocio_id) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
   id UUID PRIMARY KEY,
   usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -384,13 +411,14 @@ ALTER TABLE auditoria ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alertas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reconocimientos_ia ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cierres_caja ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suscripciones ENABLE ROW LEVEL SECURITY;
 
 -- Localito no consulta estas tablas mediante la Data API. En Supabase se
 -- revocan sus permisos para anon/authenticated como defensa adicional; el
 -- bloque se omite en PostgreSQL local cuando esos roles no existen.
 DO $$
 DECLARE
-  app_tables TEXT := 'negocios, usuarios, sesiones, password_reset_tokens, categorias, productos, clientes, ventas, detalle_ventas, movimientos_stock, devoluciones_venta, cuentas_fiado, abonos_fiado, pagos, proveedores, ordenes_compra, detalle_ordenes_compra, sesiones_caja, movimientos_caja, auditoria, alertas, reconocimientos_ia, cierres_caja';
+  app_tables TEXT := 'negocios, usuarios, sesiones, password_reset_tokens, categorias, productos, clientes, ventas, detalle_ventas, movimientos_stock, devoluciones_venta, cuentas_fiado, abonos_fiado, pagos, proveedores, ordenes_compra, detalle_ordenes_compra, sesiones_caja, movimientos_caja, auditoria, alertas, reconocimientos_ia, cierres_caja, suscripciones';
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
     EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE %s FROM anon', app_tables);

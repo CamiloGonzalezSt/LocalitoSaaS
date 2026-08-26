@@ -1659,6 +1659,16 @@ La incorporacion de IA visual convierte la camara del celular en una herramienta
 
 El MVP se desarrolló por incrementos: plataforma multi-tenant, catálogo, inventario, ventas, caja, fiado, compras, Venta Rápida, gastos, reportes, PWA y producción persistente. Los pagos externos permanecen manuales por decisión de alcance y costos. El backlog ejecutable, la reconstrucción de sprints y la guía de importación a Jira viven en `docs/Backlog-Scrum-Jira.md` y `docs/Jira-Import.csv`.
 
+## 33. Evolución SaaS y rediseño profesional
+
+La versión vigente agrega una suscripción individual por negocio. Todo local nuevo inicia una prueba Pro de 30 días y posteriormente puede operar con Localito Básico ($9.990/mes) o Localito Pro ($19.990/mes). El backend mantiene una matriz central de entitlements, por lo que ocultar un botón nunca es la única defensa: las operaciones no permitidas también reciben rechazo HTTP 403. Cuando una prueba o periodo vence, la información permanece guardada y consultable, pero las escrituras se pausan hasta la reactivación.
+
+El administrador de plataforma puede observar locales activos, pruebas, MRR estimado y plan/estado de cada tenant. El cobro recurrente automático queda como integración futura; la arquitectura ya conserva proveedor e identificadores externos sin exponer claves al frontend.
+
+La navegación deja de presentar herramientas técnicas como módulos aislados. Venta Rápida se abre desde Vender; creación, importación y carga inicial viven dentro de Inventario; configuración, usuarios, plan, cuenta y exportación se agrupan en Más. El POS aplica el flujo `productos → ticket → Cobrar → medio → confirmación`: en pagos externos el vendedor debe verificar el terminal, QR o comprobante antes de que la venta y el stock se registren.
+
+La capa visual utiliza Source Sans 3, verde principal `#0f766e`, tema claro/oscuro/sistema persistido por usuario, controles táctiles y diseño responsive sin zoom inicial ni desborde horizontal.
+
 ## 34. Trazabilidad Scrum y Jira
 
 La documentación de gestión se separa de este documento extenso para mantenerla operativa:

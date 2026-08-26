@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Copy,
   CreditCard,
+  Download,
   Edit3,
   Home,
   LogIn,
@@ -14,8 +15,9 @@ import {
   Menu,
   MessageCircle,
   Minus,
+  Monitor,
+  Moon,
   Package,
-  PackagePlus,
   Plus,
   Printer,
   ReceiptText,
@@ -28,6 +30,7 @@ import {
   ShoppingCart,
   Smartphone,
   Store,
+  Sun,
   Trash2,
   Users,
   WalletCards,
@@ -46,9 +49,11 @@ import type {
   Sale,
   SaleItem,
   Tenant,
+  Subscription,
+  SubscriptionPlan,
   User
 } from "@localito/shared";
-import { mergeQuickSaleTicket } from "@localito/shared";
+import { LOCALITO_PLANS, hasEntitlement, mergeQuickSaleTicket, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
 import { api, flushOfflineQueue } from "./lib/api";
 import type { AuthSession } from "./lib/api";
 import { OperationsView } from "./OperationsView";
@@ -56,7 +61,8 @@ import { PlatformAdminView } from "./PlatformAdminView";
 import { InventorySetupView } from "./InventorySetupView";
 import { QuickSaleView } from "./QuickSaleView";
 
-type View = "dashboard" | "sale" | "scan" | "product_create" | "setup" | "products" | "customers" | "operations" | "reports" | "settings" | "platform";
+type View = "dashboard" | "sale" | "scan" | "product_create" | "setup" | "invoice" | "products" | "customers" | "operations" | "reports" | "settings" | "plan" | "platform";
+type ThemePreference = "light" | "dark" | "system";
 
 type NoticeTone = "success" | "warning" | "error";
 
@@ -130,13 +136,11 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: "dashboard", label: "Inicio", icon: Home },
   { id: "sale", label: "Vender", icon: ShoppingCart },
-  { id: "scan", label: "Venta Rápida", icon: Camera },
-  { id: "product_create", label: "Nuevo producto", icon: PackagePlus },
-  { id: "setup", label: "Carga inicial", icon: ListPlus },
   { id: "products", label: "Inventario", icon: Package },
   { id: "customers", label: "Clientes", icon: Users },
-  { id: "operations", label: "Negocio", icon: Settings },
-  { id: "reports", label: "Reportes", icon: BarChart3 }
+  { id: "operations", label: "Caja", icon: Banknote },
+  { id: "reports", label: "Reportes", icon: BarChart3 },
+  { id: "settings", label: "Más", icon: Menu }
 ];
 
 const paymentOptions: Array<{ id: PaymentMethod; label: string; icon: LucideIcon }> = [
@@ -321,6 +325,14 @@ function suspendedCartStorageKey(tenantId: string) {
   return `localito-suspended-cart:${tenantId}`;
 }
 
+function navItemIsActive(item: View, active: View) {
+  if (item === active) return true;
+  if (item === "sale" && active === "scan") return true;
+  if (item === "products" && ["product_create", "setup", "invoice"].includes(active)) return true;
+  if (item === "settings" && active === "plan") return true;
+  return false;
+}
+
 function App() {
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -332,6 +344,8 @@ function App() {
   const [cashRegister, setCashRegister] = useState<CashRegisterSummary>(emptyCashRegister);
   const [cashClosures, setCashClosures] = useState<CashRegisterClosure[]>([]);
   const [summary, setSummary] = useState<ReportSummary>(emptySummary);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [theme, setTheme] = useState<ThemePreference>("system");
   const [ticket, setTicket] = useState<SaleItem[]>([]);
   const [lastReceipt, setLastReceipt] = useState<Sale | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
@@ -396,11 +410,12 @@ function App() {
   const visibleNavItems: NavItem[] = isSystemAdmin
     ? [{ id: "platform", label: "Locales y usuarios", icon: Store }]
     : navItems
-        .filter((item) => (isOwner || item.id !== "reports") && (isOwner || item.id !== "product_create") && (isOwner || item.id !== "setup"))
-        .map((item) => item.id === "operations" && !isOwner ? { ...item, label: "Caja", icon: Banknote } : item);
+        .filter((item) => isOwner || ["sale", "products", "customers", "operations"].includes(item.id))
+        .filter((item) => item.id !== "customers" || !subscription || hasEntitlement(subscription, "customers"))
+        .filter((item) => item.id !== "reports" || !subscription || hasEntitlement(subscription, "advancedReports"));
   const mobilePrimaryIds: View[] = isOwner
-    ? ["dashboard", "sale", "scan", "products"]
-    : ["sale", "scan", "dashboard", "operations"];
+    ? ["dashboard", "sale", "products", "operations"]
+    : ["sale", "products", "customers", "operations"];
   const mobileNavItems = isSystemAdmin ? [] : visibleNavItems.filter((item) => mobilePrimaryIds.includes(item.id));
   const mobileMoreItems = isSystemAdmin ? [] : visibleNavItems.filter((item) => !mobilePrimaryIds.includes(item.id));
 
@@ -414,6 +429,14 @@ function App() {
     localStorage.setItem("localito-token", session.token);
     setCurrentUser(session.user);
     setTenant(session.tenant);
+  }
+
+  function applyTheme(preference: ThemePreference, userId = currentUser?.id) {
+    const resolved = preference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : preference === "system" ? "light" : preference;
+    document.documentElement.dataset.theme = resolved;
+    document.documentElement.style.colorScheme = resolved;
+    setTheme(preference);
+    if (userId) localStorage.setItem(`localito-theme:${userId}`, preference);
   }
 
   async function loadWorkspace(message?: string, sessionUser: User | null = currentUser) {
@@ -431,7 +454,13 @@ function App() {
       }
       if (message || syncResult.synced > 0) setNotice({ message: syncResult.synced > 0 ? `${syncResult.synced} operaciones pendientes sincronizadas.` : message!, tone: "success" });
     } catch (error) {
-      setNotice({ message: error instanceof Error ? error.message : "No se pudo cargar la API.", tone: "error" });
+      const message = error instanceof Error ? error.message : "No se pudo cargar la API.";
+      if (/debes iniciar sesi[oó]n/i.test(message)) {
+        logout();
+        setNotice({ message: "Tu sesión venció. Inicia sesión nuevamente.", tone: "warning" });
+      } else {
+        setNotice({ message, tone: "error" });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -446,8 +475,19 @@ function App() {
     setCashRegister(data.cashRegister);
     setCashClosures(data.cashClosures);
     setSummary(data.summary);
+    setSubscription(data.subscription);
     setSelectedCustomerId((current) => current || data.customers[0]?.id || "");
   }
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const stored = localStorage.getItem(`localito-theme:${currentUser.id}`) as ThemePreference | null;
+    applyTheme(stored && ["light", "dark", "system"].includes(stored) ? stored : "system", currentUser.id);
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => { if ((localStorage.getItem(`localito-theme:${currentUser.id}`) ?? "system") === "system") applyTheme("system", currentUser.id); };
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, [currentUser?.id]);
 
   useEffect(() => {
     if (passwordResetToken) {
@@ -597,6 +637,7 @@ function App() {
     setCashRegister(emptyCashRegister);
     setCashClosures([]);
     setSummary(emptySummary);
+    setSubscription(null);
     setTicket([]);
     setLastReceipt(null);
     setPaymentMethod("cash");
@@ -695,11 +736,8 @@ function App() {
       });
       setLastReceipt(saleResponse.data);
 
-      const externalPayment = paymentMethod === "card" || paymentMethod === "transfer" || paymentMethod === "webpay";
       setNotice({
-        message: externalPayment
-          ? `Venta registrada por ${formatCLP(saleResponse.data.total)}. Confirma el pago en el terminal o aplicación externa.`
-          : `Venta registrada por ${formatCLP(saleResponse.data.total)}.`,
+        message: `Venta registrada por ${formatCLP(saleResponse.data.total)}.`,
         tone: "success"
       });
 
@@ -1191,6 +1229,29 @@ function App() {
     finally { setIsBusy(false); }
   }
 
+  async function changePlan(plan: SubscriptionPlan) {
+    setIsBusy(true);
+    try {
+      const response = await api.changePlan(plan);
+      setSubscription(response.data);
+      setNotice({ message: `Tu plan cambió a ${LOCALITO_PLANS[plan].name}.`, tone: "success" });
+    } catch (error) {
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo cambiar el plan.", tone: "error" });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  function exportBusinessData() {
+    const payload = { exportedAt: new Date().toISOString(), tenant, products, customers, sales, cashClosures };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `localito-${tenant?.name.toLocaleLowerCase("es").replace(/[^a-z0-9]+/g, "-") || "datos"}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (!currentUser) {
     return (
       <LoginView
@@ -1224,7 +1285,7 @@ function App() {
           <span className="sidebar-label">{isSystemAdmin ? "ADMINISTRACIÓN" : "TU NEGOCIO"}</span>
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
-            return <button className={activeView === item.id ? "sidebar-item active" : "sidebar-item"} key={item.id} type="button" onClick={() => navigateTo(item.id)}><Icon size={19}/><span>{item.label}</span></button>;
+            return <button className={navItemIsActive(item.id, activeView) ? "sidebar-item active" : "sidebar-item"} key={item.id} type="button" onClick={() => navigateTo(item.id)}><Icon size={19}/><span>{item.label}</span></button>;
           })}
         </nav>
         <div className="sidebar-account">
@@ -1268,7 +1329,7 @@ function App() {
           const Icon = item.icon;
           return (
             <button
-              className={activeView === item.id ? "nav-item active" : "nav-item"}
+              className={navItemIsActive(item.id, activeView) ? "nav-item active" : "nav-item"}
               key={item.id}
               type="button"
               onClick={() => navigateTo(item.id)}
@@ -1278,15 +1339,15 @@ function App() {
             </button>
           );
         })}
-        {mobileMoreItems.length > 0 && <button className={mobileMoreItems.some((item) => item.id === activeView) || activeView === "settings" ? "nav-item active" : "nav-item"} type="button" onClick={() => setIsMobileMenuOpen(true)}><Menu size={20}/><span>Más</span></button>}
+        {mobileMoreItems.length > 0 && <button className={mobileMoreItems.some((item) => navItemIsActive(item.id, activeView)) ? "nav-item active" : "nav-item"} type="button" onClick={() => setIsMobileMenuOpen(true)}><Menu size={20}/><span>Más</span></button>}
       </nav>}
 
       {isMobileMenuOpen && <div className="mobile-menu-backdrop" role="presentation" onClick={() => setIsMobileMenuOpen(false)}>
         <section className="mobile-menu-sheet" role="dialog" aria-modal="true" aria-label="Más opciones" onClick={(event) => event.stopPropagation()}>
           <div className="mobile-menu-heading"><div><span>Más opciones</span><strong>{tenant?.name ?? "Localito"}</strong></div><button className="icon-button" type="button" onClick={() => setIsMobileMenuOpen(false)} aria-label="Cerrar"><X size={20}/></button></div>
           <div className="mobile-menu-grid">
-            {mobileMoreItems.map((item) => { const Icon = item.icon; return <button className={activeView === item.id ? "mobile-menu-item active" : "mobile-menu-item"} key={item.id} type="button" onClick={() => navigateTo(item.id)}><Icon size={21}/><span>{item.label}</span></button>; })}
-            <button className={activeView === "settings" ? "mobile-menu-item active" : "mobile-menu-item"} type="button" onClick={() => navigateTo("settings")}><Settings size={21}/><span>{isOwner ? "Configuración" : "Mi cuenta"}</span></button>
+            {mobileMoreItems.map((item) => { const Icon = item.icon; return <button className={navItemIsActive(item.id, activeView) ? "mobile-menu-item active" : "mobile-menu-item"} key={item.id} type="button" onClick={() => navigateTo(item.id)}><Icon size={21}/><span>{item.label}</span></button>; })}
+            {!mobileMoreItems.some((item) => item.id === "settings") && <button className={activeView === "settings" ? "mobile-menu-item active" : "mobile-menu-item"} type="button" onClick={() => navigateTo("settings")}><Settings size={21}/><span>{isOwner ? "Más" : "Mi cuenta"}</span></button>}
             <button className="mobile-menu-item danger" type="button" onClick={logout}><LogOut size={21}/><span>Cerrar sesión</span></button>
           </div>
         </section>
@@ -1297,6 +1358,9 @@ function App() {
           {notice.tone === "success" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
           <span>{notice.message}</span>
         </section>}
+
+        {!isSystemAdmin && subscription?.status === "trialing" && <section className="subscription-banner"><div><strong>Prueba Pro · {subscriptionDaysRemaining(subscription)} días restantes</strong><span>Estás usando todas las funciones de Localito.</span></div>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Ver planes</button>}</section>}
+        {!isSystemAdmin && subscription && !subscriptionCanMutate(subscription) && <section className="notice warning"><AlertTriangle size={18}/><span>Tu suscripción no está activa. Puedes revisar toda tu información, pero las acciones están pausadas.</span>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Elegir plan</button>}</section>}
 
         {isLoading && <p className="empty-state">Conectando con la API de Localito...</p>}
 
@@ -1313,7 +1377,7 @@ function App() {
             cancelledSalesCount={cancelledSales.length}
             canViewManagementMetrics={isOwner}
             onStartSale={() => navigateTo("sale")}
-            onOpenScan={() => navigateTo("scan")}
+            onOpenScan={() => subscription && !hasEntitlement(subscription, "aiPhotoSale") ? navigateTo("plan") : navigateTo("scan")}
             onOpenStock={() => navigateTo("products")}
           />
         )}
@@ -1324,7 +1388,7 @@ function App() {
             ticket={ticket}
             ticketTotal={ticketTotal}
             paymentMethod={paymentMethod}
-            paymentOptions={paymentOptions}
+            paymentOptions={subscription && !hasEntitlement(subscription, "credit") ? paymentOptions.filter((option) => option.id !== "credit") : paymentOptions}
             customers={customers}
             selectedCustomerId={selectedCustomerId}
             searchTerm={searchTerm}
@@ -1360,14 +1424,14 @@ function App() {
                 setNotice({ message: "El carrito guardado ya no coincide con el inventario actual.", tone: "error" });
               }
             }}
-            onScan={() => setActiveView("scan")}
+            onScan={() => subscription && !hasEntitlement(subscription, "aiPhotoSale") ? navigateTo("plan") : setActiveView("scan")}
             lastReceipt={lastReceipt}
             onPrintReceipt={printLastReceipt}
             onShareReceipt={() => void shareLastReceipt()}
           />
         )}
 
-        {!isLoading && activeView === "scan" && (
+        {!isLoading && activeView === "scan" && (!subscription || hasEntitlement(subscription, "aiPhotoSale")) && (
           <QuickSaleView products={products} onAddToSale={addQuickSaleToTicket} onOpenSale={() => navigateTo("sale")} />
         )}
 
@@ -1405,7 +1469,7 @@ function App() {
         )}
 
         {!isLoading && activeView === "products" && (
-          <ProductsView
+          <div className="stack"><section className="panel inventory-actions"><div><h2>Inventario y catálogo</h2><p>Busca, corrige stock o agrega productos al local.</p></div>{isOwner && <div className="action-grid"><button className="primary-action" type="button" onClick={() => navigateTo("product_create")}><Plus size={18}/>Agregar producto</button><button className="secondary-action" type="button" onClick={() => navigateTo("setup")}><ListPlus size={18}/>Importar o carga inicial</button>{(!subscription || hasEntitlement(subscription, "purchases")) && <button className="secondary-action" type="button" onClick={() => navigateTo("invoice")}><ReceiptText size={18}/>Ingresar factura</button>}</div>}</section><ProductsView
             mode="stock"
             products={products}
             searchTerm={searchTerm}
@@ -1420,7 +1484,7 @@ function App() {
             onEdit={startEditProduct}
             onDeactivate={(product) => void deactivateProduct(product)}
             onAdjustStock={(product, delta) => void adjustStock(product, delta)}
-          />
+          /></div>
         )}
 
         {!isLoading && activeView === "customers" && (
@@ -1470,7 +1534,11 @@ function App() {
         )}
 
         {!isLoading && activeView === "operations" && (
-          <OperationsView products={products} canManage={isOwner} onRefresh={() => loadWorkspace()} />
+          <OperationsView products={products} canManage={isOwner && (!subscription || hasEntitlement(subscription, "purchases"))} onRefresh={() => loadWorkspace()} />
+        )}
+
+        {!isLoading && activeView === "invoice" && isOwner && (
+          <OperationsView mode="invoice" products={products} canManage={!subscription || hasEntitlement(subscription, "purchases")} onRefresh={() => loadWorkspace()} />
         )}
 
         {!isLoading && activeView === "settings" && (
@@ -1482,13 +1550,19 @@ function App() {
             profileForm={profileForm}
             isBusy={isBusy}
             canManageUsers={isOwner}
+            theme={theme}
             onUserForm={setUserForm}
             onProfileForm={setProfileForm}
             onSaveProfile={() => void updateMyProfile()}
             onCreateUser={() => void createUser()}
             onDeactivateUser={(userToDeactivate) => void deactivateUser(userToDeactivate)}
+            onTheme={(value) => applyTheme(value)}
+            onOpenPlan={() => navigateTo("plan")}
+            onExport={exportBusinessData}
           />
         )}
+
+        {!isLoading && activeView === "plan" && isOwner && subscription && <PlanView subscription={subscription} isBusy={isBusy} onSelect={(plan) => void changePlan(plan)} />}
       </main>
 
       <ReceiptPrintArea sale={lastReceipt} tenant={tenant} user={currentUser} customers={customers} />
@@ -1504,11 +1578,13 @@ function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
     scan: "Venta Rápida",
     product_create: "Crear producto",
     setup: "Configurar inventario",
+    invoice: "Ingresar factura",
     products: "Inventario",
-    customers: "Clientes y fiado",
-    operations: "Tu negocio",
+    customers: "Clientes",
+    operations: "Caja",
     reports: isOwner ? "Reportes" : "Cierre de caja",
-    settings: isOwner ? "Configuracion" : "Mi perfil",
+    settings: "Más",
+    plan: "Mi plan",
     platform: isSystemAdmin ? "Locales y usuarios" : "Administración"
   };
   return labels[view];
@@ -1863,9 +1939,19 @@ function SaleView({
   const [discount, setDiscount] = useState("");
   const [notes, setNotes] = useState("");
   const [cashPart, setCashPart] = useState("");
+  const [isChoosingPayment, setIsChoosingPayment] = useState(false);
+  const [externalPaymentConfirmed, setExternalPaymentConfirmed] = useState(false);
   const visibleProducts = products.slice(0, 60);
   const discountedTotal = Math.max(0, ticketTotal - numberFromInput(discount));
   const cardPart = Math.max(0, discountedTotal - numberFromInput(cashPart));
+  const isExternalPayment = ["card", "transfer", "webpay"].includes(paymentMethod);
+
+  useEffect(() => {
+    if (ticket.length === 0) {
+      setIsChoosingPayment(false);
+      setExternalPaymentConfirmed(false);
+    }
+  }, [ticket.length]);
 
   function submitSale() {
     const payments = paymentMethod === "mixed" ? [{ method: "cash" as const, amount: numberFromInput(cashPart) }, { method: "card" as const, amount: cardPart }].filter((payment) => payment.amount > 0) : undefined;
@@ -1876,7 +1962,7 @@ function SaleView({
     <div className="workspace-grid sale-workspace">
       <section className="panel sale-products-panel">
         <div className="section-heading compact-heading">
-          <h2>Productos</h2>
+          <div className="flow-title"><span>1</span><h2>Elige productos</h2></div>
           <span>{products.length} disponibles</span>
         </div>
         <div className="search-box">
@@ -1916,7 +2002,7 @@ function SaleView({
 
       <section className="panel ticket-panel" id="sale-ticket">
         <div className="section-heading">
-          <h2>Ticket</h2>
+          <div className="flow-title"><span>2</span><h2>Revisa el ticket</h2></div>
           <span>{ticket.length} items</span>
         </div>
         <div className="list ticket-list">
@@ -1930,6 +2016,9 @@ function SaleView({
               </div>
               <div className="row-actions">
                 <span className="amount">{formatCLP(item.subtotal)}</span>
+                <button className="icon-button" type="button" onClick={() => { const product = products.find((entry) => entry.id === item.productId); if (product) onAdd(product); }} aria-label="Agregar uno">
+                  <Plus size={17} />
+                </button>
                 <button className="icon-button danger" type="button" onClick={() => onRemoveOne(item.productId)} aria-label="Quitar uno">
                   <Minus size={17} />
                 </button>
@@ -1939,7 +2028,7 @@ function SaleView({
           {ticket.length === 0 && <p className="empty-state">Agrega productos para armar el ticket.</p>}
         </div>
 
-        <div className="payment-methods">
+        {isChoosingPayment && <><div className="checkout-step"><span>3</span><div><strong>¿Cómo pagará?</strong><p>Registra el pago solo después de verificarlo.</p></div></div><div className="payment-methods">
           {paymentOptions.map((option) => {
             const Icon = option.icon;
             return (
@@ -1947,7 +2036,7 @@ function SaleView({
                 className={paymentMethod === option.id ? "chip active" : "chip"}
                 type="button"
                 key={option.id}
-                onClick={() => onPaymentMethod(option.id)}
+                onClick={() => { onPaymentMethod(option.id); setExternalPaymentConfirmed(false); }}
               >
                 <Icon size={16} />
                 <span>{option.label}</span>
@@ -1970,6 +2059,8 @@ function SaleView({
         )}
 
         {paymentMethod === "mixed" && <div className="form-grid"><label className="field">Parte en efectivo<input value={cashPart} onChange={(event) => setCashPart(event.target.value)} inputMode="numeric" placeholder="Monto efectivo" /></label><div className="report-metric"><span>Parte en tarjeta</span><strong>{formatCLP(cardPart)}</strong></div></div>}
+        {isExternalPayment && <label className="external-payment-confirm"><input type="checkbox" checked={externalPaymentConfirmed} onChange={(event) => setExternalPaymentConfirmed(event.target.checked)}/><span><strong>Confirmo que el pago fue aprobado</strong><small>Revisa el terminal, QR o comprobante externo. Localito no cobra automáticamente.</small></span></label>}
+        </>}
 
         <div className="form-grid"><label className="field">Descuento<input value={discount} onChange={(event) => setDiscount(event.target.value)} inputMode="numeric" placeholder="Monto descuento" /></label><label className="field">Nota de venta<input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Pedido, encargo u observación" /></label></div>
 
@@ -1978,10 +2069,10 @@ function SaleView({
           <strong>{formatCLP(discountedTotal)}</strong>
         </div>
 
-        <button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy}>
+        {!isChoosingPayment ? <button className="primary-action full" type="button" onClick={() => setIsChoosingPayment(true)} disabled={isBusy || ticket.length === 0}>
           <CheckCircle2 size={20} />
-          <span>{isBusy ? "Registrando..." : `Cobrar ${formatCLP(discountedTotal)}`}</span>
-        </button>
+          <span>{`Cobrar ${formatCLP(discountedTotal)}`}</span>
+        </button> : <div className="stack compact-stack"><button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy || (isExternalPayment && !externalPaymentConfirmed)}><CheckCircle2 size={20}/><span>{isBusy ? "Registrando..." : isExternalPayment ? "Confirmar pago y registrar venta" : `Registrar venta · ${formatCLP(discountedTotal)}`}</span></button><button className="secondary-action full" type="button" onClick={() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); }}>Volver al ticket</button></div>}
         <div className="action-grid"><button className="secondary-action" type="button" onClick={onSuspend} disabled={!ticket.length}>Guardar carrito</button><button className="secondary-action" type="button" onClick={onRestore}>Recuperar carrito</button></div>
 
         {lastReceipt && (
@@ -2039,6 +2130,8 @@ function ProductsView({
   onAdjustStock: (product: Product, delta: number) => void;
 }) {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [stockFilter, setStockFilter] = useState<"all" | "low" | "out">("all");
+  const [showAdvancedProductFields, setShowAdvancedProductFields] = useState(false);
   const categoryOptions = useMemo(() => {
     const categories = new Map<string, { label: string; count: number }>();
 
@@ -2059,13 +2152,14 @@ function ProductsView({
     return products.filter((product) => {
       const productCategory = (product.category.trim() || "Sin categoria").toLocaleLowerCase("es");
       const matchesCategory = selectedCategory === "all" || productCategory === selectedCategory;
+      const matchesStock = stockFilter === "all" || (stockFilter === "out" ? product.trackStock !== false && product.stock <= 0 : product.trackStock !== false && product.stock <= product.minimumStock);
       const matchesSearch = !normalizedSearch || [product.name, product.brand, product.category, product.barcode, product.sku]
         .filter(Boolean)
         .some((value) => value?.toLocaleLowerCase("es").includes(normalizedSearch));
 
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesStock && matchesSearch;
     });
-  }, [products, searchTerm, selectedCategory]);
+  }, [products, searchTerm, selectedCategory, stockFilter]);
   const visibleLowStock = inventoryProducts.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock).length;
   const visibleStockValue = inventoryProducts.reduce((sum, product) => sum + product.stock * product.salePrice, 0);
   const renderedInventoryProducts = inventoryProducts.slice(0, 60);
@@ -2078,6 +2172,7 @@ function ProductsView({
 
   function clearInventoryFilters() {
     setSelectedCategory("all");
+    setStockFilter("all");
     onSearch("");
   }
 
@@ -2091,25 +2186,15 @@ function ProductsView({
           </div>
           <div className="form-grid">
             <input value={productForm.name} onChange={(event) => onForm({ ...productForm, name: event.target.value })} placeholder="Nombre" />
-            <input value={productForm.brand} onChange={(event) => onForm({ ...productForm, brand: event.target.value })} placeholder="Marca" />
             <input value={productForm.category} onChange={(event) => onForm({ ...productForm, category: event.target.value })} placeholder="Categoria" list="product-category-options" />
             <datalist id="product-category-options">
               {categoryOptions.map((category) => <option value={category.label} key={category.id} />)}
             </datalist>
-            <input value={productForm.barcode} onChange={(event) => onForm({ ...productForm, barcode: event.target.value })} placeholder="Codigo de barras" />
-            <input value={productForm.costPrice} onChange={(event) => onForm({ ...productForm, costPrice: event.target.value })} placeholder="Costo" inputMode="numeric" />
             <input value={productForm.salePrice} onChange={(event) => onForm({ ...productForm, salePrice: event.target.value })} placeholder="Precio venta" inputMode="numeric" />
             <input value={productForm.stock} onChange={(event) => onForm({ ...productForm, stock: event.target.value })} placeholder="Stock" inputMode="numeric" />
-            <input value={productForm.minimumStock} onChange={(event) => onForm({ ...productForm, minimumStock: event.target.value })} placeholder="Stock minimo" inputMode="numeric" />
-            <input value={productForm.sku} onChange={(event) => onForm({ ...productForm, sku: event.target.value })} placeholder="SKU interno" />
-            <input value={productForm.variant} onChange={(event) => onForm({ ...productForm, variant: event.target.value })} placeholder="Variante / formato" />
-            <select value={productForm.unit} onChange={(event) => onForm({ ...productForm, unit: event.target.value as ProductFormState["unit"] })}>
-              <option value="unit">Unidad</option><option value="kg">Kilogramo</option><option value="gram">Gramo</option><option value="liter">Litro</option><option value="pack">Pack</option><option value="box">Caja</option>
-            </select>
-            <input value={productForm.unitsPerPack} onChange={(event) => onForm({ ...productForm, unitsPerPack: event.target.value })} placeholder="Unidades por pack" inputMode="numeric" />
-            <label className="field">Vencimiento<input type="date" value={productForm.expiryDate} onChange={(event) => onForm({ ...productForm, expiryDate: event.target.value })} /></label>
-            <label className="field checkbox-field"><input type="checkbox" checked={productForm.trackStock} onChange={(event) => onForm({ ...productForm, trackStock: event.target.checked })} /> Controlar stock de este producto</label>
           </div>
+          {!editingProductId && <button className="secondary-action full" type="button" aria-expanded={showAdvancedProductFields} onClick={() => setShowAdvancedProductFields((value) => !value)}>{showAdvancedProductFields ? "Ocultar datos opcionales" : "Agregar marca, código y más datos"}</button>}
+          {(showAdvancedProductFields || Boolean(editingProductId)) && <div className="form-grid advanced-product-fields"><input value={productForm.brand} onChange={(event) => onForm({ ...productForm, brand: event.target.value })} placeholder="Marca" /><input value={productForm.barcode} onChange={(event) => onForm({ ...productForm, barcode: event.target.value })} placeholder="Codigo de barras" /><input value={productForm.costPrice} onChange={(event) => onForm({ ...productForm, costPrice: event.target.value })} placeholder="Costo" inputMode="numeric" /><input value={productForm.minimumStock} onChange={(event) => onForm({ ...productForm, minimumStock: event.target.value })} placeholder="Stock minimo" inputMode="numeric" /><input value={productForm.sku} onChange={(event) => onForm({ ...productForm, sku: event.target.value })} placeholder="SKU interno" /><input value={productForm.variant} onChange={(event) => onForm({ ...productForm, variant: event.target.value })} placeholder="Variante / formato" /><select value={productForm.unit} onChange={(event) => onForm({ ...productForm, unit: event.target.value as ProductFormState["unit"] })}><option value="unit">Unidad</option><option value="kg">Kilogramo</option><option value="gram">Gramo</option><option value="liter">Litro</option><option value="pack">Pack</option><option value="box">Caja</option></select><input value={productForm.unitsPerPack} onChange={(event) => onForm({ ...productForm, unitsPerPack: event.target.value })} placeholder="Unidades por pack" inputMode="numeric" /><label className="field">Vencimiento<input type="date" value={productForm.expiryDate} onChange={(event) => onForm({ ...productForm, expiryDate: event.target.value })} /></label><label className="field checkbox-field"><input type="checkbox" checked={productForm.trackStock} onChange={(event) => onForm({ ...productForm, trackStock: event.target.checked })} /> Controlar stock de este producto</label></div>}
           <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy}>
             {editingProductId ? <Save size={19} /> : <Plus size={19} />}
             <span>{editingProductId ? "Guardar cambios" : "Crear producto"}</span>
@@ -2134,7 +2219,7 @@ function ProductsView({
         <div className="inventory-filters">
           <div className="inventory-filter-heading">
             <strong>Categorias</strong>
-            {(selectedCategory !== "all" || searchTerm) && <button type="button" onClick={clearInventoryFilters}>Limpiar filtros</button>}
+            {(selectedCategory !== "all" || stockFilter !== "all" || searchTerm) && <button type="button" onClick={clearInventoryFilters}>Limpiar filtros</button>}
           </div>
           <div className="category-filter-list" role="group" aria-label="Filtrar inventario por categoria">
             <button
@@ -2159,6 +2244,7 @@ function ProductsView({
               </button>
             ))}
           </div>
+          <div className="stock-filter-list" role="group" aria-label="Filtrar inventario por stock"><button className={stockFilter === "all" ? "category-filter active" : "category-filter"} type="button" onClick={() => setStockFilter("all")}>Todo stock</button><button className={stockFilter === "low" ? "category-filter active" : "category-filter"} type="button" onClick={() => setStockFilter("low")}>Stock bajo</button><button className={stockFilter === "out" ? "category-filter active" : "category-filter"} type="button" onClick={() => setStockFilter("out")}>Sin stock</button></div>
         </div>
         {!canManageProducts && <p className="helper-text">Vista solo lectura para vendedores.</p>}
         <div className="inventory-strip" aria-label="Resumen de inventario visible">
@@ -2246,9 +2332,11 @@ function CustomersView({
   onWhatsAppDebtCharge: (charge: DebtChargeState) => void;
   onConfirmDebtCharge: (charge: DebtChargeState) => void;
 }) {
+  const [customerTab, setCustomerTab] = useState<"clients" | "credit" | "pending">("clients");
+  const visibleCustomers = customerTab === "clients" ? customers : customers.filter((customer) => customer.debtBalance > 0);
   return (
-    <div className="workspace-grid customer-workspace">
-      <section className="panel">
+    <div className="stack"><nav className="section-tabs" aria-label="Secciones de clientes"><button className={customerTab === "clients" ? "active" : ""} type="button" onClick={() => setCustomerTab("clients")}>Clientes <span>{customers.length}</span></button><button className={customerTab === "credit" ? "active" : ""} type="button" onClick={() => setCustomerTab("credit")}>Fiado <span>{customers.filter((customer) => customer.debtBalance > 0).length}</span></button><button className={customerTab === "pending" ? "active" : ""} type="button" onClick={() => setCustomerTab("pending")}>Pendientes <span>{customers.filter((customer) => customer.debtBalance > 0).length}</span></button></nav><div className="workspace-grid customer-workspace">
+      {customerTab === "clients" && <section className="panel">
         <div className="section-heading">
           <h2>{editingCustomerId ? "Editar cliente" : "Nuevo cliente"}</h2>
           <span>{canManageCustomers ? "Fiado" : "Alta rapida"}</span>
@@ -2272,7 +2360,7 @@ function CustomersView({
             Cancelar edicion
           </button>
         )}
-      </section>
+      </section>}
 
       {lastDebtCharge && (
         <section className="panel payment-share-panel">
@@ -2307,11 +2395,11 @@ function CustomersView({
 
       <section className="panel accounts-panel">
         <div className="section-heading">
-          <h2>Cuentas por cobrar</h2>
-          <span>{customers.filter((customer) => customer.debtBalance > 0).length} activas</span>
+          <h2>{customerTab === "clients" ? "Todos los clientes" : customerTab === "credit" ? "Cuentas de fiado" : "Cobros pendientes"}</h2>
+          <span>{visibleCustomers.length} registros</span>
         </div>
         <div className="list">
-          {customers.map((customer) => (
+          {visibleCustomers.map((customer) => (
             <div className="customer-row" key={customer.id}>
               <div>
                 <strong>{customer.name}</strong>
@@ -2350,9 +2438,10 @@ function CustomersView({
               </div>
             </div>
           ))}
+          {visibleCustomers.length === 0 && <p className="empty-state">No hay registros en esta sección.</p>}
         </div>
       </section>
-    </div>
+    </div></div>
   );
 }
 
@@ -2602,6 +2691,22 @@ function ReceiptPrintArea({
   );
 }
 
+function PlanView({ subscription, isBusy, onSelect }: { subscription: Subscription; isBusy: boolean; onSelect: (plan: SubscriptionPlan) => void }) {
+  const days = subscriptionDaysRemaining(subscription);
+  return <div className="stack">
+    <section className="panel hero-panel plan-hero"><div className="hero-copy"><span>MI PLAN</span><strong>{subscription.status === "trialing" ? `Prueba Pro · ${days} días restantes` : LOCALITO_PLANS[subscription.plan].name}</strong><p>Tus datos siempre siguen guardados. Al vencer, Localito queda en modo lectura hasta que reactives un plan.</p></div></section>
+    <section className="plan-grid">
+      {(Object.values(LOCALITO_PLANS)).map((plan) => <article className={plan.id === subscription.plan ? "panel plan-card current" : "panel plan-card"} key={plan.id}><div><span className="status-badge success">{plan.recommended ? "Recomendado" : "Esencial"}</span><h2>{plan.name}</h2><p>{plan.description}</p></div><strong className="plan-price">{formatCLP(plan.price)}<small>/mes</small></strong><ul>{plan.entitlements.slice(0, 7).map((feature) => <li key={feature}><CheckCircle2 size={16}/>{entitlementLabel(feature)}</li>)}</ul><button className={plan.id === subscription.plan ? "secondary-action full" : "primary-action full"} type="button" disabled={isBusy || (subscription.status === "active" && plan.id === subscription.plan)} onClick={() => onSelect(plan.id)}>{subscription.status === "active" && plan.id === subscription.plan ? "Plan actual" : `Elegir ${plan.name}`}</button></article>)}
+    </section>
+    <p className="helper-text">La activación actual se registra de forma manual. La integración de cobro recurrente puede conectarse después sin cambiar los permisos ni los datos.</p>
+  </div>;
+}
+
+function entitlementLabel(value: string) {
+  const labels: Record<string, string> = { sales: "Ventas y ticket", inventory: "Inventario", products: "Catálogo", cashRegister: "Caja", imports: "Importación masiva", customers: "Clientes", credit: "Fiado", suppliers: "Proveedores", purchases: "Compras", advancedReports: "Reportes avanzados", aiPhotoSale: "Venta con foto", advancedAnalytics: "Analítica avanzada" };
+  return labels[value] ?? value;
+}
+
 function SettingsView({
   tenant,
   user,
@@ -2610,11 +2715,15 @@ function SettingsView({
   profileForm,
   isBusy,
   canManageUsers,
+  theme,
   onUserForm,
   onProfileForm,
   onSaveProfile,
   onCreateUser,
-  onDeactivateUser
+  onDeactivateUser,
+  onTheme,
+  onOpenPlan,
+  onExport
 }: {
   tenant: Tenant | null;
   user: User;
@@ -2623,11 +2732,15 @@ function SettingsView({
   profileForm: ProfileFormState;
   isBusy: boolean;
   canManageUsers: boolean;
+  theme: ThemePreference;
   onUserForm: (value: UserFormState) => void;
   onProfileForm: (value: ProfileFormState) => void;
   onSaveProfile: () => void;
   onCreateUser: () => void;
   onDeactivateUser: (user: User) => void;
+  onTheme: (value: ThemePreference) => void;
+  onOpenPlan: () => void;
+  onExport: () => void;
 }) {
   return (
     <div className="stack">
@@ -2650,6 +2763,15 @@ function SettingsView({
           <span>Guardar mi perfil</span>
         </button>
       </section>
+
+      <section className="panel">
+        <div className="section-heading"><h2>Apariencia</h2><span>Se guarda en tu cuenta</span></div>
+        <div className="theme-selector" role="group" aria-label="Tema visual">
+          {([{ id: "light", label: "Claro", icon: Sun }, { id: "dark", label: "Oscuro", icon: Moon }, { id: "system", label: "Sistema", icon: Monitor }] as const).map((option) => { const Icon = option.icon; return <button className={theme === option.id ? "secondary-action active" : "secondary-action"} type="button" aria-pressed={theme === option.id} onClick={() => onTheme(option.id)} key={option.id}><Icon size={18}/>{option.label}</button>; })}
+        </div>
+      </section>
+
+      {canManageUsers && <section className="panel more-links"><div className="section-heading"><h2>Administración</h2><span>Tu negocio</span></div><div className="list"><div className="row-main-button"><Store size={20}/><span><strong>{tenant?.name ?? "Mi negocio"}</strong><small>Datos generales del local y cuenta propietaria.</small></span></div><button className="row-main-button" type="button" onClick={onOpenPlan}><WalletCards size={20}/><span><strong>Mi plan</strong><small>Revisa tu prueba, funciones y suscripción.</small></span></button><button className="row-main-button" type="button" onClick={onExport}><Download size={20}/><span><strong>Exportar mis datos</strong><small>Descarga productos, clientes, ventas y cierres en JSON.</small></span></button></div></section>}
 
       {canManageUsers && (
         <section className="panel">
@@ -2706,8 +2828,8 @@ function SettingsView({
 
       <section className="panel">
         <div className="section-heading">
-          <h2>Base tecnica</h2>
-          <span>MVP conectado</span>
+          <h2>Acerca de Localito</h2>
+          <span>Información del sistema</span>
         </div>
         <div className="settings-list">
           <p>
@@ -2717,19 +2839,16 @@ function SettingsView({
             <strong>Sesion:</strong> {user.name} ({user.role === "owner" ? "dueno/admin" : "vendedor"}).
           </p>
           <p>
-            <strong>Frontend:</strong> React + PWA mobile-first conectada a API.
+            <strong>Aplicación:</strong> experiencia PWA segura y adaptable a celular, tablet y computador.
           </p>
           <p>
-            <strong>Backend:</strong> Node.js con API REST y almacenamiento en memoria.
+            <strong>Datos:</strong> información separada por local y almacenada en PostgreSQL.
           </p>
           <p>
-            <strong>Datos:</strong> PostgreSQL queda como siguiente paso de persistencia.
+            <strong>Reconocimiento:</strong> foto de productos y carga de facturas conectadas al catálogo del local.
           </p>
           <p>
-            <strong>IA:</strong> Reconocimiento demo por pista/codigo listo para conectar vision real.
-          </p>
-          <p>
-            <strong>Pagos:</strong> Webpay demo genera link de integracion.
+            <strong>Pagos:</strong> el vendedor confirma terminales y aplicaciones externas antes de registrar la venta.
           </p>
         </div>
       </section>

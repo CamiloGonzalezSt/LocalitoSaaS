@@ -35,6 +35,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | EPIC-09 | Reportes | El dueño comprende ventas, margen, gastos y resultado estimado. | Terminado |
 | EPIC-10 | PWA y experiencia móvil | Operación instalable, responsive y tolerante a desconexiones. | Terminado |
 | EPIC-11 | Calidad y producción | Despliegue persistente, observable, probado y documentado. | Terminado |
+| EPIC-12 | Suscripciones y rediseño SaaS | Prueba, planes, permisos y experiencia profesional coherente por rol. | Terminado |
 
 ## 4. Product Backlog
 
@@ -82,6 +83,13 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | HU-040 | EPIC-11 | Como equipo quiero producción persistente y observable. | PostgreSQL obligatorio; `/health`; estado de IA; variables seguras; guía operativa. | 8 | Crítica | 10 | Terminado |
 | HU-041 | EPIC-11 | Como equipo quiero pruebas repetibles. | Build completo; pruebas automatizadas; matriz manual; casos críticos cubiertos. | 8 | Crítica | 10 | Terminado |
 | HU-042 | EPIC-11 | Como tesista quiero documentación defendible. | Arquitectura, requisitos, backlog, sprints, pruebas, costos, operación y demo actualizados. | 5 | Alta | 10 | Terminado |
+| HU-043 | EPIC-12 | Como negocio nuevo quiero probar Pro por 30 días. | Alta crea suscripción `trialing`; días calculados en servidor; banner visible; sin perder datos al vencer. | 8 | Crítica | 11 | Terminado |
+| HU-044 | EPIC-12 | Como dueño quiero elegir Básico o Pro. | Precios y funciones visibles; cambio actualiza suscripción; arquitectura lista para proveedor recurrente. | 5 | Alta | 11 | Terminado |
+| HU-045 | EPIC-12 | Como plataforma quiero controlar planes y estados. | MRR estimado, pruebas activas y edición de plan/estado por tenant con auditoría. | 8 | Alta | 11 | Terminado |
+| HU-046 | EPIC-12 | Como sistema quiero permisos centralizados por plan. | Entitlements compartidos; UI y API bloquean; expirado solo lectura; datos Pro preservados. | 13 | Crítica | 11 | Terminado |
+| HU-047 | EPIC-12 | Como usuario quiero una navegación simple según mi rol. | Funciones principales en 4-7 áreas; IA dentro de Vender; altas/importaciones dentro de Inventario. | 8 | Alta | 11 | Terminado |
+| HU-048 | EPIC-12 | Como vendedor quiero confirmar pagos externos antes de registrar. | Medios aparecen tras Cobrar; pago externo requiere confirmación; venta/stock mutan una sola vez. | 8 | Crítica | 11 | Terminado |
+| HU-049 | EPIC-12 | Como usuario quiero tema claro, oscuro o del sistema. | Persistencia por usuario, contraste, Source Sans 3 y responsive sin desborde. | 5 | Alta | 11 | Terminado |
 
 ## 5. Plan de sprints reconstruido
 
@@ -98,6 +106,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | Sprint 8 | Control humano y finanzas | HU-018, HU-029, HU-033, HU-035, HU-037 | Pagos manuales, gastos y resultado financiero. |
 | Sprint 9 | Mobile/PWA | HU-038, HU-039 | Experiencia móvil y continuidad offline. |
 | Sprint 10 | Producción y tesis | HU-040 a HU-042 | Despliegue verificable, QA y documentación final. |
+| Sprint 11 | SaaS y rediseño profesional | HU-043 a HU-049 | Planes/entitlements, navegación por rol, pago asistido, temas y panel SaaS. |
 
 ## 6. Definition of Ready
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, Package, Plus, Power, RefreshCw, ShieldCheck, Store, Users } from "lucide-react";
-import type { PlatformTenantSummary, User } from "@localito/shared";
+import { Building2, Clock3, Package, Plus, Power, RefreshCw, Store, Users, WalletCards } from "lucide-react";
+import { LOCALITO_PLANS, subscriptionDaysRemaining } from "@localito/shared";
+import type { PlatformTenantSummary, Subscription, SubscriptionPlan, User } from "@localito/shared";
 import { api } from "./lib/api";
 
 const emptyTenantForm = { businessName: "", businessType: "Almacén", ownerName: "", ownerEmail: "", ownerPassword: "" };
@@ -19,7 +20,9 @@ export function PlatformAdminView() {
   const totals = useMemo(() => ({
     activeTenants: tenants.filter((tenant) => tenant.active).length,
     users: tenants.reduce((sum, tenant) => sum + tenant.userCount, 0),
-    products: tenants.reduce((sum, tenant) => sum + tenant.productCount, 0)
+    products: tenants.reduce((sum, tenant) => sum + tenant.productCount, 0),
+    trials: tenants.filter((tenant) => tenant.subscription?.status === "trialing").length,
+    mrr: tenants.reduce((sum, tenant) => tenant.subscription?.status === "active" ? sum + LOCALITO_PLANS[tenant.subscription.plan].price : sum, 0)
   }), [tenants]);
 
   async function loadTenants(preferredTenantId?: string) {
@@ -80,6 +83,14 @@ export function PlatformAdminView() {
     });
   }
 
+  function updateSubscription(tenant: PlatformTenantSummary, payload: { plan?: SubscriptionPlan; status?: Subscription["status"] }) {
+    void run(async () => {
+      await api.updatePlatformTenantSubscription(tenant.id, payload);
+      await loadTenants(tenant.id);
+      setMessage("Suscripción actualizada.");
+    });
+  }
+
   return <div className="stack">
     <section className="panel hero-panel platform-admin-hero">
       <div className="hero-copy"><span>ADMINISTRACIÓN DE PLATAFORMA</span><strong>Control general de Localito</strong><p>Desde aquí creas locales y administras sus dueños y vendedores, sin mezclar este rol con la operación de caja.</p></div>
@@ -90,7 +101,8 @@ export function PlatformAdminView() {
       <article className="stat-card"><Store size={22}/><div><span>Locales activos</span><strong>{totals.activeTenants}</strong></div></article>
       <article className="stat-card"><Users size={22}/><div><span>Usuarios activos</span><strong>{totals.users}</strong></div></article>
       <article className="stat-card"><Package size={22}/><div><span>Productos registrados</span><strong>{totals.products}</strong></div></article>
-      <article className="stat-card"><ShieldCheck size={22}/><div><span>Tu perfil</span><strong>Admin</strong></div></article>
+      <article className="stat-card"><Clock3 size={22}/><div><span>Pruebas activas</span><strong>{totals.trials}</strong></div></article>
+      <article className="stat-card"><WalletCards size={22}/><div><span>MRR estimado</span><strong>${totals.mrr.toLocaleString("es-CL")}</strong></div></article>
     </section>
 
     <section className="panel"><div className="section-heading"><h2>Crear un nuevo local</h2><span>{message}</span></div><div className="form-grid">
@@ -105,7 +117,8 @@ export function PlatformAdminView() {
     <div className="workspace-grid">
       <section className="panel"><div className="section-heading"><h2>Locales</h2><span>{tenants.length}</span></div><div className="list">
         {tenants.map((tenant) => <div className={`row ${tenant.id === selectedTenantId ? "selected-row" : ""}`} key={tenant.id}>
-          <button className="row-main-button" type="button" onClick={() => setSelectedTenantId(tenant.id)}><Building2 size={20}/><span><strong>{tenant.name}</strong><small>{tenant.businessType} · {tenant.ownerCount} dueños · {tenant.userCount} usuarios · {tenant.productCount} productos</small></span></button>
+          <button className="row-main-button" type="button" onClick={() => setSelectedTenantId(tenant.id)}><Building2 size={20}/><span><strong>{tenant.name}</strong><small>{tenant.businessType} · {tenant.ownerCount} dueños · {tenant.userCount} usuarios · {tenant.productCount} productos</small><small>{tenant.subscription ? `${LOCALITO_PLANS[tenant.subscription.plan].name} · ${tenant.subscription.status}${tenant.subscription.status === "trialing" ? ` · ${subscriptionDaysRemaining(tenant.subscription)} días` : ""}` : "Sin suscripción"}</small></span></button>
+          {tenant.subscription && <div className="subscription-admin-controls"><select aria-label={`Plan de ${tenant.name}`} value={tenant.subscription.plan} onChange={(event) => updateSubscription(tenant, { plan: event.target.value as SubscriptionPlan, status: tenant.subscription?.status })} disabled={busy}><option value="basic">Básico</option><option value="pro">Pro</option></select><select aria-label={`Estado de ${tenant.name}`} value={tenant.subscription.status} onChange={(event) => updateSubscription(tenant, { status: event.target.value as Subscription["status"] })} disabled={busy}><option value="trialing">Prueba</option><option value="active">Activo</option><option value="past_due">Pago pendiente</option><option value="expired">Vencido</option><option value="cancelled">Cancelado</option></select></div>}
           <span className={tenant.active ? "status-badge success" : "status-badge warning"}>{tenant.active ? "Activo" : "Suspendido"}</span>
           <button className="icon-button" type="button" onClick={() => toggleTenant(tenant)} aria-label={tenant.active ? "Suspender local" : "Reactivar local"}><Power size={18}/></button>
         </div>)}

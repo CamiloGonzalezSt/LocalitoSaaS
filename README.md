@@ -7,13 +7,14 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 ## Funcionalidades implementadas
 
 - Administrador de plataforma separado del negocio: crea locales, crea su primer dueño, agrega vendedores y puede suspender o reactivar locales y usuarios.
+- Suscripciones SaaS por negocio con prueba Pro de 30 días, planes Básico/Pro, permisos centralizados, modo de solo lectura al vencer y métricas de MRR/pruebas en plataforma.
 - Creación de negocios y del primer usuario dueño exclusivamente desde la cuenta administradora de plataforma.
 - Recuperación de contraseña por correo con enlace de un solo uso, vencimiento de 30 minutos y revocación de sesiones anteriores.
 - Inicio y cierre de sesión con contraseñas `scrypt`, tokens aleatorios almacenados como hash, expiración y aislamiento por negocio.
 - Roles `system_admin`, `owner` y `seller` protegidos tanto en la interfaz como en la API.
 - Punto de venta con búsqueda, código de barras, descuento, notas, ticket recuperable y pagos simples o divididos.
 - Idempotencia de ventas para evitar cobros duplicados al reintentar desde una red inestable.
-- Navegación de inventario separada entre **Productos**, para crear y editar el catálogo, y **Stock**, para consultar existencias y movimientos.
+- Navegación simplificada por rol: dueño (`Inicio`, `Vender`, `Inventario`, `Clientes`, `Caja`, `Reportes`, `Más`) y vendedor (`Vender`, `Inventario`, `Clientes`, `Caja`). Crear/importar productos y Venta Rápida se abren dentro de su flujo natural.
 - Inventario con SKU, variante, unidad, packs, vencimiento, stock mínimo, productos sin control de stock y kardex de movimientos.
 - Alertas de reposición y vencimiento a 30 días.
 - Clientes con cupo, plazo, bloqueo de crédito, cuentas por cobrar, vencimientos, abonos y recordatorios por WhatsApp.
@@ -29,7 +30,8 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 - Lectura de códigos con ZXing cargado bajo demanda.
 - **Venta Rápida**: una fotografía puede proponer varios productos y cantidades usando exclusivamente el catálogo del negocio; el vendedor corrige la propuesta y la agrega al ticket POS existente. La lectura de códigos de barras continúa disponible como alternativa.
 - Ingreso de mercadería desde una foto de factura: extracción estructurada, coincidencia con catálogo, revisión obligatoria de cantidades/costos/precios, creación de productos y recepción de stock sin duplicar la factura.
-- Cobros presenciales con medios externos manuales: efectivo, tarjeta en terminal, transferencia/QR, Webpay externo, fiado y pago mixto. Localito registra el medio; no envía montos a terminales ni requiere contratar una pasarela.
+- Cobros presenciales en tres pasos: armar ticket, presionar **Cobrar** y elegir el medio. Tarjeta, transferencia/QR y Webpay externo exigen confirmar humanamente que el pago fue aprobado antes de crear la venta o descontar stock.
+- Tema claro, oscuro o según el sistema, persistido por usuario, con tipografía Source Sans 3 y controles táctiles mobile-first.
 
 ## Requisitos
 
@@ -121,12 +123,12 @@ En desarrollo local, si no se define otra clave, el administrador usa `caj.gonza
 
 1. Iniciar sesión como administrador, crear un local y su usuario dueño.
 2. Iniciar sesión como dueño: si el catálogo está vacío, Localito abre **Carga inicial** automáticamente para elegir factura con IA, plantilla CSV o carga manual.
-3. Confirmar los productos importados, agregar un vendedor y revisar existencias en **Productos**.
+3. Confirmar los productos importados, agregar un vendedor y revisar existencias en **Inventario**.
 4. Abrir una caja con el monto inicial.
-5. Abrir **Venta Rápida**, fotografiar varios productos, revisar cantidades y agregarlos al ticket; luego cobrar con el POS normal, descuento o pago dividido.
+5. Abrir **Vender → Venta Rápida con foto**, fotografiar varios productos, revisar cantidades y agregarlos al ticket; luego pulsar **Cobrar**, elegir el medio y confirmar.
 6. Crear un cliente con cupo y realizar una venta fiada.
 7. Revisar cuentas vencidas y abrir el recordatorio por WhatsApp.
-8. En **Negocio**, fotografiar una factura, revisar sus coincidencias y precios de venta, y confirmarla para actualizar stock y costo promedio.
+8. Desde la gestión de inventario, fotografiar una factura, revisar sus coincidencias y precios de venta, y confirmarla para actualizar stock y costo promedio.
 9. Anular una venta o registrar una devolución parcial.
 10. Importar/exportar catálogo y revisar movimientos de stock y auditoría.
 11. Contar el efectivo y cerrar la caja para ver la diferencia.
@@ -145,7 +147,7 @@ La cámara en vivo requiere HTTPS en iPhone y en la mayoría de los navegadores 
 
 ### Ingreso desde factura
 
-El dueño puede abrir **Negocio → Factura con IA** y tomar una foto JPG, PNG o WebP. La IA propone proveedor, folio, fecha, productos, categorías, cantidades y costos; los productos de baja confianza quedan advertidos y cada precio de venta debe quedar confirmado antes de ingresar. Al confirmar, Localito reutiliza o crea el proveedor, reutiliza o crea productos, registra una orden recibida y aumenta el stock. El folio y una clave de importación evitan dobles ingresos por reintentos.
+El dueño puede abrir la carga de factura desde la gestión de inventario y tomar una foto JPG, PNG o WebP. La IA propone proveedor, folio, fecha, productos, categorías, cantidades y costos; los productos de baja confianza quedan advertidos y cada precio de venta debe quedar confirmado antes de ingresar. Al confirmar, Localito reutiliza o crea el proveedor, reutiliza o crea productos, registra una orden recibida y aumenta el stock. El folio y una clave de importación evitan dobles ingresos por reintentos.
 
 Este flujo organiza inventario a partir de un documento comercial; no emite, valida ni contabiliza facturas electrónicas ante el SII.
 
@@ -162,6 +164,16 @@ npm run test -w apps/api
 ```
 
 Las pruebas automatizadas cubren hashes de contraseñas y sesiones, idempotencia de ventas, límites de crédito, caja, compras, costo promedio, inventario, importación masiva reintentable, Venta Rápida multiproducto, rechazo de IDs ajenos al catálogo, cantidades agrupadas, esquemas estrictos de visión, extracción de facturas, recepción de stock y prevención de duplicados. La matriz manual vive en [docs/Matriz-Pruebas-Localito.md](docs/Matriz-Pruebas-Localito.md).
+
+## Planes y permisos
+
+Todo negocio nuevo recibe una prueba de **Localito Pro por 30 días**. `suscripciones` es la fuente de verdad para plan, estado, periodos y referencia futura del proveedor de cobro. La API valida los permisos en cada operación y la interfaz oculta o deriva a **Mi plan** cuando una función no corresponde.
+
+- **Básico ($9.990/mes):** ventas, catálogo, inventario, caja e importación masiva.
+- **Pro ($19.990/mes):** agrega clientes, fiado, proveedores, compras, reportes avanzados, auditoría, alertas y Venta Rápida con foto.
+- Al vencer, los datos no se borran: quedan disponibles en modo lectura y las mutaciones responden `403` hasta reactivar.
+
+La selección manual de plan implementada deja preparada la arquitectura de entitlements y periodos. El cobro recurrente automático con un proveedor externo continúa fuera del MVP académico.
 
 ## Estructura
 

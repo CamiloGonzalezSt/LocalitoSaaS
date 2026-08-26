@@ -52,3 +52,11 @@ Story,Conciliar por medio de pago,"HU-030: Como dueño quiero totales por efecti
 Story,Corregir propuestas de IA,"HU-032: Como vendedor quiero cambiar producto o cantidad eliminar buscar o repetir la foto.",,EPIC-08,Highest,8,"ai human-in-loop",Sprint 7
 Story,Consultar reportes de venta y caja,"HU-036: Como dueño quiero ventas netas ticket promedio medios cierres y anulaciones.",,EPIC-09,High,5,"reports cash",Sprint 6
 Story,Mantener documentación de tesis,"HU-042: Como tesista quiero arquitectura requisitos backlog sprints pruebas costos operación y demo actualizados.",,EPIC-11,High,5,"documentation thesis",Sprint 10
+Epic,Suscripciones y rediseño SaaS,"Prueba planes permisos y experiencia profesional coherente por rol.",EPIC-12,,Highest,,,Sprint 11
+Story,Crear prueba Pro de 30 días,"HU-043: Como negocio nuevo quiero probar todas las funciones Pro durante 30 días.",,EPIC-12,Highest,8,"saas trial subscription",Sprint 11
+Story,Elegir plan Básico o Pro,"HU-044: Como dueño quiero comparar y elegir un plan sin perder mis datos.",,EPIC-12,High,5,"saas billing plans",Sprint 11
+Story,Administrar suscripciones de plataforma,"HU-045: Como administrador quiero controlar plan estado pruebas y MRR por tenant.",,EPIC-12,High,8,"platform mrr subscriptions",Sprint 11
+Story,Aplicar entitlements centralizados,"HU-046: Como sistema quiero proteger funciones en frontend y API y dejar vencidos en solo lectura.",,EPIC-12,Highest,13,"security entitlements",Sprint 11
+Story,Simplificar navegación por rol,"HU-047: Como usuario quiero encontrar cada función dentro de un flujo natural y sin menús duplicados.",,EPIC-12,High,8,"ux navigation roles",Sprint 11
+Story,Confirmar pagos externos,"HU-048: Como vendedor quiero verificar el terminal o comprobante antes de registrar la venta.",,EPIC-12,Highest,8,"pos payments human-confirmation",Sprint 11
+Story,Agregar tema claro oscuro y sistema,"HU-049: Como usuario quiero una apariencia legible persistida en cualquier dispositivo.",,EPIC-12,High,5,"ux theme accessibility",Sprint 11

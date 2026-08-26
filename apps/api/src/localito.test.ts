@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mergeQuickSaleTicket } from "@localito/shared";
+import { createTrialSubscription, effectiveSubscriptionStatus, hasEntitlement, mergeQuickSaleTicket, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
 import { createSessionToken, createSignedSessionToken, hashPassword, hashSessionToken, passwordPolicyError, verifyPassword, verifySignedSessionToken } from "./auth.js";
 import { resolveTransactionalEmailProvider } from "./email.js";
 import { importInvoice, invoiceFingerprint, normalizeInvoiceImportPayload } from "./invoiceImport.js";
@@ -144,6 +144,31 @@ test("tenant registration is isolated and rejects duplicate emails", async () =>
     repository.registerTenant({ name: "Otra persona", email, password: "OtraClave2026", businessName: "Duplicado", businessType: "Almacén" }),
     /correo/
   );
+});
+
+test("new tenants receive a 30-day Pro trial with centralized entitlements", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const registered = await repository.registerTenant({ name: "Dueña plan", email: `plan-${suffix}@localito.test`, password: "PlanSeguro2026", businessName: `Local plan ${suffix}`, businessType: "Almacén" });
+  const subscription = await repository.getSubscription(registered.tenant.id);
+  assert.equal(subscription.plan, "pro");
+  assert.equal(subscription.status, "trialing");
+  assert.equal(subscriptionDaysRemaining(subscription), 30);
+  assert.equal(subscriptionCanMutate(subscription), true);
+  assert.equal(hasEntitlement(subscription, "aiPhotoSale"), true);
+  assert.equal((await repository.bootstrap(registered.tenant.id)).subscription.id, subscription.id);
+});
+
+test("plan changes gate Pro features and expired subscriptions become read-only", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const registered = await repository.registerTenant({ name: "Dueño básico", email: `basic-${suffix}@localito.test`, password: "BasicoSeguro2026", businessName: `Local básico ${suffix}`, businessType: "Almacén" });
+  const basic = await repository.updateSubscription(registered.tenant.id, { plan: "basic", status: "active" });
+  assert.equal(hasEntitlement(basic, "sales"), true);
+  assert.equal(hasEntitlement(basic, "customers"), false);
+  const expired = createTrialSubscription(registered.tenant.id, new Date("2026-01-01T00:00:00.000Z"));
+  assert.equal(effectiveSubscriptionStatus(expired, new Date("2026-02-01T00:00:00.000Z")), "expired");
+  assert.equal(subscriptionCanMutate(expired), false);
 });
 
 test("initial inventory bulk import validates rows, avoids duplicates and is safe to retry", async () => {

@@ -23,6 +23,8 @@ import type {
   Sale,
   SalePayment,
   SaleReturn,
+  Subscription,
+  SubscriptionPlan,
   StockMovement,
   Supplier,
   Tenant,
@@ -152,6 +154,16 @@ export const api = {
 
   async updatePlatformTenantUser(tenantId: string, userId: string, payload: Partial<User>) {
     return request<User>(`/platform/tenants/${tenantId}/users/${userId}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+
+  async updatePlatformTenantSubscription(tenantId: string, payload: { plan?: SubscriptionPlan; status?: Subscription["status"] }) {
+    return request<Subscription>(`/platform/tenants/${tenantId}/subscription`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+
+  async getSubscription() { return request<Subscription>("/subscription"); },
+
+  async changePlan(plan: SubscriptionPlan) {
+    return request<Subscription>("/subscription/change-plan", { method: "POST", body: JSON.stringify({ plan }) });
   },
 
   async createUser(user: Partial<User> & { password?: string }) {

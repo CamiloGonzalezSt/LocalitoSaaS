@@ -3,7 +3,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import type { Customer, PaymentMethod, Product, Tenant, User } from "@localito/shared";
+import type { Customer, EntitlementKey, PaymentMethod, Product, SubscriptionPlan, Tenant, User } from "@localito/shared";
+import { LOCALITO_PLANS, hasEntitlement, subscriptionCanMutate } from "@localito/shared";
 import { createRepository } from "./repository.js";
 import { createSessionToken, createSignedSessionToken, hashSessionToken, passwordPolicyError, verifySignedSessionToken } from "./auth.js";
 import { isTransactionalEmailConfigured, sendPasswordResetEmail } from "./email.js";
@@ -113,6 +114,61 @@ async function requireRoles(req: express.Request, res: express.Response, roles: 
   }
 
   return user;
+}
+
+function entitlementForRequest(req: express.Request): EntitlementKey | undefined {
+  const path = req.path;
+  if (path.startsWith("/products/import")) return "imports";
+  if (path.startsWith("/products")) return req.method === "PATCH" && path.endsWith("/stock") ? "inventory" : "products";
+  if (path.startsWith("/sales")) return (req.body as { paymentMethod?: PaymentMethod })?.paymentMethod === "credit" ? "credit" : "sales";
+  if (path.startsWith("/customers")) return path.endsWith("/payments") ? "credit" : "customers";
+  if (path.startsWith("/ai/quick-sale") || path.startsWith("/ai/invoices") || path.startsWith("/ai/recognize")) return "aiPhotoSale";
+  if (path.startsWith("/suppliers")) return "suppliers";
+  if (path.startsWith("/purchases")) return "purchases";
+  if (path.startsWith("/cash") || path.startsWith("/cash-closures")) return "cashRegister";
+  if (path.startsWith("/reports/cash-register")) return "cashRegister";
+  if (path.startsWith("/reports")) return "advancedReports";
+  if (path.startsWith("/debts")) return "credit";
+  if (path.startsWith("/audit")) return "audit";
+  if (path.startsWith("/stock-movements")) return "inventory";
+  if (path.startsWith("/payments")) return "sales";
+  if (path.startsWith("/users")) return "products";
+  return undefined;
+}
+
+async function subscriptionGuard(req: express.Request, res: express.Response, next: express.NextFunction) {
+  try {
+    if (req.path.startsWith("/subscription") || req.path.startsWith("/platform")) {
+      next();
+      return;
+    }
+    const user = await userFromRequest(req);
+    if (!user || user.role === "system_admin") {
+      next();
+      return;
+    }
+    const subscription = await repository.getSubscription(user.tenantId);
+    const entitlement = entitlementForRequest(req);
+    if (req.method === "GET") {
+      if (entitlement && !LOCALITO_PLANS[subscription.plan].entitlements.includes(entitlement)) {
+        res.status(403).json({ message: "Esta función está disponible en Localito Pro. Puedes cambiar tu plan desde Mi plan." });
+        return;
+      }
+      next();
+      return;
+    }
+    if (!subscriptionCanMutate(subscription)) {
+      res.status(403).json({ message: "Tu prueba o suscripción no está activa. Tus datos siguen guardados; elige un plan para continuar." });
+      return;
+    }
+    if (entitlement && !hasEntitlement(subscription, entitlement)) {
+      res.status(403).json({ message: "Esta función está disponible en Localito Pro. Puedes cambiar tu plan desde Mi plan." });
+      return;
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 function loginRateLimit(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -228,15 +284,21 @@ async function bootstrapForRequest(req: express.Request) {
   const workspace = await repository.bootstrap(tenantIdFromRequest(req));
   const user = await userFromRequest(req);
   if (!user) return workspace;
+  const planFeatures = LOCALITO_PLANS[workspace.subscription.plan].entitlements;
+  const visibleWorkspace = {
+    ...workspace,
+    customers: planFeatures.includes("customers") ? workspace.customers : [],
+    sales: planFeatures.includes("advancedReports") ? workspace.sales : []
+  };
 
   if (user.role === "seller") {
     return {
-      ...workspace,
+      ...visibleWorkspace,
       user,
       users: [user],
       sales: [],
       summary: {
-        ...workspace.summary,
+        ...visibleWorkspace.summary,
         totalSales: 0,
         salesCount: 0,
         operatingExpenses: 0,
@@ -249,7 +311,7 @@ async function bootstrapForRequest(req: express.Request) {
   }
 
   return {
-    ...workspace,
+    ...visibleWorkspace,
     user
   };
 }
@@ -445,6 +507,34 @@ app.patch("/platform/tenants/:id/users/:userId", asyncRoute(async (req, res) => 
   await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "tenant_user", entityId: user.id, details: { tenantId: req.params.id, active: user.active, role: user.role } });
   res.json({ data: user });
 }));
+
+app.patch("/platform/tenants/:id/subscription", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["system_admin"]); if (!actor) return;
+  const { plan, status } = req.body as { plan?: SubscriptionPlan; status?: "trialing" | "active" | "past_due" | "cancelled" | "expired" };
+  if (plan && !["basic", "pro"].includes(plan)) { res.status(400).json({ message: "El plan indicado no existe." }); return; }
+  if (status && !["trialing", "active", "past_due", "cancelled", "expired"].includes(status)) { res.status(400).json({ message: "El estado indicado no existe." }); return; }
+  const exists = (await repository.listTenants()).some((tenant) => tenant.id === req.params.id);
+  if (!exists) { res.status(404).json({ message: "Local no encontrado." }); return; }
+  const subscription = await repository.updateSubscription(req.params.id, { plan, status, paymentProvider: "manual" });
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "subscription", entityId: subscription.id, details: { tenantId: req.params.id, plan: subscription.plan, status: subscription.status } });
+  res.json({ data: subscription });
+}));
+
+app.get("/subscription", asyncRoute(async (req, res) => {
+  if (!(await requireRoles(req, res, ["owner", "seller"]))) return;
+  res.json({ data: await repository.getSubscription(tenantIdFromRequest(req)) });
+}));
+
+app.post("/subscription/change-plan", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
+  const { plan } = req.body as { plan?: SubscriptionPlan };
+  if (!plan || !["basic", "pro"].includes(plan)) { res.status(400).json({ message: "Elige un plan válido." }); return; }
+  const subscription = await repository.updateSubscription(actor.tenantId, { plan, status: "active", paymentProvider: "manual" });
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "subscription", entityId: subscription.id, details: { plan: subscription.plan, status: subscription.status } });
+  res.json({ data: subscription });
+}));
+
+app.use(subscriptionGuard);
 
 app.get(
   "/users",
