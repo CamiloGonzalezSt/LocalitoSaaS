@@ -1,7 +1,7 @@
 export type UserRole = "system_admin" | "owner" | "seller";
 export * from "./subscriptions.js";
 
-export type PaymentMethod = "cash" | "card" | "transfer" | "webpay" | "credit" | "mixed";
+export type PaymentMethod = "cash" | "card" | "transfer" | "webpay" | "mercadopago" | "credit" | "mixed";
 
 export type PaymentStatus = "pending" | "approved" | "rejected" | "cancelled" | "expired";
 

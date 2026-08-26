@@ -339,6 +339,29 @@ app.get(
 );
 
 app.post(
+  "/auth/register",
+  loginRateLimit,
+  asyncRoute(async (req, res) => {
+    const { businessName, businessType, ownerName, email, password } = (req.body ?? {}) as Record<string, unknown>;
+    if (typeof businessName !== "string" || !businessName.trim() || typeof businessType !== "string" || !businessType.trim() || typeof ownerName !== "string" || !ownerName.trim() || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || typeof password !== "string") {
+      res.status(400).json({ message: "Completa los datos del negocio y del dueño con un correo válido." });
+      return;
+    }
+    const policyError = passwordPolicyError(password);
+    if (policyError) { res.status(400).json({ message: policyError }); return; }
+    const created = await repository.registerTenant({
+      name: ownerName.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      businessName: businessName.trim(),
+      businessType: businessType.trim()
+    });
+    const token = await createAuthToken(created.user);
+    res.status(201).json({ data: { ...created, token } });
+  })
+);
+
+app.post(
   "/auth/login",
   loginRateLimit,
   asyncRoute(async (req, res) => {
@@ -382,24 +405,16 @@ app.post(
       res.status(400).json({ message: "Ingresa un correo válido." });
       return;
     }
-    if (usesServerlessMemory) {
-      res.status(503).json({ message: "La recuperación de contraseña requiere la base de datos configurada." });
-      return;
-    }
-    if (!isTransactionalEmailConfigured()) {
-      res.status(503).json({ message: "El servicio de correo aún no está configurado." });
-      return;
-    }
-
+    const emailConfigured = isTransactionalEmailConfigured();
     const token = createSessionToken();
     const tokenHash = hashSessionToken(token);
-    const recipient = await repository.createPasswordResetToken(
+    const recipient = emailConfigured ? await repository.createPasswordResetToken(
       normalizedEmail,
       tokenHash,
       new Date(Date.now() + passwordResetDurationMs).toISOString()
-    );
+    ) : null;
 
-    if (recipient) {
+    if (recipient && emailConfigured) {
       try {
         await sendPasswordResetEmail({
           to: recipient.email,
@@ -417,7 +432,8 @@ app.post(
 
     res.status(202).json({
       data: {
-        message: "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."
+        message: emailConfigured ? "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña." : "La solicitud fue recibida, pero el envío de correo todavía no está habilitado.",
+        delivery: emailConfigured ? "email" : "unavailable"
       }
     });
   })
@@ -479,6 +495,15 @@ app.patch("/platform/tenants/:id", asyncRoute(async (req, res) => {
   res.json({ data: tenant });
 }));
 
+app.delete("/platform/tenants/:id", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["system_admin"]); if (!actor) return;
+  const tenant = (await repository.listTenants()).find((candidate) => candidate.id === req.params.id);
+  if (!tenant) { res.status(404).json({ message: "Local no encontrado." }); return; }
+  const deleted = await repository.deleteTenant(req.params.id);
+  if (!deleted) { res.status(409).json({ message: "No fue posible eliminar el local." }); return; }
+  res.json({ data: { id: tenant.id, name: tenant.name, deleted: true } });
+}));
+
 app.get("/platform/tenants/:id/users", asyncRoute(async (req, res) => {
   if (!(await requireRoles(req, res, ["system_admin"]))) return;
   const exists = (await repository.listTenants()).some((tenant) => tenant.id === req.params.id);
@@ -508,6 +533,27 @@ app.patch("/platform/tenants/:id/users/:userId", asyncRoute(async (req, res) => 
   res.json({ data: user });
 }));
 
+app.delete("/platform/tenants/:id/users/:userId", asyncRoute(async (req, res) => {
+  if (!(await requireRoles(req, res, ["system_admin"]))) return;
+  const users = await repository.getUsers(req.params.id, true);
+  const target = users.find((user) => user.id === req.params.userId);
+  if (!target) { res.status(404).json({ message: "Usuario no encontrado en ese local." }); return; }
+  const remainingOwners = users.filter((user) => user.id !== target.id && user.role === "owner" && user.active !== false);
+  if (target.role === "owner" && remainingOwners.length === 0) { res.status(409).json({ message: "Crea o activa otro dueño antes de eliminar el último acceso propietario." }); return; }
+  await repository.deleteUser(req.params.id, target.id);
+  res.json({ data: { id: target.id, deleted: true } });
+}));
+
+app.post("/platform/tenants/:id/users/:userId/password", asyncRoute(async (req, res) => {
+  if (!(await requireRoles(req, res, ["system_admin"]))) return;
+  const { password } = req.body as { password?: string };
+  const policyError = passwordPolicyError(password ?? "");
+  if (policyError) { res.status(400).json({ message: policyError }); return; }
+  const updated = await repository.setUserPassword(req.params.id, req.params.userId, password!);
+  if (!updated) { res.status(404).json({ message: "Usuario no encontrado en ese local." }); return; }
+  res.json({ data: { updated: true } });
+}));
+
 app.patch("/platform/tenants/:id/subscription", asyncRoute(async (req, res) => {
   const actor = await requireRoles(req, res, ["system_admin"]); if (!actor) return;
   const { plan, status } = req.body as { plan?: SubscriptionPlan; status?: "trialing" | "active" | "past_due" | "cancelled" | "expired" };
@@ -534,13 +580,20 @@ app.get("/subscription", asyncRoute(async (req, res) => {
 
 app.post("/subscription/change-plan", asyncRoute(async (req, res) => {
   const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
-  const { plan } = req.body as { plan?: SubscriptionPlan };
+  const { plan, provider = "transfer" } = req.body as { plan?: SubscriptionPlan; provider?: "webpay_sandbox" | "mercadopago_sandbox" | "transfer" };
   if (!plan || !["basic", "pro"].includes(plan)) { res.status(400).json({ message: "Elige un plan válido." }); return; }
+  if (!["webpay_sandbox", "mercadopago_sandbox", "transfer"].includes(provider)) { res.status(400).json({ message: "El medio de pago indicado no está disponible." }); return; }
   const current = await repository.getSubscription(actor.tenantId);
   if (current.plan === plan && current.status === "active" && !current.pendingPlan) { res.json({ data: current }); return; }
+  if (provider !== "transfer") {
+    const activated = await repository.updateSubscription(actor.tenantId, { plan, status: "active", paymentProvider: provider, pendingPlan: null });
+    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "sandbox_payment", entity: "subscription", entityId: activated.id, details: { plan, provider, amount: LOCALITO_PLANS[plan].price } });
+    res.json({ data: activated, message: "Pago de prueba aprobado. No se realizó ningún cobro real." });
+    return;
+  }
   const currentStatus = effectiveSubscriptionStatus(current);
   const nextStatus = ["expired", "cancelled", "past_due"].includes(currentStatus) ? "past_due" : current.status;
-  const subscription = await repository.updateSubscription(actor.tenantId, { status: nextStatus, paymentProvider: "manual", pendingPlan: plan });
+  const subscription = await repository.updateSubscription(actor.tenantId, { status: nextStatus, paymentProvider: "transfer", pendingPlan: plan });
   await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "subscription", entityId: subscription.id, details: { plan: subscription.plan, status: subscription.status } });
   res.json({ data: subscription });
 }));
@@ -570,7 +623,7 @@ app.get(
   "/users",
   asyncRoute(async (req, res) => {
     if (!(await requireRoles(req, res, ["owner"]))) return;
-    res.json({ data: await repository.getUsers(tenantIdFromRequest(req)) });
+    res.json({ data: await repository.getUsers(tenantIdFromRequest(req), true) });
   })
 );
 
@@ -632,16 +685,30 @@ app.patch(
 app.delete(
   "/users/:id",
   asyncRoute(async (req, res) => {
-    if (!(await requireRoles(req, res, ["owner"]))) return;
-    const user = await repository.updateUser(tenantIdFromRequest(req), req.params.id, { active: false });
-    if (!user) {
+    const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
+    if (actor.id === req.params.id) { res.status(409).json({ message: "No puedes eliminar tu propia cuenta mientras estás conectado." }); return; }
+    const users = await repository.getUsers(actor.tenantId, true);
+    const target = users.find((user) => user.id === req.params.id);
+    if (!target) {
       res.status(404).json({ message: "Usuario no encontrado." });
       return;
     }
-
-    res.json({ data: user });
+    const remainingOwners = users.filter((user) => user.id !== target.id && user.role === "owner" && user.active !== false);
+    if (target.role === "owner" && remainingOwners.length === 0) { res.status(409).json({ message: "Debe existir al menos un dueño activo." }); return; }
+    await repository.deleteUser(actor.tenantId, target.id);
+    res.json({ data: { id: target.id, deleted: true } });
   })
 );
+
+app.post("/users/:id/password", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
+  const { password } = req.body as { password?: string };
+  const policyError = passwordPolicyError(password ?? "");
+  if (policyError) { res.status(400).json({ message: policyError }); return; }
+  const updated = await repository.setUserPassword(actor.tenantId, req.params.id, password!);
+  if (!updated) { res.status(404).json({ message: "Usuario no encontrado." }); return; }
+  res.json({ data: { updated: true } });
+}));
 
 app.get(
   "/products",

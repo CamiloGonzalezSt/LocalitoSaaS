@@ -707,3 +707,29 @@ test("invoice import rejects unsafe quantities and unconfirmed sale prices befor
   assert.equal(normalized.items[0].unitCost, 101);
   assert.equal(normalized.items[0].salePrice, 152);
 });
+
+test("administration can reset credentials and permanently delete users without deleting sale history", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const registered = await repository.registerTenant({ name: "Dueña CRUD", email: `owner-crud-${suffix}@localito.test`, password: "OwnerCrud2026", businessName: `CRUD ${suffix}`, businessType: "Almacén" });
+  const seller = await repository.createUser(registered.tenant.id, { name: "Vendedor temporal", email: `seller-crud-${suffix}@localito.test`, password: "SellerCrud2026", role: "seller" });
+  assert.equal((await repository.getUsers(registered.tenant.id, true)).length, 2);
+  assert.equal(await repository.setUserPassword(registered.tenant.id, seller.id, "NuevaClave2026"), true);
+  assert.equal((await repository.authenticate(seller.email, "SellerCrud2026")), null);
+  assert.equal((await repository.authenticate(seller.email, "NuevaClave2026"))?.user.id, seller.id);
+  assert.equal(await repository.deleteUser(registered.tenant.id, seller.id), true);
+  assert.equal(await repository.authenticate(seller.email, "NuevaClave2026"), null);
+  assert.equal((await repository.getUsers(registered.tenant.id, true)).length, 1);
+});
+
+test("platform deletion removes a tenant and all its operational data", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const registered = await repository.registerTenant({ name: "Dueño borrado", email: `delete-${suffix}@localito.test`, password: "DeleteSeguro2026", businessName: `Borrar ${suffix}`, businessType: "Almacén" });
+  await repository.createProduct(registered.tenant.id, { name: "Producto a borrar", category: "General", salePrice: 1_000, stock: 2 });
+  assert.equal((await repository.listTenants()).some((tenant) => tenant.id === registered.tenant.id), true);
+  assert.equal(await repository.deleteTenant(registered.tenant.id), true);
+  assert.equal((await repository.listTenants()).some((tenant) => tenant.id === registered.tenant.id), false);
+  assert.equal(await repository.authenticate(registered.user.email, "DeleteSeguro2026"), null);
+  assert.equal((await repository.getProducts(registered.tenant.id)).length, 0);
+});

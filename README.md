@@ -12,9 +12,9 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 - Recuperación de contraseña por correo con enlace de un solo uso, vencimiento de 30 minutos y revocación de sesiones anteriores.
 - Inicio y cierre de sesión con contraseñas `scrypt`, tokens aleatorios almacenados como hash, expiración y aislamiento por negocio.
 - Roles `system_admin`, `owner` y `seller` protegidos tanto en la interfaz como en la API.
-- Punto de venta con búsqueda, código de barras, descuento, notas, ticket recuperable y pagos simples o divididos.
+- Punto de venta con búsqueda, código de barras, descuento, notas y pagos simples o divididos.
 - Idempotencia de ventas para evitar cobros duplicados al reintentar desde una red inestable.
-- Navegación simplificada por rol: dueño (`Inicio`, `Vender`, `Inventario`, `Clientes`, `Caja`, `Reportes`, `Más`) y vendedor (`Vender`, `Inventario`, `Clientes`, `Caja`). Crear/importar productos y Venta Rápida se abren dentro de su flujo natural.
+- Navegación simplificada por rol: dueño (`Inicio`, `Vender`, `Inventario`, `Clientes`, `Caja`, `Reportes`) y vendedor (`Vender`, `Inventario`, `Clientes`, `Caja`). Configuración vive en el engranaje; crear/importar productos y Venta Rápida se abren dentro de su flujo natural.
 - Inventario con SKU, variante, unidad, packs, vencimiento, stock mínimo, productos sin control de stock y kardex de movimientos.
 - Alertas de reposición y vencimiento a 30 días.
 - Clientes con cupo, plazo, bloqueo de crédito, cuentas por cobrar, vencimientos, abonos y recordatorios por WhatsApp.
@@ -153,7 +153,7 @@ Este flujo organiza inventario a partir de un documento comercial; no emite, val
 
 ## Medios de pago presenciales
 
-Localito registra efectivo, tarjeta en terminal externa, transferencia o QR, Webpay externo, fiado y pago mixto. El vendedor cobra fuera de Localito, ingresa manualmente el monto en el terminal o aplicación correspondiente y confirma en la app que recibió el pago. El MVP no envía montos a un POS, no crea links de cobro, no contrata una pasarela y nunca almacena datos de tarjeta.
+Localito registra efectivo, tarjeta en terminal externa, transferencia o QR, Webpay externo, Mercado Pago QR, fiado y pago mixto. El vendedor cobra fuera de Localito, ingresa manualmente el monto en el terminal o aplicación correspondiente y confirma en la app que recibió el pago. El MVP no envía montos a un POS ni almacena datos de tarjeta. Para contratar un plan existen flujos sandbox de Webpay y Mercado Pago sin cobro real, además de transferencia con aprobación manual del administrador.
 
 ## Calidad y verificación
 

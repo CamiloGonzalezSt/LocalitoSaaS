@@ -83,9 +83,12 @@ export interface DataRepository {
   getSubscription(tenantId: string): Promise<Subscription>;
   updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string; pendingPlan?: SubscriptionPlan | null }): Promise<Subscription>;
   updateTenant(tenantId: string, tenant: Partial<Tenant>): Promise<Tenant | null>;
+  deleteTenant(tenantId: string): Promise<boolean>;
   getUsers(tenantId: string, includeInactive?: boolean): Promise<User[]>;
   createUser(tenantId: string, user: Partial<User> & { password?: string }): Promise<User>;
   updateUser(tenantId: string, userId: string, user: Partial<User>): Promise<User | null>;
+  deleteUser(tenantId: string, userId: string): Promise<boolean>;
+  setUserPassword(tenantId: string, userId: string, password: string): Promise<boolean>;
   authenticate(email: string, password: string): Promise<{ user: User; tenant: Tenant } | null>;
   createSession(userId: string, tokenHash: string, expiresAt: string): Promise<void>;
   getSession(tokenHash: string): Promise<User | null>;
@@ -258,7 +261,7 @@ function buildMemoryBootstrap(tenantId: string): BootstrapData {
   return {
     tenant,
     user,
-    users: store.users.filter((candidate) => candidate.tenantId === tenant.id && candidate.active !== false),
+    users: store.users.filter((candidate) => candidate.tenantId === tenant.id),
     products: getTenantProducts(tenant.id),
     customers: getTenantCustomers(tenant.id),
     sales: store.sales.filter((sale) => sale.tenantId === tenant.id),
@@ -377,6 +380,7 @@ function buildCashRegisterFromSales(sales: Sale[], date = new Date(), returnedTo
     card: 0,
     transfer: 0,
     webpay: 0,
+    mercadopago: 0,
     credit: 0,
     mixed: 0
   } satisfies Record<PaymentMethod, number>;
@@ -470,6 +474,34 @@ export class MemoryRepository implements DataRepository {
     return tenant;
   }
 
+  async deleteTenant(tenantId: string) {
+    if (tenantId === systemTenantId || !store.tenants.some((tenant) => tenant.id === tenantId)) return false;
+    const userIds = new Set(store.users.filter((user) => user.tenantId === tenantId).map((user) => user.id));
+    const saleIds = new Set(store.sales.filter((sale) => sale.tenantId === tenantId).map((sale) => sale.id));
+    store.tenants = store.tenants.filter((tenant) => tenant.id !== tenantId);
+    store.users = store.users.filter((user) => user.tenantId !== tenantId);
+    store.products = store.products.filter((item) => item.tenantId !== tenantId);
+    store.customers = store.customers.filter((item) => item.tenantId !== tenantId);
+    store.sales = store.sales.filter((item) => item.tenantId !== tenantId);
+    store.payments = store.payments.filter((item) => item.tenantId !== tenantId);
+    store.recognitionLogs = store.recognitionLogs.filter((item) => item.tenantId !== tenantId);
+    store.cashClosures = store.cashClosures.filter((item) => item.tenantId !== tenantId);
+    store.suppliers = store.suppliers.filter((item) => item.tenantId !== tenantId);
+    store.purchaseOrders = store.purchaseOrders.filter((item) => item.tenantId !== tenantId);
+    store.debts = store.debts.filter((item) => item.tenantId !== tenantId);
+    store.cashSessions = store.cashSessions.filter((item) => item.tenantId !== tenantId);
+    store.cashMovements = store.cashMovements.filter((item) => item.tenantId !== tenantId);
+    store.stockMovements = store.stockMovements.filter((item) => item.tenantId !== tenantId);
+    store.auditEvents = store.auditEvents.filter((item) => item.tenantId !== tenantId);
+    store.saleReturns = store.saleReturns.filter((item) => item.tenantId !== tenantId);
+    store.subscriptions = store.subscriptions.filter((item) => item.tenantId !== tenantId);
+    store.sessions = store.sessions.filter((session) => !userIds.has(session.userId));
+    store.passwordResetTokens = store.passwordResetTokens.filter((token) => !userIds.has(token.userId));
+    for (const userId of userIds) delete store.passwordHashes[userId];
+    for (const [key, saleId] of Object.entries(store.idempotencyKeys)) if (saleIds.has(saleId)) delete store.idempotencyKeys[key];
+    return true;
+  }
+
   async getUsers(tenantId: string, includeInactive = false) {
     return store.users.filter((user) => user.tenantId === tenantId && (includeInactive || user.active !== false));
   }
@@ -511,6 +543,24 @@ export class MemoryRepository implements DataRepository {
     if (body.role != null) user.role = readUserRole(body.role);
     if (body.active != null) user.active = Boolean(body.active);
     return user;
+  }
+
+  async deleteUser(tenantId: string, userId: string) {
+    const index = store.users.findIndex((user) => user.id === userId && user.tenantId === tenantId);
+    if (index < 0) return false;
+    store.users.splice(index, 1);
+    store.sessions = store.sessions.filter((session) => session.userId !== userId);
+    store.passwordResetTokens = store.passwordResetTokens.filter((token) => token.userId !== userId);
+    delete store.passwordHashes[userId];
+    return true;
+  }
+
+  async setUserPassword(tenantId: string, userId: string, password: string) {
+    const user = store.users.find((candidate) => candidate.id === userId && candidate.tenantId === tenantId);
+    if (!user) return false;
+    store.passwordHashes[user.id] = hashPassword(password);
+    store.sessions = store.sessions.filter((session) => session.userId !== user.id);
+    return true;
   }
 
   async authenticate(email: string, password: string) {
@@ -1138,7 +1188,7 @@ class PostgresRepository implements DataRepository {
     if (!tenant) throw new Error("No hay negocios registrados en PostgreSQL.");
 
     const user = await this.findUser(tenant.id);
-    const users = await this.getUsers(tenant.id);
+    const users = await this.getUsers(tenant.id, true);
     const products = await this.getProducts(tenant.id);
     const customers = await this.getCustomers(tenant.id);
     const sales = await this.getSales(tenant.id);
@@ -1247,6 +1297,40 @@ class PostgresRepository implements DataRepository {
     return updated;
   }
 
+  async deleteUser(tenantId: string, userId: string) {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const exists = await client.query(`select 1 from usuarios where id=$1 and negocio_id=$2 for update`, [userId, tenantId]);
+      if (!exists.rows[0]) { await client.query("rollback"); return false; }
+      await client.query(`update ventas set usuario_id=null where usuario_id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query(`update movimientos_stock set usuario_id=null where usuario_id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query(`update devoluciones_venta set usuario_id=null where usuario_id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query(`update sesiones_caja set usuario_apertura_id=null where usuario_apertura_id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query(`update sesiones_caja set usuario_cierre_id=null where usuario_cierre_id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query(`update movimientos_caja set usuario_id=null where usuario_id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query(`update auditoria set usuario_id=null where usuario_id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query(`update cierres_caja set usuario_id=null where usuario_id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query(`delete from password_reset_tokens where usuario_id=$1`, [userId]);
+      await client.query(`delete from sesiones where usuario_id=$1`, [userId]);
+      await client.query(`delete from usuarios where id=$1 and negocio_id=$2`, [userId, tenantId]);
+      await client.query("commit");
+      return true;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async setUserPassword(tenantId: string, userId: string, password: string) {
+    const result = await this.pool.query(`update usuarios set password_hash=$1 where id=$2 and negocio_id=$3 returning id`, [hashPassword(password), userId, tenantId]);
+    if (!result.rows[0]) return false;
+    await this.pool.query(`update sesiones set revocada_en=CURRENT_TIMESTAMP where usuario_id=$1 and revocada_en is null`, [userId]);
+    return true;
+  }
+
   async listTenants() {
     const result = await this.pool.query(
       `select n.*,
@@ -1309,6 +1393,48 @@ class PostgresRepository implements DataRepository {
       [updated.name, updated.businessType, updated.address, updated.phone, updated.active ? "activo" : "inactivo", tenantId]
     );
     return result.rows[0] ? mapTenant(result.rows[0]) : null;
+  }
+
+  async deleteTenant(tenantId: string) {
+    if (tenantId === systemTenantId) return false;
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const exists = await client.query(`select 1 from negocios where id=$1 for update`, [tenantId]);
+      if (!exists.rows[0]) { await client.query("rollback"); return false; }
+      await client.query(`delete from abonos_fiado where cuenta_fiado_id in (select id from cuentas_fiado where negocio_id=$1)`, [tenantId]);
+      await client.query(`delete from cuentas_fiado where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from pagos where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from devoluciones_venta where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from reconocimientos_ia where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from movimientos_stock where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from detalle_ventas where venta_id in (select id from ventas where negocio_id=$1)`, [tenantId]);
+      await client.query(`delete from ventas where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from movimientos_caja where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from sesiones_caja where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from detalle_ordenes_compra where orden_id in (select id from ordenes_compra where negocio_id=$1)`, [tenantId]);
+      await client.query(`delete from ordenes_compra where negocio_id=$1`, [tenantId]);
+      await client.query(`update productos set proveedor_id=null where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from productos where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from proveedores where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from clientes where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from categorias where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from alertas where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from auditoria where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from cierres_caja where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from password_reset_tokens where usuario_id in (select id from usuarios where negocio_id=$1)`, [tenantId]);
+      await client.query(`delete from sesiones where usuario_id in (select id from usuarios where negocio_id=$1)`, [tenantId]);
+      await client.query(`delete from usuarios where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from suscripciones where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from negocios where id=$1`, [tenantId]);
+      await client.query("commit");
+      return true;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async registerTenant(input: { name: string; email: string; password: string; businessName: string; businessType: string }) {
@@ -1888,9 +2014,9 @@ class PostgresRepository implements DataRepository {
       `insert into cierres_caja (
         id, negocio_id, usuario_id, fecha_caja, cantidad_ventas, cantidad_anuladas,
         total_bruto, total_recibido, total_fiado, ticket_promedio,
-        total_efectivo, total_tarjeta, total_transferencia, total_webpay,
+        total_efectivo, total_tarjeta, total_transferencia, total_webpay, total_mercadopago,
         observacion, fecha_cierre
-      ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+      ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
       [
         closure.id,
         tenantId,
@@ -1906,6 +2032,7 @@ class PostgresRepository implements DataRepository {
         closure.totalsByMethod.card,
         closure.totalsByMethod.transfer,
         closure.totalsByMethod.webpay,
+        closure.totalsByMethod.mercadopago,
         closure.note,
         closure.closedAt
       ]
@@ -2744,6 +2871,7 @@ function mapCashRegisterClosure(row: Record<string, unknown>): CashRegisterClosu
       card: Number(row.total_tarjeta),
       transfer: Number(row.total_transferencia),
       webpay: Number(row.total_webpay),
+      mercadopago: Number(row.total_mercadopago),
       credit: Number(row.total_fiado),
       mixed: 0
     },

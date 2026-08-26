@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, Clock3, Package, Plus, Power, RefreshCw, ShieldAlert, Store, TrendingUp, Users, WalletCards } from "lucide-react";
+import { Building2, Clock3, Package, Pencil, Plus, Power, RefreshCw, ShieldAlert, Store, Trash2, TrendingUp, Users, WalletCards } from "lucide-react";
 import { LOCALITO_PLANS, subscriptionDaysRemaining } from "@localito/shared";
 import type { PlatformTenantSummary, Subscription, SubscriptionPlan, User } from "@localito/shared";
 import { api } from "./lib/api";
@@ -13,10 +13,13 @@ export function PlatformAdminView() {
   const [users, setUsers] = useState<User[]>([]);
   const [tenantForm, setTenantForm] = useState(emptyTenantForm);
   const [userForm, setUserForm] = useState(emptyUserForm);
+  const [editingUserId, setEditingUserId] = useState("");
+  const [tenantSearch, setTenantSearch] = useState("");
   const [message, setMessage] = useState("Cargando administración de Localito...");
   const [busy, setBusy] = useState(false);
 
   const selectedTenant = tenants.find((tenant) => tenant.id === selectedTenantId);
+  const visibleTenants = tenants.filter((tenant) => `${tenant.name} ${tenant.businessType}`.toLocaleLowerCase("es").includes(tenantSearch.trim().toLocaleLowerCase("es")));
   const totals = useMemo(() => {
     const subscriptions = tenants.map((tenant) => tenant.subscription).filter((subscription): subscription is Subscription => Boolean(subscription));
     const trials = subscriptions.filter((subscription) => subscription.status === "trialing");
@@ -72,10 +75,12 @@ export function PlatformAdminView() {
   function createUser() {
     if (!selectedTenantId) return;
     void run(async () => {
-      await api.createPlatformTenantUser(selectedTenantId, userForm);
+      if (editingUserId) { await api.updatePlatformTenantUser(selectedTenantId, editingUserId, { name: userForm.name, email: userForm.email, role: userForm.role }); if (userForm.password) await api.resetPlatformTenantUserPassword(selectedTenantId, editingUserId, userForm.password); }
+      else await api.createPlatformTenantUser(selectedTenantId, userForm);
       setUserForm(emptyUserForm);
+      setEditingUserId("");
       await Promise.all([loadUsers(selectedTenantId), loadTenants(selectedTenantId)]);
-      setMessage("Usuario creado en el local seleccionado.");
+      setMessage(editingUserId ? "Usuario actualizado." : "Usuario creado en el local seleccionado.");
     });
   }
 
@@ -98,9 +103,35 @@ export function PlatformAdminView() {
 
   function updateSubscription(tenant: PlatformTenantSummary, payload: { plan?: SubscriptionPlan; status?: Subscription["status"] }) {
     void run(async () => {
-      await api.updatePlatformTenantSubscription(tenant.id, payload);
+      const response = await api.updatePlatformTenantSubscription(tenant.id, payload);
+      setTenants((current) => current.map((item) => item.id === tenant.id ? { ...item, subscription: response.data } : item));
       await loadTenants(tenant.id);
       setMessage("Suscripción actualizada.");
+    });
+  }
+
+  function editUser(user: User) {
+    setEditingUserId(user.id);
+    setUserForm({ name: user.name, email: user.email, role: user.role === "owner" ? "owner" : "seller", password: "" });
+  }
+
+  function deleteUser(user: User) {
+    if (!selectedTenantId || !window.confirm(`¿Eliminar definitivamente a ${user.name}? Su historial de ventas se conservará sin vincular su acceso.`)) return;
+    void run(async () => {
+      await api.deletePlatformTenantUser(selectedTenantId, user.id);
+      if (editingUserId === user.id) { setEditingUserId(""); setUserForm(emptyUserForm); }
+      await Promise.all([loadUsers(selectedTenantId), loadTenants(selectedTenantId)]);
+      setMessage("Usuario eliminado definitivamente.");
+    });
+  }
+
+  function deleteTenant(tenant: PlatformTenantSummary) {
+    const confirmation = window.prompt(`Esta acción elimina permanentemente ${tenant.name} y todos sus datos. Escribe ELIMINAR para continuar.`);
+    if (confirmation !== "ELIMINAR") return;
+    void run(async () => {
+      await api.deletePlatformTenant(tenant.id);
+      await loadTenants();
+      setMessage(`Local ${tenant.name} eliminado definitivamente.`);
     });
   }
 
@@ -131,7 +162,7 @@ export function PlatformAdminView() {
       <div className="platform-metric-notes"><span><TrendingUp size={17}/> Conversión calculada sobre pruebas finalizadas.</span><span><ShieldAlert size={17}/> Los pagos pendientes requieren activación manual.</span></div>
     </section>
 
-    <section className="panel"><div className="section-heading"><h2>Crear un nuevo local</h2><span>{message}</span></div><div className="form-grid">
+    <section className="panel admin-create-panel"><div className="section-heading"><div><span>ALTAS</span><h2>Crear un nuevo local</h2></div><span>{message}</span></div><div className="form-grid">
       <label className="form-field"><span>Nombre del local</span><input value={tenantForm.businessName} onChange={(event) => setTenantForm({ ...tenantForm, businessName: event.target.value })} /></label>
       <label className="form-field"><span>Rubro</span><input value={tenantForm.businessType} onChange={(event) => setTenantForm({ ...tenantForm, businessType: event.target.value })} /></label>
       <label className="form-field"><span>Nombre del primer dueño</span><input value={tenantForm.ownerName} onChange={(event) => setTenantForm({ ...tenantForm, ownerName: event.target.value })} /></label>
@@ -141,19 +172,20 @@ export function PlatformAdminView() {
     </div></section>
 
     <div className="workspace-grid">
-      <section className="panel"><div className="section-heading"><h2>Locales</h2><span>{tenants.length}</span></div><div className="list">
-        {tenants.map((tenant) => <div className={`row ${tenant.id === selectedTenantId ? "selected-row" : ""}`} key={tenant.id}>
+      <section className="panel"><div className="section-heading"><div><span>NEGOCIOS</span><h2>Locales</h2></div><span>{tenants.length}</span></div><label className="form-field admin-search"><span>Buscar local</span><input value={tenantSearch} onChange={(event) => setTenantSearch(event.target.value)} placeholder="Nombre o rubro"/></label><div className="list">
+        {visibleTenants.map((tenant) => <div className={`row platform-tenant-row ${tenant.id === selectedTenantId ? "selected-row" : ""}`} key={tenant.id}>
           <button className="row-main-button" type="button" onClick={() => setSelectedTenantId(tenant.id)}><Building2 size={20}/><span><strong>{tenant.name}</strong><small>{tenant.businessType} · {tenant.ownerCount} dueños · {tenant.userCount} usuarios · {tenant.productCount} productos</small><small>{tenant.subscription ? `${LOCALITO_PLANS[tenant.subscription.plan].name} · ${tenant.subscription.status}${tenant.subscription.status === "trialing" ? ` · ${subscriptionDaysRemaining(tenant.subscription)} días` : ""}${tenant.subscription.pendingPlan ? ` · solicita ${LOCALITO_PLANS[tenant.subscription.pendingPlan].name}` : ""}` : "Sin suscripción"}</small></span></button>
-          {tenant.subscription && <div className="subscription-admin-controls"><select aria-label={`Plan de ${tenant.name}`} value={tenant.subscription.plan} onChange={(event) => updateSubscription(tenant, { plan: event.target.value as SubscriptionPlan, status: tenant.subscription?.status })} disabled={busy}><option value="basic">Básico</option><option value="pro">Pro</option></select><select aria-label={`Estado de ${tenant.name}`} value={tenant.subscription.status} onChange={(event) => updateSubscription(tenant, { status: event.target.value as Subscription["status"] })} disabled={busy}><option value="trialing">Prueba</option><option value="active">Activo</option><option value="past_due">Pago pendiente</option><option value="expired">Vencido</option><option value="cancelled">Cancelado</option></select></div>}
+          {tenant.subscription && <div className="subscription-admin-controls"><select aria-label={`Plan de ${tenant.name}`} value={tenant.subscription.plan} onChange={(event) => updateSubscription(tenant, { plan: event.target.value as SubscriptionPlan })} disabled={busy}><option value="basic">Básico</option><option value="pro">Pro</option></select><select aria-label={`Estado de ${tenant.name}`} value={tenant.subscription.status} onChange={(event) => updateSubscription(tenant, { status: event.target.value as Subscription["status"] })} disabled={busy}><option value="trialing">Prueba</option><option value="active">Activo</option><option value="past_due">Pago pendiente</option><option value="expired">Vencido</option><option value="cancelled">Cancelado</option></select></div>}
           <span className={tenant.active ? "status-badge success" : "status-badge warning"}>{tenant.active ? "Activo" : "Suspendido"}</span>
           <button className="icon-button" type="button" onClick={() => toggleTenant(tenant)} aria-label={tenant.active ? "Suspender local" : "Reactivar local"}><Power size={18}/></button>
+          <button className="icon-button danger" type="button" onClick={() => deleteTenant(tenant)} aria-label={`Eliminar ${tenant.name}`} disabled={busy}><Trash2 size={18}/></button>
         </div>)}
         {!tenants.length && <p className="empty-state">Todavía no existen locales.</p>}
       </div></section>
 
       <section className="panel"><div className="section-heading"><h2>Usuarios de {selectedTenant?.name ?? "un local"}</h2><span>{users.length}</span></div>
-        {selectedTenant && <><div className="form-grid"><label className="form-field"><span>Nombre</span><input value={userForm.name} onChange={(event) => setUserForm({ ...userForm, name: event.target.value })}/></label><label className="form-field"><span>Correo</span><input type="email" value={userForm.email} onChange={(event) => setUserForm({ ...userForm, email: event.target.value })}/></label><label className="form-field"><span>Clave inicial</span><input type="password" value={userForm.password} onChange={(event) => setUserForm({ ...userForm, password: event.target.value })} minLength={10} autoComplete="new-password"/></label><label className="form-field"><span>Rol</span><select value={userForm.role} onChange={(event) => setUserForm({ ...userForm, role: event.target.value as "owner" | "seller" })}><option value="owner">Dueño</option><option value="seller">Vendedor</option></select></label><button className="primary-action" type="button" disabled={busy || !userForm.name || !userForm.email || !userForm.password} onClick={createUser}><Plus size={18}/> Crear usuario</button></div>
-        <div className="list">{users.map((user) => <div className="row platform-user-row" key={user.id}><div><strong>{user.name}</strong><p>{user.email} · {user.role === "owner" ? "Dueño" : "Vendedor"}</p></div><span className={user.active === false ? "status-badge warning" : "status-badge success"}>{user.active === false ? "Inactivo" : "Activo"}</span><button className="secondary-action small" type="button" onClick={() => toggleUser(user)} disabled={busy}>{user.active === false ? "Reactivar" : "Desactivar"}</button></div>)}</div></>}
+        {selectedTenant && <><div className="form-grid"><label className="form-field"><span>Nombre</span><input value={userForm.name} onChange={(event) => setUserForm({ ...userForm, name: event.target.value })}/></label><label className="form-field"><span>Correo</span><input type="email" value={userForm.email} onChange={(event) => setUserForm({ ...userForm, email: event.target.value })}/></label><label className="form-field"><span>{editingUserId ? "Nueva clave (opcional)" : "Clave inicial"}</span><input type="password" value={userForm.password} onChange={(event) => setUserForm({ ...userForm, password: event.target.value })} minLength={10} autoComplete="new-password"/></label><label className="form-field"><span>Rol</span><select value={userForm.role} onChange={(event) => setUserForm({ ...userForm, role: event.target.value as "owner" | "seller" })}><option value="owner">Dueño</option><option value="seller">Vendedor</option></select></label><button className="primary-action" type="button" disabled={busy || !userForm.name || !userForm.email || (!editingUserId && !userForm.password)} onClick={createUser}>{editingUserId ? <Pencil size={18}/> : <Plus size={18}/>} {editingUserId ? "Guardar usuario" : "Crear usuario"}</button>{editingUserId && <button className="secondary-action" type="button" onClick={() => { setEditingUserId(""); setUserForm(emptyUserForm); }}>Cancelar edición</button>}</div>
+        <div className="list">{users.map((user) => <div className="row platform-user-row" key={user.id}><div><strong>{user.name}</strong><p>{user.email} · {user.role === "owner" ? "Dueño" : "Vendedor"}</p></div><span className={user.active === false ? "status-badge warning" : "status-badge success"}>{user.active === false ? "Inactivo" : "Activo"}</span><div className="row-actions"><button className="icon-button" type="button" onClick={() => editUser(user)} aria-label={`Editar ${user.name}`} disabled={busy}><Pencil size={17}/></button><button className="secondary-action small" type="button" onClick={() => toggleUser(user)} disabled={busy}>{user.active === false ? "Reactivar" : "Desactivar"}</button><button className="icon-button danger" type="button" onClick={() => deleteUser(user)} aria-label={`Eliminar ${user.name}`} disabled={busy}><Trash2 size={17}/></button></div></div>)}</div></>}
       </section>
     </div>
   </div>;

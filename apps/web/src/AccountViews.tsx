@@ -1,4 +1,4 @@
-import { Building2, CheckCircle2, Download, Monitor, Moon, Plus, Save, Sun, Trash2, Users, WalletCards } from "lucide-react";
+import { Building2, CheckCircle2, Download, Pencil, Plus, Save, Trash2, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Subscription, SubscriptionPlan, Tenant, User } from "@localito/shared";
 import { effectiveSubscriptionStatus, LOCALITO_PLANS, subscriptionDaysRemaining } from "@localito/shared";
@@ -17,20 +17,21 @@ type SettingsProps = {
   profileForm: ProfileFormState;
   isBusy: boolean;
   canManageUsers: boolean;
-  theme: ThemePreference;
   onUserForm: (value: UserFormState) => void;
   onProfileForm: (value: ProfileFormState) => void;
   onSaveProfile: () => void;
   onSaveBusiness: (value: BusinessFormState) => void;
   onCreateUser: () => void;
-  onDeactivateUser: (user: User) => void;
-  onTheme: (value: ThemePreference) => void;
+  onUpdateUser: (user: User, body: Partial<User>) => void;
+  onDeleteUser: (user: User) => void;
+  onResetUserPassword: (user: User, password: string) => void;
   onOpenPlan: () => void;
   onExport: () => void;
 };
 
-export function SettingsView({ tenant, user, users, userForm, profileForm, isBusy, canManageUsers, theme, onUserForm, onProfileForm, onSaveProfile, onSaveBusiness, onCreateUser, onDeactivateUser, onTheme, onOpenPlan, onExport }: SettingsProps) {
+export function SettingsView({ tenant, user, users, userForm, profileForm, isBusy, canManageUsers, onUserForm, onProfileForm, onSaveProfile, onSaveBusiness, onCreateUser, onUpdateUser, onDeleteUser, onResetUserPassword, onOpenPlan, onExport }: SettingsProps) {
   const [businessForm, setBusinessForm] = useState<BusinessFormState>({ name: "", businessType: "", address: "", phone: "" });
+  const [editingUserId, setEditingUserId] = useState("");
 
   useEffect(() => {
     setBusinessForm({ name: tenant?.name ?? "", businessType: tenant?.businessType ?? "", address: tenant?.address ?? "", phone: tenant?.phone ?? "" });
@@ -58,13 +59,6 @@ export function SettingsView({ tenant, user, users, userForm, profileForm, isBus
       <button className="primary-action" type="button" onClick={() => onSaveBusiness(businessForm)} disabled={isBusy || !businessForm.name.trim() || !businessForm.businessType.trim()}><Save size={19}/> Guardar negocio</button>
     </section>}
 
-    <section className="panel" aria-labelledby="appearance-title">
-      <div className="section-heading"><div><span>CONFIGURACIÓN</span><h2 id="appearance-title">Apariencia</h2></div><span>Se guarda por usuario</span></div>
-      <div className="theme-selector" role="group" aria-label="Tema visual">
-        {([{ id: "light", label: "Claro", icon: Sun }, { id: "dark", label: "Oscuro", icon: Moon }, { id: "system", label: "Sistema", icon: Monitor }] as const).map((option) => { const Icon = option.icon; return <button className={theme === option.id ? "secondary-action active" : "secondary-action"} type="button" aria-pressed={theme === option.id} onClick={() => onTheme(option.id)} key={option.id}><Icon size={18}/>{option.label}</button>; })}
-      </div>
-    </section>
-
     {canManageUsers && <section className="panel more-links" aria-labelledby="tools-title">
       <div className="section-heading"><div><span>HERRAMIENTAS</span><h2 id="tools-title">Plan y datos</h2></div></div>
       <div className="list">
@@ -74,40 +68,40 @@ export function SettingsView({ tenant, user, users, userForm, profileForm, isBus
     </section>}
 
     {canManageUsers && <section className="panel" aria-labelledby="users-title">
-      <div className="section-heading"><div><span>ACCESOS</span><h2 id="users-title">Usuarios del local</h2></div><span>{users.length} activos</span></div>
+      <div className="section-heading"><div><span>ACCESOS</span><h2 id="users-title">Usuarios del local</h2></div><span>{users.filter((item) => item.active !== false).length} activos</span></div>
       <p className="helper-text">Crea accesos individuales para cada vendedor. El dueño mantiene el control administrativo.</p>
       <div className="form-grid">
         <LabeledInput label="Nombre del usuario" value={userForm.name} onChange={(value) => onUserForm({ ...userForm, name: value })} />
         <LabeledInput label="Correo del usuario" value={userForm.email} onChange={(value) => onUserForm({ ...userForm, email: value })} type="email" />
         <label className="form-field"><span>Rol</span><select value={userForm.role} onChange={(event) => onUserForm({ ...userForm, role: event.target.value as User["role"] })}><option value="seller">Vendedor</option><option value="owner">Dueño/admin</option></select></label>
-        <LabeledInput label="Clave inicial segura" value={userForm.password} onChange={(value) => onUserForm({ ...userForm, password: value })} type="password" autoComplete="new-password" />
+        <LabeledInput label={editingUserId ? "Nueva clave (opcional)" : "Clave inicial segura"} value={userForm.password} onChange={(value) => onUserForm({ ...userForm, password: value })} type="password" autoComplete="new-password" />
       </div>
-      <button className="primary-action" type="button" onClick={onCreateUser} disabled={isBusy || !userForm.name.trim() || !userForm.email.trim() || !userForm.password}><Plus size={19}/> Crear usuario</button>
+      <div className="row-actions"><button className="primary-action" type="button" onClick={() => { const editing = users.find((item) => item.id === editingUserId); if (editing) { onUpdateUser(editing, { name: userForm.name, email: userForm.email, role: userForm.role }); if (userForm.password) onResetUserPassword(editing, userForm.password); setEditingUserId(""); onUserForm({ name: "", email: "", role: "seller", password: "" }); } else onCreateUser(); }} disabled={isBusy || !userForm.name.trim() || !userForm.email.trim() || (!editingUserId && !userForm.password)}>{editingUserId ? <Save size={19}/> : <Plus size={19}/>} {editingUserId ? "Guardar usuario" : "Crear usuario"}</button>{editingUserId && <button className="secondary-action" type="button" onClick={() => { setEditingUserId(""); onUserForm({ name: "", email: "", role: "seller", password: "" }); }}>Cancelar</button>}</div>
       <div className="list user-list">
-        {users.map((localUser) => <div className="row" key={localUser.id}><div><strong>{localUser.name}</strong><p>{localUser.email} · {localUser.role === "owner" ? "dueño/admin" : "vendedor"}</p></div><button className="secondary-action small danger-soft" type="button" onClick={() => onDeactivateUser(localUser)} disabled={isBusy || localUser.id === user.id}><Trash2 size={16}/> Desactivar</button></div>)}
+        {users.map((localUser) => <div className="row" key={localUser.id}><div><strong>{localUser.name}</strong><p>{localUser.email} · {localUser.role === "owner" ? "dueño/admin" : "vendedor"} · {localUser.active === false ? "inactivo" : "activo"}</p></div><div className="row-actions"><button className="icon-button" type="button" aria-label={`Editar ${localUser.name}`} onClick={() => { setEditingUserId(localUser.id); onUserForm({ name: localUser.name, email: localUser.email, role: localUser.role, password: "" }); }} disabled={isBusy}><Pencil size={16}/></button><button className="secondary-action small" type="button" onClick={() => onUpdateUser(localUser, { active: localUser.active === false })} disabled={isBusy || localUser.id === user.id}>{localUser.active === false ? "Reactivar" : "Desactivar"}</button><button className="icon-button danger" type="button" aria-label={`Eliminar ${localUser.name}`} onClick={() => onDeleteUser(localUser)} disabled={isBusy || localUser.id === user.id}><Trash2 size={16}/></button></div></div>)}
       </div>
     </section>}
-
-    <section className="panel"><div className="section-heading"><h2>Acerca de Localito</h2><span>Información del sistema</span></div><div className="settings-list"><p><strong>Negocio:</strong> {tenant?.name ?? "Localito"}.</p><p><strong>Sesión:</strong> {user.name} ({user.role === "owner" ? "dueño/admin" : "vendedor"}).</p><p><strong>Aplicación:</strong> PWA adaptable a celular, tablet y computador.</p><p><strong>Pagos:</strong> el vendedor confirma terminales y aplicaciones externas antes de registrar la venta.</p></div></section>
   </div>;
 }
 
-export function PlanView({ subscription, isBusy, onSelect }: { subscription: Subscription; isBusy: boolean; onSelect: (plan: SubscriptionPlan) => void }) {
+export function PlanView({ subscription, isBusy, onSelect }: { subscription: Subscription; isBusy: boolean; onSelect: (plan: SubscriptionPlan, provider: "webpay_sandbox" | "mercadopago_sandbox" | "transfer") => void }) {
   const days = subscriptionDaysRemaining(subscription);
   const status = effectiveSubscriptionStatus(subscription);
   const statusCopy = subscriptionStatusCopy(status, days);
+  const [provider, setProvider] = useState<"webpay_sandbox" | "mercadopago_sandbox" | "transfer">("webpay_sandbox");
   return <div className="stack">
     <section className="panel hero-panel plan-hero"><div className="hero-copy"><span>MI PLAN</span><strong>{status === "trialing" ? `Prueba Pro · ${days} días restantes` : LOCALITO_PLANS[subscription.plan].name}</strong><p>{statusCopy}</p></div></section>
     {(status === "past_due" || status === "expired" || status === "cancelled") && <section className="panel subscription-recovery" role="status"><WalletCards size={22}/><div><strong>{status === "past_due" ? "Activación pendiente" : "Tu acceso operativo está pausado"}</strong><p>Tus datos siguen guardados y puedes revisarlos. Elige un plan y solicita activación; un administrador confirmará el pago manualmente.</p></div></section>}
     {subscription.pendingPlan && (status === "active" || status === "trialing") && <section className="panel subscription-recovery" role="status"><WalletCards size={22}/><div><strong>Solicitud registrada: {LOCALITO_PLANS[subscription.pendingPlan].name}</strong><p>Tu acceso actual continúa sin cambios hasta que el pago sea verificado y el nuevo plan sea activado.</p></div></section>}
+    <section className="panel billing-methods"><div className="section-heading"><div><span>PAGO DE PRUEBA</span><h2>¿Cómo quieres probar la activación?</h2></div><span>No se cobrará dinero real</span></div><div className="billing-method-grid"><button className={provider === "webpay_sandbox" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("webpay_sandbox")}><strong>Webpay</strong><small>Ambiente de prueba · aprobación simulada</small></button><button className={provider === "mercadopago_sandbox" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("mercadopago_sandbox")}><strong>Mercado Pago</strong><small>Sandbox · aprobación simulada</small></button><button className={provider === "transfer" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("transfer")}><strong>Transferencia</strong><small>Queda pendiente de revisión administrativa</small></button></div></section>
     <section className="plan-grid">
       {Object.values(LOCALITO_PLANS).map((plan) => {
         const isCurrent = plan.id === subscription.plan && status === "active";
         const isRequested = plan.id === subscription.pendingPlan;
-        return <article className={plan.id === subscription.plan ? "panel plan-card current" : "panel plan-card"} key={plan.id}><div><span className="status-badge success">{isRequested ? "Solicitado" : plan.recommended ? "Recomendado" : "Esencial"}</span><h2>{plan.name}</h2><p>{plan.description}</p></div><strong className="plan-price">{formatCLP(plan.price)}<small>/mes</small></strong><ul>{plan.entitlements.map((feature) => <li key={feature}><CheckCircle2 size={16}/>{entitlementLabel(feature)}</li>)}</ul><button className={isCurrent ? "secondary-action full" : "primary-action full"} type="button" disabled={isBusy || isCurrent || isRequested} onClick={() => onSelect(plan.id)}>{isCurrent ? "Plan actual" : isRequested ? "Activación solicitada" : `Solicitar ${plan.name}`}</button></article>;
+        return <article className={plan.id === subscription.plan ? "panel plan-card current" : "panel plan-card"} key={plan.id}><div><span className="status-badge success">{isRequested ? "Solicitado" : plan.recommended ? "Recomendado" : "Esencial"}</span><h2>{plan.name}</h2><p>{plan.description}</p></div><strong className="plan-price">{formatCLP(plan.price)}<small>/mes</small></strong><ul>{plan.entitlements.map((feature) => <li key={feature}><CheckCircle2 size={16}/>{entitlementLabel(feature)}</li>)}</ul><button className={isCurrent ? "secondary-action full" : "primary-action full"} type="button" disabled={isBusy || isCurrent || isRequested} onClick={() => onSelect(plan.id, provider)}>{isCurrent ? "Plan actual" : isRequested ? "Activación solicitada" : provider === "transfer" ? `Solicitar ${plan.name}` : `Probar pago y activar`}</button></article>;
       })}
     </section>
-    <p className="helper-text">Localito no cobra automáticamente en esta etapa. La solicitud queda pendiente hasta que el pago sea verificado y el administrador active el período correspondiente.</p>
+    <p className="helper-text">Webpay y Mercado Pago funcionan aquí en modo sandbox para la tesis: simulan una aprobación sin mover dinero. La transferencia mantiene el flujo manual de revisión.</p>
   </div>;
 }
 

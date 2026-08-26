@@ -116,8 +116,12 @@ export const api = {
     });
   },
 
+  async register(payload: { businessName: string; businessType: string; ownerName: string; email: string; password: string }) {
+    return request<AuthSession>("/auth/register", { method: "POST", body: JSON.stringify(payload) });
+  },
+
   async requestPasswordReset(email: string) {
-    return request<void>("/auth/password-reset/request", {
+    return request<{ message: string; delivery: "email" | "unavailable" }>("/auth/password-reset/request", {
       method: "POST",
       body: JSON.stringify({ email })
     });
@@ -146,6 +150,10 @@ export const api = {
     return request<Tenant>(`/platform/tenants/${tenantId}`, { method: "PATCH", body: JSON.stringify(payload) });
   },
 
+  async deletePlatformTenant(tenantId: string) {
+    return request<{ id: string; name: string; deleted: true }>(`/platform/tenants/${tenantId}`, { method: "DELETE" });
+  },
+
   async getPlatformTenantUsers(tenantId: string) { return request<User[]>(`/platform/tenants/${tenantId}/users`); },
 
   async createPlatformTenantUser(tenantId: string, payload: { name: string; email: string; password: string; role: "owner" | "seller" }) {
@@ -156,14 +164,22 @@ export const api = {
     return request<User>(`/platform/tenants/${tenantId}/users/${userId}`, { method: "PATCH", body: JSON.stringify(payload) });
   },
 
+  async deletePlatformTenantUser(tenantId: string, userId: string) {
+    return request<{ id: string; deleted: true }>(`/platform/tenants/${tenantId}/users/${userId}`, { method: "DELETE" });
+  },
+
+  async resetPlatformTenantUserPassword(tenantId: string, userId: string, password: string) {
+    return request<{ updated: true }>(`/platform/tenants/${tenantId}/users/${userId}/password`, { method: "POST", body: JSON.stringify({ password }) });
+  },
+
   async updatePlatformTenantSubscription(tenantId: string, payload: { plan?: SubscriptionPlan; status?: Subscription["status"] }) {
     return request<Subscription>(`/platform/tenants/${tenantId}/subscription`, { method: "PATCH", body: JSON.stringify(payload) });
   },
 
   async getSubscription() { return request<Subscription>("/subscription"); },
 
-  async changePlan(plan: SubscriptionPlan) {
-    return request<Subscription>("/subscription/change-plan", { method: "POST", body: JSON.stringify({ plan }) });
+  async changePlan(plan: SubscriptionPlan, provider: "webpay_sandbox" | "mercadopago_sandbox" | "transfer") {
+    return request<Subscription>("/subscription/change-plan", { method: "POST", body: JSON.stringify({ plan, provider }) });
   },
 
   async updateTenant(payload: Pick<Tenant, "name" | "businessType" | "address" | "phone">) {
@@ -182,6 +198,14 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(user)
     });
+  },
+
+  async deleteUser(userId: string) {
+    return request<{ id: string; deleted: true }>(`/users/${userId}`, { method: "DELETE" });
+  },
+
+  async resetUserPassword(userId: string, password: string) {
+    return request<{ updated: true }>(`/users/${userId}/password`, { method: "POST", body: JSON.stringify({ password }) });
   },
 
   async createProduct(product: Partial<Product>) {

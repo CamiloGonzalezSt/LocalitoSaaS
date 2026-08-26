@@ -60,20 +60,18 @@ export function OperationsView({ products, onRefresh, canManage, mode = "all" }:
 
   async function load() {
     try {
-      const [debtResponse, reminderResponse, sessionResponse, movementResponse] = await Promise.all([
-        api.getDebts(), api.getDebtReminders(), api.getCashSession(), api.getCashMovements()
-      ]);
-      setDebts(debtResponse.data); setReminders(reminderResponse.data); setCashSession(sessionResponse.data); setCashMovements(movementResponse.data);
+      const [sessionResponse, movementResponse] = await Promise.all([api.getCashSession(), api.getCashMovements()]);
+      setCashSession(sessionResponse.data); setCashMovements(movementResponse.data);
       if (canManage) {
-        const [supplierResponse, purchaseResponse, stockResponse, auditResponse] = await Promise.all([
-          api.getSuppliers(), api.getPurchases(), api.getStockMovements(), api.getAuditEvents()
+        const [debtResponse, reminderResponse, supplierResponse, purchaseResponse, stockResponse, auditResponse] = await Promise.all([
+          api.getDebts(), api.getDebtReminders(), api.getSuppliers(), api.getPurchases(), api.getStockMovements(), api.getAuditEvents()
         ]);
-        setSuppliers(supplierResponse.data); setPurchases(purchaseResponse.data); setStockMovements(stockResponse.data); setAudit(auditResponse.data);
+        setDebts(debtResponse.data); setReminders(reminderResponse.data); setSuppliers(supplierResponse.data); setPurchases(purchaseResponse.data); setStockMovements(stockResponse.data); setAudit(auditResponse.data);
         setPurchaseSupplierId((value) => value || supplierResponse.data[0]?.id || "");
         setPurchaseProductId((value) => value || products[0]?.id || "");
       }
-      setMessage("Gestión actualizada.");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "No se pudo cargar la gestión."); }
+      setMessage("Caja actualizada.");
+    } catch (error) { setMessage(error instanceof Error ? `No pudimos actualizar la caja: ${error.message}` : "No pudimos actualizar la caja."); }
   }
 
   useEffect(() => { void load(); }, [canManage]);

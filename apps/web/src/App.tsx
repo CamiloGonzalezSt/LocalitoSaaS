@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowLeft,
   Banknote,
   BarChart3,
   Camera,
@@ -11,7 +12,7 @@ import {
   LogIn,
   LogOut,
   ListPlus,
-  Menu,
+  Moon,
   MessageCircle,
   Minus,
   Package,
@@ -27,6 +28,7 @@ import {
   ShoppingCart,
   Smartphone,
   Store,
+  Sun,
   Trash2,
   Users,
   WalletCards,
@@ -108,7 +110,7 @@ type LoginFormState = {
   password: string;
 };
 
-type LoginMode = "login" | "forgot" | "reset";
+type LoginMode = "login" | "register" | "forgot" | "reset";
 
 interface NoticeState {
   message: string;
@@ -127,8 +129,7 @@ const navItems: NavItem[] = [
   { id: "products", label: "Inventario", icon: Package },
   { id: "customers", label: "Clientes", icon: Users },
   { id: "operations", label: "Caja", icon: Banknote },
-  { id: "reports", label: "Reportes", icon: BarChart3 },
-  { id: "settings", label: "Más", icon: Menu }
+  { id: "reports", label: "Reportes", icon: BarChart3 }
 ];
 
 const paymentOptions: Array<{ id: PaymentMethod; label: string; icon: LucideIcon }> = [
@@ -136,6 +137,7 @@ const paymentOptions: Array<{ id: PaymentMethod; label: string; icon: LucideIcon
   { id: "card", label: "Tarjeta · terminal externo", icon: CreditCard },
   { id: "transfer", label: "Transferencia / QR externo", icon: Smartphone },
   { id: "webpay", label: "Webpay · externo", icon: WalletCards },
+  { id: "mercadopago", label: "Mercado Pago · QR prueba", icon: Smartphone },
   { id: "credit", label: "Fiado", icon: ReceiptText },
   { id: "mixed", label: "Mixto", icon: CreditCard }
 ];
@@ -204,24 +206,11 @@ const emptyCashRegister: CashRegisterSummary = {
     card: 0,
     transfer: 0,
     webpay: 0,
+    mercadopago: 0,
     credit: 0,
     mixed: 0
   }
 };
-
-const demoCredentials = [
-  {
-    label: "Dueño Don Pepe",
-    email: String(import.meta.env.VITE_DEMO_OWNER_EMAIL ?? "donpepe@localito.demo"),
-    password: String(import.meta.env.VITE_DEMO_OWNER_PASSWORD ?? "Duoc2026")
-  },
-  {
-    label: "Vendedor Don Pepe",
-    email: String(import.meta.env.VITE_DEMO_SELLER_EMAIL ?? "donpepe+vendedor@localito.demo"),
-    password: String(import.meta.env.VITE_DEMO_SELLER_PASSWORD ?? "Duoc2026V")
-  }
-].filter((credential) => credential.email && credential.password);
-const showDemoCredentials = demoCredentials.length > 0;
 
 function numberFromInput(value: string, fallback = 0) {
   const numberValue = Number(value);
@@ -245,6 +234,7 @@ function paymentMethodLabel(method: PaymentMethod) {
     card: "Tarjeta · terminal externo",
     transfer: "Transferencia / QR externo",
   webpay: "Webpay · externo",
+  mercadopago: "Mercado Pago · QR prueba",
   credit: "Fiado",
   mixed: "Pago mixto"
   };
@@ -294,10 +284,6 @@ function removePasswordResetTokenFromUrl() {
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function suspendedCartStorageKey(tenantId: string) {
-  return `localito-suspended-cart:${tenantId}`;
-}
-
 function navItemIsActive(item: View, active: View) {
   if (item === active) return true;
   if (item === "sale" && active === "scan") return true;
@@ -308,6 +294,7 @@ function navItemIsActive(item: View, active: View) {
 
 function App() {
   const [activeView, setActiveView] = useState<View>("dashboard");
+  const [previousView, setPreviousView] = useState<View>("dashboard");
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -331,8 +318,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [loginForm, setLoginForm] = useState<LoginFormState>({
-    email: demoCredentials[0]?.email ?? "",
-    password: demoCredentials[0]?.password ?? ""
+    email: "",
+    password: ""
   });
   const [passwordResetToken, setPasswordResetToken] = useState(readPasswordResetToken);
   const [loginMode, setLoginMode] = useState<LoginMode>(() => readPasswordResetToken() ? "reset" : "login");
@@ -345,7 +332,6 @@ function App() {
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
   const [cashClosureNote, setCashClosureNote] = useState("");
   const [lastDebtCharge, setLastDebtCharge] = useState<DebtChargeState | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const lowStockProducts = useMemo(
     () => products.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock),
@@ -376,14 +362,16 @@ function App() {
         .filter((item) => item.id !== "customers" || !subscription || hasEntitlement(subscription, "customers"))
         .filter((item) => item.id !== "reports" || !subscription || hasEntitlement(subscription, "advancedReports"));
   const mobilePrimaryIds: View[] = isOwner
-    ? ["dashboard", "sale", "products", "operations"]
+    ? ["dashboard", "sale", "products", "customers", "operations"]
     : ["sale", "products", "customers", "operations"];
   const mobileNavItems = isSystemAdmin ? [] : visibleNavItems.filter((item) => mobilePrimaryIds.includes(item.id));
-  const mobileMoreItems = isSystemAdmin ? [] : visibleNavItems.filter((item) => !mobilePrimaryIds.includes(item.id));
 
   function navigateTo(view: View) {
+    if (view !== activeView) setPreviousView(activeView);
     setActiveView(view);
-    setIsMobileMenuOpen(false);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }
 
   function saveSession(session: AuthSession) {
@@ -525,6 +513,22 @@ function App() {
     }
   }
 
+  async function registerAccount(payload: { businessName: string; businessType: string; ownerName: string; email: string; password: string }) {
+    setIsBusy(true);
+    setIsLoading(true);
+    try {
+      const response = await api.register(payload);
+      saveSession(response.data);
+      setActiveView("setup");
+      await loadWorkspace("Tu local fue creado. Comenzó tu prueba Pro gratuita de 30 días.", response.data.user);
+    } catch (error) {
+      setIsLoading(false);
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo crear el local.", tone: "error" });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   async function requestPasswordReset(email: string) {
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) {
@@ -534,10 +538,10 @@ function App() {
 
     setIsBusy(true);
     try {
-      await api.requestPasswordReset(normalizedEmail);
+      const response = await api.requestPasswordReset(normalizedEmail);
       setLoginForm((current) => ({ ...current, email: normalizedEmail, password: "" }));
-      setLoginMode("login");
-      setNotice({ message: "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.", tone: "success" });
+      setLoginMode(response.data.delivery === "email" ? "login" : "forgot");
+      setNotice({ message: response.data.delivery === "email" ? "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña." : "El correo de recuperación aún no está configurado. Solicita al administrador de Localito una clave temporal.", tone: response.data.delivery === "email" ? "success" : "warning" });
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo enviar el enlace de recuperación.", tone: "error" });
     } finally {
@@ -613,7 +617,6 @@ function App() {
     setPaymentAmounts({});
     setCashClosureNote("");
     setLastDebtCharge(null);
-    setIsMobileMenuOpen(false);
     setActiveView("dashboard");
     setNotice({ message: "Sesion cerrada. Puedes iniciar como dueno o vendedor.", tone: "success" });
   }
@@ -675,7 +678,7 @@ function App() {
     );
   }
 
-  async function confirmSale(options?: { discount?: number; notes?: string; payments?: Array<{ method: "cash" | "card" | "transfer" | "webpay" | "credit"; amount: number }> }) {
+  async function confirmSale(options?: { discount?: number; notes?: string; payments?: Array<{ method: Exclude<PaymentMethod, "mixed">; amount: number }> }) {
     if (ticket.length === 0) {
       setNotice({ message: "Agrega al menos un producto antes de confirmar la venta.", tone: "warning" });
       return;
@@ -819,7 +822,7 @@ function App() {
     }
   }
 
-  async function cancelSale(sale: Sale) {
+  async function cancelSale(sale: Sale, reason: string) {
     if (!isOwner) {
       setNotice({ message: "Solo el dueno/admin puede anular ventas.", tone: "warning" });
       return;
@@ -827,7 +830,7 @@ function App() {
 
     setIsBusy(true);
     try {
-      const response = await api.cancelSale(sale.id, "Anulada desde demo de tesis");
+      const response = await api.cancelSale(sale.id, reason);
       if (lastReceipt?.id === sale.id) setLastReceipt(response.data);
       await loadWorkspace("Venta anulada y stock restaurado.");
     } catch (error) {
@@ -1039,8 +1042,8 @@ function App() {
     }
   }
 
-  async function payCustomerDebt(customer: Customer) {
-    const amount = numberFromInput(paymentAmounts[customer.id] || "2000");
+  async function payCustomerDebt(customer: Customer, method: Exclude<PaymentMethod, "credit" | "mixed">) {
+    const amount = numberFromInput(paymentAmounts[customer.id] || "0");
     if (amount <= 0) {
       setNotice({ message: "Ingresa un monto de abono valido.", tone: "warning" });
       return;
@@ -1048,7 +1051,7 @@ function App() {
 
     setIsBusy(true);
     try {
-      await api.payCustomerDebt(customer.id, amount, "cash");
+      await api.payCustomerDebt(customer.id, amount, method);
       setPaymentAmounts((current) => ({ ...current, [customer.id]: "" }));
       await loadWorkspace(`Abono registrado para ${customer.name}.`);
     } catch (error) {
@@ -1190,41 +1193,50 @@ function App() {
     }
   }
 
-  async function deactivateUser(user: User) {
-    if (!isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede desactivar usuarios.", tone: "warning" });
-      return;
-    }
-
+  async function updateManagedUser(user: User, body: Partial<User>) {
+    if (!isOwner) return;
     setIsBusy(true);
     try {
-      await api.updateUser(user.id, { active: false });
-      await loadWorkspace(`${user.name} fue desactivado.`);
+      await api.updateUser(user.id, body);
+      await loadWorkspace(`${user.name} fue actualizado.`);
     } catch (error) {
-      setNotice({ message: error instanceof Error ? error.message : "No se pudo desactivar el usuario.", tone: "error" });
-    } finally {
-      setIsBusy(false);
-    }
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo actualizar el usuario.", tone: "error" });
+    } finally { setIsBusy(false); }
   }
 
-  async function returnSale(sale: Sale) {
-    if (!isOwner || sale.status === "cancelled" || sale.status === "refunded") return;
-    const item = sale.items[0]; if (!item) return;
-    const quantity = Number(window.prompt(`Cantidad a devolver de ${item.productName} (máximo ${item.quantity})`, "1"));
-    if (!Number.isFinite(quantity) || quantity <= 0 || quantity > item.quantity) { setNotice({ message: "Cantidad de devolución inválida.", tone: "warning" }); return; }
-    const reason = window.prompt("Motivo de la devolución", "Cambio o producto devuelto")?.trim(); if (!reason) return;
+  async function deleteManagedUser(user: User) {
+    if (!isOwner || !window.confirm(`¿Eliminar definitivamente el acceso de ${user.name}?`)) return;
     setIsBusy(true);
-    try { await api.returnSale(sale.id, [{ productId: item.productId, quantity }], reason); await loadWorkspace("Devolución registrada y stock restaurado."); }
+    try {
+      await api.deleteUser(user.id);
+      await loadWorkspace(`${user.name} fue eliminado definitivamente.`);
+    } catch (error) {
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo eliminar el usuario.", tone: "error" });
+    } finally { setIsBusy(false); }
+  }
+
+  async function resetManagedUserPassword(user: User, password: string) {
+    if (!isOwner) return;
+    setIsBusy(true);
+    try { await api.resetUserPassword(user.id, password); setNotice({ message: `Clave temporal actualizada para ${user.name}.`, tone: "success" }); }
+    catch (error) { setNotice({ message: error instanceof Error ? error.message : "No se pudo actualizar la clave.", tone: "error" }); }
+    finally { setIsBusy(false); }
+  }
+
+  async function returnSale(sale: Sale, items: Array<{ productId: string; quantity: number }>, reason: string) {
+    if (!isOwner || sale.status === "cancelled" || sale.status === "refunded") return;
+    setIsBusy(true);
+    try { await api.returnSale(sale.id, items, reason); await loadWorkspace("Devolución registrada y stock restaurado."); }
     catch (error) { setNotice({ message: error instanceof Error ? error.message : "No se pudo devolver la venta.", tone: "error" }); }
     finally { setIsBusy(false); }
   }
 
-  async function changePlan(plan: SubscriptionPlan) {
+  async function changePlan(plan: SubscriptionPlan, provider: "webpay_sandbox" | "mercadopago_sandbox" | "transfer") {
     setIsBusy(true);
     try {
-      const response = await api.changePlan(plan);
+      const response = await api.changePlan(plan, provider);
       setSubscription(response.data);
-      setNotice({ message: `Solicitud de ${LOCALITO_PLANS[plan].name} registrada. La activación quedará lista cuando se confirme el pago manual.`, tone: "success" });
+      setNotice({ message: provider === "transfer" ? `Solicitud de ${LOCALITO_PLANS[plan].name} registrada. Se activará cuando el administrador confirme la transferencia.` : `Pago de prueba aprobado. ${LOCALITO_PLANS[plan].name} quedó activo sin realizar un cobro real.`, tone: "success" });
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo cambiar el plan.", tone: "error" });
     } finally {
@@ -1247,11 +1259,12 @@ function App() {
       <LoginView
         loginForm={loginForm}
         mode={loginMode}
-        showDemoCredentials={showDemoCredentials}
         notice={notice}
         isBusy={isBusy || isLoading}
         onForm={setLoginForm}
         onLogin={() => void login()}
+        onRegister={(payload) => void registerAccount(payload)}
+        onOpenRegister={() => setLoginMode("register")}
         onForgot={() => setLoginMode("forgot")}
         onRequestReset={(email) => void requestPasswordReset(email)}
         onConfirmReset={(password, confirmation) => void confirmPasswordReset(password, confirmation)}
@@ -1271,6 +1284,7 @@ function App() {
           <Store size={18} />
           <div><small>{isSystemAdmin ? "Plataforma" : "Local activo"}</small><strong>{tenant?.name ?? "Localito"}</strong></div>
         </div>
+        {isOwner && subscription && <button className="sidebar-plan-card" type="button" onClick={() => navigateTo("plan")}><span>{effectiveSubscriptionStatus(subscription) === "trialing" ? "PRO · PRUEBA" : LOCALITO_PLANS[subscription.plan].name.toLocaleUpperCase("es")}</span><strong>{effectiveSubscriptionStatus(subscription) === "trialing" ? `${subscriptionDaysRemaining(subscription)} días restantes` : subscription.status === "active" ? "Plan activo" : "Revisar suscripción"}</strong><small>Ver mi plan</small></button>}
         <nav className="sidebar-nav" aria-label="Navegación principal">
           <span className="sidebar-label">{isSystemAdmin ? "ADMINISTRACIÓN" : "TU NEGOCIO"}</span>
           {visibleNavItems.map((item) => {
@@ -1282,12 +1296,14 @@ function App() {
           <span className="avatar-mini">{userInitials(currentUser)}</span>
           <div><strong>{currentUser.name}</strong><small>{currentUser.role === "system_admin" ? "Admin plataforma" : currentUser.role === "owner" ? "Dueño" : "Vendedor"}</small></div>
           {!isSystemAdmin && <button className="sidebar-icon-button" type="button" onClick={() => navigateTo("settings")} aria-label="Configuración"><Settings size={18}/></button>}
+          {!isSystemAdmin && <button className="theme-switch" type="button" role="switch" aria-checked={theme === "dark"} onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar entre modo claro y oscuro"><Sun size={14}/><span/><Moon size={14}/></button>}
           <button className="sidebar-icon-button" type="button" onClick={logout} aria-label="Cerrar sesión"><LogOut size={18}/></button>
         </div>
       </aside>
 
       <header className="topbar">
         <div className="topbar-copy">
+          {["scan", "product_create", "setup", "invoice", "plan"].includes(activeView) && <button className="back-button" type="button" onClick={() => navigateTo(previousView === activeView ? "dashboard" : previousView)}><ArrowLeft size={18}/> Volver</button>}
           <p className="eyebrow">{isSystemAdmin ? "Administración de Localito" : `Hola, ${currentUser.name.split(" ")[0]}`}</p>
           <h1>{viewTitle(activeView, isOwner, isSystemAdmin)}</h1>
           <p className="session-line">
@@ -1297,6 +1313,8 @@ function App() {
           </p>
         </div>
         <div className="topbar-actions">
+          {!isSystemAdmin && isOwner && <button className="icon-button mobile-report-button" type="button" onClick={() => navigateTo("reports")} aria-label="Reportes"><BarChart3 size={20}/></button>}
+          {!isSystemAdmin && <button className="icon-button mobile-theme-button" type="button" onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar tema">{theme === "dark" ? <Sun size={20}/> : <Moon size={20}/>}</button>}
           <button className="icon-button" type="button" onClick={() => void loadWorkspace("Datos refrescados.")} aria-label="Refrescar">
             <RefreshCw size={20} />
           </button>
@@ -1314,7 +1332,7 @@ function App() {
         </div>
       </header>
 
-      {!!mobileNavItems.length && <nav className="bottom-nav" aria-label="Navegación móvil" style={{ gridTemplateColumns: `repeat(${mobileNavItems.length + (mobileMoreItems.length ? 1 : 0)}, minmax(0, 1fr))` }}>
+      {!!mobileNavItems.length && <nav className="bottom-nav" aria-label="Navegación móvil" style={{ gridTemplateColumns: `repeat(${mobileNavItems.length}, minmax(0, 1fr))` }}>
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -1329,19 +1347,7 @@ function App() {
             </button>
           );
         })}
-        {mobileMoreItems.length > 0 && <button className={mobileMoreItems.some((item) => navItemIsActive(item.id, activeView)) ? "nav-item active" : "nav-item"} type="button" onClick={() => setIsMobileMenuOpen(true)}><Menu size={20}/><span>Más</span></button>}
       </nav>}
-
-      {isMobileMenuOpen && <div className="mobile-menu-backdrop" role="presentation" onClick={() => setIsMobileMenuOpen(false)}>
-        <section className="mobile-menu-sheet" role="dialog" aria-modal="true" aria-label="Más opciones" onClick={(event) => event.stopPropagation()}>
-          <div className="mobile-menu-heading"><div><span>Más opciones</span><strong>{tenant?.name ?? "Localito"}</strong></div><button className="icon-button" type="button" onClick={() => setIsMobileMenuOpen(false)} aria-label="Cerrar"><X size={20}/></button></div>
-          <div className="mobile-menu-grid">
-            {mobileMoreItems.map((item) => { const Icon = item.icon; return <button className={navItemIsActive(item.id, activeView) ? "mobile-menu-item active" : "mobile-menu-item"} key={item.id} type="button" onClick={() => navigateTo(item.id)}><Icon size={21}/><span>{item.label}</span></button>; })}
-            {!mobileMoreItems.some((item) => item.id === "settings") && <button className={activeView === "settings" ? "mobile-menu-item active" : "mobile-menu-item"} type="button" onClick={() => navigateTo("settings")}><Settings size={21}/><span>{isOwner ? "Más" : "Mi cuenta"}</span></button>}
-            <button className="mobile-menu-item danger" type="button" onClick={logout}><LogOut size={21}/><span>Cerrar sesión</span></button>
-          </div>
-        </section>
-      </div>}
 
       <main className="content">
         {notice && <section className={`notice ${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
@@ -1349,7 +1355,7 @@ function App() {
           <span>{notice.message}</span>
         </section>}
 
-        {!isSystemAdmin && subscription && effectiveSubscriptionStatus(subscription) === "trialing" && <section className="subscription-banner"><div><strong>Prueba Pro · {subscriptionDaysRemaining(subscription)} días restantes</strong><span>Estás usando todas las funciones de Localito.</span></div>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Ver planes</button>}</section>}
+        {!isSystemAdmin && isOwner && subscription && effectiveSubscriptionStatus(subscription) === "trialing" && <section className="subscription-banner"><div><strong>Prueba Pro · {subscriptionDaysRemaining(subscription)} días restantes</strong><span>Incluye todas las funciones. Al terminar, elige un plan para seguir operando.</span></div><button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Ver mi plan</button></section>}
         {!isSystemAdmin && subscription && !subscriptionCanMutate(subscription) && <section className="notice warning"><AlertTriangle size={18}/><span>Tu suscripción no está activa. Puedes revisar toda tu información, pero las acciones están pausadas.</span>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Elegir plan</button>}</section>}
 
         {isLoading && <p className="empty-state">Conectando con la API de Localito...</p>}
@@ -1393,31 +1399,6 @@ function App() {
             onPaymentMethod={setPaymentMethod}
             onCustomer={setSelectedCustomerId}
             onConfirm={(options) => void confirmSale(options)}
-            onSuspend={() => {
-              if (!tenant) return;
-              localStorage.setItem(
-                suspendedCartStorageKey(tenant.id),
-                JSON.stringify(ticket.map((item) => ({ productId: item.productId, quantity: item.quantity })))
-              );
-              setTicket([]);
-              setNotice({ message: "Carrito guardado para retomarlo después.", tone: "success" });
-            }}
-            onRestore={() => {
-              if (!tenant) return;
-              try {
-                const stored = JSON.parse(localStorage.getItem(suspendedCartStorageKey(tenant.id)) ?? "[]") as Array<{ productId: string; quantity: number }>;
-                if (!Array.isArray(stored) || stored.length === 0) {
-                  setTicket([]);
-                  setNotice({ message: "No hay un carrito guardado para este local.", tone: "warning" });
-                  return;
-                }
-                const restored = mergeQuickSaleTicket(products, [], stored);
-                setTicket(restored.ticket);
-                setNotice({ message: "Carrito recuperado.", tone: "success" });
-              } catch {
-                setNotice({ message: "El carrito guardado ya no coincide con el inventario actual.", tone: "error" });
-              }
-            }}
             onScan={() => !canOperate || (subscription && !hasEntitlement(subscription, "aiPhotoSale")) ? navigateTo("plan") : setActiveView("scan")}
             lastReceipt={lastReceipt}
             onPrintReceipt={printLastReceipt}
@@ -1500,7 +1481,7 @@ function App() {
             }}
             onEdit={startEditCustomer}
             onDeactivate={(customer) => void deactivateCustomer(customer)}
-            onPayDebt={(customer) => void payCustomerDebt(customer)}
+            onPayDebt={(customer, method) => void payCustomerDebt(customer, method)}
             onCreatePayment={(customer) => void createDebtWebpay(customer)}
             onShareDebtCharge={(charge) => void shareDebtCharge(charge)}
             onCopyDebtCharge={(charge) => void copyDebtCharge(charge)}
@@ -1512,10 +1493,10 @@ function App() {
         {!isLoading && activeView === "reports" && (
           <ReportsView
             products={products}
+            users={users}
             customers={customers}
             sales={sales}
             lowStockProducts={lowStockProducts}
-            summary={summary}
             cashRegister={cashRegister}
             cashClosures={cashClosures}
             cashClosureNote={cashClosureNote}
@@ -1523,8 +1504,8 @@ function App() {
             canViewFullReports={isOwner}
             onCashClosureNote={setCashClosureNote}
             onCloseCashRegister={() => void closeCashRegister()}
-            onCancelSale={(sale) => void cancelSale(sale)}
-            onReturnSale={(sale) => void returnSale(sale)}
+            onCancelSale={(sale, reason) => void cancelSale(sale, reason)}
+            onReturnSale={(sale, items, reason) => void returnSale(sale, items, reason)}
           />
         )}
 
@@ -1545,20 +1526,20 @@ function App() {
             profileForm={profileForm}
             isBusy={isBusy}
             canManageUsers={isOwner}
-            theme={theme}
             onUserForm={setUserForm}
             onProfileForm={setProfileForm}
             onSaveProfile={() => void updateMyProfile()}
             onSaveBusiness={(value) => void updateBusiness(value)}
             onCreateUser={() => void createUser()}
-            onDeactivateUser={(userToDeactivate) => void deactivateUser(userToDeactivate)}
-            onTheme={(value) => applyTheme(value)}
+            onUpdateUser={(userToUpdate, body) => void updateManagedUser(userToUpdate, body)}
+            onDeleteUser={(userToDelete) => void deleteManagedUser(userToDelete)}
+            onResetUserPassword={(userToUpdate, password) => void resetManagedUserPassword(userToUpdate, password)}
             onOpenPlan={() => navigateTo("plan")}
             onExport={exportBusinessData}
           />
         )}
 
-        {!isLoading && activeView === "plan" && isOwner && subscription && <PlanView subscription={subscription} isBusy={isBusy} onSelect={(plan) => void changePlan(plan)} />}
+        {!isLoading && activeView === "plan" && isOwner && subscription && <PlanView subscription={subscription} isBusy={isBusy} onSelect={(plan, provider) => void changePlan(plan, provider)} />}
       </main>
 
       <ReceiptPrintArea sale={lastReceipt} tenant={tenant} user={currentUser} customers={customers} />
@@ -1579,7 +1560,7 @@ function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
     customers: "Clientes",
     operations: "Caja",
     reports: isOwner ? "Reportes" : "Cierre de caja",
-    settings: "Más",
+    settings: "Configuración",
     plan: "Mi plan",
     platform: isSystemAdmin ? "Locales y usuarios" : "Administración"
   };
@@ -1589,11 +1570,12 @@ function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
 function LoginView({
   loginForm,
   mode,
-  showDemoCredentials,
   notice,
   isBusy,
   onForm,
   onLogin,
+  onRegister,
+  onOpenRegister,
   onForgot,
   onRequestReset,
   onConfirmReset,
@@ -1601,11 +1583,12 @@ function LoginView({
 }: {
   loginForm: LoginFormState;
   mode: LoginMode;
-  showDemoCredentials: boolean;
   notice: NoticeState | null;
   isBusy: boolean;
   onForm: (value: LoginFormState) => void;
   onLogin: () => void;
+  onRegister: (payload: { businessName: string; businessType: string; ownerName: string; email: string; password: string }) => void;
+  onOpenRegister: () => void;
   onForgot: () => void;
   onRequestReset: (email: string) => void;
   onConfirmReset: (password: string, confirmation: string) => void;
@@ -1613,8 +1596,9 @@ function LoginView({
 }) {
   const [recoveryEmail, setRecoveryEmail] = useState(loginForm.email);
   const [resetForm, setResetForm] = useState({ password: "", confirmation: "" });
+  const [registration, setRegistration] = useState({ businessName: "", businessType: "Almacén", ownerName: "", email: "", password: "", confirmation: "", accepted: false });
   const firstFieldRef = useRef<HTMLInputElement>(null);
-  const title = mode === "reset" ? "Nueva contraseña" : mode === "forgot" ? "Recuperar acceso" : "Bienvenido de vuelta";
+  const title = mode === "reset" ? "Nueva contraseña" : mode === "forgot" ? "Recuperar acceso" : mode === "register" ? "Crea tu local" : "Bienvenido de vuelta";
 
   useEffect(() => {
     const usesPrecisePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -1691,6 +1675,28 @@ function LoginView({
             setRecoveryEmail(loginForm.email);
             onForgot();
           }}>Olvidé mi contraseña</button>
+          <div className="auth-divider"><span>¿Primera vez en Localito?</span></div>
+          <button className="auth-register-link" type="button" disabled={isBusy} onClick={onOpenRegister}>Crear una cuenta para mi negocio</button>
+        </form>}
+
+        {mode === "register" && <form className="login-form registration-form" onSubmit={(event) => {
+          event.preventDefault();
+          if (registration.password !== registration.confirmation) return;
+          onRegister({ businessName: registration.businessName, businessType: registration.businessType, ownerName: registration.ownerName, email: registration.email, password: registration.password });
+        }}>
+          <div className="trial-offer"><CheckCircle2 size={20}/><div><strong>Prueba Localito Pro gratis por 30 días</strong><p>Incluye ventas, inventario, caja, clientes, fiado, reportes y Venta Rápida. No pedimos tarjeta.</p></div></div>
+          <div className="form-grid compact-auth-grid">
+            <label className="field">Nombre del negocio<input ref={firstFieldRef} value={registration.businessName} onChange={(event) => setRegistration({ ...registration, businessName: event.target.value })} required maxLength={120}/></label>
+            <label className="field">Rubro<select value={registration.businessType} onChange={(event) => setRegistration({ ...registration, businessType: event.target.value })}><option>Almacén</option><option>Botillería</option><option>Minimarket</option><option>Peluquería</option><option>Otro</option></select></label>
+            <label className="field">Tu nombre<input value={registration.ownerName} onChange={(event) => setRegistration({ ...registration, ownerName: event.target.value })} required autoComplete="name" maxLength={120}/></label>
+            <label className="field">Correo<input type="email" value={registration.email} onChange={(event) => setRegistration({ ...registration, email: event.target.value })} required autoComplete="email" maxLength={254}/></label>
+            <label className="field">Contraseña<input type="password" value={registration.password} onChange={(event) => setRegistration({ ...registration, password: event.target.value })} required minLength={10} maxLength={128} autoComplete="new-password"/></label>
+            <label className="field">Repetir contraseña<input type="password" value={registration.confirmation} onChange={(event) => setRegistration({ ...registration, confirmation: event.target.value })} required minLength={10} maxLength={128} autoComplete="new-password"/></label>
+          </div>
+          {registration.confirmation && registration.password !== registration.confirmation && <p className="field-error">Las contraseñas no coinciden.</p>}
+          <label className="consent-check"><input type="checkbox" checked={registration.accepted} onChange={(event) => setRegistration({ ...registration, accepted: event.target.checked })}/><span>Entiendo que al terminar los 30 días deberé elegir un plan para seguir operando. Mis datos permanecerán guardados.</span></label>
+          <button className="primary-action full" type="submit" disabled={isBusy || !registration.accepted || registration.password !== registration.confirmation}>{isBusy ? "Creando local..." : "Comenzar mi mes de prueba"}</button>
+          <button className="secondary-action full" type="button" onClick={onReturnToLogin} disabled={isBusy}>Ya tengo cuenta</button>
         </form>}
 
         {mode === "forgot" && <form className="login-form" onSubmit={(event) => {
@@ -1749,24 +1755,6 @@ function LoginView({
           <button className="secondary-action full" type="button" onClick={onReturnToLogin} disabled={isBusy}>Volver al ingreso</button>
         </form>}
 
-        {mode === "login" && showDemoCredentials && <div className="quick-login">
-          {demoCredentials.map((credential) => (
-            <button
-              className="secondary-action"
-              type="button"
-              key={credential.email}
-              onClick={() => onForm({ email: credential.email, password: credential.password })}
-            >
-              <Users size={18} />
-              <span className="quick-login-copy">
-                <strong>{credential.label}</strong>
-                <small>{credential.email}</small>
-                <small>Clave: {credential.password}</small>
-              </span>
-            </button>
-          ))}
-        </div>}
-
       </section>
     </main>
   );
@@ -1789,8 +1777,6 @@ function SaleView({
   onPaymentMethod,
   onCustomer,
   onConfirm,
-  onSuspend,
-  onRestore,
   onScan,
   lastReceipt,
   onPrintReceipt,
@@ -1811,9 +1797,7 @@ function SaleView({
   onRemoveOne: (productId: string) => void;
   onPaymentMethod: (value: PaymentMethod) => void;
   onCustomer: (value: string) => void;
-  onConfirm: (options?: { discount?: number; notes?: string; payments?: Array<{ method: "cash" | "card" | "transfer" | "webpay" | "credit"; amount: number }> }) => void;
-  onSuspend: () => void;
-  onRestore: () => void;
+  onConfirm: (options?: { discount?: number; notes?: string; payments?: Array<{ method: Exclude<PaymentMethod, "mixed">; amount: number }> }) => void;
   onScan: () => void;
   lastReceipt: Sale | null;
   onPrintReceipt: () => void;
@@ -1827,7 +1811,7 @@ function SaleView({
   const visibleProducts = products.slice(0, 60);
   const discountedTotal = Math.max(0, ticketTotal - numberFromInput(discount));
   const cardPart = Math.max(0, discountedTotal - numberFromInput(cashPart));
-  const isExternalPayment = ["card", "transfer", "webpay"].includes(paymentMethod);
+  const isExternalPayment = ["card", "transfer", "webpay", "mercadopago"].includes(paymentMethod);
 
   useEffect(() => {
     if (ticket.length === 0) {
@@ -1956,8 +1940,6 @@ function SaleView({
           <CheckCircle2 size={20} />
           <span>{`Cobrar ${formatCLP(discountedTotal)}`}</span>
         </button> : <div className="stack compact-stack"><button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy || !canSell || (isExternalPayment && !externalPaymentConfirmed)}><CheckCircle2 size={20}/><span>{isBusy ? "Registrando..." : isExternalPayment ? "Confirmar pago y registrar venta" : `Registrar venta · ${formatCLP(discountedTotal)}`}</span></button><button className="secondary-action full" type="button" onClick={() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); }}>Volver al ticket</button></div>}
-        <div className="action-grid"><button className="secondary-action" type="button" onClick={onSuspend} disabled={!canSell || !ticket.length}>Guardar carrito</button><button className="secondary-action" type="button" onClick={onRestore} disabled={!canSell}>Recuperar carrito</button></div>
-
         {lastReceipt && (
           <div className="receipt-card">
             <div>
@@ -2210,7 +2192,7 @@ function CustomersView({
   onCancelEdit: () => void;
   onEdit: (customer: Customer) => void;
   onDeactivate: (customer: Customer) => void;
-  onPayDebt: (customer: Customer) => void;
+  onPayDebt: (customer: Customer, method: Exclude<PaymentMethod, "credit" | "mixed">) => void;
   onCreatePayment: (customer: Customer) => void;
   onShareDebtCharge: (charge: DebtChargeState) => void;
   onCopyDebtCharge: (charge: DebtChargeState) => void;
@@ -2218,6 +2200,7 @@ function CustomersView({
   onConfirmDebtCharge: (charge: DebtChargeState) => void;
 }) {
   const [customerTab, setCustomerTab] = useState<"clients" | "credit" | "pending">("clients");
+  const [debtMethods, setDebtMethods] = useState<Record<string, Exclude<PaymentMethod, "credit" | "mixed">>>({});
   const visibleCustomers = customerTab === "clients" ? customers : customers.filter((customer) => customer.debtBalance > 0);
   return (
     <div className="stack"><nav className="section-tabs" aria-label="Secciones de clientes"><button className={customerTab === "clients" ? "active" : ""} type="button" onClick={() => setCustomerTab("clients")}>Clientes <span>{customers.length}</span></button><button className={customerTab === "credit" ? "active" : ""} type="button" onClick={() => setCustomerTab("credit")}>Fiado <span>{customers.filter((customer) => customer.debtBalance > 0).length}</span></button><button className={customerTab === "pending" ? "active" : ""} type="button" onClick={() => setCustomerTab("pending")}>Pendientes <span>{customers.filter((customer) => customer.debtBalance > 0).length}</span></button></nav><div className="workspace-grid customer-workspace">
@@ -2226,14 +2209,14 @@ function CustomersView({
           <h2>{editingCustomerId ? "Editar cliente" : "Nuevo cliente"}</h2>
           <span>{canManageCustomers ? "Fiado" : "Alta rapida"}</span>
         </div>
-        <div className="form-grid single">
-          <input value={customerForm.name} onChange={(event) => onForm({ ...customerForm, name: event.target.value })} placeholder="Nombre" />
-          <input value={customerForm.phone} onChange={(event) => onForm({ ...customerForm, phone: event.target.value })} placeholder="Telefono" />
-          <input value={customerForm.email} onChange={(event) => onForm({ ...customerForm, email: event.target.value })} placeholder="Email" />
-          <input value={customerForm.address} onChange={(event) => onForm({ ...customerForm, address: event.target.value })} placeholder="Direccion" />
-          <input value={customerForm.notes} onChange={(event) => onForm({ ...customerForm, notes: event.target.value })} placeholder="Observaciones" />
-          <input value={customerForm.creditLimit} onChange={(event) => onForm({ ...customerForm, creditLimit: event.target.value })} placeholder="Limite de fiado (0 = sin limite)" inputMode="numeric" />
-          <input value={customerForm.creditDays} onChange={(event) => onForm({ ...customerForm, creditDays: event.target.value })} placeholder="Dias para pagar" inputMode="numeric" />
+        <div className="form-grid customer-form-grid">
+          <label className="form-field"><span>Nombre completo</span><input value={customerForm.name} onChange={(event) => onForm({ ...customerForm, name: event.target.value })} placeholder="Ej. María González" /></label>
+          <label className="form-field"><span>Teléfono</span><input value={customerForm.phone} onChange={(event) => onForm({ ...customerForm, phone: event.target.value })} placeholder="+56 9..." /></label>
+          <label className="form-field"><span>Correo (opcional)</span><input value={customerForm.email} onChange={(event) => onForm({ ...customerForm, email: event.target.value })} placeholder="cliente@correo.cl" /></label>
+          <label className="form-field"><span>Dirección (opcional)</span><input value={customerForm.address} onChange={(event) => onForm({ ...customerForm, address: event.target.value })} placeholder="Calle y número" /></label>
+          <label className="form-field customer-notes-field"><span>Observaciones</span><input value={customerForm.notes} onChange={(event) => onForm({ ...customerForm, notes: event.target.value })} placeholder="Datos útiles del cliente" /></label>
+          <label className="form-field"><span>Límite de fiado</span><input value={customerForm.creditLimit} onChange={(event) => onForm({ ...customerForm, creditLimit: event.target.value })} placeholder="0 = sin límite" inputMode="numeric" /></label>
+          <label className="form-field"><span>Días para pagar</span><input value={customerForm.creditDays} onChange={(event) => onForm({ ...customerForm, creditDays: event.target.value })} placeholder="30" inputMode="numeric" /></label>
           {canManageCustomers && <label className="field checkbox-field"><input type="checkbox" checked={customerForm.creditBlocked} onChange={(event) => onForm({ ...customerForm, creditBlocked: event.target.checked })} /> Bloquear nuevos fiados</label>}
         </div>
         <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy || !canOperate}>
@@ -2299,6 +2282,7 @@ function CustomersView({
                 inputMode="numeric"
                 disabled={!canOperate || customer.debtBalance === 0}
               />
+              <select className="debt-method-select" aria-label={`Medio del abono de ${customer.name}`} value={debtMethods[customer.id] ?? "cash"} onChange={(event) => setDebtMethods((current) => ({ ...current, [customer.id]: event.target.value as Exclude<PaymentMethod, "credit" | "mixed"> }))} disabled={!canOperate || customer.debtBalance === 0}><option value="cash">Efectivo</option><option value="card">Tarjeta</option><option value="transfer">Transferencia</option><option value="webpay">Webpay</option><option value="mercadopago">Mercado Pago QR</option></select>
               <div className="customer-actions">
                 {canManageCustomers && (
                   <button className="secondary-action small" type="button" onClick={() => onEdit(customer)} disabled={isBusy}>
@@ -2306,7 +2290,7 @@ function CustomersView({
                     <span>Editar</span>
                   </button>
                 )}
-                <button className="secondary-action small" type="button" onClick={() => onPayDebt(customer)} disabled={isBusy || !canOperate || customer.debtBalance === 0}>
+                <button className="secondary-action small" type="button" onClick={() => onPayDebt(customer, debtMethods[customer.id] ?? "cash")} disabled={isBusy || !canOperate || customer.debtBalance === 0 || numberFromInput(paymentAmounts[customer.id] ?? "0") <= 0}>
                   <Banknote size={16} />
                   <span>Abono</span>
                 </button>
@@ -2332,10 +2316,10 @@ function CustomersView({
 
 function ReportsView({
   products,
+  users,
   customers,
   sales,
   lowStockProducts,
-  summary,
   cashRegister,
   cashClosures,
   cashClosureNote,
@@ -2347,10 +2331,10 @@ function ReportsView({
   onReturnSale
 }: {
   products: Product[];
+  users: User[];
   customers: Customer[];
   sales: Sale[];
   lowStockProducts: Product[];
-  summary: ReportSummary;
   cashRegister: CashRegisterSummary;
   cashClosures: CashRegisterClosure[];
   cashClosureNote: string;
@@ -2358,22 +2342,63 @@ function ReportsView({
   canViewFullReports: boolean;
   onCashClosureNote: (value: string) => void;
   onCloseCashRegister: () => void;
-  onCancelSale: (sale: Sale) => void;
-  onReturnSale: (sale: Sale) => void;
+  onCancelSale: (sale: Sale, reason: string) => void;
+  onReturnSale: (sale: Sale, items: Array<{ productId: string; quantity: number }>, reason: string) => void;
 }) {
-  const topProducts = [...products].sort((a, b) => b.salePrice * b.stock - a.salePrice * a.stock).slice(0, 4);
-  const activeSales = sales.filter((sale) => sale.status !== "cancelled");
+  const latestMonth = sales[0]?.createdAt.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
+  const [selectedMonth, setSelectedMonth] = useState(latestMonth);
+  const [selectedClosureId, setSelectedClosureId] = useState("");
+  const [saleAction, setSaleAction] = useState<{ sale: Sale; type: "cancel" | "return" } | null>(null);
+  const [actionReason, setActionReason] = useState("");
+  const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+  const monthSales = sales.filter((sale) => sale.createdAt.slice(0, 7) === selectedMonth);
+  const activeSales = monthSales.filter((sale) => sale.status !== "cancelled");
+  const monthTotal = activeSales.reduce((sum, sale) => sum + sale.total, 0);
+  const monthUnits = activeSales.reduce((sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+  const dailyTotals = [...activeSales.reduce((map, sale) => { const day = sale.createdAt.slice(8, 10); map.set(day, (map.get(day) ?? 0) + sale.total); return map; }, new Map<string, number>())].sort((a, b) => a[0].localeCompare(b[0]));
+  const maxDaily = Math.max(...dailyTotals.map(([, total]) => total), 1);
+  const methodTotals = activeSales.reduce((map, sale) => {
+    if (sale.payments?.length) sale.payments.forEach((payment) => map.set(paymentMethodLabel(payment.method), (map.get(paymentMethodLabel(payment.method)) ?? 0) + payment.amount));
+    else map.set(paymentMethodLabel(sale.paymentMethod), (map.get(paymentMethodLabel(sale.paymentMethod)) ?? 0) + sale.total);
+    return map;
+  }, new Map<string, number>());
+  const productTotals = activeSales.reduce((map, sale) => { sale.items.forEach((item) => { const current = map.get(item.productId) ?? { name: item.productName, units: 0, amount: 0 }; current.units += item.quantity; current.amount += item.subtotal; map.set(item.productId, current); }); return map; }, new Map<string, { name: string; units: number; amount: number }>());
+  const topProducts = [...productTotals.values()].sort((a, b) => b.amount - a.amount).slice(0, 5);
+  const sellerTotals = [...activeSales.reduce((map, sale) => map.set(sale.sellerId, (map.get(sale.sellerId) ?? 0) + sale.total), new Map<string, number>())].sort((a, b) => b[1] - a[1]);
+  const selectedClosure = cashClosures.find((closure) => closure.id === selectedClosureId);
+  const closureSales = selectedClosure ? sales.filter((sale) => sale.createdAt.slice(0, 10) === selectedClosure.date) : [];
+
+  function openSaleAction(sale: Sale, type: "cancel" | "return") {
+    setSaleAction({ sale, type }); setActionReason("");
+    setReturnQuantities(Object.fromEntries(sale.items.map((item) => [item.productId, type === "return" ? 1 : 0])));
+  }
+
+  function confirmSaleAction() {
+    if (!saleAction || !actionReason.trim()) return;
+    if (saleAction.type === "cancel") onCancelSale(saleAction.sale, actionReason.trim());
+    else {
+      const items = saleAction.sale.items.map((item) => ({ productId: item.productId, quantity: Math.min(item.quantity, Math.max(0, returnQuantities[item.productId] ?? 0)) })).filter((item) => item.quantity > 0);
+      if (!items.length) return;
+      onReturnSale(saleAction.sale, items, actionReason.trim());
+    }
+    setSaleAction(null);
+  }
 
   return (
     <div className="stack">
+      <section className="reports-toolbar"><div><span>REPORTES</span><h2>Resumen del negocio</h2></div><label className="month-filter"><span>Período</span><input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)}/></label></section>
       {canViewFullReports && (
         <div className="stats-grid">
-          <StatCard label="Vendido" value={formatCLP(summary.totalSales)} icon={BarChart3} tone="green" />
-          <StatCard label="Margen estimado" value={formatCLP(summary.estimatedGrossProfit)} icon={Package} tone="blue" />
-          <StatCard label="Gastos operativos" value={formatCLP(summary.operatingExpenses)} icon={ReceiptText} tone="amber" />
-          <StatCard label="Resultado estimado" value={formatCLP(summary.estimatedNetResult)} icon={Banknote} tone={summary.estimatedNetResult >= 0 ? "green" : "red"} />
+          <StatCard label="Ventas del período" value={formatCLP(monthTotal)} icon={BarChart3} tone="green" />
+          <StatCard label="Número de ventas" value={String(activeSales.length)} icon={ReceiptText} tone="blue" />
+          <StatCard label="Unidades vendidas" value={String(monthUnits)} icon={Package} tone="amber" />
+          <StatCard label="Ticket promedio" value={formatCLP(activeSales.length ? Math.round(monthTotal / activeSales.length) : 0)} icon={Banknote} tone="green" />
         </div>
       )}
+
+      {canViewFullReports && <section className="panel report-overview"><div className="section-heading"><div><span>COMPARACIÓN DIARIA</span><h2>Ventas del mes</h2></div><span>{dailyTotals.length} días con ventas</span></div><div className="daily-chart" aria-label="Ventas diarias">{dailyTotals.map(([day, total]) => <div className="daily-column" key={day}><strong>{formatCLP(total)}</strong><div><span style={{ height: `${Math.max(5, total / maxDaily * 100)}%` }}/></div><small>{day}</small></div>)}{!dailyTotals.length && <p className="empty-state">No hay ventas para el período seleccionado.</p>}</div></section>}
+
+      {canViewFullReports && <div className="report-dashboard-grid"><section className="panel"><div className="section-heading"><h2>Formas de pago más utilizadas</h2><span>{formatCLP(monthTotal)}</span></div><div className="horizontal-bars">{[...methodTotals.entries()].sort((a,b)=>b[1]-a[1]).map(([label,total]) => <div className="horizontal-bar" key={label}><span>{label}</span><div><i style={{ width: `${Math.max(4, total / Math.max(monthTotal,1) * 100)}%` }}/></div><strong>{formatCLP(total)}</strong></div>)}</div></section><section className="panel"><div className="section-heading"><h2>Ventas por vendedor</h2><span>{sellerTotals.length}</span></div><div className="seller-breakdown">{sellerTotals.map(([sellerId,total]) => <div key={sellerId}><span>{users.find((item) => item.id === sellerId)?.name ?? "Usuario eliminado"}</span><strong>{formatCLP(total)}</strong></div>)}{!sellerTotals.length && <p className="empty-state">Sin ventas en este período.</p>}</div></section></div>}
 
       <section className="panel">
         <div className="section-heading">
@@ -2385,6 +2410,7 @@ function ReportsView({
           <ReportMetric label="Tarjeta" value={formatCLP(cashRegister.totalsByMethod.card)} />
           <ReportMetric label="Transferencia" value={formatCLP(cashRegister.totalsByMethod.transfer)} />
           <ReportMetric label="Webpay" value={formatCLP(cashRegister.totalsByMethod.webpay)} />
+          <ReportMetric label="Mercado Pago" value={formatCLP(cashRegister.totalsByMethod.mercadopago)} />
           <ReportMetric label="Fiado" value={formatCLP(cashRegister.creditTotal)} tone="warning" />
           <ReportMetric label="Total bruto" value={formatCLP(cashRegister.grossTotal)} />
           <ReportMetric label="Ticket promedio" value={formatCLP(cashRegister.averageTicket)} />
@@ -2412,9 +2438,9 @@ function ReportsView({
           <h2>Ultimos cierres</h2>
           <span>{cashClosures.length} registros</span>
         </div>
-            <div className="list">
+            <div className="list closure-list">
               {cashClosures.slice(0, 5).map((closure) => (
-            <div className="row report-history-row" key={closure.id}>
+            <button className={selectedClosureId === closure.id ? "row report-history-row selected-row" : "row report-history-row"} type="button" key={closure.id} onClick={() => setSelectedClosureId(selectedClosureId === closure.id ? "" : closure.id)}>
               <div>
                 <strong>{closure.date} - {formatCLP(closure.receivedTotal)}</strong>
                 <p>
@@ -2423,40 +2449,42 @@ function ReportsView({
                 {closure.note && <p>{closure.note}</p>}
               </div>
               <span className="amount report-row-amount">{closure.closedByName ?? "Localito"}</span>
-            </div>
+            </button>
           ))}
           {cashClosures.length === 0 && <p className="empty-state">Aun no hay cierres registrados.</p>}
         </div>
+        {selectedClosure && <div className="closure-detail"><div className="section-heading"><h3>Detalle del cierre {selectedClosure.date}</h3><span>{closureSales.length} ventas</span></div><div className="report-grid"><ReportMetric label="Total recibido" value={formatCLP(selectedClosure.receivedTotal)}/><ReportMetric label="Efectivo" value={formatCLP(selectedClosure.totalsByMethod.cash)}/><ReportMetric label="Fiado" value={formatCLP(selectedClosure.creditTotal)} tone="warning"/><ReportMetric label="Anuladas" value={String(selectedClosure.cancelledSalesCount)}/></div><div className="list">{closureSales.map((sale) => <div className="row" key={sale.id}><div><strong>Venta #{sale.id.slice(0,8)}</strong><p>{formatDateTime(sale.createdAt)} · {paymentMethodLabel(sale.paymentMethod)}</p></div><strong>{formatCLP(sale.total)}</strong></div>)}</div></div>}
       </section>
 
       {canViewFullReports && (
         <>
           <section className="panel">
             <div className="section-heading">
-              <h2>Productos relevantes</h2>
-              <span>Valor en sala</span>
+              <h2>Productos más vendidos</h2>
+              <span>Por monto</span>
             </div>
             <div className="bars">
               {topProducts.map((product) => {
-                const value = product.stock * product.salePrice;
-                const max = Math.max(...topProducts.map((item) => item.stock * item.salePrice), 1);
+                const value = product.amount;
+                const max = Math.max(...topProducts.map((item) => item.amount), 1);
                 return (
-                  <div className="bar-row" key={product.id}>
+                  <div className="bar-row" key={product.name}>
                     <span>{product.name}</span>
                     <div className="bar-track">
                       <div className="bar-fill" style={{ width: `${Math.max(8, (value / max) * 100)}%` }} />
                     </div>
-                    <strong>{formatCLP(value)}</strong>
+                    <strong>{formatCLP(value)} · {product.units} u.</strong>
                   </div>
                 );
               })}
+              {!topProducts.length && <p className="empty-state">Sin productos vendidos en este período.</p>}
             </div>
           </section>
 
           <section className="panel">
             <div className="section-heading">
               <h2>Resumen operativo</h2>
-              <span>{sales.length} ventas</span>
+              <span>{monthSales.length} ventas</span>
             </div>
             <div className="report-grid">
               <ReportMetric label="Clientes registrados" value={String(customers.length)} />
@@ -2472,7 +2500,7 @@ function ReportsView({
               <span>{sales.length} registros</span>
             </div>
             <div className="list">
-              {sales.slice(0, 8).map((sale) => (
+              {monthSales.slice(0, 20).map((sale) => (
                 <div className="row report-history-row" key={sale.id}>
                   <div>
                     <strong>Venta #{sale.id.slice(0, 8)}</strong>
@@ -2483,11 +2511,11 @@ function ReportsView({
                   </div>
                   <div className="row-actions report-row-actions">
                     <span className={sale.status === "cancelled" ? "debt report-row-amount" : "amount report-row-amount"}>{formatCLP(sale.total)}</span>
-                    <button className="secondary-action small danger-soft" type="button" onClick={() => onCancelSale(sale)} disabled={sale.status === "cancelled"}>
+                    <button className="secondary-action small danger-soft" type="button" onClick={() => openSaleAction(sale, "cancel")} disabled={sale.status === "cancelled"}>
                       <Trash2 size={16} />
                       <span>Anular</span>
                     </button>
-                    <button className="secondary-action small" type="button" onClick={() => onReturnSale(sale)} disabled={sale.status === "cancelled" || sale.status === "refunded"}>
+                    <button className="secondary-action small" type="button" onClick={() => openSaleAction(sale, "return")} disabled={sale.status === "cancelled" || sale.status === "refunded"}>
                       <RefreshCw size={16} /><span>Devolver</span>
                     </button>
                   </div>
@@ -2497,6 +2525,7 @@ function ReportsView({
           </section>
         </>
       )}
+      {saleAction && <div className="modal-backdrop" role="presentation" onClick={() => setSaleAction(null)}><section className="panel sale-action-dialog" role="dialog" aria-modal="true" aria-labelledby="sale-action-title" onClick={(event) => event.stopPropagation()}><div className="section-heading"><h2 id="sale-action-title">{saleAction.type === "cancel" ? "Anular venta" : "Registrar devolución"}</h2><button className="icon-button" type="button" onClick={() => setSaleAction(null)} aria-label="Cerrar"><X size={17}/></button></div><p className="helper-text">Venta #{saleAction.sale.id.slice(0,8)} · {formatCLP(saleAction.sale.total)}</p>{saleAction.type === "return" && <div className="list return-items">{saleAction.sale.items.map((item) => <label className="form-field" key={item.productId}><span>{item.productName} · máximo {item.quantity}</span><input type="number" min="0" max={item.quantity} value={returnQuantities[item.productId] ?? 0} onChange={(event) => setReturnQuantities((current) => ({ ...current, [item.productId]: Number(event.target.value) }))}/></label>)}</div>}<label className="form-field"><span>Motivo obligatorio</span><textarea value={actionReason} onChange={(event) => setActionReason(event.target.value)} placeholder="Explica brevemente el motivo"/></label><div className="action-grid"><button className="secondary-action" type="button" onClick={() => setSaleAction(null)}>Volver</button><button className="primary-action" type="button" onClick={confirmSaleAction} disabled={!actionReason.trim() || isBusy}>{isBusy ? "Procesando..." : saleAction.type === "cancel" ? "Confirmar anulación" : "Confirmar devolución"}</button></div></section></div>}
     </div>
   );
 }

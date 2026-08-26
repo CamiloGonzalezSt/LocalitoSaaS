@@ -8,7 +8,7 @@ Documento operativo para registrar en Jira el alcance construido de Localito, pl
 - Jerarquía: `Epic → Story → Sub-task`; usar `Bug` para defectos y `Task` para infraestructura o documentación.
 - Flujo: `Backlog → Por hacer → En curso → En revisión → Pruebas → Terminado`.
 - Estimación: Story Points Fibonacci (`1, 2, 3, 5, 8, 13`).
-- Sprint: dos semanas. Para reconstruir el historial, crear Sprint 0 a Sprint 10 y cerrar los incrementos ya entregados.
+- Sprint: dos semanas. Para reconstruir el historial, crear Sprint 0 a Sprint 13 y cerrar los incrementos ya entregados.
 - Componentes: Plataforma, Autenticación, POS, Inventario, Clientes, Caja, Compras, IA, Reportes, PWA, DevOps y Documentación.
 - Labels: `mvp`, `mobile-first`, `multi-tenant`, `security`, `ai`, `offline`, `production`, `thesis`.
 
@@ -18,7 +18,7 @@ El CSV [Jira-Import.csv](Jira-Import.csv) contiene épicas e historias listas pa
 
 Localito es un SaaS/PWA multi-tenant para negocios de barrio. Dueño y vendedor operan la aplicación; el cliente final no inicia sesión ni interactúa con Localito. El sistema administra catálogo, inventario, ventas, clientes, fiado, caja, gastos, compras, reportes y asistencia visual.
 
-Los pagos presenciales son externos y manuales. Localito registra efectivo, tarjeta en terminal externa, transferencia/QR, Webpay externo, fiado o pago mixto, pero no envía automáticamente el monto a un POS ni almacena datos de tarjeta.
+Los pagos presenciales son externos y manuales. Localito registra efectivo, tarjeta en terminal externa, transferencia/QR, Webpay externo, Mercado Pago QR, fiado o pago mixto, pero no envía automáticamente el monto a un POS ni almacena datos de tarjeta. La contratación de planes incluye una simulación sandbox de Webpay/Mercado Pago y transferencia sujeta a aprobación; la pasarela real queda pendiente de credenciales comerciales.
 
 ## 3. Épicas
 
@@ -36,6 +36,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | EPIC-10 | PWA y experiencia móvil | Operación instalable, responsive y tolerante a desconexiones. | Terminado |
 | EPIC-11 | Calidad y producción | Despliegue persistente, observable, probado y documentado. | Terminado |
 | EPIC-12 | Suscripciones y rediseño SaaS | Prueba, planes, permisos y experiencia profesional coherente por rol. | Terminado |
+| EPIC-13 | Preparación comercial y hardening | Alta pública, administración completa, operación financiera y UI lista para piloto. | Terminado |
 
 ## 4. Product Backlog
 
@@ -94,6 +95,16 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | HU-051 | EPIC-12 | Como dueño quiero editar los datos de mi negocio desde Más. | Nombre, rubro, dirección y teléfono tienen labels, validación, endpoint owner y auditoría. | 5 | Alta | 12 | Terminado |
 | HU-052 | EPIC-12 | Como dueño quiero solicitar un plan sin obtener acceso no pagado. | `pendingPlan` preserva acceso actual; system_admin verifica y activa el período manual. | 8 | Crítica | 12 | Terminado |
 | HU-053 | EPIC-12 | Como equipo quiero demostrar no regresión del rediseño. | Matriz anterior/nueva ubicación, pruebas y evidencia responsive actualizadas. | 8 | Crítica | 12 | Terminado |
+| HU-054 | EPIC-13 | Como empresa nueva quiero registrarme sin ayuda del administrador. | Alta pública; prueba Pro de 30 días; funciones, días restantes y condición de continuidad visibles. | 8 | Crítica | 13 | Terminado |
+| HU-055 | EPIC-13 | Como administrador quiero que planes y estados persistan. | Cambio optimista confirmado por API, recarga conserva plan/estado y auditoría registra el cambio. | 5 | Crítica | 13 | Terminado |
+| HU-056 | EPIC-13 | Como administrador quiero eliminar definitivamente locales y usuarios. | Confirmación reforzada; cascada segura por tenant; último dueño y usuario actual protegidos. | 8 | Alta | 13 | Terminado |
+| HU-057 | EPIC-13 | Como dueño quiero administrar completamente los usuarios del local. | Crear, editar, rol, activar, desactivar, restablecer clave y eliminar. | 8 | Alta | 13 | Terminado |
+| HU-058 | EPIC-13 | Como dueño quiero reportes mensuales accionables. | Filtro mensual, ventas, unidades, ticket, tendencia diaria, medios, vendedores, productos y cierres con detalle. | 13 | Alta | 13 | Terminado |
+| HU-059 | EPIC-13 | Como dueño quiero anular y devolver ventas con control. | Motivo obligatorio, devolución parcial por producto, stock y fiado corregidos sin duplicidad. | 8 | Crítica | 13 | Terminado |
+| HU-060 | EPIC-13 | Como vendedor quiero registrar abonos correctamente. | Monto obligatorio, medio explícito, límite por saldo y actualización consistente del cliente/deuda. | 5 | Crítica | 13 | Terminado |
+| HU-061 | EPIC-13 | Como usuario quiero un tema claro/oscuro profesional. | Switch accesible, paleta oficial, sombras oscuras eliminadas y contraste probado a 320/390/1280 px. | 5 | Alta | 13 | Terminado |
+| HU-062 | EPIC-13 | Como dueño quiero probar la contratación del plan sin dinero real. | Sandbox Webpay/Mercado Pago activa el plan de prueba; transferencia queda pendiente de aprobación. | 8 | Alta | 13 | Terminado |
+| HU-063 | EPIC-13 | Como usuario quiero recuperar acceso sin error de servidor. | Solicitud responde de forma segura; correo se envía si hay proveedor configurado; admin puede asignar clave temporal. | 5 | Crítica | 13 | Terminado |
 
 ## 5. Plan de sprints reconstruido
 
@@ -112,6 +123,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | Sprint 10 | Producción y tesis | HU-040 a HU-042 | Despliegue verificable, QA y documentación final. |
 | Sprint 11 | SaaS y rediseño profesional | HU-043 a HU-049 | Planes/entitlements, navegación por rol, pago asistido, temas y panel SaaS. |
 | Sprint 12 | Cierre de rediseño y regresión | HU-050 a HU-053 | Inicio final, negocio editable, activación manual segura y trazabilidad de regresión. |
+| Sprint 13 | Preparación comercial y hardening | HU-054 a HU-063 | Alta pública, administración CRUD, reportes, reversas, pagos sandbox y QA responsive. |
 
 ## 6. Definition of Ready
 

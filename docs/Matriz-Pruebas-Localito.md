@@ -116,6 +116,19 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-80 | Suscripción | Vencido con lectura | Vencer plan Pro y entrar a Clientes/Reportes. | Datos del plan siguen visibles; botones operativos deshabilitados y API rechaza mutaciones. | UI y HTTP aprobados con banner y productos del POS deshabilitados |
 | CP-81 | Plataforma | Embudo SaaS | Entrar como system_admin. | Muestra Basic, Pro, past_due, expirados, pruebas nuevas, conversión y MRR. | Visual aprobada en panel system_admin |
 | CP-82 | Apariencia | Predeterminado Claro | Iniciar con un usuario sin preferencia guardada. | Localito abre en Claro; Oscuro/Sistema quedan como selección explícita persistida. | Visual aprobada: dataset light inicial y selector Claro presionado |
+| CP-83 | Registro público | Crear empresa nueva | Completar negocio, dueño, correo y clave desde el login. | Crea tenant aislado, sesión owner y prueba Pro de 30 días. | Automatizada y HTTP local aprobadas |
+| CP-84 | Recuperación | Solicitar enlace sin proveedor de correo | Enviar un correo válido con email transaccional sin configurar. | Responde 202 sin revelar cuentas ni producir error 500; informa alternativa administrativa. | HTTP local aprobada |
+| CP-85 | Plataforma | Persistencia de plan | Cambiar Pro a Básico, recargar el panel y volver a Pro. | La selección persiste después de la recarga. | Visual local aprobada |
+| CP-86 | Plataforma | Eliminación definitiva de usuario | Restablecer clave y eliminar un vendedor. | Sesiones revocadas; historial de venta se conserva sin FK inválida. | Automatizada aprobada |
+| CP-87 | Plataforma | Eliminación definitiva de local | Eliminar tenant de prueba con confirmación reforzada. | Se eliminan todos sus datos y no afecta otros tenants. | Automatizada aprobada |
+| CP-88 | Clientes | Pestañas estables | Alternar Clientes, Fiado y Pendientes. | La franja conserva 58 px de alto y no mueve la pantalla. | Visual automatizada en navegador aprobada |
+| CP-89 | Fiado | Registrar abono | Ingresar monto y medio en cliente con deuda. | Abono se habilita, reduce saldo y no admite monto vacío o superior. | Lógica y UI aprobadas |
+| CP-90 | Caja | Carga según plan y rol | Abrir Caja con Basic/Pro y dueño/vendedor. | No muestra el error genérico de API; solicita solo módulos autorizados. | Visual local aprobada |
+| CP-91 | Reportes | Filtro mensual | Cambiar mes y revisar métricas/gráficos/listas. | Todos los bloques usan el mismo período y valores netos. | Typecheck y visual aprobadas |
+| CP-92 | Ventas | Devolución parcial acumulada | Devolver unidades en dos operaciones. | Nunca supera cantidad original y repone stock exactamente una vez. | Automatizada aprobada |
+| CP-93 | Tema oscuro | Sin superficies blancas | Revisar POS, buscador, clientes, reportes y modales. | Fondo #090909, superficie #111111, bordes #292929 y sin sombras blancas. | CSS computado y visual a 320 px aprobados |
+| CP-94 | Responsive | Controles a 320 px | Abrir POS y medir encabezado/navegación. | Cuatro botones de 44 px sin superposición y sin overflow horizontal. | Visual y medición aprobadas |
+| CP-95 | Rol vendedor | Plan oculto | Iniciar como vendedor en escritorio y móvil. | No ve tarjeta, días, contratación ni reportes del dueño. | Visual local aprobada |
 
 ## 5. Pruebas no funcionales sugeridas
 

@@ -1663,20 +1663,20 @@ El MVP se desarrolló por incrementos: plataforma multi-tenant, catálogo, inven
 
 La versión vigente agrega una suscripción individual por negocio. Todo local nuevo inicia una prueba Pro de 30 días y posteriormente puede operar con Localito Básico ($9.990/mes) o Localito Pro ($19.990/mes). El backend mantiene una matriz central de entitlements, por lo que ocultar un botón nunca es la única defensa: las operaciones no permitidas también reciben rechazo HTTP 403. Cuando una prueba o periodo vence, la información permanece guardada y consultable, pero las escrituras se pausan hasta la reactivación.
 
-El administrador de plataforma puede observar locales activos, pruebas, MRR estimado y plan/estado de cada tenant. El cobro recurrente automático queda como integración futura; la arquitectura ya conserva proveedor e identificadores externos sin exponer claves al frontend.
+El administrador de plataforma puede observar locales activos, pruebas, MRR estimado y plan/estado de cada tenant, además de administrar credenciales y eliminar definitivamente usuarios o locales mediante confirmaciones reforzadas. El cobro recurrente automático queda como integración futura; la arquitectura ya conserva proveedor e identificadores externos sin exponer claves al frontend.
 
-La navegación deja de presentar herramientas técnicas como módulos aislados. Venta Rápida se abre desde Vender; creación, importación y carga inicial viven dentro de Inventario; configuración, usuarios, plan, cuenta y exportación se agrupan en Más. El POS aplica el flujo `productos → ticket → Cobrar → medio → confirmación`: en pagos externos el vendedor debe verificar el terminal, QR o comprobante antes de que la venta y el stock se registren.
+La navegación deja de presentar herramientas técnicas como módulos aislados. Venta Rápida se abre desde Vender; creación, importación y carga inicial viven dentro de Inventario; configuración, usuarios, plan, cuenta y exportación se abren desde el engranaje, sin una sección “Más” duplicada. El POS aplica el flujo `productos → ticket → Cobrar → medio → confirmación`: en pagos externos el vendedor debe verificar el terminal, QR o comprobante antes de que la venta y el stock se registren.
 
-El cierre del rediseño agrega un Inicio centrado en ventas y atención diaria, edición segura de los datos del negocio desde Más y solicitudes de plan mediante `pendingPlan`. Esta solicitud no concede acceso ni reemplaza el plan vigente: el administrador de plataforma verifica el pago manual y recién entonces activa el período. La matriz de no regresión documenta la ubicación nueva de cada capacidad anterior.
+El cierre del rediseño agrega un Inicio centrado en ventas y atención diaria, edición segura de los datos del negocio desde Configuración, alta pública con prueba Pro de 30 días y contratación académica mediante Webpay/Mercado Pago sandbox o transferencia pendiente. El entorno sandbox no mueve dinero; una integración comercial real requerirá credenciales y contratos propios. La matriz de no regresión documenta la ubicación nueva de cada capacidad anterior.
 
-La capa visual utiliza Source Sans 3, verde principal `#0f766e`, tema claro/oscuro/sistema persistido por usuario, controles táctiles y diseño responsive sin zoom inicial ni desborde horizontal.
+La capa visual utiliza Source Sans 3, verde principal, sidebar azul premium en claro y grafito en oscuro, switch claro/oscuro persistido, controles táctiles y diseño responsive sin zoom inicial ni desborde horizontal.
 
 ## 34. Trazabilidad Scrum y Jira
 
 La documentación de gestión se separa de este documento extenso para mantenerla operativa:
 
-- `docs/Backlog-Scrum-Jira.md`: configuración de Jira, épicas, 42 historias, Story Points, prioridades, sprints, Definition of Ready, Definition of Done y roadmap.
-- `docs/Jira-Import.csv`: 11 épicas y 42 historias para importación mediante CSV.
+- `docs/Backlog-Scrum-Jira.md`: configuración de Jira, épicas, 63 historias, Story Points, prioridades, sprints, Definition of Ready, Definition of Done y roadmap.
+- `docs/Jira-Import.csv`: épicas e historias vigentes para importación mediante CSV.
 - `docs/Matriz-Pruebas-Localito.md`: casos funcionales y no funcionales que sirven como evidencia de aceptación.
 - `docs/Operacion-Produccion.md`: monitoreo, respaldos, incidentes, costos y seguridad.
 

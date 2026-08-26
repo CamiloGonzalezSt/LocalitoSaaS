@@ -342,11 +342,13 @@ CREATE TABLE IF NOT EXISTS cierres_caja (
   total_tarjeta INTEGER NOT NULL DEFAULT 0,
   total_transferencia INTEGER NOT NULL DEFAULT 0,
   total_webpay INTEGER NOT NULL DEFAULT 0,
+  total_mercadopago INTEGER NOT NULL DEFAULT 0,
   observacion TEXT,
   fecha_cierre TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_cierres_caja_negocio_fecha ON cierres_caja(negocio_id, fecha_caja);
+ALTER TABLE cierres_caja ADD COLUMN IF NOT EXISTS total_mercadopago INTEGER NOT NULL DEFAULT 0;
 
 -- Índices de relaciones y filtros multi-negocio. PostgreSQL no crea índices
 -- automáticamente para las columnas que contienen claves foráneas.

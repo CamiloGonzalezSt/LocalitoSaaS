@@ -283,6 +283,7 @@ export function getCashRegisterSummary(tenantId: string, date = new Date(), open
     card: 0,
     transfer: 0,
     webpay: 0,
+    mercadopago: 0,
     credit: 0,
     mixed: 0
   } satisfies Record<PaymentMethod, number>;
