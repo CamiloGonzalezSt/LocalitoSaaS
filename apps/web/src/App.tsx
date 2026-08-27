@@ -5,6 +5,7 @@ import {
   BarChart3,
   Camera,
   CheckCircle2,
+  CircleHelp,
   Copy,
   CreditCard,
   Edit3,
@@ -1927,6 +1928,7 @@ function SaleView({
           <Search size={18} />
           <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
         </div>
+        <ContextHelp title="¿Cómo preparo una venta rápida?" tips={["Busca por nombre, marca o código; también puedes elegir una categoría.", "Toca un producto para agregarlo al ticket y revisa cantidades antes de cobrar.", "Si tienes varios productos sobre el mesón, usa Venta Rápida con foto."]} />
         {!searchTerm.trim() && featuredProducts.length > 0 && <section className="sale-featured-products" aria-label="Productos frecuentes">
           <div className="sale-featured-heading"><strong>Productos frecuentes</strong><div role="group" aria-label="Tipo de productos frecuentes"><button className={featuredMode === "popular" ? "active" : ""} type="button" aria-pressed={featuredMode === "popular"} onClick={() => setFeaturedMode("popular")}><TrendingUp size={14}/> Más vendidos</button><button className={featuredMode === "recent" ? "active" : ""} type="button" aria-pressed={featuredMode === "recent"} onClick={() => setFeaturedMode("recent")}>Recientes</button></div></div>
           <div className="sale-featured-list">
@@ -2203,6 +2205,7 @@ function ProductsView({
           <h2>Inventario</h2>
           <span>{inventoryProducts.length === products.length ? `${products.length} productos` : `${inventoryProducts.length} de ${products.length}`}</span>
         </div>
+        <ContextHelp title="¿Cómo ordeno el inventario?" tips={["Usa categorías, stock bajo o sin stock para encontrar lo que necesitas.", "Para un producto nuevo elige Crear producto; para varios, usa Cargar varios.", "Ingresa una factura solo cuando vayas a recibir mercadería y confirmar sus datos."]} />
         <div className="search-box">
           <Search size={18} />
           <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
@@ -2336,6 +2339,7 @@ function CustomersView({
           <span>{canManageCustomers ? "Fiado" : "Alta rápida"}</span>
         </div>
         <p className="helper-text customer-form-intro">Registra lo esencial primero. Puedes completar más datos cuando los necesites.</p>
+        <ContextHelp title="¿Cómo usar clientes y fiados?" tips={["Crea al cliente antes de hacer una venta a fiado.", "Define un límite y los días acordados solo si necesitas controlarlos.", "Cuando te paguen, registra un abono para que la deuda quede al día."]} />
         <div className="form-grid customer-form-grid customer-form-primary-grid">
           <label className="form-field"><span>Nombre completo</span><input id="customer-name" value={customerForm.name} onChange={(event) => onForm({ ...customerForm, name: event.target.value })} placeholder="Ej. María González" /></label>
           <label className="form-field"><span>Teléfono</span><input value={customerForm.phone} onChange={(event) => onForm({ ...customerForm, phone: event.target.value })} placeholder="+56 9..." /></label>
@@ -2798,6 +2802,15 @@ function EmptyState({
       </div>
       {actionLabel && onAction && <button className="secondary-action small" type="button" onClick={onAction}>{actionLabel}</button>}
     </div>
+  );
+}
+
+function ContextHelp({ title, tips }: { title: string; tips: string[] }) {
+  return (
+    <details className="context-help">
+      <summary><CircleHelp size={18} /><span>{title}</span></summary>
+      <ul>{tips.map((tip) => <li key={tip}>{tip}</li>)}</ul>
+    </details>
   );
 }
 

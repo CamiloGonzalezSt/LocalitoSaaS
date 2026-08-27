@@ -6584,3 +6584,60 @@ summary:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Ayuda breve dentro del flujo: visible solo cuando la persona la necesita. */
+.context-help {
+  margin-top: 12px;
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.context-help summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 11px 13px;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 800;
+  list-style: none;
+}
+
+.context-help summary::-webkit-details-marker {
+  display: none;
+}
+
+.context-help summary::after {
+  margin-left: auto;
+  content: "+";
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.context-help[open] summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.context-help[open] summary::after {
+  content: "−";
+}
+
+.context-help ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 13px 16px 15px 35px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
+[data-theme="dark"] .context-help {
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+  border-color: var(--border);
+}
