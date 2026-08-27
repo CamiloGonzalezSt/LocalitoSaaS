@@ -5643,3 +5643,95 @@ button:active:not(:disabled) { transform: none; }
     padding: 14px;
   }
 }
+
+/* Inventario: estados legibles y superficies coherentes en ambos temas. */
+.category-filter {
+  color: var(--text-secondary);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.category-filter small {
+  color: var(--text-secondary);
+  background: var(--surface-secondary);
+}
+
+.category-filter:hover:not(.active) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+}
+
+.category-filter.active,
+.category-filter[aria-pressed="true"] {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.category-filter.active small,
+.category-filter[aria-pressed="true"] small {
+  color: #0c6f61;
+  background: #ffffff;
+}
+
+.category-filter:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .inventory-panel .stock-card,
+[data-theme="dark"] .inventory-strip div,
+[data-theme="dark"] .product-meta div,
+[data-theme="dark"] .product-code,
+[data-theme="dark"] .category-filter:not(.active) {
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .category-filter:not(.active) small {
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+}
+
+[data-theme="dark"] .category-filter.active,
+[data-theme="dark"] .category-filter[aria-pressed="true"] {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+[data-theme="dark"] .category-filter.active small,
+[data-theme="dark"] .category-filter[aria-pressed="true"] small {
+  color: #0c6f61;
+  background: #eafff9;
+}
+
+[data-theme="dark"] .inventory-strip {
+  background: var(--border);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .product-visual {
+  background: var(--primary-soft);
+  border: 1px solid #255b52;
+}
+
+[data-theme="dark"] .stock-status:not(.low) {
+  color: #8be1d2;
+  background: var(--primary-soft);
+}
+
+[data-theme="dark"] .stock-status.low,
+[data-theme="dark"] .stock-pill.low {
+  color: #ffb4b4;
+  background: #2b1515;
+}
+
+[data-theme="dark"] .stock-warning {
+  color: #ffb4b4;
+  background: #261313;
+  border-color: #5b2929;
+}
