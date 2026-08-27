@@ -5210,47 +5210,56 @@ button:active:not(:disabled) { transform: none; }
 .auth-divider::after { flex: 1; height: 1px; content: ""; background: var(--border); }
 
 .auth-register-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  width: 100%;
-  min-height: 64px;
-  padding: 12px 15px 12px 17px;
-  color: #713f12;
-  text-align: left;
-  background: linear-gradient(135deg, #fff4d8, #ffe8c2);
-  border: 1px solid #f0c987;
-  border-radius: 16px;
-  box-shadow: 0 8px 18px rgba(190, 125, 44, 0.12);
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  padding: 0;
+  color: #2563eb;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 750;
+  cursor: pointer;
 }
 
 .auth-register-link:hover:not(:disabled) {
-  border-color: #dfaa5c;
-  box-shadow: 0 12px 24px rgba(190, 125, 44, 0.19);
-  transform: translateY(-2px);
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
-.auth-register-copy {
-  display: grid;
-  gap: 3px;
+.register-prompt {
+  margin: 16px 0 0;
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: .82rem;
+  font-weight: 650;
 }
 
-.auth-register-copy strong { font-size: .94rem; }
-.auth-register-copy small { color: #95652d; font-size: .78rem; font-weight: 650; }
+.social-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  color: #475569;
+  background: #f3fafc;
+  border: 1px solid #e2eef2;
+  border-radius: 10px;
+  font-size: .82rem;
+  font-weight: 750;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
 
-.auth-register-arrow {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex: none;
-  color: #fffaf0;
-  background: #d88932;
-  border-radius: 50%;
-  font-size: 1.15rem;
-  line-height: 1;
+.social-login-button:hover:not(:disabled) {
+  background: #eaf6f8;
+  border-color: #cfe3e8;
+  transform: translateY(-1px);
+}
+
+.google-mark {
+  color: #4285f4;
+  font-size: 1.2rem;
+  font-weight: 900;
+  font-family: Arial, sans-serif;
 }
 
 .trial-offer {

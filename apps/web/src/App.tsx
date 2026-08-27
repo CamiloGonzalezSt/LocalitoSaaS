@@ -1712,10 +1712,11 @@ function LoginView({
             onForgot();
           }}>Olvidé mi contraseña</button>
           <div className="auth-divider"><span>¿Primera vez en Localito?</span></div>
-          <button className="auth-register-link" type="button" disabled={isBusy} onClick={onOpenRegister}>
-            <span className="auth-register-copy"><strong>Tu negocio merece algo simple</strong><small>Comienza tu cuenta gratis en un par de minutos</small></span>
-            <span className="auth-register-arrow" aria-hidden="true">→</span>
+          <button className="social-login-button" type="button" disabled={isBusy} onClick={() => setNotice({ message: "El inicio con Google estará disponible cuando conectemos la cuenta de Google del proyecto.", tone: "warning" })}>
+            <span className="google-mark" aria-hidden="true">G</span>
+            <span>Continuar con Google</span>
           </button>
+          <p className="register-prompt">¿Aún no tienes una cuenta? <button className="auth-register-link" type="button" disabled={isBusy} onClick={onOpenRegister}>Crea tu cuenta</button></p>
         </form>}
 
         {mode === "register" && <form className="login-form registration-form" onSubmit={(event) => {
