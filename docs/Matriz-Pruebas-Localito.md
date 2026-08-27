@@ -134,6 +134,7 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-94 | Responsive | Controles a 320 px | Abrir POS y medir encabezado/navegación. | Cuatro botones de 44 px sin superposición y sin overflow horizontal. | Visual y medición aprobadas |
 | CP-95 | Rol vendedor | Plan oculto | Iniciar como vendedor en escritorio y móvil. | No ve tarjeta, días, contratación ni reportes del dueño. | Visual local aprobada |
 | CP-96 | Experiencia | Estados vacíos con orientación | Abrir Vender sin ticket, filtrar un catálogo sin resultados, abrir Clientes vacío y elegir un mes sin ventas. | Cada estado explica la situación y, cuando corresponde, entrega una acción segura para continuar sin crear datos de prueba. | Pendiente evidencia |
+| CP-97 | Inventario | Acceso por tarea | Abrir Inventario como dueño y usar Revisar catálogo, Agregar producto, Cargar varios e Ingresar factura. | Cada tarea dirige al flujo existente correspondiente; no crea un segundo catálogo ni duplica la lógica de recepción. | Pendiente evidencia |
 
 ## 5. Pruebas no funcionales sugeridas
 
