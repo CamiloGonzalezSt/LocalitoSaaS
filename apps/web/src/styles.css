@@ -2787,6 +2787,7 @@ textarea:focus {
 
   .content {
     grid-area: content;
+    grid-template-columns: minmax(0, 1fr);
     max-width: 1480px;
     padding: 26px clamp(24px, 3.4vw, 46px) 48px;
   }
@@ -5158,6 +5159,15 @@ button:active:not(:disabled) { transform: none; }
 .dashboard-stack {
   width: 100%;
   max-width: none;
+  justify-self: stretch;
+  align-self: stretch;
+}
+
+.account-settings {
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+  align-self: stretch;
 }
 
 .back-button {
