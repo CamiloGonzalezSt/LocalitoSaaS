@@ -824,6 +824,46 @@ button:active:not(:disabled) {
   border-radius: 8px;
 }
 
+.action-empty-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 20px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+}
+
+.action-empty-state-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: var(--green);
+  background: var(--green-soft);
+  border-radius: 12px;
+}
+
+.action-empty-state strong {
+  display: block;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.action-empty-state p {
+  margin: 4px 0 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.action-empty-state .secondary-action {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
 .helper-text {
   margin: 10px 0 0;
   color: var(--muted);
@@ -5061,6 +5101,15 @@ button,
 [data-theme="dark"] .dashboard-priority-panel.urgent .dashboard-priority-icon { color: #ffadad; background: #2a1515; }
 
 @media (min-width: 680px) {
+  .action-empty-state {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .action-empty-state .secondary-action {
+    grid-column: auto;
+    justify-self: end;
+  }
+
   .dashboard-priority-panel {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }

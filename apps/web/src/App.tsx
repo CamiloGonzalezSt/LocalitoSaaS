@@ -1918,7 +1918,7 @@ function SaleView({
 
   return (
     <div className="workspace-grid sale-workspace">
-      <section className="panel sale-products-panel">
+      <section className="panel sale-products-panel" id="sale-product-picker">
         <div className="section-heading compact-heading">
           <div className="flow-title"><span>1</span><h2>Elige productos</h2></div>
           <span>{categoryProducts.length} disponibles</span>
@@ -1969,7 +1969,13 @@ function SaleView({
             </button>
           ))}
           {categoryProducts.length === 0 && (
-            <p className="empty-state">No encontramos productos en esta búsqueda. Prueba con otro nombre, marca, código o categoría.</p>
+            <EmptyState
+              icon={Search}
+              title="No encontramos productos"
+              description={searchTerm.trim() ? "Prueba con otro nombre, marca o código. También puedes volver a ver todo el catálogo." : `No hay productos en ${selectedCategoryLabel}. Elige otra categoría para continuar.`}
+              actionLabel="Ver todo el catálogo"
+              onAction={() => { onSearch(""); setSelectedCategory("all"); }}
+            />
           )}
           {categoryProducts.length > visibleProducts.length && (
             <p className="helper-text">Mostrando los primeros {visibleProducts.length} de {categoryProducts.length} en {selectedCategoryLabel}. Escribe el nombre, marca o código para encontrar otro producto.</p>
@@ -2011,7 +2017,7 @@ function SaleView({
               </div>
             </div>
           ))}
-          {ticket.length === 0 && <p className="empty-state">Agrega productos para armar el ticket.</p>}
+          {ticket.length === 0 && <EmptyState icon={ShoppingCart} title="Tu ticket está vacío" description="Elige un producto del catálogo o usa Venta Rápida con foto para prepararlo." actionLabel="Elegir productos" onAction={() => document.getElementById("sale-product-picker")?.scrollIntoView({ behavior: "smooth", block: "start" })} />}
         </div>
 
         {isChoosingPayment && <><div className="checkout-step"><span>3</span><div><strong>¿Cómo pagará?</strong><p>Registra el pago solo después de verificarlo.</p></div></div><div className="payment-methods">
@@ -2330,7 +2336,7 @@ function CustomersView({
         </div>
         <p className="helper-text customer-form-intro">Registra lo esencial primero. Puedes completar más datos cuando los necesites.</p>
         <div className="form-grid customer-form-grid customer-form-primary-grid">
-          <label className="form-field"><span>Nombre completo</span><input value={customerForm.name} onChange={(event) => onForm({ ...customerForm, name: event.target.value })} placeholder="Ej. María González" /></label>
+          <label className="form-field"><span>Nombre completo</span><input id="customer-name" value={customerForm.name} onChange={(event) => onForm({ ...customerForm, name: event.target.value })} placeholder="Ej. María González" /></label>
           <label className="form-field"><span>Teléfono</span><input value={customerForm.phone} onChange={(event) => onForm({ ...customerForm, phone: event.target.value })} placeholder="+56 9..." /></label>
           <label className="form-field"><span>Límite de fiado</span><input value={customerForm.creditLimit} onChange={(event) => onForm({ ...customerForm, creditLimit: event.target.value })} placeholder="0 = sin límite" inputMode="numeric" /></label>
           <label className="form-field"><span>Días para pagar</span><input value={customerForm.creditDays} onChange={(event) => onForm({ ...customerForm, creditDays: event.target.value })} placeholder="30" inputMode="numeric" /></label>
@@ -2434,7 +2440,7 @@ function CustomersView({
               </div>
             </div>
           ))}
-          {visibleCustomers.length === 0 && <p className="empty-state">No hay registros en esta sección.</p>}
+          {visibleCustomers.length === 0 && <EmptyState icon={Users} title={customerTab === "clients" ? "Aún no has registrado clientes" : "No hay cuentas pendientes"} description={customerTab === "clients" ? "Crea tu primer cliente para guardar sus datos y administrar sus fiados." : "Cuando un cliente tenga un fiado activo, aparecerá aquí para que puedas revisarlo."} actionLabel={customerTab === "clients" ? "Crear cliente" : undefined} onAction={customerTab === "clients" ? () => document.getElementById("customer-name")?.focus() : undefined} />}
         </div>
       </section>
     </div></div>
@@ -2540,9 +2546,11 @@ function ReportsView({
         </div>
       )}
 
-      {canViewFullReports && <section className="panel report-overview"><div className="section-heading"><div><span>COMPARACIÓN DIARIA</span><h2>Ventas del mes</h2></div><span>{dailyTotals.length} días con ventas</span></div><div className="daily-chart" aria-label="Ventas diarias">{dailyTotals.map(([day, total]) => <div className="daily-column" key={day}><strong>{formatCLP(total)}</strong><div><span style={{ height: `${Math.max(5, total / maxDaily * 100)}%` }}/></div><small>{day}</small></div>)}{!dailyTotals.length && <p className="empty-state">No hay ventas para el período seleccionado.</p>}</div></section>}
+      {canViewFullReports && activeSales.length === 0 && <EmptyState icon={BarChart3} title="Aún no hay ventas en este período" description="Cambia el mes seleccionado o registra una venta para ver tendencias, medios de pago y productos más vendidos." />}
 
-      {canViewFullReports && <div className="report-dashboard-grid"><section className="panel"><div className="section-heading"><h2>Formas de pago más utilizadas</h2><span>{formatCLP(monthTotal)}</span></div><div className="horizontal-bars">{[...methodTotals.entries()].sort((a,b)=>b[1]-a[1]).map(([label,total]) => <div className="horizontal-bar" key={label}><span>{label}</span><div><i style={{ width: `${Math.max(4, total / Math.max(monthTotal,1) * 100)}%` }}/></div><strong>{formatCLP(total)}</strong></div>)}</div></section><section className="panel"><div className="section-heading"><h2>Ventas por vendedor</h2><span>{sellerTotals.length}</span></div><div className="seller-breakdown">{sellerTotals.map(([sellerId,total]) => <div key={sellerId}><span>{users.find((item) => item.id === sellerId)?.name ?? "Usuario eliminado"}</span><strong>{formatCLP(total)}</strong></div>)}{!sellerTotals.length && <p className="empty-state">Sin ventas en este período.</p>}</div></section></div>}
+      {canViewFullReports && activeSales.length > 0 && <section className="panel report-overview"><div className="section-heading"><div><span>COMPARACIÓN DIARIA</span><h2>Ventas del mes</h2></div><span>{dailyTotals.length} días con ventas</span></div><div className="daily-chart" aria-label="Ventas diarias">{dailyTotals.map(([day, total]) => <div className="daily-column" key={day}><strong>{formatCLP(total)}</strong><div><span style={{ height: `${Math.max(5, total / maxDaily * 100)}%` }}/></div><small>{day}</small></div>)}</div></section>}
+
+      {canViewFullReports && activeSales.length > 0 && <div className="report-dashboard-grid"><section className="panel"><div className="section-heading"><h2>Formas de pago más utilizadas</h2><span>{formatCLP(monthTotal)}</span></div><div className="horizontal-bars">{[...methodTotals.entries()].sort((a,b)=>b[1]-a[1]).map(([label,total]) => <div className="horizontal-bar" key={label}><span>{label}</span><div><i style={{ width: `${Math.max(4, total / Math.max(monthTotal,1) * 100)}%` }}/></div><strong>{formatCLP(total)}</strong></div>)}</div></section><section className="panel"><div className="section-heading"><h2>Ventas por vendedor</h2><span>{sellerTotals.length}</span></div><div className="seller-breakdown">{sellerTotals.map(([sellerId,total]) => <div key={sellerId}><span>{users.find((item) => item.id === sellerId)?.name ?? "Usuario eliminado"}</span><strong>{formatCLP(total)}</strong></div>)}</div></section></div>}
 
       <section className="panel">
         <div className="section-heading">
@@ -2602,7 +2610,7 @@ function ReportsView({
 
       {canViewFullReports && (
         <>
-          <section className="panel">
+          {activeSales.length > 0 && <section className="panel">
             <div className="section-heading">
               <h2>Productos más vendidos</h2>
               <span>Por monto</span>
@@ -2621,9 +2629,8 @@ function ReportsView({
                   </div>
                 );
               })}
-              {!topProducts.length && <p className="empty-state">Sin productos vendidos en este período.</p>}
             </div>
-          </section>
+          </section>}
 
           <section className="panel">
             <div className="section-heading">
@@ -2665,6 +2672,7 @@ function ReportsView({
                   </div>
                 </div>
               ))}
+              {monthSales.length === 0 && <EmptyState icon={ReceiptText} title="No hay ventas ni anulaciones" description="Cuando registres movimientos en este mes, podrás revisarlos y gestionar anulaciones o devoluciones desde aquí." />}
             </div>
           </section>
         </>
@@ -2768,6 +2776,31 @@ function StatCard({
         <strong>{value}</strong>
       </div>
     </section>
+  );
+}
+
+function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  actionLabel,
+  onAction
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="action-empty-state">
+      <div className="action-empty-state-icon"><Icon size={22} /></div>
+      <div>
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+      {actionLabel && onAction && <button className="secondary-action small" type="button" onClick={onAction}>{actionLabel}</button>}
+    </div>
   );
 }
 
