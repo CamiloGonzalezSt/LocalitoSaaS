@@ -443,7 +443,7 @@ function App() {
 
     const storedSession = localStorage.getItem("localito-session");
     if (!storedSession) {
-      setNotice({ message: "Inicia sesion para operar el local.", tone: "success" });
+      setNotice({ message: "Inicia sesión para operar el local.", tone: "success" });
       setIsLoading(false);
       return;
     }
@@ -452,11 +452,11 @@ function App() {
       const restored = JSON.parse(storedSession) as AuthSession;
       saveSession(restored);
       if (restored.user.role === "seller") setActiveView("sale");
-      void loadWorkspace("Sesion restaurada.", restored.user);
+      void loadWorkspace("Sesión restaurada.", restored.user);
     } catch {
       localStorage.removeItem("localito-session");
       localStorage.removeItem("localito-token");
-      setNotice({ message: "Inicia sesion para operar el local.", tone: "success" });
+      setNotice({ message: "Inicia sesión para operar el local.", tone: "success" });
       setIsLoading(false);
     }
   }, []);
@@ -520,7 +520,7 @@ function App() {
       await loadWorkspace(`Bienvenido, ${response.data.user.name}.`, response.data.user);
     } catch (error) {
       setIsLoading(false);
-      setNotice({ message: error instanceof Error ? error.message : "No se pudo iniciar sesion.", tone: "error" });
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo iniciar sesión.", tone: "error" });
     } finally {
       setIsBusy(false);
     }
@@ -631,7 +631,7 @@ function App() {
     setCashClosureNote("");
     setLastDebtCharge(null);
     setActiveView("dashboard");
-    setNotice({ message: "Sesion cerrada. Puedes iniciar como dueno o vendedor.", tone: "success" });
+    setNotice({ message: "Sesión cerrada. Puedes iniciar como dueño o vendedor.", tone: "success" });
   }
 
   function addToTicket(product: Product) {
@@ -880,7 +880,7 @@ function App() {
     }
 
     if (!productForm.name.trim() || !productForm.category.trim() || !productForm.salePrice.trim()) {
-      setNotice({ message: "Nombre, categoria y precio de venta son obligatorios.", tone: "warning" });
+      setNotice({ message: "Nombre, categoría y precio de venta son obligatorios.", tone: "warning" });
       return;
     }
 
@@ -1338,11 +1338,11 @@ function App() {
               className="icon-button"
               type="button"
               onClick={() => navigateTo("settings")}
-              aria-label={isOwner ? "Configuracion" : "Mi perfil"}
+              aria-label={isOwner ? "Configuración" : "Mi perfil"}
             >
               <Settings size={21} />
             </button>}
-          <button className="icon-button" type="button" onClick={logout} aria-label="Cerrar sesion">
+          <button className="icon-button" type="button" onClick={logout} aria-label="Cerrar sesión">
             <LogOut size={20} />
           </button>
         </div>
@@ -1700,7 +1700,7 @@ function LoginView({
           </label>
           <button className="primary-action full" type="submit" disabled={isBusy}>
             <LogIn size={20} />
-            <span>{isBusy ? "Entrando..." : "Iniciar sesion"}</span>
+            <span>{isBusy ? "Entrando..." : "Iniciar sesión"}</span>
           </button>
           <button className="secondary-action full" type="button" disabled={isBusy} onClick={() => {
             setRecoveryEmail(loginForm.email);
@@ -1925,7 +1925,7 @@ function SaleView({
         </div>
         <div className="search-box">
           <Search size={18} />
-          <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o codigo" />
+          <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
         </div>
         {!searchTerm.trim() && featuredProducts.length > 0 && <section className="sale-featured-products" aria-label="Productos frecuentes">
           <div className="sale-featured-heading"><strong>Productos frecuentes</strong><div role="group" aria-label="Tipo de productos frecuentes"><button className={featuredMode === "popular" ? "active" : ""} type="button" aria-pressed={featuredMode === "popular"} onClick={() => setFeaturedMode("popular")}><TrendingUp size={14}/> Más vendidos</button><button className={featuredMode === "recent" ? "active" : ""} type="button" aria-pressed={featuredMode === "recent"} onClick={() => setFeaturedMode("recent")}>Recientes</button></div></div>
@@ -2126,7 +2126,7 @@ function ProductsView({
     const categories = new Map<string, { label: string; count: number }>();
 
     for (const product of products) {
-      const label = product.category.trim() || "Sin categoria";
+      const label = product.category.trim() || "Sin categoría";
       const id = label.toLocaleLowerCase("es");
       const current = categories.get(id);
       categories.set(id, { label: current?.label ?? label, count: (current?.count ?? 0) + 1 });
@@ -2140,7 +2140,7 @@ function ProductsView({
     const normalizedSearch = searchTerm.trim().toLocaleLowerCase("es");
 
     return products.filter((product) => {
-      const productCategory = (product.category.trim() || "Sin categoria").toLocaleLowerCase("es");
+      const productCategory = (product.category.trim() || "Sin categoría").toLocaleLowerCase("es");
       const matchesCategory = selectedCategory === "all" || productCategory === selectedCategory;
       const matchesStock = stockFilter === "all" || (stockFilter === "out" ? product.trackStock !== false && product.stock <= 0 : product.trackStock !== false && product.stock <= product.minimumStock);
       const matchesSearch = !normalizedSearch || [product.name, product.brand, product.category, product.barcode, product.sku]
@@ -2188,11 +2188,11 @@ function ProductsView({
           {(showAdvancedProductFields || Boolean(editingProductId)) && <div className="progressive-form-additional"><div className="progressive-form-heading"><span>INFORMACIÓN ADICIONAL</span><p>Completa solo lo que te ayude a ordenar mejor el inventario.</p></div><div className="form-grid advanced-product-fields"><label className="form-field"><span>Marca</span><input value={productForm.brand} onChange={(event) => onForm({ ...productForm, brand: event.target.value })} placeholder="Ej. Coca-Cola" /></label><label className="form-field"><span>Código de barras</span><input value={productForm.barcode} onChange={(event) => onForm({ ...productForm, barcode: event.target.value })} placeholder="Código del envase" inputMode="numeric" /></label><label className="form-field"><span>Costo</span><input value={productForm.costPrice} onChange={(event) => onForm({ ...productForm, costPrice: event.target.value })} placeholder="$0" inputMode="numeric" /></label><label className="form-field"><span>Stock mínimo</span><input value={productForm.minimumStock} onChange={(event) => onForm({ ...productForm, minimumStock: event.target.value })} placeholder="0" inputMode="numeric" /></label><label className="form-field"><span>SKU interno</span><input value={productForm.sku} onChange={(event) => onForm({ ...productForm, sku: event.target.value })} placeholder="Código interno" /></label><label className="form-field"><span>Variante o formato</span><input value={productForm.variant} onChange={(event) => onForm({ ...productForm, variant: event.target.value })} placeholder="Ej. Sin azúcar, pack 6" /></label><label className="form-field"><span>Unidad de venta</span><select value={productForm.unit} onChange={(event) => onForm({ ...productForm, unit: event.target.value as ProductFormState["unit"] })}><option value="unit">Unidad</option><option value="kg">Kilogramo</option><option value="gram">Gramo</option><option value="liter">Litro</option><option value="pack">Pack</option><option value="box">Caja</option></select></label><label className="form-field"><span>Unidades por pack</span><input value={productForm.unitsPerPack} onChange={(event) => onForm({ ...productForm, unitsPerPack: event.target.value })} placeholder="Ej. 6" inputMode="numeric" /></label><label className="form-field"><span>Vencimiento</span><input type="date" value={productForm.expiryDate} onChange={(event) => onForm({ ...productForm, expiryDate: event.target.value })} /></label><label className="field checkbox-field"><input type="checkbox" checked={productForm.trackStock} onChange={(event) => onForm({ ...productForm, trackStock: event.target.checked })} /> Controlar stock de este producto</label></div></div>}
           <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy}>
             {editingProductId ? <Save size={19} /> : <Plus size={19} />}
-            <span>{editingProductId ? "Guardar cambios" : "Crear producto"}</span>
+            <span>{editingProductId ? "Guardar producto" : "Crear producto"}</span>
           </button>
           {editingProductId && (
             <button className="secondary-action full" type="button" onClick={onCancelEdit}>
-              Cancelar edicion
+              Cancelar edición
             </button>
           )}
         </section>
@@ -2205,14 +2205,14 @@ function ProductsView({
         </div>
         <div className="search-box">
           <Search size={18} />
-          <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o codigo" />
+          <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
         </div>
         <div className="inventory-filters">
           <div className="inventory-filter-heading">
-            <strong>Categorias</strong>
+            <strong>Categorías</strong>
             {(selectedCategory !== "all" || stockFilter !== "all" || searchTerm) && <button type="button" onClick={clearInventoryFilters}>Limpiar filtros</button>}
           </div>
-          <div className="category-filter-list" role="group" aria-label="Filtrar inventario por categoria">
+          <div className="category-filter-list" role="group" aria-label="Filtrar inventario por categoría">
             <button
               className={selectedCategory === "all" ? "category-filter active" : "category-filter"}
               type="button"
@@ -2333,7 +2333,7 @@ function CustomersView({
       {customerTab === "clients" && <section className="panel customer-form-panel">
         <div className="section-heading">
           <h2>{editingCustomerId ? "Editar cliente" : "Nuevo cliente"}</h2>
-          <span>{canManageCustomers ? "Fiado" : "Alta rapida"}</span>
+          <span>{canManageCustomers ? "Fiado" : "Alta rápida"}</span>
         </div>
         <p className="helper-text customer-form-intro">Registra lo esencial primero. Puedes completar más datos cuando los necesites.</p>
         <div className="form-grid customer-form-grid customer-form-primary-grid">
@@ -2357,7 +2357,7 @@ function CustomersView({
         </button>
         {editingCustomerId && canManageCustomers && (
           <button className="secondary-action full" type="button" onClick={onCancelEdit}>
-            Cancelar edicion
+            Cancelar edición
           </button>
         )}
       </section>}
@@ -2405,7 +2405,7 @@ function CustomersView({
             <div className="customer-row" key={customer.id}>
               <div>
                 <strong>{customer.name}</strong>
-                <p>{customer.phone ?? "Sin telefono"}</p>
+                <p>{customer.phone ?? "Sin teléfono"}</p>
               </div>
               <span className={customer.debtBalance > 0 ? "debt" : "paid"}>{formatCLP(customer.debtBalance)}</span>
               <input
@@ -2566,7 +2566,7 @@ function ReportsView({
           <ReportMetric label="Anuladas" value={String(cashRegister.cancelledSalesCount)} />
         </div>
         <label className="field">
-          Observacion del cierre
+          Observación del cierre
           <input
             value={cashClosureNote}
             onChange={(event) => onCashClosureNote(event.target.value)}
@@ -2600,7 +2600,7 @@ function ReportsView({
               <span className="amount report-row-amount">{closure.closedByName ?? "Localito"}</span>
             </button>
           ))}
-          {cashClosures.length === 0 && <p className="empty-state">Aun no hay cierres registrados.</p>}
+          {cashClosures.length === 0 && <p className="empty-state">Aún no hay cierres registrados.</p>}
         </div>
         {selectedClosure && <div className="closure-detail"><div className="section-heading"><h3>Detalle del cierre {selectedClosure.date}</h3><span>{closureSales.length} ventas</span></div><div className="report-grid"><ReportMetric label="Total recibido" value={formatCLP(selectedClosure.receivedTotal)}/><ReportMetric label="Efectivo" value={formatCLP(selectedClosure.totalsByMethod.cash)}/><ReportMetric label="Fiado" value={formatCLP(selectedClosure.creditTotal)} tone="warning"/><ReportMetric label="Anuladas" value={String(selectedClosure.cancelledSalesCount)}/></div><div className="list">{closureSales.map((sale) => <div className="row" key={sale.id}><div><strong>Venta #{sale.id.slice(0,8)}</strong><p>{formatDateTime(sale.createdAt)} · {paymentMethodLabel(sale.paymentMethod)}</p></div><strong>{formatCLP(sale.total)}</strong></div>)}</div></div>}
       </section>
@@ -2699,8 +2699,8 @@ function ReceiptPrintArea({
       <div className="receipt-paper">
         <div className="receipt-header">
           <h1>{tenant?.name ?? "Localito"}</h1>
-          <p>{tenant?.address ?? "Direccion no registrada"}</p>
-          <p>{tenant?.phone ?? "Telefono no registrado"}</p>
+          <p>{tenant?.address ?? "Dirección no registrada"}</p>
+          <p>{tenant?.phone ?? "Teléfono no registrado"}</p>
           <strong>Comprobante no tributario</strong>
         </div>
 

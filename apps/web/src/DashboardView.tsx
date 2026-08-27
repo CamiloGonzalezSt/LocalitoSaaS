@@ -62,7 +62,7 @@ export function DashboardView({
             <ShoppingCart size={21} /> Vender
           </button>
           <button className="secondary-action" type="button" onClick={onAddProduct} disabled={!canOperate}>
-            <PackagePlus size={21} /> Agregar producto
+            <PackagePlus size={21} /> Crear producto
           </button>
           <button className="secondary-action" type="button" onClick={onOpenCash}>
             <Banknote size={21} /> Ver caja
