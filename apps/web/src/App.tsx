@@ -1742,7 +1742,7 @@ function LoginView({
           event.preventDefault();
           onRequestReset(recoveryEmail);
         }}>
-          <p className="helper-text">Te enviaremos un enlace seguro al correo asociado a tu cuenta.</p>
+          <p className="helper-text">Si el correo está habilitado, recibirás un enlace seguro. Si no, el administrador puede asignarte una clave temporal.</p>
           <label className="field">
             Correo
             <input
@@ -1756,7 +1756,7 @@ function LoginView({
               required
             />
           </label>
-          <button className="primary-action full" type="submit" disabled={isBusy}>{isBusy ? "Enviando..." : "Enviar enlace"}</button>
+          <button className="primary-action full" type="submit" disabled={isBusy}>{isBusy ? "Enviando..." : "Solicitar recuperación"}</button>
           <button className="secondary-action full" type="button" onClick={onReturnToLogin} disabled={isBusy}>Volver al ingreso</button>
         </form>}
 
