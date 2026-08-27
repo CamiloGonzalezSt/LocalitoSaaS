@@ -2239,21 +2239,27 @@ function CustomersView({
   const visibleCustomers = customerTab === "clients" ? customers : customers.filter((customer) => customer.debtBalance > 0);
   return (
     <div className="stack"><nav className="section-tabs" aria-label="Secciones de clientes"><button className={customerTab === "clients" ? "active" : ""} type="button" onClick={() => setCustomerTab("clients")}>Clientes <span>{customers.length}</span></button><button className={customerTab === "credit" ? "active" : ""} type="button" onClick={() => setCustomerTab("credit")}>Fiado <span>{customers.filter((customer) => customer.debtBalance > 0).length}</span></button><button className={customerTab === "pending" ? "active" : ""} type="button" onClick={() => setCustomerTab("pending")}>Pendientes <span>{customers.filter((customer) => customer.debtBalance > 0).length}</span></button></nav><div className="workspace-grid customer-workspace">
-      {customerTab === "clients" && <section className="panel">
+      {customerTab === "clients" && <section className="panel customer-form-panel">
         <div className="section-heading">
           <h2>{editingCustomerId ? "Editar cliente" : "Nuevo cliente"}</h2>
           <span>{canManageCustomers ? "Fiado" : "Alta rapida"}</span>
         </div>
-        <div className="form-grid customer-form-grid">
+        <p className="helper-text customer-form-intro">Registra lo esencial primero. Puedes completar más datos cuando los necesites.</p>
+        <div className="form-grid customer-form-grid customer-form-primary-grid">
           <label className="form-field"><span>Nombre completo</span><input value={customerForm.name} onChange={(event) => onForm({ ...customerForm, name: event.target.value })} placeholder="Ej. María González" /></label>
           <label className="form-field"><span>Teléfono</span><input value={customerForm.phone} onChange={(event) => onForm({ ...customerForm, phone: event.target.value })} placeholder="+56 9..." /></label>
-          <label className="form-field"><span>Correo (opcional)</span><input value={customerForm.email} onChange={(event) => onForm({ ...customerForm, email: event.target.value })} placeholder="cliente@correo.cl" /></label>
-          <label className="form-field"><span>Dirección (opcional)</span><input value={customerForm.address} onChange={(event) => onForm({ ...customerForm, address: event.target.value })} placeholder="Calle y número" /></label>
-          <label className="form-field customer-notes-field"><span>Observaciones</span><input value={customerForm.notes} onChange={(event) => onForm({ ...customerForm, notes: event.target.value })} placeholder="Datos útiles del cliente" /></label>
           <label className="form-field"><span>Límite de fiado</span><input value={customerForm.creditLimit} onChange={(event) => onForm({ ...customerForm, creditLimit: event.target.value })} placeholder="0 = sin límite" inputMode="numeric" /></label>
           <label className="form-field"><span>Días para pagar</span><input value={customerForm.creditDays} onChange={(event) => onForm({ ...customerForm, creditDays: event.target.value })} placeholder="30" inputMode="numeric" /></label>
           {canManageCustomers && <label className="field checkbox-field"><input type="checkbox" checked={customerForm.creditBlocked} onChange={(event) => onForm({ ...customerForm, creditBlocked: event.target.checked })} /> Bloquear nuevos fiados</label>}
         </div>
+        <details className="customer-additional-fields">
+          <summary><span>Información adicional</span><small>Correo, dirección y observaciones</small></summary>
+          <div className="form-grid customer-form-grid">
+            <label className="form-field"><span>Correo (opcional)</span><input value={customerForm.email} onChange={(event) => onForm({ ...customerForm, email: event.target.value })} placeholder="cliente@correo.cl" /></label>
+            <label className="form-field"><span>Dirección (opcional)</span><input value={customerForm.address} onChange={(event) => onForm({ ...customerForm, address: event.target.value })} placeholder="Calle y número" /></label>
+            <label className="form-field customer-notes-field"><span>Observaciones</span><input value={customerForm.notes} onChange={(event) => onForm({ ...customerForm, notes: event.target.value })} placeholder="Datos útiles del cliente" /></label>
+          </div>
+        </details>
         <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy || !canOperate}>
           {editingCustomerId ? <Save size={19} /> : <Plus size={19} />}
           <span>{editingCustomerId ? "Guardar cliente" : "Crear cliente"}</span>
@@ -2264,6 +2270,8 @@ function CustomersView({
           </button>
         )}
       </section>}
+
+      {customerTab === "clients" && <CustomerOverview customers={customers} />}
 
       {lastDebtCharge && (
         <section className="panel payment-share-panel">
@@ -2347,6 +2355,23 @@ function CustomersView({
       </section>
     </div></div>
   );
+}
+
+function CustomerOverview({ customers }: { customers: Customer[] }) {
+  const activeCustomers = customers.filter((customer) => customer.active !== false);
+  const customersWithDebt = activeCustomers.filter((customer) => customer.debtBalance > 0);
+  const blockedCustomers = activeCustomers.filter((customer) => customer.creditBlocked);
+  const totalDebt = customersWithDebt.reduce((sum, customer) => sum + customer.debtBalance, 0);
+
+  return <aside className="panel customer-overview" aria-label="Resumen de clientes">
+    <div className="section-heading"><div><span>VISTA RÁPIDA</span><h2>Resumen de clientes</h2></div><span>{activeCustomers.length} activos</span></div>
+    <div className="customer-overview-metrics">
+      <article><span>Clientes</span><strong>{activeCustomers.length}</strong><small>registrados</small></article>
+      <article className={customersWithDebt.length ? "attention" : ""}><span>Con fiado</span><strong>{customersWithDebt.length}</strong><small>{formatCLP(totalDebt)} pendiente</small></article>
+      <article><span>Bloqueados</span><strong>{blockedCustomers.length}</strong><small>sin nuevos fiados</small></article>
+    </div>
+    {activeCustomers.length ? <div className="customer-overview-list"><div><strong>Clientes recientes</strong><small>Accesos rápidos para revisar sus datos.</small></div>{activeCustomers.slice(0, 4).map((customer) => <div className="customer-overview-item" key={customer.id}><span>{customer.name}</span><strong className={customer.debtBalance > 0 ? "debt" : "paid"}>{customer.debtBalance > 0 ? formatCLP(customer.debtBalance) : "Al día"}</strong></div>)}</div> : <div className="customer-overview-empty"><Users size={23}/><strong>Comienza con tu primer cliente</strong><p>Cuando registres clientes, aquí verás sus fiados, deudas y datos más recientes.</p></div>}
+  </aside>;
 }
 
 function ReportsView({
