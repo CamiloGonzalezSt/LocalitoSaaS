@@ -12,6 +12,7 @@ import {
   LogIn,
   LogOut,
   ListPlus,
+  EllipsisVertical,
   Moon,
   MessageCircle,
   Minus,
@@ -306,6 +307,7 @@ function App() {
   const [summary, setSummary] = useState<ReportSummary>(emptySummary);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [theme, setTheme] = useState<ThemePreference>("light");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [ticket, setTicket] = useState<SaleItem[]>([]);
   const [lastReceipt, setLastReceipt] = useState<Sale | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
@@ -368,6 +370,7 @@ function App() {
 
   function navigateTo(view: View) {
     if (view !== activeView) setPreviousView(activeView);
+    setMobileMenuOpen(false);
     setActiveView(view);
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     document.documentElement.scrollTop = 0;
@@ -1312,9 +1315,7 @@ function App() {
             <span className="role-pill">{currentUser.role === "system_admin" ? "Admin plataforma" : currentUser.role === "owner" ? "Dueño" : "Vendedor"}</span>
           </p>
         </div>
-        <div className="topbar-actions">
-          {!isSystemAdmin && isOwner && <button className="icon-button mobile-report-button" type="button" onClick={() => navigateTo("reports")} aria-label="Reportes"><BarChart3 size={20}/></button>}
-          {!isSystemAdmin && <button className="icon-button mobile-theme-button" type="button" onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar tema">{theme === "dark" ? <Sun size={20}/> : <Moon size={20}/>}</button>}
+        <div className="topbar-actions desktop-topbar-actions">
           <button className="icon-button" type="button" onClick={() => void loadWorkspace("Datos refrescados.")} aria-label="Refrescar">
             <RefreshCw size={20} />
           </button>
@@ -1329,6 +1330,18 @@ function App() {
           <button className="icon-button" type="button" onClick={logout} aria-label="Cerrar sesion">
             <LogOut size={20} />
           </button>
+        </div>
+        <div className="mobile-topbar-tools">
+          {!isSystemAdmin && <button className="icon-button" type="button" onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar tema">{theme === "dark" ? <Sun size={19}/> : <Moon size={19}/>}</button>}
+          <div className="mobile-actions-wrap">
+            <button className="icon-button mobile-menu-trigger" type="button" aria-label="Abrir acciones" aria-haspopup="menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)}><EllipsisVertical size={21}/></button>
+            {mobileMenuOpen && <div className="mobile-actions-menu" role="menu">
+              {!isSystemAdmin && isOwner && <button type="button" role="menuitem" onClick={() => navigateTo("reports")}><BarChart3 size={18}/><span>Reportes</span></button>}
+              <button type="button" role="menuitem" onClick={() => { setMobileMenuOpen(false); void loadWorkspace("Datos refrescados."); }}><RefreshCw size={18}/><span>Actualizar datos</span></button>
+              {!isSystemAdmin && <button type="button" role="menuitem" onClick={() => navigateTo("settings")}><Settings size={18}/><span>{isOwner ? "Configuración" : "Mi perfil"}</span></button>}
+              <button className="danger" type="button" role="menuitem" onClick={() => { setMobileMenuOpen(false); logout(); }}><LogOut size={18}/><span>Cerrar sesión</span></button>
+            </div>}
+          </div>
         </div>
       </header>
 
