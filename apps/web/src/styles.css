@@ -6555,3 +6555,32 @@ button.inventory-task:hover:not(:disabled) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Accesibilidad transversal: cada control conserva un foco perceptible en ambos temas. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 56%, transparent);
+  outline-offset: 3px;
+}
+
+.inventory-task:focus-visible,
+.sale-featured-product:focus-visible,
+.mobile-cart-summary:focus-visible,
+.mobile-checkout-action:focus-visible {
+  outline-color: color-mix(in srgb, var(--primary) 68%, #ffffff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

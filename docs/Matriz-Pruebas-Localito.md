@@ -138,6 +138,7 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-98 | Reportes | Lectura por período | Elegir un mes con y sin ventas y recorrer resultado, análisis, caja e historial. | El total y las métricas corresponden al período elegido; Caja de hoy declara que es operativa y los historiales muestran su alcance sin mezclar datos. | Pendiente evidencia |
 | CP-99 | Productos | Formulario progresivo | Crear y editar un producto completando solo datos principales y luego desplegando información adicional. | Nombre, categoría, precio y stock son claros y suficientes para crear; datos opcionales conservan el mismo comportamiento al guardar. | Pendiente evidencia |
 | CP-100 | Experiencia | Textos y acciones consistentes | Recorrer Inicio, Inventario, Clientes, Reportes y los mensajes de sesión. | Las acciones distinguen crear, guardar, revisar y cerrar; etiquetas, búsquedas y mensajes visibles usan español claro y acentuación correcta. | Pendiente evidencia |
+| CP-101 | Accesibilidad | Foco y reducción de movimiento | Navegar con teclado por botones, campos, filtros y enlaces en ambos temas; activar reducción de movimiento del sistema. | El foco es visible en cada control y la interfaz elimina transiciones no esenciales cuando el sistema solicita menos movimiento. | Pendiente evidencia |
 
 ## 5. Pruebas no funcionales sugeridas
 
