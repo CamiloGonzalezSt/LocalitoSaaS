@@ -347,7 +347,7 @@ function App() {
     if (!normalized) return products;
 
     return products.filter((product) =>
-      [product.name, product.brand, product.category, product.barcode]
+      [product.name, product.brand, product.category, product.barcode, product.sku]
         .filter(Boolean)
         .some((value) => value?.toLowerCase().includes(normalized))
     );
@@ -1851,7 +1851,22 @@ function SaleView({
   const [cashPart, setCashPart] = useState("");
   const [isChoosingPayment, setIsChoosingPayment] = useState(false);
   const [externalPaymentConfirmed, setExternalPaymentConfirmed] = useState(false);
-  const visibleProducts = products.slice(0, 60);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const categoryOptions = useMemo(() => {
+    const categories = new Map<string, { id: string; label: string; count: number }>();
+    products.forEach((product) => {
+      const label = product.category.trim() || "Sin categoría";
+      const id = label.toLocaleLowerCase("es");
+      const current = categories.get(id);
+      categories.set(id, current ? { ...current, count: current.count + 1 } : { id, label, count: 1 });
+    });
+    return [...categories.values()].sort((a, b) => a.label.localeCompare(b.label, "es"));
+  }, [products]);
+  const categoryProducts = useMemo(() => selectedCategory === "all"
+    ? products
+    : products.filter((product) => (product.category.trim() || "Sin categoría").toLocaleLowerCase("es") === selectedCategory), [products, selectedCategory]);
+  const selectedCategoryLabel = selectedCategory === "all" ? "Todos" : categoryOptions.find((category) => category.id === selectedCategory)?.label ?? "Todos";
+  const visibleProducts = categoryProducts.slice(0, 60);
   const discountedTotal = Math.max(0, ticketTotal - numberFromInput(discount));
   const cardPart = Math.max(0, discountedTotal - numberFromInput(cashPart));
   const isExternalPayment = ["card", "transfer", "webpay", "mercadopago"].includes(paymentMethod);
@@ -1863,6 +1878,16 @@ function SaleView({
     }
   }, [ticket.length]);
 
+  useEffect(() => {
+    if (selectedCategory !== "all" && !categoryOptions.some((category) => category.id === selectedCategory)) {
+      setSelectedCategory("all");
+    }
+  }, [categoryOptions, selectedCategory]);
+
+  useEffect(() => {
+    if (searchTerm.trim()) setSelectedCategory("all");
+  }, [searchTerm]);
+
   function submitSale() {
     const payments = paymentMethod === "mixed" ? [{ method: "cash" as const, amount: numberFromInput(cashPart) }, { method: "card" as const, amount: cardPart }].filter((payment) => payment.amount > 0) : undefined;
     onConfirm({ discount: numberFromInput(discount), notes: notes.trim() || undefined, payments });
@@ -1873,11 +1898,27 @@ function SaleView({
       <section className="panel sale-products-panel">
         <div className="section-heading compact-heading">
           <div className="flow-title"><span>1</span><h2>Elige productos</h2></div>
-          <span>{products.length} disponibles</span>
+          <span>{categoryProducts.length} disponibles</span>
         </div>
         <div className="search-box">
           <Search size={18} />
           <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o codigo" />
+        </div>
+        <div className="sale-category-area">
+          <div className="sale-category-heading">
+            <strong>{searchTerm.trim() ? "Resultados de búsqueda" : "Explora por categoría"}</strong>
+            {selectedCategory !== "all" && <button type="button" onClick={() => setSelectedCategory("all")}>Ver todos</button>}
+          </div>
+          <div className="category-filter-list sale-category-list" role="group" aria-label="Filtrar productos de venta por categoría">
+            <button className={selectedCategory === "all" ? "category-filter active" : "category-filter"} type="button" aria-pressed={selectedCategory === "all"} onClick={() => setSelectedCategory("all")}>
+              <span>Todos</span><small>{products.length}</small>
+            </button>
+            {categoryOptions.map((category) => (
+              <button className={selectedCategory === category.id ? "category-filter active" : "category-filter"} type="button" aria-pressed={selectedCategory === category.id} onClick={() => setSelectedCategory(category.id)} key={category.id}>
+                <span>{category.label}</span><small>{category.count}</small>
+              </button>
+            ))}
+          </div>
         </div>
         <button className="inline-command" type="button" onClick={onScan} disabled={!canSell}>
           <Camera size={18} />
@@ -1898,8 +1939,11 @@ function SaleView({
               <span className="product-price">{formatCLP(product.salePrice)}</span>
             </button>
           ))}
-          {products.length > visibleProducts.length && (
-            <p className="helper-text">Mostrando los primeros {visibleProducts.length} de {products.length}. Escribe el nombre, marca o código para encontrar otro producto.</p>
+          {categoryProducts.length === 0 && (
+            <p className="empty-state">No encontramos productos en esta búsqueda. Prueba con otro nombre, marca, código o categoría.</p>
+          )}
+          {categoryProducts.length > visibleProducts.length && (
+            <p className="helper-text">Mostrando los primeros {visibleProducts.length} de {categoryProducts.length} en {selectedCategoryLabel}. Escribe el nombre, marca o código para encontrar otro producto.</p>
           )}
         </div>
       </section>

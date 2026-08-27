@@ -2329,6 +2329,39 @@ textarea:focus {
   overflow: hidden;
 }
 
+.sale-category-area {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 2px;
+}
+
+.sale-category-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sale-category-heading strong {
+  color: var(--text-primary, var(--ink));
+  font-size: .79rem;
+  font-weight: 900;
+}
+
+.sale-category-heading button {
+  padding: 2px 0;
+  color: var(--primary, var(--green));
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 850;
+}
+
+.sale-category-list {
+  margin: 0;
+}
+
 .product-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;

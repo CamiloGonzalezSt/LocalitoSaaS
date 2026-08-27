@@ -123,6 +123,7 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-87 | Plataforma | Eliminación definitiva de local | Eliminar tenant de prueba con confirmación reforzada. | Se eliminan todos sus datos y no afecta otros tenants. | Automatizada aprobada |
 | CP-88 | Clientes | Pestañas estables | Alternar Clientes, Fiado y Pendientes. | La franja conserva 58 px de alto y no mueve la pantalla. | Visual automatizada en navegador aprobada |
 | CP-89 | Fiado | Registrar abono | Ingresar monto y medio en cliente con deuda. | Abono se habilita, reduce saldo y no admite monto vacío o superior. | Lógica y UI aprobadas |
+| CP-90 | POS | Explorar por categoría | Entrar a Vender, elegir una categoría y luego volver a Todos. | Solo se muestran los productos de la categoría elegida; búsqueda restablece Todos y el ticket no cambia. | Pendiente evidencia |
 | CP-90 | Caja | Carga según plan y rol | Abrir Caja con Basic/Pro y dueño/vendedor. | No muestra el error genérico de API; solicita solo módulos autorizados. | Visual local aprobada |
 | CP-91 | Reportes | Filtro mensual | Cambiar mes y revisar métricas/gráficos/listas. | Todos los bloques usan el mismo período y valores netos. | Typecheck y visual aprobadas |
 | CP-92 | Ventas | Devolución parcial acumulada | Devolver unidades en dos operaciones. | Nunca supera cantidad original y repone stock exactamente una vez. | Automatizada aprobada |
