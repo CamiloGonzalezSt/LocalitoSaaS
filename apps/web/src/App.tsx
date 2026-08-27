@@ -1906,6 +1906,16 @@ function SaleView({
     onConfirm({ discount: numberFromInput(discount), notes: notes.trim() || undefined, payments });
   }
 
+  function scrollToTicket() {
+    document.getElementById("sale-ticket")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function openMobileCheckout() {
+    setIsChoosingPayment(true);
+    setExternalPaymentConfirmed(false);
+    window.setTimeout(scrollToTicket, 0);
+  }
+
   return (
     <div className="workspace-grid sale-workspace">
       <section className="panel sale-products-panel">
@@ -1967,11 +1977,14 @@ function SaleView({
         </div>
       </section>
 
-      {ticket.length > 0 && <button className="mobile-cart-summary" type="button" onClick={() => document.getElementById("sale-ticket")?.scrollIntoView({ behavior: "smooth" })}>
-        <span><ShoppingCart size={20}/><strong>{ticket.reduce((sum, item) => sum + item.quantity, 0)} productos</strong></span>
-        <strong>{formatCLP(discountedTotal)}</strong>
-        <span>Ver carrito</span>
-      </button>}
+      {ticket.length > 0 && <div className="mobile-checkout-bar" aria-label="Resumen del ticket">
+        <button className="mobile-cart-summary" type="button" onClick={scrollToTicket}>
+          <span><ShoppingCart size={20}/><strong>{ticket.reduce((sum, item) => sum + item.quantity, 0)} productos</strong></span>
+          <strong>{formatCLP(discountedTotal)}</strong>
+          <span>Revisar ticket</span>
+        </button>
+        <button className="mobile-checkout-action" type="button" onClick={openMobileCheckout} disabled={!canSell || isBusy}><CheckCircle2 size={18}/><span>Cobrar</span></button>
+      </div>}
 
       <section className="panel ticket-panel" id="sale-ticket">
         <div className="section-heading">
