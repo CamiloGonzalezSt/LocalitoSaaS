@@ -4877,6 +4877,86 @@ button,
   gap: 10px;
 }
 
+.dashboard-priority-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  color: var(--text-primary, var(--ink));
+  background: var(--surface);
+  border: 1px solid var(--border, var(--line));
+  border-left: 4px solid var(--primary, var(--green));
+  border-radius: 16px;
+}
+
+.dashboard-priority-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  color: var(--primary, var(--green));
+  background: var(--primary-soft, var(--green-soft));
+  border-radius: 14px;
+}
+
+.dashboard-priority-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.dashboard-priority-copy > span {
+  color: var(--primary, var(--green));
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .07em;
+}
+
+.dashboard-priority-copy strong {
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+}
+
+.dashboard-priority-copy small {
+  color: var(--text-secondary, var(--muted));
+  font-size: .8rem;
+  line-height: 1.35;
+}
+
+.dashboard-priority-panel .secondary-action {
+  grid-column: 1 / -1;
+  justify-content: center;
+  min-height: 43px;
+}
+
+.dashboard-priority-panel.warning { border-left-color: var(--amber); }
+.dashboard-priority-panel.warning .dashboard-priority-icon { color: #a56700; background: #fff3d9; }
+.dashboard-priority-panel.urgent { border-left-color: var(--red); }
+.dashboard-priority-panel.urgent .dashboard-priority-icon { color: var(--red); background: #fff0ed; }
+
+[data-theme="dark"] .dashboard-priority-panel {
+  background: var(--surface);
+  border-color: var(--border);
+  border-left-color: var(--primary);
+}
+
+[data-theme="dark"] .dashboard-priority-panel.warning { border-left-color: #e6ad36; }
+[data-theme="dark"] .dashboard-priority-panel.warning .dashboard-priority-icon { color: #f0bb48; background: #2a210e; }
+[data-theme="dark"] .dashboard-priority-panel.urgent { border-left-color: #f08787; }
+[data-theme="dark"] .dashboard-priority-panel.urgent .dashboard-priority-icon { color: #ffadad; background: #2a1515; }
+
+@media (min-width: 680px) {
+  .dashboard-priority-panel {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .dashboard-priority-panel .secondary-action {
+    grid-column: auto;
+    justify-content: center;
+  }
+}
+
 .dashboard-metric {
   display: grid;
   gap: 5px;

@@ -7,7 +7,7 @@ Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sus
 
 | Funcionalidad anterior | Nueva ubicación | Estado | Prueba realizada |
 |---|---|---|---|
-| Inicio / dashboard | **Inicio** | Rediseñada | Ventas de hoy, número de ventas, efectivo esperado, margen, ticket promedio y alertas renderizados en escritorio y móvil. |
+| Inicio / dashboard | **Inicio** | Rediseñada | Ventas de hoy, métricas útiles y una prioridad contextual con acción directa; los avisos aparecen solo cuando requieren revisión. |
 | Vender / POS | **Vender** | Conservada y simplificada | Selección por búsqueda o categoría → ticket → Cobrar → medio de pago; el filtro no modifica el ticket. |
 | Venta Rápida | **Vender → Venta Rápida con foto** | Reubicada | La navegación la abre dentro del POS; resultado se agrega al ticket existente. |
 | Código de barras | **Vender → Venta Rápida → código** | Conservada | Servicio y vista `QuickSaleView` continúan disponibles sin cambiar endpoints. |

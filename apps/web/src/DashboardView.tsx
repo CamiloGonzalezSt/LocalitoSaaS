@@ -1,4 +1,4 @@
-import { AlertTriangle, Banknote, PackagePlus, ShoppingCart, Store, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Banknote, CheckCircle2, PackagePlus, ShoppingCart, Store, Users } from "lucide-react";
 import type { CashRegisterSummary, Customer, Product, ReportSummary, Sale } from "@localito/shared";
 import { contextualGreeting, formatCLP } from "./lib/format";
 
@@ -37,6 +37,15 @@ export function DashboardView({
 }: Props) {
   const outOfStock = lowStockProducts.filter((product) => product.stock <= 0);
   const firstName = userName.trim().split(/\s+/)[0] || userName;
+  const hasPendingDebt = Boolean(canViewCustomers && topDebtor && topDebtor.debtBalance > 0);
+  const priority = outOfStock.length > 0
+    ? { Icon: AlertTriangle, tone: "urgent", title: `${outOfStock.length} producto${outOfStock.length === 1 ? "" : "s"} sin stock`, description: "Revísalos antes de que afecten tus próximas ventas.", action: "Revisar inventario", onClick: onOpenStock, requiresOperation: false }
+    : lowStockProducts.length > 0
+      ? { Icon: PackagePlus, tone: "warning", title: `${lowStockProducts.length} producto${lowStockProducts.length === 1 ? "" : "s"} con stock bajo`, description: "Anticipa la reposición para mantener el negocio operativo.", action: "Ver stock bajo", onClick: onOpenStock, requiresOperation: false }
+      : hasPendingDebt
+        ? { Icon: Users, tone: "warning", title: "Hay un fiado pendiente", description: `${topDebtor?.name} debe ${formatCLP(topDebtor?.debtBalance ?? 0)}.`, action: "Revisar fiado", onClick: onOpenCustomers, requiresOperation: false }
+        : { Icon: CheckCircle2, tone: "ready", title: "Todo está al día", description: "El negocio está listo para registrar la próxima venta.", action: "Comenzar venta", onClick: onStartSale, requiresOperation: true };
+  const PriorityIcon = priority.Icon;
 
   return (
     <div className="stack dashboard-stack">
@@ -68,23 +77,28 @@ export function DashboardView({
         <DashboardMetric label={canViewCustomers ? "Fiado pendiente" : "Alertas de stock"} value={canViewCustomers ? formatCLP(summary.pendingDebt) : String(lowStockProducts.length)} attention={canViewCustomers ? summary.pendingDebt > 0 : lowStockProducts.length > 0} />
       </section>
 
-      <section className="panel attention-panel">
+      <section className={`dashboard-priority-panel ${priority.tone}`} aria-label="Prioridad de hoy">
+        <div className="dashboard-priority-icon"><PriorityIcon size={23} /></div>
+        <div className="dashboard-priority-copy"><span>PRIORIDAD DE HOY</span><strong>{priority.title}</strong><small>{priority.description}</small></div>
+        <button className="secondary-action" type="button" onClick={priority.onClick} disabled={priority.requiresOperation && !canOperate}><span>{priority.action}</span><ArrowRight size={17} /></button>
+      </section>
+
+      {(lowStockProducts.length > 0 || hasPendingDebt) && <section className="panel attention-panel">
         <div className="section-heading">
           <div><span>RESUMEN OPERATIVO</span><h2>Necesitan atención</h2></div>
-          <span>{lowStockProducts.length + (canViewCustomers && topDebtor?.debtBalance ? 1 : 0)} pendientes</span>
+          <span>{lowStockProducts.length + (hasPendingDebt ? 1 : 0)} pendientes</span>
         </div>
         <div className="attention-grid">
-          <button className="attention-card" type="button" onClick={onOpenStock}>
+          {lowStockProducts.length > 0 && <button className="attention-card" type="button" onClick={onOpenStock}>
             <AlertTriangle size={21} />
             <span><strong>{lowStockProducts.length} con stock bajo</strong><small>{outOfStock.length ? `${outOfStock.length} sin stock` : "Ningún producto agotado"}</small></span>
-          </button>
-          {canViewCustomers && <button className="attention-card" type="button" onClick={onOpenCustomers}>
+          </button>}
+          {hasPendingDebt && <button className="attention-card" type="button" onClick={onOpenCustomers}>
             <Users size={21} />
-            <span><strong>{topDebtor && topDebtor.debtBalance > 0 ? topDebtor.name : "Fiados al día"}</strong><small>{topDebtor && topDebtor.debtBalance > 0 ? `Debe ${formatCLP(topDebtor.debtBalance)}` : "No hay deudas pendientes"}</small></span>
+            <span><strong>{topDebtor?.name}</strong><small>Debe {formatCLP(topDebtor?.debtBalance ?? 0)}</small></span>
           </button>}
         </div>
-        {!lowStockProducts.length && !(canViewCustomers && topDebtor && topDebtor.debtBalance > 0) && <p className="empty-state">Todo está al día. No hay alertas que revisar.</p>}
-      </section>
+      </section>}
 
       <section className="panel">
         <div className="section-heading"><h2>Últimas ventas</h2><span>{sales.length} registros</span></div>
