@@ -11,9 +11,21 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // The app still works if the browser blocks service workers in development.
-    });
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let refreshingForUpdate = false;
+
+    if (hadController) {
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshingForUpdate) return;
+        refreshingForUpdate = true;
+        window.location.reload();
+      });
+    }
+
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => registration.update())
+      .catch(() => {
+        // Localito sigue funcionando si el navegador bloquea el modo instalable.
+      });
   });
 }
-
