@@ -136,6 +136,7 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-96 | Experiencia | Estados vacíos con orientación | Abrir Vender sin ticket, filtrar un catálogo sin resultados, abrir Clientes vacío y elegir un mes sin ventas. | Cada estado explica la situación y, cuando corresponde, entrega una acción segura para continuar sin crear datos de prueba. | Pendiente evidencia |
 | CP-97 | Inventario | Acceso por tarea | Abrir Inventario como dueño y usar Revisar catálogo, Agregar producto, Cargar varios e Ingresar factura. | Cada tarea dirige al flujo existente correspondiente; no crea un segundo catálogo ni duplica la lógica de recepción. | Pendiente evidencia |
 | CP-98 | Reportes | Lectura por período | Elegir un mes con y sin ventas y recorrer resultado, análisis, caja e historial. | El total y las métricas corresponden al período elegido; Caja de hoy declara que es operativa y los historiales muestran su alcance sin mezclar datos. | Pendiente evidencia |
+| CP-99 | Productos | Formulario progresivo | Crear y editar un producto completando solo datos principales y luego desplegando información adicional. | Nombre, categoría, precio y stock son claros y suficientes para crear; datos opcionales conservan el mismo comportamiento al guardar. | Pendiente evidencia |
 
 ## 5. Pruebas no funcionales sugeridas
 
