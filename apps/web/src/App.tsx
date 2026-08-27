@@ -30,6 +30,7 @@ import {
   Smartphone,
   Store,
   Sun,
+  TrendingUp,
   Trash2,
   Users,
   WalletCards,
@@ -342,16 +343,6 @@ function App() {
   );
 
   const ticketTotal = useMemo(() => ticket.reduce((sum, item) => sum + item.subtotal, 0), [ticket]);
-  const filteredProducts = useMemo(() => {
-    const normalized = searchTerm.trim().toLowerCase();
-    if (!normalized) return products;
-
-    return products.filter((product) =>
-      [product.name, product.brand, product.category, product.barcode, product.sku]
-        .filter(Boolean)
-        .some((value) => value?.toLowerCase().includes(normalized))
-    );
-  }, [products, searchTerm]);
   const activeSales = useMemo(() => sales.filter((sale) => sale.status !== "cancelled"), [sales]);
   const cancelledSales = useMemo(() => sales.filter((sale) => sale.status === "cancelled"), [sales]);
   const topDebtor = useMemo(() => [...customers].sort((a, b) => b.debtBalance - a.debtBalance)[0], [customers]);
@@ -1420,7 +1411,8 @@ function App() {
 
         {!isLoading && activeView === "sale" && (
           <SaleView
-            products={filteredProducts}
+            products={products}
+            sales={activeSales}
             ticket={ticket}
             ticketTotal={ticketTotal}
             paymentMethod={paymentMethod}
@@ -1805,6 +1797,7 @@ function LoginView({
 
 function SaleView({
   products,
+  sales,
   ticket,
   ticketTotal,
   paymentMethod,
@@ -1826,6 +1819,7 @@ function SaleView({
   onShareReceipt
 }: {
   products: Product[];
+  sales: Sale[];
   ticket: SaleItem[];
   ticketTotal: number;
   paymentMethod: PaymentMethod;
@@ -1852,6 +1846,14 @@ function SaleView({
   const [isChoosingPayment, setIsChoosingPayment] = useState(false);
   const [externalPaymentConfirmed, setExternalPaymentConfirmed] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [featuredMode, setFeaturedMode] = useState<"popular" | "recent">("popular");
+  const searchFilteredProducts = useMemo(() => {
+    const normalized = searchTerm.trim().toLocaleLowerCase("es");
+    if (!normalized) return products;
+    return products.filter((product) => [product.name, product.brand, product.category, product.barcode, product.sku]
+      .filter(Boolean)
+      .some((value) => value?.toLocaleLowerCase("es").includes(normalized)));
+  }, [products, searchTerm]);
   const categoryOptions = useMemo(() => {
     const categories = new Map<string, { id: string; label: string; count: number }>();
     products.forEach((product) => {
@@ -1863,8 +1865,19 @@ function SaleView({
     return [...categories.values()].sort((a, b) => a.label.localeCompare(b.label, "es"));
   }, [products]);
   const categoryProducts = useMemo(() => selectedCategory === "all"
-    ? products
-    : products.filter((product) => (product.category.trim() || "Sin categoría").toLocaleLowerCase("es") === selectedCategory), [products, selectedCategory]);
+    ? searchFilteredProducts
+    : searchFilteredProducts.filter((product) => (product.category.trim() || "Sin categoría").toLocaleLowerCase("es") === selectedCategory), [searchFilteredProducts, selectedCategory]);
+  const featuredProducts = useMemo(() => {
+    const productsById = new Map(products.map((product) => [product.id, product]));
+    if (featuredMode === "popular") {
+      const quantities = new Map<string, number>();
+      sales.forEach((sale) => sale.items.forEach((item) => quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity)));
+      return [...quantities.entries()].sort((a, b) => b[1] - a[1]).map(([productId]) => productsById.get(productId)).filter((product): product is Product => Boolean(product)).slice(0, 6);
+    }
+
+    const recentIds = [...sales].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).flatMap((sale) => sale.items.map((item) => item.productId));
+    return [...new Set(recentIds)].map((productId) => productsById.get(productId)).filter((product): product is Product => Boolean(product)).slice(0, 6);
+  }, [featuredMode, products, sales]);
   const selectedCategoryLabel = selectedCategory === "all" ? "Todos" : categoryOptions.find((category) => category.id === selectedCategory)?.label ?? "Todos";
   const visibleProducts = categoryProducts.slice(0, 60);
   const discountedTotal = Math.max(0, ticketTotal - numberFromInput(discount));
@@ -1904,6 +1917,12 @@ function SaleView({
           <Search size={18} />
           <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o codigo" />
         </div>
+        {!searchTerm.trim() && featuredProducts.length > 0 && <section className="sale-featured-products" aria-label="Productos frecuentes">
+          <div className="sale-featured-heading"><strong>Productos frecuentes</strong><div role="group" aria-label="Tipo de productos frecuentes"><button className={featuredMode === "popular" ? "active" : ""} type="button" aria-pressed={featuredMode === "popular"} onClick={() => setFeaturedMode("popular")}><TrendingUp size={14}/> Más vendidos</button><button className={featuredMode === "recent" ? "active" : ""} type="button" aria-pressed={featuredMode === "recent"} onClick={() => setFeaturedMode("recent")}>Recientes</button></div></div>
+          <div className="sale-featured-list">
+            {featuredProducts.map((product) => <button className="sale-featured-product" type="button" key={product.id} onClick={() => onAdd(product)} disabled={!canSell}><img src={productImageUrl(product)} alt="" aria-hidden="true"/><span><strong>{product.name}</strong><small>{formatCLP(product.salePrice)}</small></span></button>)}
+          </div>
+        </section>}
         <div className="sale-category-area">
           <div className="sale-category-heading">
             <strong>{searchTerm.trim() ? "Resultados de búsqueda" : "Explora por categoría"}</strong>
