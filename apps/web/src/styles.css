@@ -5735,3 +5735,80 @@ button:active:not(:disabled) { transform: none; }
   background: #261313;
   border-color: #5b2929;
 }
+
+/* Configurar inventario: la cabecera no debe heredar el fondo blanco de .panel. */
+.panel.setup-hero {
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.17), transparent 30%),
+    linear-gradient(135deg, #0f8b7a, #11264d);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.panel.setup-hero .setup-kicker,
+.panel.setup-hero h2,
+.panel.setup-hero .setup-progress-card strong {
+  color: #ffffff;
+}
+
+.panel.setup-hero p,
+.panel.setup-hero .setup-progress-card span,
+.panel.setup-hero .setup-progress-card small {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.setup-context-card,
+.setup-finish-card,
+.setup-method-panel,
+.setup-choice,
+.setup-steps > div {
+  color: var(--text-primary);
+  background-color: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .panel.setup-hero {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(34, 183, 159, 0.15), transparent 30%),
+    linear-gradient(135deg, #102925, #111111);
+  border-color: #255b52;
+}
+
+[data-theme="dark"] .setup-context-card,
+[data-theme="dark"] .setup-finish-card,
+[data-theme="dark"] .setup-method-panel,
+[data-theme="dark"] .setup-choice,
+[data-theme="dark"] .setup-steps > div {
+  color: var(--text-primary);
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .setup-choice.recommended,
+[data-theme="dark"] .setup-steps > div.active {
+  background: var(--primary-soft);
+  border-color: #255b52;
+}
+
+[data-theme="dark"] .setup-category-chips span {
+  color: #8be1d2;
+  background: var(--primary-soft);
+  border-color: #255b52;
+}
+
+[data-theme="dark"] .setup-steps > div > span {
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+}
+
+[data-theme="dark"] .setup-choice-icon.blue {
+  color: #9ab8ff;
+  background: #17233b;
+}
+
+[data-theme="dark"] .setup-choice-icon.amber {
+  color: #ffd38a;
+  background: #2d2414;
+}
