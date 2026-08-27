@@ -308,6 +308,7 @@ function App() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [theme, setTheme] = useState<ThemePreference>("light");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileActionsRef = useRef<HTMLDivElement>(null);
   const [ticket, setTicket] = useState<SaleItem[]>([]);
   const [lastReceipt, setLastReceipt] = useState<Sale | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
@@ -494,6 +495,24 @@ function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [activeView]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const closeWhenClickingOutside = (event: PointerEvent) => {
+      if (!mobileActionsRef.current?.contains(event.target as Node)) setMobileMenuOpen(false);
+    };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeWhenClickingOutside);
+    document.addEventListener("keydown", closeWithEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeWhenClickingOutside);
+      document.removeEventListener("keydown", closeWithEscape);
+    };
+  }, [mobileMenuOpen]);
 
   async function login() {
     if (!loginForm.email.trim() || !loginForm.password.trim()) {
@@ -1333,7 +1352,7 @@ function App() {
         </div>
         <div className="mobile-topbar-tools">
           {!isSystemAdmin && <button className="icon-button" type="button" onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar tema">{theme === "dark" ? <Sun size={19}/> : <Moon size={19}/>}</button>}
-          <div className="mobile-actions-wrap">
+          <div className="mobile-actions-wrap" ref={mobileActionsRef}>
             <button className="icon-button mobile-menu-trigger" type="button" aria-label="Abrir acciones" aria-haspopup="menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)}><EllipsisVertical size={21}/></button>
             {mobileMenuOpen && <div className="mobile-actions-menu" role="menu">
               {!isSystemAdmin && isOwner && <button type="button" role="menuitem" onClick={() => navigateTo("reports")}><BarChart3 size={18}/><span>Reportes</span></button>}
