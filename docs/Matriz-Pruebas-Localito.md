@@ -140,6 +140,12 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-100 | Experiencia | Textos y acciones consistentes | Recorrer Inicio, Inventario, Clientes, Reportes y los mensajes de sesión. | Las acciones distinguen crear, guardar, revisar y cerrar; etiquetas, búsquedas y mensajes visibles usan español claro y acentuación correcta. | Pendiente evidencia |
 | CP-101 | Accesibilidad | Foco y reducción de movimiento | Navegar con teclado por botones, campos, filtros y enlaces en ambos temas; activar reducción de movimiento del sistema. | El foco es visible en cada control y la interfaz elimina transiciones no esenciales cuando el sistema solicita menos movimiento. | Pendiente evidencia |
 | CP-102 | Experiencia | Ayuda contextual | Abrir las ayudas de Vender, Inventario y Clientes. | Cada ayuda explica el flujo propio de la sección en lenguaje simple, puede abrirse o cerrarse y no bloquea la tarea principal. | Pendiente evidencia |
+| CP-103 | Inicio | Puesta en marcha | Ingresar como dueño con catálogo vacío y luego con catálogo sin ventas. | Inicio muestra únicamente los pasos pendientes para cargar productos y realizar la primera venta; cada paso abre el flujo existente. | Pendiente evidencia |
+| CP-104 | Inicio | Indicadores operativos | Registrar ventas y revisar Inicio. | Muestra producto más vendido, tamaño y categorías del catálogo y valor estimado del stock usando datos del negocio. | Pendiente evidencia |
+| CP-105 | Caja | Historial del turno | Abrir caja, registrar ingreso, gasto y retiro. | El historial lista tipo, motivo, categoría, monto, hora y usuario de cada movimiento del turno abierto. | Pendiente evidencia |
+| CP-106 | Búsqueda | Búsqueda global | Usar Buscar desde escritorio y menú móvil con producto, cliente, código y venta. | Los resultados son del negocio actual y dirigen al módulo correspondiente sin exponer datos no autorizados al vendedor. | Pendiente evidencia |
+| CP-107 | Seguridad operativa | Confirmaciones críticas | Intentar desactivar producto/cliente, eliminar usuario y cerrar caja. | Explica el efecto de la acción y permite volver; solo ejecuta después de confirmar explícitamente. | Pendiente evidencia |
+| CP-108 | Tesis | Guion de demostración | Seguir el documento de demostración desde una cuenta demo. | El recorrido cubre Inicio, Inventario, Venta, Venta Rápida, Clientes, Caja y Reportes sin requerir cobros reales. | Pendiente evidencia |
 
 ## 5. Pruebas no funcionales sugeridas
 

@@ -1,10 +1,12 @@
-import { AlertTriangle, ArrowRight, Banknote, CheckCircle2, PackagePlus, ShoppingCart, Store, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Banknote, CheckCircle2, PackageCheck, PackagePlus, Presentation, ShoppingCart, Store, Users } from "lucide-react";
+import { useMemo } from "react";
 import type { CashRegisterSummary, Customer, Product, ReportSummary, Sale } from "@localito/shared";
 import { contextualGreeting, formatCLP } from "./lib/format";
 
 type Props = {
   businessName: string;
   userName: string;
+  products: Product[];
   lowStockProducts: Product[];
   summary: ReportSummary;
   sales: Sale[];
@@ -17,11 +19,13 @@ type Props = {
   onOpenCash: () => void;
   onOpenStock: () => void;
   onOpenCustomers: () => void;
+  onOpenReports: () => void;
 };
 
 export function DashboardView({
   businessName,
   userName,
+  products,
   lowStockProducts,
   summary,
   sales,
@@ -33,11 +37,23 @@ export function DashboardView({
   onAddProduct,
   onOpenCash,
   onOpenStock,
-  onOpenCustomers
+  onOpenCustomers,
+  onOpenReports
 }: Props) {
   const outOfStock = lowStockProducts.filter((product) => product.stock <= 0);
   const firstName = userName.trim().split(/\s+/)[0] || userName;
   const hasPendingDebt = Boolean(canViewCustomers && topDebtor && topDebtor.debtBalance > 0);
+  const topProduct = useMemo(() => {
+    const totals = new Map<string, { name: string; quantity: number }>();
+    sales.forEach((sale) => sale.items.forEach((item) => {
+      const current = totals.get(item.productId) ?? { name: item.productName, quantity: 0 };
+      current.quantity += item.quantity;
+      totals.set(item.productId, current);
+    }));
+    return [...totals.values()].sort((left, right) => right.quantity - left.quantity)[0];
+  }, [sales]);
+  const categoryCount = new Set(products.map((product) => product.category.trim().toLocaleLowerCase("es")).filter(Boolean)).size;
+  const needsOnboarding = products.length === 0 || sales.length === 0;
   const priority = outOfStock.length > 0
     ? { Icon: AlertTriangle, tone: "urgent", title: `${outOfStock.length} producto${outOfStock.length === 1 ? "" : "s"} sin stock`, description: "Revísalos antes de que afecten tus próximas ventas.", action: "Revisar inventario", onClick: onOpenStock, requiresOperation: false }
     : lowStockProducts.length > 0
@@ -77,11 +93,31 @@ export function DashboardView({
         <DashboardMetric label={canViewCustomers ? "Fiado pendiente" : "Alertas de stock"} value={canViewCustomers ? formatCLP(summary.pendingDebt) : String(lowStockProducts.length)} attention={canViewCustomers ? summary.pendingDebt > 0 : lowStockProducts.length > 0} />
       </section>
 
+      {needsOnboarding && <section className="panel onboarding-panel" aria-label="Puesta en marcha">
+        <div className="section-heading"><div><span>PUESTA EN MARCHA</span><h2>Deja listo tu local</h2><p>Completa estos pasos una sola vez para comenzar a operar con tranquilidad.</p></div><span>{products.length ? "1 paso" : "2 pasos"}</span></div>
+        <div className="onboarding-steps">
+          <button className={products.length ? "onboarding-step complete" : "onboarding-step"} type="button" onClick={onAddProduct} disabled={!canOperate}><PackageCheck size={20}/><span><strong>{products.length ? "Catálogo preparado" : "Carga tus productos"}</strong><small>{products.length ? `${products.length} productos disponibles para vender.` : "Crea uno o carga varios desde una factura o archivo."}</small></span><ArrowRight size={17}/></button>
+          <button className={sales.length ? "onboarding-step complete" : "onboarding-step"} type="button" onClick={onStartSale} disabled={!canOperate}><ShoppingCart size={20}/><span><strong>{sales.length ? "Primera venta registrada" : "Realiza tu primera venta"}</strong><small>{sales.length ? "El flujo de venta ya está en marcha." : "Elige productos, revisa el ticket y registra el pago."}</small></span><ArrowRight size={17}/></button>
+        </div>
+      </section>}
+
+      <section className="dashboard-insights" aria-label="Indicadores del negocio">
+        <article><span>Producto más vendido</span><strong>{topProduct?.name ?? "Aún sin ventas"}</strong><small>{topProduct ? `${topProduct.quantity} unidades registradas` : "Aparecerá después de la primera venta."}</small></article>
+        <article><span>Catálogo activo</span><strong>{products.length} productos</strong><small>{categoryCount ? `${categoryCount} ${categoryCount === 1 ? "categoría" : "categorías"} para ordenar la venta.` : "Carga productos para comenzar."}</small></article>
+        <article><span>Valor de stock</span><strong>{formatCLP(summary.stockValue)}</strong><small>Estimación con los precios registrados.</small></article>
+      </section>
+
       <section className={`dashboard-priority-panel ${priority.tone}`} aria-label="Prioridad de hoy">
         <div className="dashboard-priority-icon"><PriorityIcon size={23} /></div>
         <div className="dashboard-priority-copy"><span>PRIORIDAD DE HOY</span><strong>{priority.title}</strong><small>{priority.description}</small></div>
         <button className="secondary-action" type="button" onClick={priority.onClick} disabled={priority.requiresOperation && !canOperate}><span>{priority.action}</span><ArrowRight size={17} /></button>
       </section>
+
+      <details className="presentation-guide">
+        <summary><Presentation size={19}/><span>Guion rápido para presentar Localito</span></summary>
+        <ol><li>Parte por este panel y explica la prioridad del día.</li><li>Ve a Vender, agrega productos por categoría y muestra el ticket.</li><li>Registra un pago y revisa Caja o Reportes para mostrar el resultado.</li></ol>
+        <button className="secondary-action small" type="button" onClick={onOpenReports}>Abrir reportes</button>
+      </details>
 
       {(lowStockProducts.length > 0 || hasPendingDebt) && <section className="panel attention-panel">
         <div className="section-heading">

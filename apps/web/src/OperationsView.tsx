@@ -57,6 +57,10 @@ export function OperationsView({ products, onRefresh, canManage, mode = "all" }:
       })
       .sort((left, right) => String(left.expiryDate).localeCompare(String(right.expiryDate)));
   }, [products]);
+  const activeCashMovements = useMemo(
+    () => cashSession ? cashMovements.filter((movement) => movement.sessionId === cashSession.id) : [],
+    [cashMovements, cashSession]
+  );
 
   async function load() {
     try {
@@ -123,6 +127,8 @@ export function OperationsView({ products, onRefresh, canManage, mode = "all" }:
         <div className="form-grid"><input inputMode="numeric" value={countedAmount} onChange={(event) => setCountedAmount(event.target.value)} placeholder="Efectivo contado"/><button className="primary-action" disabled={busy} onClick={() => run(() => api.closeCashSession(Number(countedAmount), "Cierre desde gestión"), "Caja cerrada y conciliada.")}>Cerrar y conciliar</button></div>
       </>}
     </section>
+
+    {cashSession && <section className="panel cash-timeline"><div className="section-heading"><div><span>MOVIMIENTOS DEL TURNO</span><h2>Historial de caja</h2><p>Ingresos, gastos y retiros registrados desde que abriste la caja.</p></div><span>{activeCashMovements.length} registros</span></div><div className="list">{activeCashMovements.slice(0, 12).map((movement) => <div className={`row cash-timeline-row ${movement.type}`} key={movement.id}><div><strong>{movement.type === "deposit" ? "Ingreso" : movement.type === "withdrawal" ? "Retiro" : "Gasto operativo"} · {movement.category ?? "Operación general"}</strong><p>{movement.reason} · {new Date(movement.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}{movement.createdByName ? ` · ${movement.createdByName}` : ""}</p></div><strong>{movement.type === "deposit" ? "+" : "−"}{money(movement.amount)}</strong></div>)}{!activeCashMovements.length && <p className="empty-state">Aún no registras movimientos manuales en este turno.</p>}</div></section>}
 
     <section className="panel"><div className="section-heading"><h2>Gastos operativos</h2><span>{money(expenseTotals.reduce((sum, [, amount]) => sum + amount, 0))}</span></div><div className="list">{expenseTotals.map(([category, amount]) => <div className="row" key={category}><strong>{category}</strong><strong className="debt">{money(amount)}</strong></div>)}{!expenseTotals.length && <p className="empty-state">Registra gastos en una caja abierta para ver el resumen por categoría.</p>}</div></section>
 

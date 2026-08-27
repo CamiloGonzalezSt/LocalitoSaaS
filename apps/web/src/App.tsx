@@ -120,6 +120,13 @@ interface NoticeState {
   tone: NoticeTone;
 }
 
+type CriticalActionState = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  action: () => Promise<void>;
+};
+
 interface NavItem {
   id: View;
   label: string;
@@ -316,6 +323,8 @@ function App() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [notice, setNotice] = useState<NoticeState | null>({
     message: "Cargando Localito...",
     tone: "success"
@@ -337,6 +346,7 @@ function App() {
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
   const [cashClosureNote, setCashClosureNote] = useState("");
   const [lastDebtCharge, setLastDebtCharge] = useState<DebtChargeState | null>(null);
+  const [criticalAction, setCriticalAction] = useState<CriticalActionState | null>(null);
 
   const lowStockProducts = useMemo(
     () => products.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock),
@@ -347,6 +357,16 @@ function App() {
   const activeSales = useMemo(() => sales.filter((sale) => sale.status !== "cancelled"), [sales]);
   const cancelledSales = useMemo(() => sales.filter((sale) => sale.status === "cancelled"), [sales]);
   const topDebtor = useMemo(() => [...customers].sort((a, b) => b.debtBalance - a.debtBalance)[0], [customers]);
+  const globalSearchResults = useMemo(() => {
+    const query = globalSearchQuery.trim().toLocaleLowerCase("es");
+    if (!query) return { products: products.slice(0, 5), customers: customers.slice(0, 4), sales: activeSales.slice(0, 4) };
+    const includesQuery = (...values: Array<string | undefined>) => values.filter(Boolean).some((value) => value?.toLocaleLowerCase("es").includes(query));
+    return {
+      products: products.filter((product) => includesQuery(product.name, product.brand, product.category, product.barcode, product.sku)).slice(0, 5),
+      customers: customers.filter((customer) => includesQuery(customer.name, customer.phone, customer.email)).slice(0, 4),
+      sales: activeSales.filter((sale) => includesQuery(sale.id, sale.items.map((item) => item.productName).join(" "))).slice(0, 4)
+    };
+  }, [activeSales, customers, globalSearchQuery, products]);
   const isOwner = isOwnerUser(currentUser);
   const isSystemAdmin = isSystemAdminUser(currentUser);
   const canOperate = !subscription || subscriptionCanMutate(subscription);
@@ -368,6 +388,39 @@ function App() {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+  }
+
+  function openGlobalSearch() {
+    setGlobalSearchQuery("");
+    setMobileMenuOpen(false);
+    setGlobalSearchOpen(true);
+  }
+
+  function selectGlobalProduct(product: Product) {
+    setSearchTerm(product.name);
+    setGlobalSearchOpen(false);
+    navigateTo("sale");
+  }
+
+  function selectGlobalCustomer() {
+    setGlobalSearchOpen(false);
+    navigateTo("customers");
+  }
+
+  function selectGlobalSale() {
+    setGlobalSearchOpen(false);
+    navigateTo("reports");
+  }
+
+  function requestCriticalAction(title: string, description: string, confirmLabel: string, action: () => Promise<void>) {
+    setCriticalAction({ title, description, confirmLabel, action });
+  }
+
+  async function confirmCriticalAction() {
+    if (!criticalAction) return;
+    const action = criticalAction.action;
+    setCriticalAction(null);
+    await action();
   }
 
   function saveSession(session: AuthSession) {
@@ -874,6 +927,15 @@ function App() {
     }
   }
 
+  function requestCloseCashRegister() {
+    requestCriticalAction(
+      "Registrar cierre de caja",
+      `Se guardará el cierre de ${cashRegister.date} con un total recibido de ${formatCLP(cashRegister.receivedTotal)}. Después podrás revisarlo en el historial.`,
+      "Confirmar cierre",
+      closeCashRegister
+    );
+  }
+
   async function createProduct() {
     if (!isOwner) {
       setNotice({ message: "El vendedor solo puede consultar stock. No puede crear ni editar productos.", tone: "warning" });
@@ -961,6 +1023,15 @@ function App() {
     } finally {
       setIsBusy(false);
     }
+  }
+
+  function requestDeactivateProduct(product: Product) {
+    requestCriticalAction(
+      "Desactivar producto",
+      `${product.name} dejará de aparecer para vender y en el inventario activo. Su historial se conserva.`,
+      "Sí, desactivar producto",
+      () => deactivateProduct(product)
+    );
   }
 
   async function adjustStock(product: Product, delta: number) {
@@ -1055,6 +1126,15 @@ function App() {
     } finally {
       setIsBusy(false);
     }
+  }
+
+  function requestDeactivateCustomer(customer: Customer) {
+    requestCriticalAction(
+      "Desactivar cliente",
+      `${customer.name} dejará de estar disponible para nuevos fiados. Sus abonos e historial se conservan.`,
+      "Sí, desactivar cliente",
+      () => deactivateCustomer(customer)
+    );
   }
 
   async function payCustomerDebt(customer: Customer, method: Exclude<PaymentMethod, "credit" | "mixed">) {
@@ -1219,8 +1299,8 @@ function App() {
     } finally { setIsBusy(false); }
   }
 
-  async function deleteManagedUser(user: User) {
-    if (!isOwner || !window.confirm(`¿Eliminar definitivamente el acceso de ${user.name}?`)) return;
+  async function deleteManagedUserNow(user: User) {
+    if (!isOwner) return;
     setIsBusy(true);
     try {
       await api.deleteUser(user.id);
@@ -1228,6 +1308,16 @@ function App() {
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo eliminar el usuario.", tone: "error" });
     } finally { setIsBusy(false); }
+  }
+
+  function deleteManagedUser(user: User) {
+    if (!isOwner) return;
+    requestCriticalAction(
+      "Eliminar acceso de usuario",
+      `Eliminarás definitivamente el acceso de ${user.name}. Esta acción no se puede deshacer.`,
+      "Eliminar usuario",
+      () => deleteManagedUserNow(user)
+    );
   }
 
   async function resetManagedUserPassword(user: User, password: string) {
@@ -1332,6 +1422,7 @@ function App() {
           </p>
         </div>
         <div className="topbar-actions desktop-topbar-actions">
+          {!isSystemAdmin && <button className="icon-button" type="button" onClick={openGlobalSearch} aria-label="Buscar en el negocio"><Search size={20} /></button>}
           <button className="icon-button" type="button" onClick={() => void loadWorkspace("Datos refrescados.")} aria-label="Refrescar">
             <RefreshCw size={20} />
           </button>
@@ -1352,6 +1443,7 @@ function App() {
           <div className="mobile-actions-wrap" ref={mobileActionsRef}>
             <button className="icon-button mobile-menu-trigger" type="button" aria-label="Abrir acciones" aria-haspopup="menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)}><EllipsisVertical size={21}/></button>
             {mobileMenuOpen && <div className="mobile-actions-menu" role="menu">
+              {!isSystemAdmin && <button type="button" role="menuitem" onClick={openGlobalSearch}><Search size={18}/><span>Buscar</span></button>}
               {!isSystemAdmin && isOwner && <button type="button" role="menuitem" onClick={() => navigateTo("reports")}><BarChart3 size={18}/><span>Reportes</span></button>}
               <button type="button" role="menuitem" onClick={() => { setMobileMenuOpen(false); void loadWorkspace("Datos refrescados."); }}><RefreshCw size={18}/><span>Actualizar datos</span></button>
               {!isSystemAdmin && <button type="button" role="menuitem" onClick={() => navigateTo("settings")}><Settings size={18}/><span>{isOwner ? "Configuración" : "Mi perfil"}</span></button>}
@@ -1395,6 +1487,7 @@ function App() {
           <DashboardView
             businessName={tenant?.name ?? "Localito"}
             userName={currentUser.name}
+            products={products}
             lowStockProducts={lowStockProducts}
             summary={summary}
             sales={activeSales}
@@ -1407,6 +1500,7 @@ function App() {
             onOpenCash={() => navigateTo("operations")}
             onOpenStock={() => navigateTo("products")}
             onOpenCustomers={() => navigateTo("customers")}
+            onOpenReports={() => navigateTo("reports")}
           />
         )}
 
@@ -1457,7 +1551,7 @@ function App() {
               setProductForm(emptyProductForm);
             }}
             onEdit={startEditProduct}
-            onDeactivate={(product) => void deactivateProduct(product)}
+            onDeactivate={requestDeactivateProduct}
             onAdjustStock={(product, delta) => void adjustStock(product, delta)}
           />
         )}
@@ -1487,7 +1581,7 @@ function App() {
             onCreate={() => void createProduct()}
             onCancelEdit={() => { setEditingProductId(null); setProductForm(emptyProductForm); }}
             onEdit={startEditProduct}
-            onDeactivate={(product) => void deactivateProduct(product)}
+            onDeactivate={requestDeactivateProduct}
             onAdjustStock={(product, delta) => void adjustStock(product, delta)}
           /></div>
         )}
@@ -1510,7 +1604,7 @@ function App() {
               setCustomerForm(emptyCustomerForm);
             }}
             onEdit={startEditCustomer}
-            onDeactivate={(customer) => void deactivateCustomer(customer)}
+            onDeactivate={requestDeactivateCustomer}
             onPayDebt={(customer, method) => void payCustomerDebt(customer, method)}
             onCreatePayment={(customer) => void createDebtWebpay(customer)}
             onShareDebtCharge={(charge) => void shareDebtCharge(charge)}
@@ -1533,7 +1627,7 @@ function App() {
             isBusy={isBusy}
             canViewFullReports={isOwner}
             onCashClosureNote={setCashClosureNote}
-            onCloseCashRegister={() => void closeCashRegister()}
+            onCloseCashRegister={requestCloseCashRegister}
             onCancelSale={(sale, reason) => void cancelSale(sale, reason)}
             onReturnSale={(sale, items, reason) => void returnSale(sale, items, reason)}
           />
@@ -1572,6 +1666,18 @@ function App() {
         {!isLoading && activeView === "plan" && isOwner && subscription && <PlanView subscription={subscription} isBusy={isBusy} onSelect={(plan, provider) => void changePlan(plan, provider)} />}
       </main>
 
+      {globalSearchOpen && <GlobalSearchDialog
+        query={globalSearchQuery}
+        products={globalSearchResults.products}
+        customers={isOwner ? globalSearchResults.customers : []}
+        sales={isOwner ? globalSearchResults.sales : []}
+        onQuery={setGlobalSearchQuery}
+        onClose={() => setGlobalSearchOpen(false)}
+        onProduct={selectGlobalProduct}
+        onCustomer={selectGlobalCustomer}
+        onSale={selectGlobalSale}
+      />}
+      {criticalAction && <CriticalActionDialog action={criticalAction} isBusy={isBusy} onCancel={() => setCriticalAction(null)} onConfirm={() => void confirmCriticalAction()} />}
       <ReceiptPrintArea sale={lastReceipt} tenant={tenant} user={currentUser} customers={customers} />
 
     </div>
@@ -1595,6 +1701,35 @@ function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
     platform: isSystemAdmin ? "Locales y usuarios" : "Administración"
   };
   return labels[view];
+}
+
+function GlobalSearchDialog({
+  query,
+  products,
+  customers,
+  sales,
+  onQuery,
+  onClose,
+  onProduct,
+  onCustomer,
+  onSale
+}: {
+  query: string;
+  products: Product[];
+  customers: Customer[];
+  sales: Sale[];
+  onQuery: (value: string) => void;
+  onClose: () => void;
+  onProduct: (product: Product) => void;
+  onCustomer: () => void;
+  onSale: () => void;
+}) {
+  const hasResults = products.length + customers.length + sales.length > 0;
+  return <div className="modal-backdrop global-search-backdrop" role="presentation" onClick={onClose}><section className="panel global-search-dialog" role="dialog" aria-modal="true" aria-labelledby="global-search-title" onClick={(event) => event.stopPropagation()}><div className="section-heading"><div><span>BÚSQUEDA RÁPIDA</span><h2 id="global-search-title">Encuentra lo que necesitas</h2></div><button className="icon-button" type="button" onClick={onClose} aria-label="Cerrar búsqueda"><X size={18}/></button></div><label className="global-search-input"><Search size={19}/><input autoFocus value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Producto, cliente, código o venta" /></label><div className="global-search-results">{products.length > 0 && <section><h3>Productos</h3>{products.map((product) => <button type="button" key={product.id} onClick={() => onProduct(product)}><Package size={18}/><span><strong>{product.name}</strong><small>{product.category} · {formatCLP(product.salePrice)}</small></span><ArrowRight size={17}/></button>)}</section>}{customers.length > 0 && <section><h3>Clientes</h3>{customers.map((customer) => <button type="button" key={customer.id} onClick={onCustomer}><Users size={18}/><span><strong>{customer.name}</strong><small>{customer.phone ?? "Sin teléfono"} · Deuda {formatCLP(customer.debtBalance)}</small></span><ArrowRight size={17}/></button>)}</section>}{sales.length > 0 && <section><h3>Ventas</h3>{sales.map((sale) => <button type="button" key={sale.id} onClick={onSale}><ReceiptText size={18}/><span><strong>Venta #{sale.id.slice(0, 8)}</strong><small>{sale.items.length} producto(s) · {formatCLP(sale.total)}</small></span><ArrowRight size={17}/></button>)}</section>}{!hasResults && <EmptyState icon={Search} title="Sin resultados" description="Prueba con otro nombre, código o dato del cliente." />}</div></section></div>;
+}
+
+function CriticalActionDialog({ action, isBusy, onCancel, onConfirm }: { action: CriticalActionState; isBusy: boolean; onCancel: () => void; onConfirm: () => void }) {
+  return <div className="modal-backdrop" role="presentation" onClick={isBusy ? undefined : onCancel}><section className="panel critical-action-dialog" role="dialog" aria-modal="true" aria-labelledby="critical-action-title" onClick={(event) => event.stopPropagation()}><AlertTriangle size={25}/><div><span>CONFIRMACIÓN REQUERIDA</span><h2 id="critical-action-title">{action.title}</h2><p>{action.description}</p></div><div className="action-grid"><button className="secondary-action" type="button" onClick={onCancel} disabled={isBusy}>Volver</button><button className="primary-action danger-action" type="button" onClick={onConfirm} disabled={isBusy}>{isBusy ? "Procesando..." : action.confirmLabel}</button></div></section></div>;
 }
 
 function LoginView({
