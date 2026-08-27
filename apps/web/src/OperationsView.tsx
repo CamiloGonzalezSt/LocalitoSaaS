@@ -105,7 +105,13 @@ export function OperationsView({ products, onRefresh, canManage, mode = "all" }:
   }
 
   return <div className="stack">
-    <section className="panel"><div className="section-heading"><h2>{canManage ? "Centro de gestión" : "Operación de caja"}</h2><span>{message}</span></div><p className="helper-text">{canManage ? "Caja por turno, compras, reposición, vencimientos, fiado y trazabilidad en un mismo lugar." : "Apertura, movimientos, cierre de turno y recordatorios de fiado."}</p></section>
+    <section className="panel operations-intro">
+      <div className="section-heading">
+        <h2>{canManage ? "Centro de gestión" : "Operación de caja"}</h2>
+        <span className="operations-status" role="status">{message}</span>
+      </div>
+      <p className="helper-text">{canManage ? "Caja por turno, compras, reposición, vencimientos, fiado y trazabilidad en un mismo lugar." : "Apertura, movimientos, cierre de turno y recordatorios de fiado."}</p>
+    </section>
 
     {canManage && <InvoiceImportPanel products={products} suppliers={suppliers} onImported={async () => { await Promise.all([load(), onRefresh()]); }} />}
 
