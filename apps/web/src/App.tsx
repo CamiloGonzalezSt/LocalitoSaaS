@@ -2501,6 +2501,7 @@ function ReportsView({
   const [saleAction, setSaleAction] = useState<{ sale: Sale; type: "cancel" | "return" } | null>(null);
   const [actionReason, setActionReason] = useState("");
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+  const selectedMonthLabel = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric" }).format(new Date(`${selectedMonth}-01T12:00:00`));
   const monthSales = sales.filter((sale) => sale.createdAt.slice(0, 7) === selectedMonth);
   const activeSales = monthSales.filter((sale) => sale.status !== "cancelled");
   const monthTotal = activeSales.reduce((sum, sale) => sum + sale.total, 0);
@@ -2536,25 +2537,20 @@ function ReportsView({
 
   return (
     <div className="stack">
-      <section className="reports-toolbar"><div><span>REPORTES</span><h2>Resumen del negocio</h2></div><label className="month-filter"><span>Período</span><input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)}/></label></section>
+      <section className="reports-toolbar"><div><span>REPORTES</span><h2>Así va tu negocio</h2><p>Revisa las ventas, la caja y el historial de {selectedMonthLabel}.</p></div><label className="month-filter"><span>Período a revisar</span><input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)}/></label></section>
       {canViewFullReports && (
-        <div className="stats-grid">
-          <StatCard label="Ventas del período" value={formatCLP(monthTotal)} icon={BarChart3} tone="green" />
-          <StatCard label="Número de ventas" value={String(activeSales.length)} icon={ReceiptText} tone="blue" />
-          <StatCard label="Unidades vendidas" value={String(monthUnits)} icon={Package} tone="amber" />
-          <StatCard label="Ticket promedio" value={formatCLP(activeSales.length ? Math.round(monthTotal / activeSales.length) : 0)} icon={Banknote} tone="green" />
-        </div>
+        <section className="report-period-summary" aria-label={`Resultado de ${selectedMonthLabel}`}><div className="report-period-copy"><span>RESULTADO DEL PERÍODO</span><h3>{selectedMonthLabel}</h3><p>{activeSales.length ? `${activeSales.length} ${activeSales.length === 1 ? "venta registrada" : "ventas registradas"} en el período seleccionado.` : "Aún no se han registrado ventas en este período."}</p></div><div className="report-period-total"><span>Ventas netas</span><strong>{formatCLP(monthTotal)}</strong></div><div className="stats-grid report-stats-grid"><StatCard label="Ventas" value={String(activeSales.length)} icon={ReceiptText} tone="blue" /><StatCard label="Unidades" value={String(monthUnits)} icon={Package} tone="amber" /><StatCard label="Ticket promedio" value={formatCLP(activeSales.length ? Math.round(monthTotal / activeSales.length) : 0)} icon={Banknote} tone="green" /></div></section>
       )}
 
       {canViewFullReports && activeSales.length === 0 && <EmptyState icon={BarChart3} title="Aún no hay ventas en este período" description="Cambia el mes seleccionado o registra una venta para ver tendencias, medios de pago y productos más vendidos." />}
 
-      {canViewFullReports && activeSales.length > 0 && <section className="panel report-overview"><div className="section-heading"><div><span>COMPARACIÓN DIARIA</span><h2>Ventas del mes</h2></div><span>{dailyTotals.length} días con ventas</span></div><div className="daily-chart" aria-label="Ventas diarias">{dailyTotals.map(([day, total]) => <div className="daily-column" key={day}><strong>{formatCLP(total)}</strong><div><span style={{ height: `${Math.max(5, total / maxDaily * 100)}%` }}/></div><small>{day}</small></div>)}</div></section>}
+      {canViewFullReports && activeSales.length > 0 && <section className="panel report-overview"><div className="section-heading"><div><span>ANÁLISIS DEL PERÍODO</span><h2>Evolución de ventas</h2><p>Cómo se distribuyeron las ventas durante {selectedMonthLabel}.</p></div><span>{dailyTotals.length} días con ventas</span></div><div className="daily-chart" aria-label="Ventas diarias">{dailyTotals.map(([day, total]) => <div className="daily-column" key={day}><strong>{formatCLP(total)}</strong><div><span style={{ height: `${Math.max(5, total / maxDaily * 100)}%` }}/></div><small>{day}</small></div>)}</div></section>}
 
-      {canViewFullReports && activeSales.length > 0 && <div className="report-dashboard-grid"><section className="panel"><div className="section-heading"><h2>Formas de pago más utilizadas</h2><span>{formatCLP(monthTotal)}</span></div><div className="horizontal-bars">{[...methodTotals.entries()].sort((a,b)=>b[1]-a[1]).map(([label,total]) => <div className="horizontal-bar" key={label}><span>{label}</span><div><i style={{ width: `${Math.max(4, total / Math.max(monthTotal,1) * 100)}%` }}/></div><strong>{formatCLP(total)}</strong></div>)}</div></section><section className="panel"><div className="section-heading"><h2>Ventas por vendedor</h2><span>{sellerTotals.length}</span></div><div className="seller-breakdown">{sellerTotals.map(([sellerId,total]) => <div key={sellerId}><span>{users.find((item) => item.id === sellerId)?.name ?? "Usuario eliminado"}</span><strong>{formatCLP(total)}</strong></div>)}</div></section></div>}
+      {canViewFullReports && activeSales.length > 0 && <div className="report-dashboard-grid"><section className="panel"><div className="section-heading"><div><h2>Medios de pago</h2><p>Cómo se pagaron las ventas del período.</p></div><span>{formatCLP(monthTotal)}</span></div><div className="horizontal-bars">{[...methodTotals.entries()].sort((a,b)=>b[1]-a[1]).map(([label,total]) => <div className="horizontal-bar" key={label}><span>{label}</span><div><i style={{ width: `${Math.max(4, total / Math.max(monthTotal,1) * 100)}%` }}/></div><strong>{formatCLP(total)}</strong></div>)}</div></section><section className="panel"><div className="section-heading"><div><h2>Ventas por vendedor</h2><p>Participación del equipo durante el período.</p></div><span>{sellerTotals.length}</span></div><div className="seller-breakdown">{sellerTotals.map(([sellerId,total]) => <div key={sellerId}><span>{users.find((item) => item.id === sellerId)?.name ?? "Usuario eliminado"}</span><strong>{formatCLP(total)}</strong></div>)}</div></section></div>}
 
       <section className="panel">
         <div className="section-heading">
-          <h2>Caja en vivo</h2>
+          <div><span>OPERACIÓN ACTUAL</span><h2>Caja de hoy</h2><p>Movimientos del turno abierto, independientes del filtro mensual.</p></div>
           <span>{cashRegister.date}</span>
         </div>
         <div className="report-grid">
@@ -2587,7 +2583,7 @@ function ReportsView({
 
       <section className="panel">
         <div className="section-heading">
-          <h2>Ultimos cierres</h2>
+          <div><span>HISTORIAL</span><h2>Últimos cierres</h2><p>Selecciona un cierre para revisar las ventas que incluyó.</p></div>
           <span>{cashClosures.length} registros</span>
         </div>
             <div className="list closure-list">
@@ -2612,7 +2608,7 @@ function ReportsView({
         <>
           {activeSales.length > 0 && <section className="panel">
             <div className="section-heading">
-              <h2>Productos más vendidos</h2>
+              <div><span>DESEMPEÑO DEL PERÍODO</span><h2>Productos más vendidos</h2></div>
               <span>Por monto</span>
             </div>
             <div className="bars">
@@ -2634,7 +2630,7 @@ function ReportsView({
 
           <section className="panel">
             <div className="section-heading">
-              <h2>Resumen operativo</h2>
+              <div><span>VISTA GENERAL</span><h2>Resumen operativo</h2></div>
               <span>{monthSales.length} ventas</span>
             </div>
             <div className="report-grid">
@@ -2647,8 +2643,8 @@ function ReportsView({
 
           <section className="panel">
             <div className="section-heading">
-              <h2>Ventas y anulaciones</h2>
-              <span>{sales.length} registros</span>
+              <div><span>HISTORIAL DEL PERÍODO</span><h2>Ventas, anulaciones y devoluciones</h2></div>
+              <span>{monthSales.length} registros</span>
             </div>
             <div className="list">
               {monthSales.slice(0, 20).map((sale) => (
