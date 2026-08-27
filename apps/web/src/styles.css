@@ -5343,6 +5343,13 @@ button:active:not(:disabled) { transform: none; }
 [data-theme="dark"] .login-shell { background: radial-gradient(circle at 12% 18%, #102925, transparent 34%), #090909; }
 [data-theme="dark"] .login-panel { background: var(--surface); border-color: var(--border); box-shadow: none; }
 [data-theme="dark"] .search-box { background: var(--surface); border-color: var(--border); box-shadow: none; }
+[data-theme="dark"] .ticket-total {
+  background: var(--primary-soft);
+  border-color: #255b52;
+  box-shadow: none;
+}
+[data-theme="dark"] .ticket-total span { color: var(--text-secondary); }
+[data-theme="dark"] .ticket-total strong { color: #f4fffc; }
 
 @media (max-width: 1000px) {
   .platform-tenant-row { grid-template-columns: minmax(0,1fr) auto auto; }
