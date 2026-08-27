@@ -1,0 +1,170 @@
+{
+  "input": "C:\\Users\\cajgo\\Documents\\Codex\\LocalitoSaaS\\entregables\\1.4_APT122_FormativaFase1_COMPLETADA.docx",
+  "fonts_by_char_count": {
+    "Arial": 7028
+  },
+  "direct_run_formatting_runs": 202,
+  "direct_paragraph_formatting_paragraphs": 223,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "LOCALITO",
+      "style": "Normal"
+    },
+    {
+      "para_index": 2,
+      "text": "PWA SaaS multi-negocio para comercios de barrio",
+      "style": "Normal"
+    },
+    {
+      "para_index": 162,
+      "text": "Asignatura",
+      "style": "Normal"
+    },
+    {
+      "para_index": 164,
+      "text": "Integrantes",
+      "style": "Normal"
+    },
+    {
+      "para_index": 166,
+      "text": "Docente",
+      "style": "Normal"
+    },
+    {
+      "para_index": 168,
+      "text": "Secci\u00f3n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 170,
+      "text": "Instituci\u00f3n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 172,
+      "text": "Fecha",
+      "style": "Normal"
+    },
+    {
+      "para_index": 174,
+      "text": "\u00c1rea",
+      "style": "Normal"
+    },
+    {
+      "para_index": 175,
+      "text": "Capacidad de Localito",
+      "style": "Normal"
+    },
+    {
+      "para_index": 176,
+      "text": "Beneficio esperado",
+      "style": "Normal"
+    },
+    {
+      "para_index": 195,
+      "text": "Competencia",
+      "style": "Normal"
+    },
+    {
+      "para_index": 196,
+      "text": "Aplicaci\u00f3n concreta en Localito",
+      "style": "Normal"
+    },
+    {
+      "para_index": 197,
+      "text": "Evidencia/resultado",
+      "style": "Normal"
+    },
+    {
+      "para_index": 210,
+      "text": "Dimensi\u00f3n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 211,
+      "text": "Condici\u00f3n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 212,
+      "text": "Respuesta de factibilidad",
+      "style": "Normal"
+    },
+    {
+      "para_index": 231,
+      "text": "Riesgo",
+      "style": "Normal"
+    },
+    {
+      "para_index": 232,
+      "text": "Efecto",
+      "style": "Normal"
+    },
+    {
+      "para_index": 233,
+      "text": "Mitigaci\u00f3n",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "LOCALITO",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "text": "Evaluaci\u00f3n Formativa Fase 1\nDefinici\u00f3n de Proyecto APT",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "text": "Documento preparado para revisi\u00f3n acad\u00e9mica. Los campos entre corchetes deben completarse antes de entregar.",
+        "style": "Normal"
+      },
+      {
+        "para_index": 8,
+        "text": "1. Resumen / Resumen ejecutivo\t3",
+        "style": "Normal"
+      },
+      {
+        "para_index": 9,
+        "text": "2. Abstract\t3",
+        "style": "Normal"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "LOCALITO",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": "PWA SaaS multi-negocio para comercios de barrio",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Evaluaci\u00f3n Formativa Fase 1\nDefinici\u00f3n de Proyecto APT",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "run_text": "Documento preparado para revisi\u00f3n acad\u00e9mica. Los campos entre corchetes deben co",
+        "style": "Normal"
+      },
+      {
+        "para_index": 142,
+        "run_text": "Repositorio Localito. ",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

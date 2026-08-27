@@ -1,12 +1,12 @@
 # Matriz de pruebas funcionales - Localito
 
 **Proyecto:** Localito  
-**Tipo:** PWA SaaS mobile-first para pequenos negocios  
+**Tipo:** PWA académica mobile-first para pequeños negocios
 **Objetivo del documento:** Servir como evidencia de validacion funcional para memoria, presentacion y defensa de tesis.
 
 ## 1. Alcance de pruebas
 
-Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visual externo es opcional; todos los demas flujos pueden probarse en navegador de escritorio y celular en red local.
+Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visual externo es opcional; todos los demás flujos pueden probarse en navegador de escritorio y celular en red local. El estado de cada caso es evidencia disponible, no una certificación comercial del sistema.
 
 ## 2. Ambiente de prueba
 
@@ -14,7 +14,7 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | --- | --- |
 | Frontend | React + PWA |
 | Backend | Node.js + API REST |
-| Base de datos | Memory para demo rapida, PostgreSQL preparado |
+| Base de datos | Memoria solo para desarrollo local; PostgreSQL persistente en producción |
 | URL web local | `http://localhost:5173` |
 | URL API local | `http://localhost:3000` |
 | URL movil en red local | `http://IP-DEL-PC:5174` |
@@ -62,9 +62,9 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-26 | Permisos | API rechaza accion administrativa | Llamar endpoint admin con token de vendedor. | API responde 403 sin ejecutar accion. | Pendiente evidencia |
 | CP-27 | Perfil | Editar perfil propio | Iniciar como vendedor o dueno, entrar a Mi perfil/Configuracion, cambiar nombre o correo y guardar. | El perfil se actualiza sin cambiar rol ni permisos. | Pendiente evidencia |
 | CP-28 | Usuarios | Vendedor no administra usuarios | Iniciar como vendedor y entrar a Mi perfil. | No aparece el formulario de crear usuarios ni la lista administrativa. | Pendiente evidencia |
-| CP-29 | Webpay fiado | Compartir cobro | Entrar a Fiado, presionar Cobrar en cliente con deuda. | Se genera tarjeta Cobro listo con link, Compartir, WhatsApp y Copiar. | Pendiente evidencia |
-| CP-30 | Webpay fiado | Confirmar pago demo | Generar cobro Webpay y presionar Confirmar demo. | El pago queda aprobado y la deuda del cliente disminuye por el monto cobrado. | Pendiente evidencia |
-| CP-31 | Administración | Crear negocio | Iniciar como administrador y registrar negocio, dueño y clave segura. | Se crea un tenant aislado; el login público no permite crear negocios. | Pendiente evidencia |
+| CP-29 | Simulación Webpay fiado | Compartir simulación | Entrar a Fiado, presionar Simular cobro en cliente con deuda. | Se genera una tarjeta de demostración con enlace, compartir, WhatsApp y copiar; no se envía dinero. | Pendiente evidencia |
+| CP-30 | Simulación Webpay fiado | Confirmar simulación | Generar la simulación y presionar Confirmar simulación. | La deuda disminuye por el monto de prueba, sin consultar ni cobrar mediante Transbank. | Pendiente evidencia |
+| CP-31 | Administración | Crear negocio | Registrar negocio, dueño y clave desde Crear cuenta o como administrador. | Se crea un tenant aislado y una prueba Pro de 30 días. | Pendiente evidencia |
 | CP-32 | Seguridad | Cerrar sesion | Cerrar sesion y reutilizar el token anterior. | El token queda revocado y la API responde 401. | Pendiente evidencia |
 | CP-33 | Multi-tenant | Intentar cambiar negocio por cabecera | Enviar una cabecera `x-tenant-id` distinta con un token valido. | La API ignora la cabecera y deriva el negocio desde la sesion. | Pendiente evidencia |
 | CP-34 | Ventas | Pago dividido | Vender usando efectivo y tarjeta por montos que sumen el total. | La venta queda con metodo mixto y caja separa ambos montos. | Pendiente evidencia |
@@ -107,10 +107,10 @@ Estas pruebas validan el nucleo operacional de Localito. El reconocimiento visua
 | CP-71 | Suscripción | Plan Básico | Cambiar a Básico e intentar clientes, IA o compras desde UI/API. | Navegación oculta función y API responde 403; ventas, inventario y caja siguen disponibles. | UI y HTTP aprobados: productos 200, clientes 403 y Venta Rápida deriva a Mi plan |
 | CP-72 | Suscripción | Vencimiento solo lectura | Vencer prueba/periodo y consultar/modificar datos. | Consultas del plan siguen disponibles; mutaciones responden 403 y los datos permanecen. | HTTP/UI aprobados: productos GET 200, POST 403 y controles POS deshabilitados |
 | CP-73 | Plataforma | Métricas SaaS | Entrar como `system_admin`. | Muestra locales, pruebas activas, MRR estimado y controles de plan/estado por tenant. | Visual aprobada; activación Basic actualizó MRR de $59.970 a $49.970 |
-| CP-74 | Apariencia | Claro, oscuro y sistema | Cambiar el selector desde Más y recargar. | Tema persiste por usuario, mantiene contraste y respeta preferencia del sistema. | Claro predeterminado y Oscuro persistido tras recarga a 390 px |
+| CP-74 | Apariencia | Claro, oscuro y sistema | Cambiar el control Apariencia del lateral en escritorio o del menú móvil y recargar. | Tema persiste por usuario, mantiene contraste y respeta preferencia del sistema. | Claro predeterminado y Oscuro persistido tras recarga a 390 px |
 | CP-75 | Responsive | Sin zoom ni desborde | Revisar Inicio, Vender, Inventario y formularios a 390 × 844. | `scrollWidth` no supera el viewport y la navegación inferior no tapa controles esenciales. | Aprobada en 390 × 844 |
 | CP-76 | Inicio | Jerarquía diaria | Entrar como owner. | Ventas de hoy domina; muestra acciones Vender/Agregar producto/Ver caja, atención y cuatro métricas útiles. | Visual aprobada a 390 y 1440 px; sin desborde |
-| CP-77 | Negocio | Editar identidad | Cambiar nombre, rubro, dirección y teléfono desde Más. | API persiste el tenant, actualiza sesión y registra auditoría sin permitir cambiar `active`. | Automatizada y visual/HTTP aprobadas con mensaje Datos del negocio guardados |
+| CP-77 | Negocio | Editar identidad | Cambiar nombre, rubro, dirección y teléfono desde el engranaje de Configuración. | API persiste el tenant, actualiza sesión y registra auditoría sin permitir cambiar `active`. | Automatizada y visual/HTTP aprobadas con mensaje Datos del negocio guardados |
 | CP-78 | Suscripción | Solicitud durante trial | Solicitar Basic mientras existe trial Pro. | Mantiene Pro `trialing`, registra `pendingPlan=basic` y no corta acceso. | Automatizada aprobada |
 | CP-79 | Suscripción | Activación manual | Como system_admin activar un tenant con plan solicitado. | Aplica plan solicitado, crea período, limpia pendiente y audita. | Visual/HTTP aprobada: solicitud Basic desapareció y plan quedó active |
 | CP-80 | Suscripción | Vencido con lectura | Vencer plan Pro y entrar a Clientes/Reportes. | Datos del plan siguen visibles; botones operativos deshabilitados y API rechaza mutaciones. | UI y HTTP aprobados con banner y productos del POS deshabilitados |

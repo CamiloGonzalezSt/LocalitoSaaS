@@ -1,7 +1,7 @@
 # Matriz de regresión del rediseño Localito
 
-Fecha de revisión: 2026-08-26
-Alcance: rediseño Profesional, navegación por rol y modelo SaaS.
+Fecha de revisión: 2026-08-27
+Alcance: rediseño académico, navegación por rol y demostración multi-negocio.
 
 Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sustituir el POS ni duplicar lógica de negocio. La API y PostgreSQL siguen siendo la fuente de verdad para ventas, precios, stock, caja y fiado.
 
@@ -11,11 +11,10 @@ Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sus
 | Vender / POS | **Vender** | Conservada y simplificada | Selección → ticket → Cobrar → medio de pago; venta demo y stock validados. |
 | Venta Rápida | **Vender → Venta Rápida con foto** | Reubicada | La navegación la abre dentro del POS; resultado se agrega al ticket existente. |
 | Código de barras | **Vender → Venta Rápida → código** | Conservada | Servicio y vista `QuickSaleView` continúan disponibles sin cambiar endpoints. |
-| Carrito suspendido | **Vender → Guardar/Recuperar carrito** | Conservada | Persistencia por tenant en almacenamiento local y recuperación contra catálogo actual. |
 | Efectivo | **Vender → Cobrar → Efectivo** | Conservada | Venta automatizada y resumen de caja aprobados. |
 | Tarjeta externa | **Vender → Cobrar → Tarjeta** | Reforzada | Registrar permanece bloqueado hasta marcar confirmación explícita. |
 | Transferencia / QR | **Vender → Cobrar → Transferencia/QR** | Reforzada | Misma confirmación humana obligatoria que tarjeta. |
-| Webpay externo | **Vender → Cobrar → Webpay** | Conservada | No descuenta stock ni registra venta antes de la confirmación humana. |
+| Webpay / Mercado Pago externos | **Vender → Cobrar → medios externos** | Conservada como registro manual | No descuenta stock ni registra venta antes de la confirmación humana; no integra APIs, QR ni cobros reales. |
 | Fiado | **Vender → Cobrar → Fiado** y **Clientes → Fiado** | Reubicada | Cliente obligatorio, deuda preservada y endpoint sujeto a entitlement Pro. |
 | Pago mixto | **Vender → Cobrar → Mixto** | Conservada | Partes de efectivo/tarjeta deben sumar el total y usan el POS existente. |
 | Comprobante | **Vender → Comprobante listo** | Conservada | Área imprimible y compartir siguen conectados a la última venta. |
@@ -26,26 +25,32 @@ Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sus
 | Importación CSV | **Inventario → Importar productos** | Conservada | Validación, vista previa, duplicados y reintento cubiertos por pruebas. |
 | Factura con IA | **Inventario → Ingresar factura** | Reubicada | Mantiene análisis, revisión e ingreso mediante flujo de compras existente. |
 | Clientes | **Clientes → Clientes** | Rediseñada | Alta rápida, edición owner y estados vacíos conservados. |
-| Cuentas de fiado | **Clientes → Fiado** | Reubicada | Saldo, abonos y cobro externo permanecen conectados al cliente. |
+| Cuentas de fiado | **Clientes → Fiado** | Reubicada | Saldo y abonos permanecen conectados al cliente; el enlace Webpay es una simulación académica. |
 | Pagos pendientes | **Clientes → Pendientes** | Nueva organización | Filtro de clientes con deuda, sin duplicar cuentas. |
 | Caja en vivo | **Caja** | Reubicada | Efectivo esperado, movimientos, gastos y ventas se obtienen de la API actual. |
 | Cierre de caja | **Caja** | Conservada | Apertura/cierre y diferencia mantienen repositorio y endpoints originales. |
 | Reportes | **Reportes** | Rediseñada | Ventas, margen, gastos, resultado, productos y detalle conservados para owner/Pro. |
-| Perfil propio | **Más → Mi cuenta** | Reubicada | Actualización de nombre/correo conserva sesión y rol. |
-| Negocio | **Más → Mi negocio** | Reubicada y completada | Owner edita nombre, rubro, dirección y teléfono mediante `PATCH /tenant`. |
-| Usuarios | **Más → Usuarios del local** | Reubicada | Crear/desactivar usuario conserva validación de rol y contraseña. |
-| Apariencia | **Más → Configuración → Apariencia** | Ampliada | Claro predeterminado; Oscuro y Sistema persistidos por ID de usuario. |
-| Exportación de datos | **Más → Plan y datos** | Reubicada | JSON incluye tenant, productos, clientes, ventas y cierres. |
+| Perfil propio | **Engranaje → Mi cuenta** | Reubicada | Actualización de nombre/correo conserva sesión y rol. |
+| Negocio | **Engranaje → Mi negocio** | Reubicada y completada | Owner edita nombre, rubro, dirección y teléfono mediante `PATCH /tenant`. |
+| Usuarios | **Engranaje → Usuarios del local** | Reubicada | Crear/desactivar usuario conserva validación de rol y contraseña. |
+| Apariencia | **Control Apariencia lateral / menú móvil** | Ampliada | Claro predeterminado; Oscuro y Sistema persistidos por ID de usuario. |
+| Exportación de datos | **Engranaje → Plan y datos** | Reubicada | JSON incluye tenant, productos, clientes, ventas y cierres. |
 | Recuperación de contraseña | **Inicio de sesión → Recuperar acceso** | Conservada | Token de un uso, expiración y revocación de sesiones cubiertos por pruebas. |
 | Roles owner/seller | Navegación y API | Conservados | Owner ve 7 secciones; seller ve Vender, Inventario, Clientes y Caja. |
 | System admin | Panel independiente **Locales y usuarios** | Rediseñado | No entra al POS; administra locales, usuarios, planes y estados. |
 | Multi-tenant | Backend/PostgreSQL | Conservado | Operaciones derivan tenant desde sesión; pruebas verifican aislamiento. |
 | PWA/offline | Shell y cola existente | Conservado | Cola mantiene idempotencia; IA informa que requiere conexión. |
-| Prueba gratuita | **Mi plan** y banner | Nueva | Alta crea Pro `trialing` por 30 días sin tarjeta. |
+| Prueba gratuita | **Mi plan** y banner | Nueva | Alta crea Pro `trialing` por 30 días sin tarjeta; es un flujo de demostración académica. |
 | Basic/Pro | **Mi plan** | Nueva | Entitlements centralizados y validación API 403 por función. |
 | Solicitud de plan | **Mi plan → Solicitar plan** | Nueva | Registra `pendingPlan`; no concede acceso ni corta una prueba activa. |
 | Activación manual | **System admin → estado Activo** | Nueva | Aplica el plan solicitado, abre período de 30 días y limpia la solicitud. |
 | Suscripción vencida | Toda la aplicación | Nueva | Datos visibles en modo lectura; mutaciones deshabilitadas en UI y rechazadas en API. |
+
+## Límites declarados para la tesis
+
+- Los botones de Webpay y Mercado Pago de planes, fiados y POS son demostraciones controladas: no procesan dinero ni sustituyen una pasarela real.
+- La recuperación de contraseña envía correo únicamente si se configura un proveedor transaccional; sin esa configuración, el sistema no revela cuentas y ofrece la alternativa administrativa.
+- La cola offline cubre ventas y ajustes de stock; las funciones que necesitan IA requieren conexión.
 
 ## Criterios de salida
 

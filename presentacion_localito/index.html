@@ -1,0 +1,1785 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#13233e">
+  <title>Localito — Presentación de propuesta</title>
+  <style>
+    :root {
+      --navy: #13233e;
+      --navy-2: #1d3152;
+      --green: #078d70;
+      --green-2: #28b78f;
+      --mint: #dff4eb;
+      --cream: #f7f4ed;
+      --paper: #fffdf8;
+      --ink: #14233d;
+      --muted: #667085;
+      --line: rgba(20, 35, 61, .13);
+      --amber: #efaa21;
+      --coral: #e75d50;
+      --shadow: 0 28px 80px rgba(14, 30, 53, .18);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--navy);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .deck {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(40, 183, 143, .25), transparent 27%),
+        radial-gradient(circle at 88% 100%, rgba(239, 170, 33, .16), transparent 31%),
+        var(--navy);
+    }
+
+    .slides {
+      position: absolute;
+      inset: 0;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: clamp(12px, 2vh, 24px);
+      padding: clamp(28px, 5vw, 76px) clamp(30px, 6vw, 96px) clamp(70px, 9vh, 96px);
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(6%);
+      transition: opacity .34s ease, transform .48s cubic-bezier(.2,.8,.2,1), visibility 0s linear .48s;
+      background: var(--cream);
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      width: min(36vw, 520px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      top: -22%;
+      right: -10%;
+      background: rgba(40, 183, 143, .09);
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      transition-delay: 0s;
+      z-index: 2;
+    }
+
+    .slide.leaving {
+      transform: translateX(-4%);
+    }
+
+    .slide.dark {
+      color: #fff;
+      background:
+        linear-gradient(115deg, rgba(19,35,62,.98), rgba(19,35,62,.91)),
+        radial-gradient(circle at 80% 20%, var(--green), transparent 42%);
+    }
+
+    .slide.dark::before {
+      width: min(50vw, 760px);
+      top: -42%;
+      right: -12%;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(40, 183, 143, .11);
+      box-shadow: 0 0 0 90px rgba(255,255,255,.018), 0 0 0 180px rgba(255,255,255,.012);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      width: fit-content;
+      margin: 0;
+      color: var(--green);
+      font-size: clamp(11px, 1vw, 15px);
+      font-weight: 850;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 22px;
+      height: 3px;
+      border-radius: 99px;
+      background: currentColor;
+    }
+
+    .dark .eyebrow { color: #72dfbd; }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 980px;
+      margin-bottom: 22px;
+      font-size: clamp(45px, 6.2vw, 98px);
+      line-height: .94;
+      letter-spacing: -.055em;
+    }
+
+    h2 {
+      max-width: 1040px;
+      margin-bottom: 0;
+      font-size: clamp(34px, 4.8vw, 72px);
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: clamp(18px, 1.6vw, 26px);
+      line-height: 1.12;
+      letter-spacing: -.02em;
+    }
+
+    .lead {
+      max-width: 910px;
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: clamp(17px, 1.75vw, 29px);
+      line-height: 1.35;
+    }
+
+    .dark .lead { color: rgba(255,255,255,.75); }
+
+    .accent { color: var(--green-2); }
+    .amber { color: var(--amber); }
+
+    .topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-number {
+      color: rgba(20,35,61,.28);
+      font-weight: 900;
+      font-size: clamp(30px, 4vw, 62px);
+      letter-spacing: -.06em;
+    }
+
+    .dark .section-number { color: rgba(255,255,255,.22); }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      min-height: 0;
+      align-self: center;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: clamp(24px, 4vh, 48px);
+      font-weight: 900;
+      font-size: clamp(18px, 1.4vw, 24px);
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px 14px 18px 18px;
+      color: white;
+      background: linear-gradient(145deg, #53b866, #778a45);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.04fr) minmax(380px, .96fr);
+      align-items: center;
+      gap: clamp(36px, 6vw, 100px);
+      height: 100%;
+    }
+
+    .hero-copy { align-self: center; }
+
+    .hero-shot {
+      position: relative;
+      align-self: center;
+      transform: rotate(1.5deg);
+    }
+
+    .hero-shot::before {
+      content: "";
+      position: absolute;
+      inset: 10% -6% -8% 8%;
+      border-radius: 42px;
+      background: linear-gradient(145deg, var(--green-2), var(--amber));
+      filter: blur(55px);
+      opacity: .25;
+    }
+
+    .browser-frame {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(20,35,61,.13);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .browser-bar {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 14px;
+      background: #f2efe8;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .browser-bar i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d4d0c7;
+    }
+
+    .browser-frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .dark .browser-frame { border-color: rgba(255,255,255,.18); }
+
+    .caption {
+      margin: 11px 0 0;
+      color: var(--muted);
+      font-size: clamp(11px, 1vw, 15px);
+    }
+
+    .dark .caption { color: rgba(255,255,255,.63); }
+
+    .proof-pill {
+      position: absolute;
+      right: -18px;
+      bottom: -16px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      color: var(--navy);
+      background: #fff;
+      box-shadow: 0 14px 35px rgba(0,0,0,.18);
+      font-size: clamp(12px, 1vw, 16px);
+      font-weight: 850;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 26px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255,255,255,.72);
+      font-size: clamp(11px, .95vw, 15px);
+      font-weight: 760;
+    }
+
+    .tag::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .dark .tag {
+      color: #fff;
+      border-color: rgba(255,255,255,.17);
+      background: rgba(255,255,255,.07);
+    }
+
+    .footer-note {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      color: var(--muted);
+      font-size: clamp(10px, .9vw, 14px);
+    }
+
+    .dark .footer-note { color: rgba(255,255,255,.55); }
+
+    .pain-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, .75fr) minmax(500px, 1.25fr);
+      gap: clamp(30px, 6vw, 90px);
+      align-items: center;
+    }
+
+    .pain-stack {
+      position: relative;
+      display: grid;
+      gap: 12px;
+    }
+
+    .pain-card {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
+      align-items: center;
+      min-height: 82px;
+      padding: 15px 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.8);
+      box-shadow: 0 8px 25px rgba(20,35,61,.06);
+    }
+
+    .pain-card:nth-child(2) { transform: translateX(6%); }
+    .pain-card:nth-child(3) { transform: translateX(2%); }
+    .pain-card:nth-child(4) { transform: translateX(8%); }
+
+    .icon-box {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      color: var(--coral);
+      background: #fff0ed;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .pain-card strong { font-size: clamp(14px, 1.3vw, 21px); }
+    .pain-card small { display:block; margin-top:4px; color:var(--muted); font-size:clamp(11px,.9vw,14px); }
+
+    .quote {
+      padding: 22px 0 0 25px;
+      border-left: 5px solid var(--amber);
+      color: var(--ink);
+      font-size: clamp(20px, 2.1vw, 34px);
+      line-height: 1.22;
+      font-weight: 780;
+    }
+
+    .persona-grid {
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: clamp(30px, 5vw, 80px);
+      align-items: stretch;
+    }
+
+    .persona {
+      display: grid;
+      align-content: space-between;
+      padding: clamp(24px, 3vw, 44px);
+      border-radius: 28px;
+      color: #fff;
+      background: linear-gradient(150deg, var(--navy-2), var(--navy));
+      box-shadow: var(--shadow);
+    }
+
+    .persona-avatar {
+      display: grid;
+      place-items: center;
+      width: clamp(76px, 8vw, 120px);
+      aspect-ratio: 1;
+      margin-bottom: 28px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, var(--green-2), #607d3e);
+      font-size: clamp(30px, 3.2vw, 52px);
+      font-weight: 900;
+    }
+
+    .persona p { color: rgba(255,255,255,.7); line-height:1.45; font-size:clamp(14px,1.2vw,19px); }
+
+    .needs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .need {
+      padding: clamp(18px, 2.3vw, 30px);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255,255,255,.72);
+    }
+
+    .need b {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--green);
+      font-size: clamp(12px, 1vw, 16px);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .need p { margin:0; color:var(--muted); font-size:clamp(13px,1.15vw,18px); line-height:1.4; }
+
+    .bridge {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: clamp(16px, 3vw, 44px);
+      align-items: center;
+    }
+
+    .state {
+      min-height: clamp(300px, 48vh, 520px);
+      display: grid;
+      align-content: center;
+      gap: 16px;
+      padding: clamp(28px, 4vw, 58px);
+      border-radius: 30px;
+      background: rgba(255,255,255,.72);
+      border: 1px solid var(--line);
+    }
+
+    .state.after {
+      color: #fff;
+      background: linear-gradient(145deg, var(--green), #056b59);
+      border-color: transparent;
+      box-shadow: 0 22px 55px rgba(7,141,112,.24);
+    }
+
+    .state-label {
+      width: fit-content;
+      padding: 7px 11px;
+      border-radius: 999px;
+      color: var(--coral);
+      background: #fff0ed;
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .after .state-label { color:#fff; background:rgba(255,255,255,.15); }
+
+    .state ul { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+    .state li { position:relative; padding-left:25px; color:var(--muted); font-size:clamp(14px,1.25vw,20px); line-height:1.3; }
+    .state li::before { content:"×"; position:absolute; left:0; color:var(--coral); font-weight:900; }
+    .after li { color:rgba(255,255,255,.86); }
+    .after li::before { content:"✓"; color:#bff7df; }
+
+    .arrow {
+      display: grid;
+      place-items: center;
+      width: clamp(54px, 5vw, 76px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      color: var(--navy);
+      background: var(--amber);
+      font-size: clamp(24px, 2.4vw, 38px);
+      font-weight: 900;
+      box-shadow: 0 14px 35px rgba(239,170,33,.28);
+    }
+
+    .product-layout {
+      display: grid;
+      grid-template-columns: minmax(350px,.76fr) minmax(540px,1.24fr);
+      gap: clamp(36px,6vw,90px);
+      align-items: center;
+    }
+
+    .value-list { display:grid; gap:13px; margin-top:26px; }
+
+    .value-item {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 13px;
+      align-items: start;
+      color: var(--muted);
+      font-size: clamp(14px,1.25vw,19px);
+      line-height:1.35;
+    }
+
+    .value-item i {
+      display:grid;
+      place-items:center;
+      width:30px;
+      height:30px;
+      border-radius:50%;
+      color:#fff;
+      background:var(--green);
+      font-style:normal;
+      font-size:14px;
+      font-weight:900;
+    }
+
+    .live-badge {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:16px;
+      padding:8px 12px;
+      border-radius:999px;
+      color:#076b58;
+      background:#dff4eb;
+      font-size:clamp(11px,1vw,15px);
+      font-weight:850;
+    }
+
+    .live-badge::before {
+      content:"";
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--green);
+      box-shadow:0 0 0 5px rgba(7,141,112,.12);
+    }
+
+    .proof-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:clamp(14px,2vw,24px);
+    }
+
+    .proof-grid .browser-frame {
+      height: clamp(142px, 21vh, 205px);
+    }
+
+    .proof-grid .browser-frame img {
+      height: calc(100% - 34px);
+      object-fit:cover;
+      object-position:top;
+    }
+
+    .proof-card:nth-child(1) .browser-frame img { object-position:center; }
+    .proof-card:nth-child(3) .browser-frame img { object-position:bottom; }
+
+    .proof-card { min-width:0; }
+
+    .proof-card h3 {
+      margin:10px 0 3px;
+      font-size:clamp(15px,1.35vw,21px);
+    }
+
+    .proof-card p { margin:0; color:var(--muted); font-size:clamp(11px,.95vw,15px); }
+
+    .deployment-layout {
+      display:grid;
+      grid-template-columns:minmax(320px,.72fr) minmax(600px,1.28fr);
+      gap:clamp(34px,5vw,76px);
+      align-items:center;
+    }
+
+    .deployment-copy .lead { max-width:520px; }
+
+    .deployment-stage {
+      position:relative;
+      min-height:clamp(360px,57vh,535px);
+    }
+
+    .deployed-browser {
+      position:absolute;
+      z-index:1;
+      top:3%;
+      left:0;
+      width:92%;
+      transform:rotate(-1deg);
+    }
+
+    .deployed-browser img {
+      aspect-ratio:16/8;
+      object-fit:cover;
+      object-position:top;
+    }
+
+    .phone-frame {
+      position:absolute;
+      z-index:3;
+      right:0;
+      bottom:-1%;
+      width:clamp(158px,15.5vw,238px);
+      padding:8px;
+      border:1px solid rgba(255,255,255,.24);
+      border-radius:32px;
+      background:#0b172a;
+      box-shadow:0 28px 70px rgba(0,0,0,.42);
+      transform:rotate(2deg);
+    }
+
+    .phone-frame::before {
+      content:"";
+      position:absolute;
+      z-index:2;
+      top:13px;
+      left:50%;
+      width:32%;
+      height:12px;
+      border-radius:999px;
+      background:#0b172a;
+      transform:translateX(-50%);
+    }
+
+    .phone-frame img {
+      display:block;
+      width:100%;
+      max-height:clamp(350px,54vh,510px);
+      object-fit:cover;
+      object-position:top;
+      border-radius:25px;
+    }
+
+    .deployment-label {
+      position:absolute;
+      z-index:4;
+      left:3%;
+      bottom:10%;
+      max-width:320px;
+      padding:13px 16px;
+      border-radius:16px;
+      color:var(--navy);
+      background:#fff;
+      box-shadow:0 15px 35px rgba(0,0,0,.22);
+      font-size:clamp(11px,.95vw,15px);
+      font-weight:820;
+    }
+
+    .focus-layout {
+      display:grid;
+      grid-template-columns:minmax(400px,1.15fr) minmax(310px,.85fr);
+      gap:clamp(30px,5vw,70px);
+      align-items:center;
+    }
+
+    .focus-shot img {
+      aspect-ratio:16/8;
+      object-fit:cover;
+      object-position:bottom;
+    }
+
+    .mini-metrics { display:grid; gap:12px; }
+
+    .mini-metric {
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:14px;
+      align-items:center;
+      padding:16px 18px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(255,255,255,.72);
+    }
+
+    .mini-metric b { color:var(--green); font-size:clamp(24px,2.5vw,40px); }
+    .mini-metric span { color:var(--muted); font-size:clamp(12px,1vw,16px); line-height:1.3; }
+
+    .innovation-grid {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:clamp(12px,1.7vw,22px);
+    }
+
+    .innovation-card {
+      min-height:clamp(230px,35vh,380px);
+      display:grid;
+      align-content:space-between;
+      padding:clamp(20px,2.5vw,34px);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:24px;
+      background:rgba(255,255,255,.075);
+      backdrop-filter:blur(10px);
+    }
+
+    .innovation-card:nth-child(2) { background:rgba(40,183,143,.14); }
+    .innovation-card:nth-child(3) { background:rgba(239,170,33,.11); }
+
+    .number-bubble {
+      display:grid;
+      place-items:center;
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      color:var(--navy);
+      background:#fff;
+      font-weight:950;
+    }
+
+    .innovation-card p { margin:0; color:rgba(255,255,255,.68); font-size:clamp(12px,1.05vw,17px); line-height:1.42; }
+
+    .gains-grid {
+      display:grid;
+      grid-template-columns:.9fr 1.1fr;
+      gap:clamp(30px,5vw,70px);
+      align-items:center;
+    }
+
+    .gains { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+
+    .gain {
+      min-height:160px;
+      padding:clamp(20px,2.4vw,32px);
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:rgba(255,255,255,.75);
+    }
+
+    .gain b { display:block; margin-bottom:8px; color:var(--green); font-size:clamp(17px,1.5vw,24px); }
+    .gain p { margin:0; color:var(--muted); font-size:clamp(12px,1.05vw,17px); line-height:1.4; }
+
+    .validation-box {
+      padding:clamp(26px,3.5vw,48px);
+      border-radius:28px;
+      color:#fff;
+      background:linear-gradient(145deg,var(--navy-2),var(--navy));
+      box-shadow:var(--shadow);
+    }
+
+    .validation-box h3 { font-size:clamp(22px,2vw,34px); }
+    .validation-box p { color:rgba(255,255,255,.68); font-size:clamp(13px,1.15vw,18px); line-height:1.4; }
+
+    .metric-tags { display:flex; flex-wrap:wrap; gap:9px; margin-top:20px; }
+    .metric-tags span { padding:8px 11px; border:1px solid rgba(255,255,255,.16); border-radius:999px; background:rgba(255,255,255,.07); font-size:clamp(10px,.85vw,14px); }
+
+    .business-layout {
+      display:grid;
+      grid-template-columns:.8fr 1.2fr;
+      gap:clamp(34px,6vw,90px);
+      align-items:center;
+    }
+
+    .price-card {
+      padding:clamp(28px,4vw,54px);
+      border-radius:28px;
+      color:#fff;
+      background:linear-gradient(150deg,var(--green),#056652);
+      box-shadow:0 25px 65px rgba(7,141,112,.27);
+    }
+
+    .price-card .price {
+      margin:18px 0 4px;
+      font-size:clamp(42px,5vw,76px);
+      line-height:1;
+      font-weight:950;
+      letter-spacing:-.05em;
+    }
+
+    .price-card p { color:rgba(255,255,255,.76); font-size:clamp(13px,1.15vw,18px); line-height:1.42; }
+
+    .roadmap { display:grid; gap:12px; }
+
+    .roadmap-item {
+      display:grid;
+      grid-template-columns:90px 1fr;
+      gap:18px;
+      padding:16px 0;
+      border-bottom:1px solid var(--line);
+    }
+
+    .roadmap-item:last-child { border-bottom:0; }
+    .roadmap-item b { color:var(--green); font-size:clamp(12px,1vw,16px); text-transform:uppercase; letter-spacing:.08em; }
+    .roadmap-item p { margin:0; color:var(--muted); font-size:clamp(13px,1.12vw,18px); line-height:1.4; }
+
+    .scope-note {
+      margin-top:18px;
+      padding:13px 16px;
+      border-left:4px solid var(--amber);
+      color:var(--muted);
+      background:rgba(239,170,33,.08);
+      font-size:clamp(11px,.95vw,15px);
+      line-height:1.4;
+    }
+
+    .closing-grid {
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:clamp(36px,7vw,110px);
+      align-items:center;
+    }
+
+    .closing-grid h2 {
+      font-size: clamp(34px, 3.8vw, 58px);
+    }
+
+    .pitch {
+      padding:clamp(18px,2.4vw,34px);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:28px;
+      background:rgba(255,255,255,.07);
+      font-size:clamp(14px,1.3vw,20px);
+      line-height:1.4;
+      font-weight:650;
+    }
+
+    .ask {
+      display:grid;
+      gap:18px;
+      padding:clamp(28px,3.7vw,50px);
+      border-radius:28px;
+      color:var(--navy);
+      background:#fff;
+      box-shadow:var(--shadow);
+    }
+
+    .ask-label { color:var(--green); font-size:clamp(11px,1vw,15px); font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+    .ask h3 { font-size:clamp(25px,2.8vw,44px); line-height:1.04; }
+    .ask p { margin:0; color:var(--muted); font-size:clamp(13px,1.15vw,18px); line-height:1.4; }
+
+    .controls {
+      position: fixed;
+      z-index: 20;
+      left: 50%;
+      bottom: 17px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(19,35,62,.9);
+      box-shadow: 0 12px 35px rgba(0,0,0,.22);
+      backdrop-filter: blur(14px);
+    }
+
+    .controls button {
+      display:grid;
+      place-items:center;
+      min-width:36px;
+      height:36px;
+      padding:0 11px;
+      border:0;
+      border-radius:999px;
+      color:#fff;
+      background:transparent;
+      cursor:pointer;
+      font-weight:800;
+    }
+
+    .controls button:hover, .controls button:focus-visible { outline:none; background:rgba(255,255,255,.13); }
+    .controls button:disabled { opacity:.32; cursor:default; }
+
+    .counter {
+      min-width:62px;
+      text-align:center;
+      font-size:12px;
+      font-variant-numeric:tabular-nums;
+      color:rgba(255,255,255,.72);
+    }
+
+    .progress {
+      position:fixed;
+      z-index:21;
+      left:0;
+      bottom:0;
+      width:100%;
+      height:4px;
+      background:rgba(255,255,255,.12);
+    }
+
+    .progress span {
+      display:block;
+      width:0;
+      height:100%;
+      background:linear-gradient(90deg,var(--green-2),var(--amber));
+      transition:width .35s ease;
+    }
+
+    .notes-panel {
+      position:fixed;
+      z-index:30;
+      right:18px;
+      bottom:70px;
+      width:min(440px,calc(100vw - 36px));
+      max-height:min(60vh,520px);
+      overflow:auto;
+      padding:22px;
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:20px;
+      color:#fff;
+      background:rgba(19,35,62,.96);
+      box-shadow:0 24px 80px rgba(0,0,0,.35);
+      backdrop-filter:blur(16px);
+      opacity:0;
+      visibility:hidden;
+      transform:translateY(12px);
+      transition:.2s ease;
+    }
+
+    .notes-panel.open { opacity:1; visibility:visible; transform:none; }
+    .notes-panel strong { display:block; margin-bottom:10px; color:#72dfbd; font-size:12px; letter-spacing:.1em; text-transform:uppercase; }
+    .notes-panel p { margin:0; color:rgba(255,255,255,.8); font-size:15px; line-height:1.55; }
+
+    .help {
+      position:fixed;
+      z-index:19;
+      top:14px;
+      right:18px;
+      color:rgba(255,255,255,.62);
+      font-size:11px;
+      font-weight:700;
+      pointer-events:none;
+      mix-blend-mode:difference;
+    }
+
+    /* Versión simple: una idea por diapositiva y palabras cotidianas. */
+    .slide:not(.simple) { display:none; }
+
+    .slide.simple {
+      gap:clamp(10px,1.5vh,18px);
+      padding:clamp(30px,4.5vw,68px) clamp(34px,5.5vw,86px) clamp(68px,8vh,88px);
+      background:#f8f5ed;
+    }
+
+    .slide.simple::before {
+      width:min(28vw,420px);
+      top:-27%;
+      right:-8%;
+      background:rgba(7,141,112,.07);
+    }
+
+    .simple .topline { align-items:center; }
+    .simple .section-number { font-size:clamp(26px,3.3vw,48px); }
+    .simple .eyebrow { font-size:clamp(12px,1vw,15px); letter-spacing:.08em; }
+    .simple h1 { font-size:clamp(56px,7.2vw,108px); line-height:.93; }
+    .simple h2 { max-width:1080px; font-size:clamp(38px,4.8vw,68px); line-height:1.02; }
+    .simple h3 { font-size:clamp(20px,1.7vw,27px); }
+    .simple .lead { font-size:clamp(18px,1.7vw,26px); line-height:1.38; }
+
+    .simple-brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:var(--ink);
+      font-size:clamp(17px,1.35vw,22px);
+      font-weight:900;
+    }
+
+    .simple-cover-grid {
+      display:grid;
+      grid-template-columns:minmax(380px,.82fr) minmax(560px,1.18fr);
+      gap:clamp(42px,6vw,90px);
+      align-items:center;
+    }
+
+    .simple-cover-grid h1 { margin:12px 0 12px; }
+    .simple-cover-grid h2 { margin-bottom:18px; font-size:clamp(34px,3.8vw,58px); }
+    .simple-cover-grid .browser-frame { transform:rotate(1deg); }
+
+    .plain-promise {
+      display:inline-block;
+      margin-top:24px;
+      padding:13px 18px;
+      border-radius:14px;
+      color:#075f50;
+      background:#dff4eb;
+      font-size:clamp(14px,1.15vw,18px);
+      font-weight:850;
+    }
+
+    .simple-heading {
+      margin-bottom:clamp(22px,4vh,44px);
+    }
+
+    .three-questions,
+    .three-tools,
+    .three-differences {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:clamp(15px,2vw,26px);
+    }
+
+    .question-card {
+      min-height:clamp(230px,34vh,350px);
+      display:grid;
+      align-content:space-between;
+      padding:clamp(24px,3vw,42px);
+      border:2px solid var(--line);
+      border-radius:26px;
+      background:#fff;
+    }
+
+    .question-card:nth-child(2) { background:#fff9e9; border-color:rgba(239,170,33,.28); }
+    .question-card:nth-child(3) { background:#eef8f4; border-color:rgba(7,141,112,.24); }
+    .question-card .question { font-size:clamp(26px,2.5vw,40px); line-height:1.1; font-weight:900; letter-spacing:-.035em; }
+    .question-card .answer { color:var(--green); font-size:clamp(16px,1.35vw,21px); line-height:1.35; font-weight:800; }
+
+    .audience-layout {
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:clamp(36px,6vw,90px);
+      align-items:center;
+    }
+
+    .store-words { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+    .store-words span { padding:13px 17px; border:2px solid var(--line); border-radius:14px; background:#fff; font-size:clamp(15px,1.25vw,20px); font-weight:850; }
+
+    .plain-box {
+      padding:clamp(28px,4vw,54px);
+      border-radius:28px;
+      color:#fff;
+      background:var(--navy);
+      box-shadow:var(--shadow);
+    }
+
+    .plain-box h3 { margin-bottom:16px; font-size:clamp(27px,2.7vw,42px); }
+    .plain-box p { margin:0; color:rgba(255,255,255,.78); font-size:clamp(17px,1.55vw,24px); line-height:1.45; }
+
+    .four-steps {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:clamp(12px,1.5vw,20px);
+    }
+
+    .plain-step {
+      position:relative;
+      min-height:clamp(260px,38vh,390px);
+      display:grid;
+      align-content:start;
+      gap:18px;
+      padding:clamp(22px,2.6vw,36px);
+      border:2px solid var(--line);
+      border-radius:24px;
+      background:#fff;
+    }
+
+    .plain-step:not(:last-child)::after { content:"→"; position:absolute; z-index:2; right:-19px; top:45%; width:36px; height:36px; display:grid; place-items:center; border-radius:50%; color:#fff; background:var(--green); font-weight:900; }
+    .step-number { color:var(--green); font-size:clamp(34px,3.4vw,52px); line-height:1; font-weight:950; }
+    .plain-step p { margin:0; color:var(--muted); font-size:clamp(15px,1.25vw,20px); line-height:1.4; }
+
+    .dashboard-layout {
+      display:grid;
+      grid-template-columns:minmax(590px,1.28fr) minmax(310px,.72fr);
+      gap:clamp(30px,4.5vw,66px);
+      align-items:center;
+    }
+
+    .screen-points { display:grid; gap:14px; }
+    .screen-point { padding:18px 20px; border:2px solid var(--line); border-radius:17px; background:#fff; font-size:clamp(16px,1.3vw,21px); font-weight:850; }
+    .screen-point strong { color:var(--green); }
+
+    .tool-card { min-width:0; }
+    .tool-card .browser-frame img { height:clamp(190px,29vh,280px); object-fit:cover; object-position:top; }
+    .tool-card:nth-child(1) .browser-frame img { object-position:center; }
+    .tool-card:nth-child(3) .browser-frame img { object-position:bottom; }
+    .tool-card h3 { margin:14px 0 5px; }
+    .tool-card p { margin:0; color:var(--muted); font-size:clamp(14px,1.12vw,18px); line-height:1.35; }
+
+    .video-demo-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:clamp(18px,2.2vw,30px);
+    }
+
+    .demo-card {
+      min-width:0;
+      display:grid;
+      grid-template-columns:clamp(155px,14vw,205px) 1fr;
+      gap:clamp(18px,2vw,28px);
+      align-items:center;
+      padding:clamp(16px,1.8vw,24px);
+      border:2px solid var(--line);
+      border-radius:26px;
+      background:#fff;
+      box-shadow:0 12px 34px rgba(20,35,61,.08);
+    }
+
+    .video-shell {
+      position:relative;
+      overflow:hidden;
+      width:100%;
+      aspect-ratio:9/16;
+      border:6px solid var(--navy);
+      border-radius:24px;
+      background:var(--navy);
+      box-shadow:0 16px 35px rgba(20,35,61,.2);
+    }
+
+    .video-shell video {
+      display:block;
+      width:100%;
+      height:100%;
+      border-radius:17px;
+      object-fit:cover;
+      background:#f8f5ed;
+    }
+
+    .play-overlay {
+      position:absolute;
+      z-index:3;
+      inset:0;
+      display:grid;
+      place-content:center;
+      justify-items:center;
+      gap:10px;
+      border:0;
+      color:#fff;
+      background:linear-gradient(to bottom,rgba(19,35,62,.08),rgba(19,35,62,.62));
+      cursor:pointer;
+      font-size:14px;
+      font-weight:900;
+    }
+
+    .play-overlay span {
+      display:grid;
+      place-items:center;
+      width:68px;
+      height:68px;
+      padding-left:5px;
+      border-radius:50%;
+      color:#fff;
+      background:var(--green);
+      box-shadow:0 12px 28px rgba(0,0,0,.28);
+      font-size:30px;
+    }
+
+    .video-shell.playing .play-overlay { display:none; }
+    .demo-copy h3 { margin-bottom:10px; font-size:clamp(24px,2vw,32px); }
+    .demo-copy p { margin:0 0 18px; color:var(--muted); font-size:clamp(14px,1.15vw,18px); line-height:1.42; }
+
+    .device-layout {
+      display:grid;
+      grid-template-columns:minmax(330px,.72fr) minmax(600px,1.28fr);
+      gap:clamp(34px,5vw,76px);
+      align-items:center;
+    }
+
+    .device-copy { display:grid; gap:16px; }
+    .device-rule { padding:15px 17px; border-left:5px solid var(--green); background:#fff; font-size:clamp(16px,1.35vw,21px); line-height:1.35; font-weight:800; }
+
+    .difference-card {
+      min-height:clamp(240px,35vh,350px);
+      padding:clamp(25px,3vw,42px);
+      border:2px solid var(--line);
+      border-radius:26px;
+      background:#fff;
+    }
+
+    .difference-card b { display:block; margin-bottom:18px; color:var(--green); font-size:clamp(17px,1.35vw,22px); }
+    .difference-card h3 { margin-bottom:12px; font-size:clamp(25px,2.3vw,36px); }
+    .difference-card p { margin:0; color:var(--muted); font-size:clamp(15px,1.2vw,19px); line-height:1.42; }
+
+    .gain-model-layout {
+      display:grid;
+      grid-template-columns:1.08fr .92fr;
+      gap:clamp(32px,5vw,74px);
+      align-items:center;
+    }
+
+    .plain-gains { display:grid; gap:14px; }
+    .plain-gain { display:grid; grid-template-columns:52px 1fr; gap:16px; align-items:center; padding:17px 20px; border:2px solid var(--line); border-radius:18px; background:#fff; }
+    .plain-gain span { display:grid; place-items:center; width:48px; height:48px; border-radius:50%; color:#fff; background:var(--green); font-size:22px; font-weight:950; }
+    .plain-gain b { display:block; font-size:clamp(19px,1.55vw,25px); }
+    .plain-gain small { color:var(--muted); font-size:clamp(13px,1vw,16px); }
+
+    .plain-payment {
+      padding:clamp(30px,4vw,55px);
+      border-radius:28px;
+      color:#fff;
+      background:var(--green);
+      box-shadow:0 24px 60px rgba(7,141,112,.25);
+    }
+
+    .plain-payment .big-line { margin:16px 0; font-size:clamp(29px,3vw,47px); line-height:1.08; font-weight:950; letter-spacing:-.035em; }
+    .plain-payment p { margin:0; color:rgba(255,255,255,.82); font-size:clamp(16px,1.35vw,21px); line-height:1.4; }
+
+    .simple-close-layout {
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:clamp(36px,6vw,90px);
+      align-items:center;
+    }
+
+    .simple-pitch { padding:clamp(26px,3.5vw,48px); border:2px solid var(--line); border-radius:26px; background:#fff; font-size:clamp(19px,1.7vw,26px); line-height:1.5; font-weight:700; }
+    .simple-ask { padding:clamp(30px,4vw,55px); border-radius:28px; color:#fff; background:var(--navy); box-shadow:var(--shadow); }
+    .simple-ask h3 { margin:12px 0 18px; font-size:clamp(30px,3vw,48px); line-height:1.08; }
+    .simple-ask p { margin:0; color:rgba(255,255,255,.76); font-size:clamp(16px,1.3vw,21px); line-height:1.4; }
+
+    @media (max-width: 900px) {
+      .slide { padding:24px 24px 76px; overflow-y:auto; }
+      .hero-grid, .pain-layout, .persona-grid, .product-layout, .deployment-layout, .focus-layout, .gains-grid, .business-layout, .closing-grid { grid-template-columns:1fr; }
+      .hero-shot { max-width:700px; }
+      .persona-grid, .product-layout, .focus-layout, .gains-grid, .business-layout, .closing-grid { padding-bottom:20px; }
+      .innovation-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .bridge { grid-template-columns:1fr; }
+      .state { min-height:0; }
+      .arrow { transform:rotate(90deg); margin:auto; }
+      .proof-grid { grid-template-columns:1fr; }
+      .proof-grid .proof-card:nth-child(n+3) { display:none; }
+      .hero-grid { align-content:start; }
+      .deployment-stage { min-height:430px; }
+      .help { display:none; }
+      .simple-cover-grid, .audience-layout, .dashboard-layout, .device-layout, .gain-model-layout, .simple-close-layout { grid-template-columns:1fr; }
+      .three-questions, .three-tools, .three-differences { grid-template-columns:1fr; }
+      .video-demo-grid { grid-template-columns:1fr; }
+      .demo-card { grid-template-columns:135px 1fr; }
+      .four-steps { grid-template-columns:1fr; }
+      .plain-step { min-height:0; }
+      .plain-step:not(:last-child)::after { display:none; }
+    }
+
+    @media (max-width: 560px) {
+      .needs, .gains, .innovation-grid { grid-template-columns:1fr; }
+      .innovation-card { min-height:190px; }
+      .roadmap-item { grid-template-columns:1fr; gap:4px; }
+      .section-number { display:none; }
+      .controls button.utility { display:none; }
+      h1 { font-size:clamp(43px,14vw,72px); }
+      h2 { font-size:clamp(34px,10.5vw,58px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior:auto!important; transition:none!important; }
+    }
+
+    @media print {
+      @page { size: 13.333in 7.5in; margin:0; }
+      html,body { overflow:visible; background:#fff; }
+      .deck,.slides { position:static; width:auto; height:auto; }
+      .slide { position:relative; inset:auto; width:13.333in; height:7.5in; break-after:page; opacity:1; visibility:visible; transform:none; }
+      .controls,.progress,.notes-panel,.help { display:none!important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="Presentación de la propuesta Localito">
+    <div class="slides">
+      <section class="slide dark active" data-title="Portada" data-notes="Buenos días. Hoy no venimos a mostrar otro sistema administrativo: venimos a proponer una herramienta simple para un problema cotidiano. Localito convierte el cuaderno, la memoria y las planillas separadas de un comercio de barrio en una caja inteligente que cabe en el teléfono.">
+        <div class="topline">
+          <div class="brand"><span class="brand-mark">LO</span> Localito</div>
+          <span class="section-number">01</span>
+        </div>
+        <div class="content hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Propuesta de proyecto APT</p>
+            <h1>La caja inteligente <span class="accent">de bolsillo</span>.</h1>
+            <p class="lead">Ventas, inventario, fiado y caja en un solo lugar, pensado para comercios de barrio.</p>
+            <div class="tag-row">
+              <span class="tag">Simple</span>
+              <span class="tag">Móvil</span>
+              <span class="tag">Vendible como SaaS</span>
+            </div>
+          </div>
+          <div class="hero-shot">
+            <div class="browser-frame">
+              <div class="browser-bar"><i></i><i></i><i></i></div>
+              <img src="assets/02-dashboard.png" alt="Panel principal funcional de Localito">
+            </div>
+            <div class="proof-pill">● Prototipo funcional</div>
+          </div>
+        </div>
+        <div class="footer-note"><span>Camilo González · Alexander Patiño · Samuel Solis</span><span>Localito · 2026</span></div>
+      </section>
+
+      <section class="slide" data-title="El dolor" data-notes="Nuestra hipótesis de problema es clara: en muchos comercios pequeños la operación depende de la memoria del dueño, un cuaderno o aplicaciones separadas. Eso hace difícil saber qué queda, quién debe, cuánto entró y por qué no cuadra la caja. El dolor no es falta de trabajo; es falta de visibilidad.">
+        <div class="topline"><p class="eyebrow">El dolor que resolvemos</p><span class="section-number">02</span></div>
+        <div class="content pain-layout">
+          <div>
+            <h2>El negocio funciona.<br><span class="amber">El control no siempre.</span></h2>
+            <p class="quote">“Sé que vendí, pero no siempre sé qué me queda, quién me debe o por qué no cuadró la caja”.</p>
+          </div>
+          <div class="pain-stack">
+            <article class="pain-card"><span class="icon-box">#</span><div><strong>Stock a ojo</strong><small>Quiebres, compras tardías y productos olvidados.</small></div></article>
+            <article class="pain-card"><span class="icon-box">$</span><div><strong>Fiado sin trazabilidad</strong><small>Deudas anotadas, incompletas o difíciles de cobrar.</small></div></article>
+            <article class="pain-card"><span class="icon-box">≠</span><div><strong>Caja que no cuadra</strong><small>Ventas y medios de pago dispersos.</small></div></article>
+            <article class="pain-card"><span class="icon-box">⌛</span><div><strong>Tiempo perdido</strong><small>Revisar cuadernos, mensajes y planillas al cerrar.</small></div></article>
+          </div>
+        </div>
+        <div class="footer-note"><span>Problema a validar con entrevistas y piloto</span><span>No se asumen cifras aún</span></div>
+      </section>
+
+      <section class="slide" data-title="Cliente objetivo" data-notes="El cliente inicial no es una gran cadena. Es la persona que atiende y administra su propio negocio: almacenes, minimarkets, botillerías, bazares y otros comercios familiares. Tiene poco tiempo, infraestructura limitada y necesita respuestas rápidas, no una capacitación de ERP.">
+        <div class="topline"><p class="eyebrow">¿Para quién?</p><span class="section-number">03</span></div>
+        <div class="content persona-grid">
+          <article class="persona">
+            <div>
+              <div class="persona-avatar">JM</div>
+              <p class="eyebrow">Cliente inicial</p>
+              <h2>La dueña que también atiende.</h2>
+            </div>
+            <p>Almacenes, botillerías, minimarkets, bazares y comercios familiares con operación manual o fragmentada.</p>
+          </article>
+          <div class="needs">
+            <article class="need"><b>Necesita</b><h3>Vender sin fricción</h3><p>Buscar, escanear, cobrar y seguir atendiendo.</p></article>
+            <article class="need"><b>Necesita</b><h3>Saber qué reponer</h3><p>Stock visible y alertas antes de perder una venta.</p></article>
+            <article class="need"><b>Necesita</b><h3>Cobrar el fiado</h3><p>Saldo, abonos y datos del cliente en una sola cuenta.</p></article>
+            <article class="need"><b>Necesita</b><h3>Cerrar con claridad</h3><p>Ingresos separados por medio de pago y evidencia del cierre.</p></article>
+          </div>
+        </div>
+        <div class="footer-note"><span>Entrada comercial: dueño/a de un comercio de barrio</span><span>Uso diario desde teléfono o computador</span></div>
+      </section>
+
+      <section class="slide" data-title="Propuesta de valor" data-notes="Localito reúne el flujo diario completo. El cambio que vendemos es pasar de información dispersa a decisiones visibles: vender, descontar inventario, registrar un fiado y ver la caja desde la misma herramienta. No queremos añadir otra tarea al comerciante, sino simplificar la que ya realiza.">
+        <div class="topline"><p class="eyebrow">Propuesta de valor</p><span class="section-number">04</span></div>
+        <div class="content bridge">
+          <article class="state">
+            <span class="state-label">Antes</span>
+            <h2>Información dispersa</h2>
+            <ul><li>Cuaderno y memoria</li><li>Planillas separadas</li><li>Deudas difíciles de seguir</li><li>Cierre manual</li></ul>
+          </article>
+          <div class="arrow" aria-hidden="true">→</div>
+          <article class="state after">
+            <span class="state-label">Con Localito</span>
+            <h2>Una sola operación</h2>
+            <ul><li>Venta y stock conectados</li><li>Fiado con saldo y abonos</li><li>Alertas para reponer</li><li>Caja y reportes visibles</li></ul>
+          </article>
+        </div>
+        <div class="footer-note"><span>Promesa central: “Tu negocio, más claro”</span><span>Menos memoria · más control</span></div>
+      </section>
+
+      <section class="slide" data-title="Producto funcional" data-notes="La propuesta ya se puede recorrer. Este es el panel real del prototipo: muestra ventas del día, fiado pendiente, alertas, tickets y caja. No es un mockup inventado para la exposición; es una captura tomada del proyecto funcionando.">
+        <div class="topline"><p class="eyebrow">El producto, hoy</p><span class="section-number">05</span></div>
+        <div class="content product-layout">
+          <div>
+            <span class="live-badge">Proyecto ejecutado y probado</span>
+            <h2>Todo el día en <span class="accent">una mirada.</span></h2>
+            <div class="value-list">
+              <div class="value-item"><i>✓</i><span>Ventas, tickets y medios de pago.</span></div>
+              <div class="value-item"><i>✓</i><span>Fiado pendiente y clientes.</span></div>
+              <div class="value-item"><i>✓</i><span>Alertas de stock y productos relevantes.</span></div>
+              <div class="value-item"><i>✓</i><span>Acciones rápidas para vender, escanear y revisar.</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="browser-frame">
+              <div class="browser-bar"><i></i><i></i><i></i></div>
+              <img src="assets/02-dashboard.png" alt="Panel real de Localito con ventas, fiado, alertas y caja">
+            </div>
+            <p class="caption">Captura real del prototipo · Negocio demo “Donde Juanita”</p>
+          </div>
+        </div>
+        <div class="footer-note"><span>Evidencia funcional, no resultados comerciales</span><span>Demo local verificada</span></div>
+      </section>
+
+      <section class="slide" data-title="Flujos clave" data-notes="Los cuatro flujos que más valor entregan están conectados. La venta acepta distintos medios de pago; el inventario muestra stock y alertas; las cuentas por cobrar registran deudas y abonos; y reportes permite revisar la caja. Esta integración es el corazón del MVP.">
+        <div class="topline"><p class="eyebrow">Flujos clave del MVP</p><span class="section-number">06</span></div>
+        <div class="content proof-grid">
+          <article class="proof-card"><div class="browser-frame"><div class="browser-bar"><i></i><i></i><i></i></div><img src="assets/03-punto-venta.png" alt="Punto de venta de Localito con ticket y medios de pago"></div><h3>1. Vender</h3><p>Productos, ticket, descuento, fiado y pago mixto.</p></article>
+          <article class="proof-card"><div class="browser-frame"><div class="browser-bar"><i></i><i></i><i></i></div><img src="assets/05-inventario.png" alt="Inventario de Localito con productos y alertas"></div><h3>2. Controlar stock</h3><p>Categorías, mínimos, valorización y movimientos.</p></article>
+          <article class="proof-card"><div class="browser-frame"><div class="browser-bar"><i></i><i></i><i></i></div><img src="assets/06-fiado-clientes.png" alt="Cuentas por cobrar de clientes en Localito"></div><h3>3. Gestionar fiado</h3><p>Saldos, límites, abonos y cobro trazable.</p></article>
+          <article class="proof-card"><div class="browser-frame"><div class="browser-bar"><i></i><i></i><i></i></div><img src="assets/07-reportes-caja.png" alt="Reportes y cierre de caja de Localito"></div><h3>4. Cerrar el día</h3><p>Ingresos por medio de pago y evidencia de caja.</p></article>
+        </div>
+        <div class="footer-note"><span>Una venta actualiza la operación</span><span>Capturas reales del proyecto</span></div>
+      </section>
+
+      <section class="slide dark" data-title="Producto desplegado" data-notes="Estas capturas fueron tomadas por el equipo desde la versión desplegada de Localito. La misma operación se adapta al computador del mesón y al teléfono del dueño. Esto reduce la barrera de entrada: no exigimos comprar un terminal especializado para comenzar a usar el producto.">
+        <div class="topline"><p class="eyebrow">Del mesón al bolsillo</p><span class="section-number">07</span></div>
+        <div class="content deployment-layout">
+          <div class="deployment-copy">
+            <span class="live-badge">Versión web desplegada</span>
+            <h2>Una experiencia. <span class="accent">Cualquier pantalla.</span></h2>
+            <p class="lead">El dueño puede vender desde el computador y revisar o escanear desde su teléfono, sin comprar hardware especializado.</p>
+            <div class="tag-row">
+              <span class="tag">Diseño adaptable</span>
+              <span class="tag">PWA instalable</span>
+              <span class="tag">Cámara del teléfono</span>
+            </div>
+          </div>
+          <div class="deployment-stage" aria-label="Capturas de Localito en computador y teléfono">
+            <div class="browser-frame deployed-browser">
+              <div class="browser-bar"><i></i><i></i><i></i></div>
+              <img src="assets/08-pos-desplegado.jpeg" alt="Punto de venta de Localito desplegado en computador">
+            </div>
+            <div class="phone-frame"><img src="assets/09-escaneo-movil.jpeg" alt="Escaneo inteligente de Localito en teléfono"></div>
+            <div class="deployment-label">Capturas reales del despliegue · Botillería Don Pepe</div>
+          </div>
+        </div>
+        <div class="footer-note"><span>Computador para atender · teléfono para moverse</span><span>Sin terminal propietario</span></div>
+      </section>
+
+      <section class="slide" data-title="Fiado" data-notes="El fiado es un ejemplo concreto de dolor local que muchas soluciones genéricas no priorizan. Localito lo integra a la venta y a la ficha del cliente. La ganancia esperada es recordar menos, poder registrar abonos y cobrar con información clara; el piloto medirá si efectivamente disminuyen las deudas vencidas.">
+        <div class="topline"><p class="eyebrow">Un dolor local, resuelto</p><span class="section-number">08</span></div>
+        <div class="content focus-layout">
+          <div>
+            <div class="browser-frame focus-shot">
+              <div class="browser-bar"><i></i><i></i><i></i></div>
+              <img src="assets/06-fiado-clientes.png" alt="Módulo de cuentas por cobrar y fiado">
+            </div>
+            <p class="caption">Cuenta por cliente con saldo, abono y acción de cobro.</p>
+          </div>
+          <div>
+            <h2>El fiado deja de vivir <span class="amber">solo en el cuaderno.</span></h2>
+            <div class="mini-metrics">
+              <div class="mini-metric"><b>01</b><span>Saldo visible por cliente</span></div>
+              <div class="mini-metric"><b>02</b><span>Abonos y límites registrables</span></div>
+              <div class="mini-metric"><b>03</b><span>Base para recordatorios de cobro</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="footer-note"><span>Beneficio esperado: más trazabilidad y menos olvido</span><span>Impacto a medir en piloto</span></div>
+      </section>
+
+      <section class="slide dark" data-title="Innovación" data-notes="La innovación de Localito no depende solamente de decir inteligencia artificial. Está en adaptar tecnología útil al contexto real: una aplicación instalable, una cola controlada cuando falla internet, lectura de código de barras y cámara con confirmación humana, y arquitectura multi-negocio para ofrecerla como servicio.">
+        <div class="topline"><p class="eyebrow">¿Qué lo hace diferente?</p><span class="section-number">09</span></div>
+        <div class="content innovation-grid">
+          <article class="innovation-card"><span class="number-bubble">01</span><div><h3>Diseñado para el barrio</h3><p>Flujos cortos, lenguaje simple y fiado como parte central; no un ERP genérico reducido.</p></div></article>
+          <article class="innovation-card"><span class="number-bubble">02</span><div><h3>Cámara + confirmación</h3><p>Código de barras primero y reconocimiento visual opcional, con validación humana si hay duda.</p></div></article>
+          <article class="innovation-card"><span class="number-bubble">03</span><div><h3>Resiste conexión inestable</h3><p>PWA instalable y cola offline controlada para no duplicar ventas al sincronizar.</p></div></article>
+          <article class="innovation-card"><span class="number-bubble">04</span><div><h3>Nace como SaaS</h3><p>Datos aislados por negocio, roles, auditoría y base preparada para crecer a múltiples clientes.</p></div></article>
+        </div>
+        <div class="footer-note"><span>Innovación aplicada, no decorativa</span><span>IA como apoyo · persona decide</span></div>
+      </section>
+
+      <section class="slide" data-title="Beneficios y validación" data-notes="No presentamos estos beneficios como resultados ya obtenidos. Son hipótesis medibles. Esperamos ventas más claras, mejor reposición, fiado trazable y cierres más simples. En el piloto vamos a comparar tiempo por venta, exactitud de inventario, deuda vencida, diferencias de caja y uso recurrente.">
+        <div class="topline"><p class="eyebrow">¿Qué gana el cliente?</p><span class="section-number">10</span></div>
+        <div class="content gains-grid">
+          <div class="gains">
+            <article class="gain"><b>Más tiempo</b><p>Menos búsqueda y conciliación manual durante el día.</p></article>
+            <article class="gain"><b>Más control</b><p>Stock, ventas, fiado y caja conectados.</p></article>
+            <article class="gain"><b>Menos errores</b><p>Operaciones trazables y ventas idempotentes.</p></article>
+            <article class="gain"><b>Mejores decisiones</b><p>Alertas y reportes para reponer y cerrar.</p></article>
+          </div>
+          <aside class="validation-box">
+            <p class="eyebrow">La promesa se demuestra</p>
+            <h3>Validaremos el valor con un piloto real.</h3>
+            <p>Antes de fijar precio o afirmar ahorro, mediremos si Localito resuelve el dolor y si el comerciante vuelve a usarlo.</p>
+            <div class="metric-tags"><span>Tiempo por venta</span><span>Exactitud de stock</span><span>Fiado vencido</span><span>Diferencia de caja</span><span>Uso recurrente</span><span>Disposición a pagar</span></div>
+          </aside>
+        </div>
+        <div class="footer-note"><span>Beneficios = hipótesis verificables</span><span>Éxito = uso + mejora + voluntad de pago</span></div>
+      </section>
+
+      <section class="slide" data-title="Modelo y alcance" data-notes="El modelo propuesto es una suscripción mensual simple por negocio. Primero ofreceremos un piloto para validar uso y disposición a pagar; después definiremos el plan comercial con evidencia. El alcance de esta fase se mantiene realista: operación del negocio, no integración tributaria ni promesas que dependan de credenciales externas.">
+        <div class="topline"><p class="eyebrow">Proyecto vendible y alcanzable</p><span class="section-number">11</span></div>
+        <div class="content business-layout">
+          <article class="price-card">
+            <p class="eyebrow">Modelo de negocio</p>
+            <div class="price">SaaS</div>
+            <h3>Suscripción mensual por comercio</h3>
+            <p>Sin comprar un servidor ni hardware especializado. Prueba piloto antes de definir precio y planes.</p>
+          </article>
+          <div>
+            <h2>De prototipo a producto.</h2>
+            <div class="roadmap">
+              <div class="roadmap-item"><b>Ahora</b><p>MVP funcional: ventas, inventario, fiado, caja, reportes, roles y PWA.</p></div>
+              <div class="roadmap-item"><b>Piloto</b><p>Probar con comercios reales, observar fricciones y medir impacto.</p></div>
+              <div class="roadmap-item"><b>Producto</b><p>Ajustar experiencia, soporte, precio y activación según evidencia.</p></div>
+              <div class="roadmap-item"><b>Escala</b><p>Integraciones comerciales y nuevas capacidades según demanda.</p></div>
+            </div>
+            <div class="scope-note"><strong>Límite honesto de Fase 1:</strong> no reemplaza facturación electrónica/SII. Integraciones reales de pago requieren credenciales y ambiente productivo.</div>
+          </div>
+        </div>
+        <div class="footer-note"><span>Ingreso potencial recurrente · costo de entrada bajo</span><span>Precio se valida, no se inventa</span></div>
+      </section>
+
+      <section class="slide dark" data-title="Cierre" data-notes="Nuestro pedido es aprobar Localito como proyecto APT y permitirnos validar la propuesta con comercios reales. Tenemos un dolor concreto, un cliente identificable, una solución demostrable y un camino comercial medible. Localito no busca digitalizar por moda: busca que el dueño termine el día sabiendo qué vendió, qué queda y qué debe cobrar.">
+        <div class="topline"><div class="brand"><span class="brand-mark">LO</span> Localito</div><span class="section-number">12</span></div>
+        <div class="content closing-grid">
+          <div>
+            <p class="eyebrow">Elevator pitch · 45 segundos</p>
+            <h2>Que el negocio dependa <span class="accent">menos de la memoria</span> y más de la información.</h2>
+            <div class="pitch">“Localito convierte el cuaderno, la memoria y las herramientas separadas de un comercio de barrio en una caja inteligente de bolsillo. Desde una sola aplicación permite vender, controlar stock, registrar fiado y cerrar caja. Es simple, instalable y preparado para conexión inestable. Lo ofreceremos como suscripción y validaremos con comercios reales si ahorra tiempo, reduce errores y mejora el control diario”.</div>
+          </div>
+          <aside class="ask">
+            <span class="ask-label">Lo que solicitamos</span>
+            <h3>Aprobar el proyecto para validar su valor en terreno.</h3>
+            <p>Problema claro · cliente definido · prototipo funcional · impacto medible · modelo vendible.</p>
+          </aside>
+        </div>
+        <div class="footer-note"><span>Equipo: Camilo González · Alexander Patiño · Samuel Solis</span><span>Tu negocio, más claro · Gracias</span></div>
+      </section>
+
+      <section class="slide simple active" data-title="Portada" data-notes="Buenos días. Nuestro proyecto se llama Localito. Su objetivo es muy simple: ayudar a una persona que atiende su propio negocio a saber qué vendió, qué productos le quedan, quién le debe y cuánto dinero entró.">
+        <div class="topline"><div class="simple-brand"><span class="brand-mark">LO</span> Localito</div><span class="section-number">01</span></div>
+        <div class="content simple-cover-grid">
+          <div>
+            <p class="eyebrow">Propuesta de proyecto</p>
+            <h1>Localito</h1>
+            <h2>Ordena tu negocio sin complicarte.</h2>
+            <p class="lead">Vende, controla productos, anota fiados y revisa la caja desde un solo lugar.</p>
+            <div class="plain-promise">Tu negocio, más claro.</div>
+          </div>
+          <div>
+            <div class="browser-frame">
+              <div class="browser-bar"><i></i><i></i><i></i></div>
+              <img src="assets/02-dashboard.png" alt="Pantalla principal de Localito">
+            </div>
+            <p class="caption">Pantalla real del proyecto funcionando.</p>
+          </div>
+        </div>
+        <div class="footer-note"><span>Camilo González · Alexander Patiño · Samuel Solis</span><span>2026</span></div>
+      </section>
+
+      <section class="slide simple" data-title="El problema" data-notes="El problema se puede explicar con tres preguntas. Muchos dueños no pueden responderlas rápidamente porque la información está en un cuaderno, en mensajes o en su memoria. Localito junta esas respuestas en una sola pantalla.">
+        <div class="topline"><p class="eyebrow">El problema</p><span class="section-number">02</span></div>
+        <div class="content">
+          <div class="simple-heading"><h2>Tres preguntas que deberían ser fáciles.</h2></div>
+          <div class="three-questions">
+            <article class="question-card"><div class="question">¿Qué vendí hoy?</div><div class="answer">Localito guarda cada venta.</div></article>
+            <article class="question-card"><div class="question">¿Qué productos me quedan?</div><div class="answer">Localito avisa cuándo reponer.</div></article>
+            <article class="question-card"><div class="question">¿Quién me debe?</div><div class="answer">Localito anota el fiado y los abonos.</div></article>
+          </div>
+        </div>
+        <div class="footer-note"><span>Hoy estas respuestas suelen estar separadas.</span><span>Localito las reúne.</span></div>
+      </section>
+
+      <section class="slide simple" data-title="Para quién" data-notes="Localito está pensado para personas que atienden y administran su propio comercio. No buscamos que aprendan un sistema complicado. Buscamos que puedan usarlo con pasos claros y botones grandes.">
+        <div class="topline"><p class="eyebrow">¿Para quién?</p><span class="section-number">03</span></div>
+        <div class="content audience-layout">
+          <div>
+            <h2>Para quien atiende su propio negocio.</h2>
+            <p class="lead">Personas con poco tiempo que necesitan orden, no más trabajo.</p>
+            <div class="store-words"><span>Almacén</span><span>Botillería</span><span>Minimarket</span><span>Bazar</span><span>Negocio familiar</span></div>
+          </div>
+          <aside class="plain-box">
+            <h3>La idea es sencilla</h3>
+            <p>Botones grandes, palabras conocidas y solo la información necesaria para atender el día.</p>
+          </aside>
+        </div>
+        <div class="footer-note"><span>No necesita ser experto en computación.</span><span>Queremos que se aprenda rápido.</span></div>
+      </section>
+
+      <section class="slide simple" data-title="Cómo funciona" data-notes="Este es el recorrido completo. Primero se registra la venta. Luego el stock se descuenta. Si el cliente compra fiado, la deuda queda anotada. Al final del día, el dueño puede revisar su caja. Todo ocurre en el mismo sistema.">
+        <div class="topline"><p class="eyebrow">Así funciona</p><span class="section-number">04</span></div>
+        <div class="content">
+          <div class="simple-heading"><h2>Una venta. Cuatro pasos claros.</h2></div>
+          <div class="four-steps">
+            <article class="plain-step"><span class="step-number">1</span><h3>Vende</h3><p>Busca el producto y registra el pago.</p></article>
+            <article class="plain-step"><span class="step-number">2</span><h3>Actualiza</h3><p>La cantidad disponible baja automáticamente.</p></article>
+            <article class="plain-step"><span class="step-number">3</span><h3>Anota</h3><p>Si es fiado, queda guardado a nombre del cliente.</p></article>
+            <article class="plain-step"><span class="step-number">4</span><h3>Revisa</h3><p>Al final del día ve cuánto vendió y cuánto recibió.</p></article>
+          </div>
+        </div>
+        <div class="footer-note"><span>Sin repetir información.</span><span>Sin depender de la memoria.</span></div>
+      </section>
+
+      <section class="slide simple" data-title="Pantalla principal" data-notes="Esta es una pantalla real del proyecto. En un solo vistazo muestra ventas, fiado, productos que faltan y caja. La persona no necesita abrir muchas secciones para saber cómo va su negocio.">
+        <div class="topline"><p class="eyebrow">Todo a la vista</p><span class="section-number">05</span></div>
+        <div class="content dashboard-layout">
+          <div>
+            <div class="browser-frame">
+              <div class="browser-bar"><i></i><i></i><i></i></div>
+              <img src="assets/02-dashboard.png" alt="Panel diario con ventas, fiado, alertas y caja">
+            </div>
+            <p class="caption">Panel diario real de Localito.</p>
+          </div>
+          <div class="screen-points">
+            <h2>Todo el día en una pantalla.</h2>
+            <div class="screen-point"><strong>Ventas:</strong> cuánto entró.</div>
+            <div class="screen-point"><strong>Fiado:</strong> cuánto falta cobrar.</div>
+            <div class="screen-point"><strong>Alertas:</strong> qué producto falta.</div>
+            <div class="screen-point"><strong>Caja:</strong> cómo pagaron.</div>
+          </div>
+        </div>
+        <div class="footer-note"><span>Información simple para decidir.</span><span>Captura real del proyecto.</span></div>
+      </section>
+
+      <section class="slide simple" data-title="Demostración" data-notes="Aquí podemos mostrar el producto funcionando. El primer video registra una venta completa. El segundo recorre inventario, clientes, compras y reportes. Reproduzcan uno a la vez y usen pantalla completa si el profesor necesita ver más detalle.">
+        <div class="topline"><p class="eyebrow">Localito en acción</p><span class="section-number">06</span></div>
+        <div class="content">
+          <div class="simple-heading"><h2>Mira cómo funciona.</h2></div>
+          <div class="video-demo-grid">
+            <article class="demo-card">
+              <div class="video-shell">
+                <video class="demo-video" controls playsinline preload="metadata" poster="assets/videos/poster-venta.jpg">
+                  <source src="assets/videos/01_Registrar_una_venta_Localito.mp4" type="video/mp4">
+                  Tu navegador no puede reproducir este video.
+                </video>
+                <button class="play-overlay" type="button" aria-label="Reproducir demostración de una venta"><span>▶</span>Reproducir</button>
+              </div>
+              <div class="demo-copy"><h3>1. Registrar una venta</h3><p>Elegir productos, cobrar y obtener el comprobante.</p></div>
+            </article>
+            <article class="demo-card">
+              <div class="video-shell">
+                <video class="demo-video" controls playsinline preload="metadata" poster="assets/videos/poster-control.jpg">
+                  <source src="assets/videos/02_Controlar_el_negocio_Localito.mp4" type="video/mp4">
+                  Tu navegador no puede reproducir este video.
+                </video>
+                <button class="play-overlay" type="button" aria-label="Reproducir demostración del control del negocio"><span>▶</span>Reproducir</button>
+              </div>
+              <div class="demo-copy"><h3>2. Controlar el negocio</h3><p>Inventario, clientes, compras y reportes.</p></div>
+            </article>
+          </div>
+        </div>
+        <div class="footer-note"><span>Presiona reproducir para comenzar.</span><span>Un video a la vez.</span></div>
+      </section>
+
+      <section class="slide simple" data-title="Computador y teléfono" data-notes="Localito se adapta a la forma de trabajar. En el mesón se puede usar un computador para vender. Cuando el dueño se mueve, puede usar el teléfono para revisar o escanear. Las imágenes fueron tomadas desde la versión desplegada.">
+        <div class="topline"><p class="eyebrow">Donde lo necesite</p><span class="section-number">07</span></div>
+        <div class="content device-layout">
+          <div class="device-copy">
+            <h2>En el mesón y en el bolsillo.</h2>
+            <div class="device-rule">En el computador: vender y atender.</div>
+            <div class="device-rule">En el teléfono: revisar y escanear.</div>
+            <p class="lead">No necesita comprar una máquina especial.</p>
+          </div>
+          <div class="deployment-stage" aria-label="Localito en computador y teléfono">
+            <div class="browser-frame deployed-browser"><div class="browser-bar"><i></i><i></i><i></i></div><img src="assets/08-pos-desplegado.jpeg" alt="Localito funcionando en computador"></div>
+            <div class="phone-frame"><img src="assets/09-escaneo-movil.jpeg" alt="Localito funcionando en teléfono"></div>
+          </div>
+        </div>
+        <div class="footer-note"><span>La misma herramienta en dos tamaños.</span><span>Capturas reales del despliegue.</span></div>
+      </section>
+
+      <section class="slide simple" data-title="Qué lo hace diferente" data-notes="Lo diferente no es llenar el proyecto de palabras tecnológicas. Es adaptar la tecnología a la realidad del comercio de barrio. Localito considera el fiado, puede usarse desde un celular y está preparado para una conexión inestable.">
+        <div class="topline"><p class="eyebrow">¿Qué tiene de especial?</p><span class="section-number">08</span></div>
+        <div class="content">
+          <div class="simple-heading"><h2>Tecnología útil, explicada fácil.</h2></div>
+          <div class="three-differences">
+            <article class="difference-card"><b>1 · Hecho para el barrio</b><h3>Entiende el fiado</h3><p>La deuda y los abonos quedan guardados por cliente.</p></article>
+            <article class="difference-card"><b>2 · Usa la cámara</b><h3>Ayuda a encontrar productos</h3><p>La persona siempre confirma antes de guardar o vender.</p></article>
+            <article class="difference-card"><b>3 · Si falla internet</b><h3>No pierde la venta</h3><p>Puede guardarla y sincronizarla cuando vuelva la conexión.</p></article>
+          </div>
+        </div>
+        <div class="footer-note"><span>La tecnología ayuda.</span><span>La persona mantiene el control.</span></div>
+      </section>
+
+      <section class="slide simple" data-title="Beneficio y venta" data-notes="El dueño gana orden, menos olvidos y un cierre más claro. Para vender Localito proponemos una entrada simple: primero el comerciante lo prueba. Si realmente le sirve, paga una mensualidad. El precio se definirá después del piloto.">
+        <div class="topline"><p class="eyebrow">¿Qué gana el dueño?</p><span class="section-number">09</span></div>
+        <div class="content gain-model-layout">
+          <div class="plain-gains">
+            <h2>Menos preocupación. Más claridad.</h2>
+            <div class="plain-gain"><span>1</span><div><b>Más orden</b><small>Ventas, productos, fiado y caja juntos.</small></div></div>
+            <div class="plain-gain"><span>2</span><div><b>Menos olvidos</b><small>Avisos de productos y deudas guardadas.</small></div></div>
+            <div class="plain-gain"><span>3</span><div><b>Cierre más claro</b><small>Sabe cuánto entró y cómo pagaron.</small></div></div>
+          </div>
+          <aside class="plain-payment">
+            <p class="eyebrow">¿Cómo se vende?</p>
+            <div class="big-line">Primero lo prueba.</div>
+            <div class="big-line">Si le sirve, paga una mensualidad.</div>
+            <p>El precio se define después de probarlo con negocios reales.</p>
+          </aside>
+        </div>
+        <div class="footer-note"><span>Promesas que se pueden medir.</span><span>Primero demostrar valor.</span></div>
+      </section>
+
+      <section class="slide simple" data-title="Cierre" data-notes="Queremos que se apruebe Localito para probarlo con negocios reales. Ya existe un prototipo funcional. El siguiente paso es confirmar, junto a los dueños, si realmente ahorra tiempo, evita errores y les ayuda a mantener el control.">
+        <div class="topline"><div class="simple-brand"><span class="brand-mark">LO</span> Localito</div><span class="section-number">10</span></div>
+        <div class="content simple-close-layout">
+          <div>
+            <p class="eyebrow">La propuesta en pocas palabras</p>
+            <h2>Orden para el negocio, sin hacerlo más difícil.</h2>
+            <div class="simple-pitch">Localito ayuda a los negocios de barrio a vender y mantener el orden. Junta ventas, productos, fiado y caja en una herramienta fácil de usar.</div>
+          </div>
+          <aside class="simple-ask">
+            <p class="eyebrow">Lo que pedimos</p>
+            <h3>Aprobar el proyecto para probarlo con negocios reales.</h3>
+            <p>Queremos comprobar si ahorra tiempo, evita errores y ayuda al dueño a terminar el día con tranquilidad.</p>
+          </aside>
+        </div>
+        <div class="footer-note"><span>Camilo González · Alexander Patiño · Samuel Solis</span><span>Gracias</span></div>
+      </section>
+    </div>
+
+    <div class="help" aria-hidden="true">← → avanzar · F pantalla completa · N notas</div>
+    <nav class="controls" aria-label="Controles de presentación">
+      <button id="prev" aria-label="Diapositiva anterior" title="Anterior (←)">←</button>
+      <span class="counter" id="counter" aria-live="polite">01 / 10</span>
+      <button id="next" aria-label="Diapositiva siguiente" title="Siguiente (→)">→</button>
+      <button class="utility" id="notes" aria-label="Mostrar notas del expositor" title="Notas (N)">N</button>
+      <button class="utility" id="fullscreen" aria-label="Pantalla completa" title="Pantalla completa (F)">⛶</button>
+    </nav>
+    <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+    <aside class="notes-panel" id="notesPanel" aria-label="Notas del expositor"><strong>Notas del expositor</strong><p id="notesText"></p></aside>
+  </main>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide.simple')];
+      const prevButton = document.getElementById('prev');
+      const nextButton = document.getElementById('next');
+      const counter = document.getElementById('counter');
+      const progressBar = document.getElementById('progressBar');
+      const notesButton = document.getElementById('notes');
+      const notesPanel = document.getElementById('notesPanel');
+      const notesText = document.getElementById('notesText');
+      const fullscreenButton = document.getElementById('fullscreen');
+      const demoVideos = [...document.querySelectorAll('.demo-video')];
+      let current = Math.max(0, Math.min(slides.length - 1, Number(location.hash.replace('#', '')) - 1 || 0));
+
+      const pad = value => String(value).padStart(2, '0');
+
+      function render(next, direction = 1) {
+        const target = Math.max(0, Math.min(slides.length - 1, next));
+        slides.forEach((slide, index) => {
+          slide.classList.toggle('active', index === target);
+          slide.classList.toggle('leaving', index === current && index !== target && direction > 0);
+          slide.setAttribute('aria-hidden', index === target ? 'false' : 'true');
+        });
+        current = target;
+        counter.textContent = `${pad(current + 1)} / ${pad(slides.length)}`;
+        progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
+        prevButton.disabled = current === 0;
+        nextButton.disabled = current === slides.length - 1;
+        notesText.textContent = slides[current].dataset.notes || '';
+        document.title = `Localito — ${slides[current].dataset.title}`;
+        demoVideos.forEach(video => { if (!slides[current].contains(video)) video.pause(); });
+        history.replaceState(null, '', `#${current + 1}`);
+      }
+
+      function move(delta) { render(current + delta, delta); }
+
+      prevButton.addEventListener('click', () => move(-1));
+      nextButton.addEventListener('click', () => move(1));
+      notesButton.addEventListener('click', () => notesPanel.classList.toggle('open'));
+      fullscreenButton.addEventListener('click', async () => {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.();
+        else await document.exitFullscreen?.();
+      });
+
+      document.querySelectorAll('.video-shell').forEach(shell => {
+        const video = shell.querySelector('video');
+        const playButton = shell.querySelector('.play-overlay');
+        playButton.addEventListener('click', () => video.play());
+        video.addEventListener('play', () => {
+          demoVideos.forEach(other => { if (other !== video) other.pause(); });
+          shell.classList.add('playing');
+        });
+        video.addEventListener('ended', () => shell.classList.remove('playing'));
+      });
+
+      document.addEventListener('keydown', event => {
+        const interactive = ['VIDEO', 'BUTTON', 'INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName);
+        if (['ArrowRight', 'PageDown'].includes(event.key) || (event.key === ' ' && !interactive)) { event.preventDefault(); move(1); }
+        if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); move(-1); }
+        if (event.key === 'Home') { event.preventDefault(); render(0, -1); }
+        if (event.key === 'End') { event.preventDefault(); render(slides.length - 1, 1); }
+        if (event.key.toLowerCase() === 'n') notesPanel.classList.toggle('open');
+        if (event.key.toLowerCase() === 'f') fullscreenButton.click();
+        if (event.key === 'Escape') notesPanel.classList.remove('open');
+      });
+
+      let touchStart = null;
+      document.addEventListener('touchstart', event => { touchStart = event.changedTouches[0].clientX; }, { passive: true });
+      document.addEventListener('touchend', event => {
+        if (touchStart === null) return;
+        const distance = event.changedTouches[0].clientX - touchStart;
+        if (Math.abs(distance) > 60) move(distance < 0 ? 1 : -1);
+        touchStart = null;
+      }, { passive: true });
+
+      render(current);
+    })();
+  </script>
+</body>
+</html>

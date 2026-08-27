@@ -1,0 +1,170 @@
+{
+  "input": "C:\\Users\\cajgo\\Downloads\\1.3_APT122_AutoevaluacionFase1.docx",
+  "fonts_by_char_count": {
+    "Calibri": 1935
+  },
+  "direct_run_formatting_runs": 503,
+  "direct_paragraph_formatting_paragraphs": 46,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "Evaluaci\u00f3n Fase 1",
+      "style": "Normal"
+    },
+    {
+      "para_index": 2,
+      "text": "Nombre: Autoevaluaci\u00f3n Definici\u00f3n Proyecto APT",
+      "style": "Footer"
+    },
+    {
+      "para_index": 4,
+      "text": "Agente evaluativo",
+      "style": "List Paragraph"
+    },
+    {
+      "para_index": 6,
+      "text": "Tabla de Especificaciones",
+      "style": "List Paragraph"
+    },
+    {
+      "para_index": 8,
+      "text": "Instrucciones para el/la estudiante",
+      "style": "List Paragraph"
+    },
+    {
+      "para_index": 15,
+      "text": "Pauta de Evaluaci\u00f3n",
+      "style": "Header"
+    },
+    {
+      "para_index": 16,
+      "text": "Pauta tipo: R\u00fabrica",
+      "style": "Normal"
+    },
+    {
+      "para_index": 20,
+      "text": "Sigla",
+      "style": "Footer"
+    },
+    {
+      "para_index": 21,
+      "text": "Nombre Asignatura",
+      "style": "Footer"
+    },
+    {
+      "para_index": 22,
+      "text": "Tiempo Asignado",
+      "style": "Footer"
+    },
+    {
+      "para_index": 23,
+      "text": "% Ponderaci\u00f3n",
+      "style": "Footer"
+    },
+    {
+      "para_index": 24,
+      "text": "PTY4614",
+      "style": "Footer"
+    },
+    {
+      "para_index": 25,
+      "text": "Capstone",
+      "style": "Footer"
+    },
+    {
+      "para_index": 27,
+      "text": "0%",
+      "style": "Footer"
+    },
+    {
+      "para_index": 29,
+      "text": "Heteroevaluaci\u00f3n",
+      "style": "Footer"
+    },
+    {
+      "para_index": 32,
+      "text": "Coevaluaci\u00f3n",
+      "style": "Footer"
+    },
+    {
+      "para_index": 34,
+      "text": "X",
+      "style": "Footer"
+    },
+    {
+      "para_index": 35,
+      "text": "Autoevaluaci\u00f3n",
+      "style": "Footer"
+    },
+    {
+      "para_index": 36,
+      "text": "Resultado de Aprendizaje",
+      "style": "Footer"
+    },
+    {
+      "para_index": 37,
+      "text": "Indicador de Logro (IL)",
+      "style": "Footer"
+    }
+  ],
+  "examples": {
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "Evaluaci\u00f3n ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 1,
+        "run_text": "Fase 1",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Nombre",
+        "style": "Footer"
+      },
+      {
+        "para_index": 2,
+        "run_text": ": ",
+        "style": "Footer"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Autoevaluaci\u00f3n ",
+        "style": "Footer"
+      }
+    ],
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 2,
+        "text": "Nombre: Autoevaluaci\u00f3n Definici\u00f3n Proyecto APT",
+        "style": "Footer"
+      },
+      {
+        "para_index": 5,
+        "text": "",
+        "style": "Footer"
+      },
+      {
+        "para_index": 11,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 24,
+        "text": "PTY4614",
+        "style": "Footer"
+      },
+      {
+        "para_index": 25,
+        "text": "Capstone",
+        "style": "Footer"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

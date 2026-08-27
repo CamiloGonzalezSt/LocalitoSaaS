@@ -325,6 +325,7 @@ app.get("/health", (_req, res) => {
       persistentStorage: repository.mode === "postgres",
       quickSaleConfigured: isQuickSaleAiConfigured(),
       invoiceAiConfigured: isInvoiceAiConfigured(),
+      passwordResetEmailConfigured: isTransactionalEmailConfigured(),
       timestamp: new Date().toISOString()
     }
   });

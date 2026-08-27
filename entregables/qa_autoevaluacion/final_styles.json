@@ -1,0 +1,170 @@
+{
+  "input": "C:\\Users\\cajgo\\Documents\\Codex\\LocalitoSaaS\\entregables\\1.3_APT122_AutoevaluacionFase1_COMPLETADA.docx",
+  "fonts_by_char_count": {
+    "Calibri": 16857
+  },
+  "direct_run_formatting_runs": 734,
+  "direct_paragraph_formatting_paragraphs": 261,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "Evaluaci\u00f3n Fase 1",
+      "style": "Normal"
+    },
+    {
+      "para_index": 2,
+      "text": "Nombre: Autoevaluaci\u00f3n Definici\u00f3n Proyecto APT",
+      "style": "Footer"
+    },
+    {
+      "para_index": 4,
+      "text": "Agente evaluativo",
+      "style": "List Paragraph"
+    },
+    {
+      "para_index": 6,
+      "text": "Tabla de Especificaciones",
+      "style": "List Paragraph"
+    },
+    {
+      "para_index": 8,
+      "text": "Instrucciones para el/la estudiante",
+      "style": "List Paragraph"
+    },
+    {
+      "para_index": 15,
+      "text": "Pauta de Evaluaci\u00f3n",
+      "style": "Header"
+    },
+    {
+      "para_index": 16,
+      "text": "Pauta tipo: R\u00fabrica",
+      "style": "Normal"
+    },
+    {
+      "para_index": 20,
+      "text": "INFORME DE DEFINICI\u00d3N Y AUTOEVALUACI\u00d3N DEL PROYECTO APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 21,
+      "text": "Proyecto: Localito \u2014 PWA SaaS multi-negocio para comercios de barrio",
+      "style": "Normal"
+    },
+    {
+      "para_index": 23,
+      "text": "Resumen",
+      "style": "Normal"
+    },
+    {
+      "para_index": 26,
+      "text": "Abstract",
+      "style": "Normal"
+    },
+    {
+      "para_index": 29,
+      "text": "1. Descripci\u00f3n y relevancia del Proyecto APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 32,
+      "text": "2. Relaci\u00f3n con las competencias del perfil de egreso",
+      "style": "Normal"
+    },
+    {
+      "para_index": 34,
+      "text": "3. Relaci\u00f3n con mis intereses profesionales",
+      "style": "Normal"
+    },
+    {
+      "para_index": 36,
+      "text": "4. Factibilidad",
+      "style": "Normal"
+    },
+    {
+      "para_index": 39,
+      "text": "5. Objetivos",
+      "style": "Normal"
+    },
+    {
+      "para_index": 40,
+      "text": "Objetivo general",
+      "style": "Normal"
+    },
+    {
+      "para_index": 42,
+      "text": "Objetivos espec\u00edficos",
+      "style": "Normal"
+    },
+    {
+      "para_index": 49,
+      "text": "6. Metodolog\u00eda de trabajo",
+      "style": "Normal"
+    },
+    {
+      "para_index": 51,
+      "text": "7. Plan de trabajo",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "Evaluaci\u00f3n ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 1,
+        "run_text": "Fase 1",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Nombre",
+        "style": "Footer"
+      },
+      {
+        "para_index": 2,
+        "run_text": ": ",
+        "style": "Footer"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Autoevaluaci\u00f3n ",
+        "style": "Footer"
+      }
+    ],
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 2,
+        "text": "Nombre: Autoevaluaci\u00f3n Definici\u00f3n Proyecto APT",
+        "style": "Footer"
+      },
+      {
+        "para_index": 5,
+        "text": "",
+        "style": "Footer"
+      },
+      {
+        "para_index": 11,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 20,
+        "text": "INFORME DE DEFINICI\u00d3N Y AUTOEVALUACI\u00d3N DEL PROYECTO APT",
+        "style": "Normal"
+      },
+      {
+        "para_index": 21,
+        "text": "Proyecto: Localito \u2014 PWA SaaS multi-negocio para comercios de barrio",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

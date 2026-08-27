@@ -1,0 +1,12 @@
+PRESENTACION LOCALITO - VERSION SIN INTERNET
+
+1. Descomprime completamente el archivo ZIP.
+2. Abre ABRIR_PRESENTACION.html con Chrome, Edge o Firefox.
+3. Usa las flechas izquierda y derecha para avanzar.
+4. Presiona F para usar pantalla completa.
+5. En la lamina 6, presiona Reproducir para ver cada demostracion.
+
+IMPORTANTE
+- No abras el archivo directamente dentro del ZIP: primero debes descomprimirlo.
+- No cambies de lugar ni borres la carpeta assets, porque contiene las imagenes y los videos.
+- La presentacion y sus dos videos funcionan sin conexion a Internet.

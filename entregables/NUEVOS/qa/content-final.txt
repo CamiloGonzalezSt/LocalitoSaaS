@@ -1,0 +1,264 @@
+P000 [Normal] 'LOCALITO'
+P001 [Normal] 'PWA SaaS multi-negocio para comercios de barrio'
+P002 [Normal] 'Evaluaci�n Formativa Fase 1\nDefinici�n de Proyecto APT'
+P003 [Normal] '\n'
+P004 [Normal] 'Documento preparado para revisi�n acad�mica. Los campos entre corchetes deben completarse antes de entregar.'
+P005 [Normal] ''
+P006 [Title] '�ndice'
+P007 [Normal] '1. Resumen / Resumen ejecutivo\t3'
+P008 [Normal] '2. Abstract\t3'
+P009 [Normal] '3. Descripci�n y relevancia del Proyecto APT\t4'
+P010 [Normal] '4. Relaci�n con el perfil de egreso\t6'
+P011 [Normal] '5. Intereses profesionales\t8'
+P012 [Normal] '6. Factibilidad\t8'
+P013 [Normal] '7. Desarrollo de ingenier�a\t11'
+P014 [Normal] '8. Calidad disciplinaria y estrategia de pruebas\t17'
+P015 [Normal] '9. Individual conclusions\t19'
+P016 [Normal] '10. Reflection\t20'
+P017 [Normal] '11. Bibliograf�a\t21'
+P018 [Normal] 'Anexo A. Trazabilidad y evidencia\t22'
+P019 [Normal] ''
+P020 [Title] '1. Resumen / Resumen ejecutivo'
+P021 [Normal] 'Localito es una aplicaci�n web progresiva (PWA) bajo un modelo SaaS multi-negocio, orientada a almacenes, minimarkets, botiller�as, peluquer�as y otros comercios de barrio. Centraliza punto de venta, inventario, caja, compras, proveedores, clientes, fiado y auditor�a en una experiencia mobile-first. Su elemento diferenciador es el uso de la c�mara del tel�fono para leer c�digos de barra o proponer coincidencias de productos mediante visi�n artificial cuando existe una clave de OpenAI configurada.'
+P022 [Normal] 'El problema abordado es la fragmentaci�n de la operaci�n cotidiana: ventas registradas en cuadernos, stock conocido de memoria, deudas informales y escasa trazabilidad. Localito busca reducir errores, facilitar decisiones y entregar continuidad operacional desde un dispositivo disponible para el peque�o comerciante. El n�cleo funcional est� implementado, mientras que la emisi�n tributaria chilena y la validaci�n manual completa permanecen fuera de esta fase.'
+P023 [Title] '2. Abstract'
+P024 [Heading 1] '2.1 Resumen en espa�ol'
+P025 [Normal] 'Localito propone una soluci�n digital de bajo acceso para comercios de barrio mediante una PWA SaaS multi-negocio. El sistema integra ventas, inventario, clientes, cr�dito informal, caja, compras, proveedores y control de usuarios, con aislamiento de datos por negocio. Adem�s, incorpora reconocimiento de productos por c�digo de barras y un flujo opcional de visi�n artificial. La arquitectura utiliza React en la interfaz, Node.js con API REST en el backend y PostgreSQL como persistencia principal, con modo memoria para demostraciones controladas. La propuesta es relevante para el campo de la inform�tica porque combina desarrollo full-stack, modelado de datos, seguridad, pruebas, despliegue y gesti�n �gil. El alcance actual prioriza el n�cleo operacional y declara como pendientes la evidencia manual completa, la integraci�n tributaria con SII y el reemplazo de Webpay simulado por una integraci�n productiva.'
+P026 [Heading 1] '2.2 Abstract in English'
+P027 [Normal] 'Localito is a low-barrier digital solution for neighborhood businesses delivered as a multi-tenant SaaS Progressive Web App. It integrates sales, inventory, customer credit, cash shifts, purchases, suppliers, and user management while isolating each business tenant. It also supports barcode recognition and an optional computer-vision workflow. The architecture combines a React client, a Node.js REST API, and PostgreSQL persistence, with an in-memory mode for controlled demonstrations. The project is relevant to the information technology field because it combines full-stack development, data modeling, security, testing, deployment, and agile project management. The current scope prioritizes the operational core and explicitly leaves full manual evidence collection, Chilean tax integration, and production Webpay integration for later stages.'
+P028 [Title] '3. Descripci�n y relevancia del Proyecto APT'
+P029 [Heading 1] '3.1 Problema y oportunidad'
+P030 [Normal] 'Los peque�os comercios suelen operar con herramientas dispersas o manuales. Esto dificulta conocer el stock real, controlar fiados, conciliar caja, reconstruir devoluciones y disponer de informaci�n confiable para decidir compras. La oportunidad consiste en entregar una herramienta simple, m�vil y escalable que concentre esas funciones sin requerir infraestructura especializada en el local.'
+P031 [Normal] ''
+P032 [Heading 1] '3.2 Soluci�n propuesta'
+P033 [Normal] ''
+P034 [Heading 1] '3.3 Relevancia para el campo laboral'
+P035 [Normal] 'El proyecto reproduce problemas reales de la industria: autenticaci�n segura, autorizaci�n por roles, aislamiento multi-tenant, consistencia de inventario, transacciones de venta, experiencia m�vil, recuperaci�n ante redes inestables y trazabilidad. Por ello permite demostrar competencias directamente transferibles a equipos de desarrollo de software, consultor�a tecnol�gica, aseguramiento de calidad y gesti�n de productos digitales.'
+P036 [Normal] 'El impacto es doble. Para el negocio, ordena procesos cr�ticos con menor barrera de adopci�n. Para el equipo desarrollador, obliga a integrar interfaz, API, persistencia, seguridad y pruebas dentro de un alcance coherente. El ticket emitido es un comprobante interno y no sustituye una boleta tributaria; la integraci�n con SII o un proveedor autorizado se mantiene fuera del MVP acad�mico.'
+P037 [Title] '4. Relaci�n con las competencias del perfil de egreso'
+P038 [Normal] ''
+P039 [Normal] ''
+P040 [Heading 1] '4.1 Indicadores de calidad disciplinarios'
+P041 [List Bullet] '1.1 Dise�o de pruebas: existe una matriz que relaciona m�dulos, pasos, resultado esperado y estado.'
+P042 [List Bullet] '1.2 Aplicaci�n de pruebas: hay pruebas automatizadas aprobadas para idempotencia, devoluciones, l�mite de cr�dito, caja, compras y recuperaci�n de contrase�a; las manuales no se presentan como aprobadas.'
+P043 [List Bullet] '1.3 Mejora basada en resultados: la matriz funciona como l�nea base para registrar hallazgos, corregir defectos y repetir pruebas antes de la defensa.'
+P044 [List Bullet] '2.1 Planificaci�n: alcance, backlog, sprints, riesgos, criterios de aceptaci�n y ambientes est�n definidos.'
+P045 [List Bullet] '2.2 Control: los estados �Automatizada aprobada� y �Pendiente evidencia� permiten controlar avance sin sobrestimar resultados.'
+P046 [List Bullet] '3.1 y 3.2 Datos: el modelo contempla relaciones, persistencia PostgreSQL, historial y aislamiento por negocio.'
+P047 [List Bullet] '4.1 a 4.3 Software: la soluci�n est� construida e integrada; la implantaci�n productiva completa depende de variables seguras, base persistente y validaci�n final en dispositivos.'
+P048 [Normal] ''
+P049 [Title] '5. Relaci�n con los intereses profesionales'
+P050 [Normal] 'El proyecto se alinea con intereses profesionales en desarrollo full-stack, arquitectura de software, experiencia m�vil, seguridad, datos y automatizaci�n de procesos. Localito permite trabajar sobre un producto completo y no sobre una funci�n aislada: cada decisi�n de interfaz tiene efectos en la API, el modelo de datos, la trazabilidad y la experiencia del usuario.'
+P051 [Normal] 'Tambi�n ofrece una aproximaci�n concreta al uso responsable de inteligencia artificial. La visi�n no reemplaza las reglas de negocio ni la confirmaci�n humana: la imagen se reduce en el navegador, se procesa en el backend y la respuesta se compara con el cat�logo del negocio. Cuando no hay clave configurada, se mantiene un flujo controlado por c�digo o pista, evitando que una dependencia externa bloquee la demostraci�n.'
+P052 [Normal] 'Antes de entregar, cada integrante debe personalizar esta secci�n con una frase breve sobre su motivaci�n, por ejemplo: �[NOMBRE]: mi inter�s profesional se centra en ______; mi aporte y aprendizaje dentro de Localito corresponde a ______�.'
+P053 [Title] '6. Factibilidad'
+P054 [Heading 1] '6.1 Factibilidad t�cnica'
+P055 [Normal] 'La base tecnol�gica es accesible para un proyecto acad�mico: Node.js 20+, React, API REST, PostgreSQL 16 o Docker y herramientas habituales de control de versiones. La soluci�n puede operar en modo memoria para una demostraci�n r�pida, aunque la persistencia real requiere PostgreSQL. La PWA evita depender de una aplicaci�n nativa y permite probar en escritorio y tel�fono.'
+P056 [Normal] ''
+P057 [Heading 1] '6.2 Tiempo, materiales y factores externos'
+P058 [Normal] ''
+P059 [Normal] ''
+P060 [Heading 1] '6.3 Riesgos y mitigaciones'
+P061 [Normal] ''
+P062 [Normal] ''
+P063 [Title] '7. Desarrollo de ingenier�a'
+P064 [Heading 1] '7.1 Objetivo general'
+P065 [Normal] 'Dise�ar e implementar una PWA SaaS multi-negocio que permita a comercios de barrio gestionar ventas, productos, stock, caja, compras, proveedores y clientes, incorporando fiado, operaci�n offline controlada y reconocimiento asistido desde la c�mara del tel�fono.'
+P066 [Heading 1] '7.2 Objetivos espec�ficos'
+P067 [List Bullet] 'Implementar autenticaci�n, recuperaci�n de contrase�a, roles y aislamiento por negocio.'
+P068 [List Bullet] 'Centralizar el cat�logo, stock, vencimientos, kardex, alertas y costos.'
+P069 [List Bullet] 'Registrar ventas con distintos medios de pago, devoluci�n, anulaci�n e idempotencia.'
+P070 [List Bullet] 'Administrar clientes, cupos, deudas, abonos y cobros compartibles.'
+P071 [List Bullet] 'Gestionar turnos de caja, compras, proveedores y auditor�a.'
+P072 [List Bullet] 'Proveer una PWA instalable con comportamiento m�vil y cola local ante p�rdida de conexi�n.'
+P073 [List Bullet] 'Validar reglas cr�ticas mediante pruebas automatizadas y completar evidencia manual priorizada.'
+P074 [Normal] ''
+P075 [Heading 1] '7.3 Alcance implementado y l�mites'
+P076 [Normal] ''
+P077 [Normal] ''
+P078 [Heading 1] '7.4 Arquitectura'
+P079 [Normal] ''
+P080 [Normal] ''
+P081 [Title] '7.5 Modelo de datos y seguridad'
+P082 [Normal] 'El negocio funciona como tenant. Las sesiones determinan el negocio y el rol; una cabecera proporcionada por el cliente no debe modificar ese contexto. Las entidades principales abarcan negocios, usuarios, sesiones, productos, movimientos de stock, ventas, �tems, pagos, clientes, cuentas por cobrar, abonos, proveedores, �rdenes de compra, turnos de caja y registros de auditor�a.'
+P083 [Normal] ''
+P084 [Normal] ''
+P085 [Heading 1] '7.6 Flujos cr�ticos'
+P086 [Heading 2] 'Venta'
+P087 [List Number] 'Autenticar usuario y verificar turno/permiso.'
+P088 [List Number] 'Buscar o reconocer producto; validar disponibilidad.'
+P089 [List Number] 'Construir ticket, descuentos y pagos.'
+P090 [List Number] 'Confirmar con clave idempotente.'
+P091 [List Number] 'Registrar venta y movimientos; emitir ticket interno.'
+P092 [Heading 2] 'Fiado'
+P093 [List Number] 'Seleccionar cliente elegible.'
+P094 [List Number] 'Validar cupo, plazo y bloqueo.'
+P095 [List Number] 'Registrar venta y cuenta por cobrar.'
+P096 [List Number] 'Aceptar abonos y mantener saldo/historial.'
+P097 [Heading 2] 'Compra'
+P098 [List Number] 'Crear proveedor y orden.'
+P099 [List Number] 'Recibir cantidades.'
+P100 [List Number] 'Actualizar stock, kardex y costo promedio ponderado.'
+P101 [Heading 2] 'Reconocimiento'
+P102 [List Number] 'Intentar c�digo de barra.'
+P103 [List Number] 'Si corresponde, enviar imagen reducida al backend.'
+P104 [List Number] 'Comparar propuesta con cat�logo y mostrar confianza.'
+P105 [List Number] 'Solicitar confirmaci�n o correcci�n.'
+P106 [Normal] ''
+P107 [Title] '7.7 Gesti�n del proyecto'
+P108 [Normal] 'Se adopta Scrum con entregas incrementales. El Product Backlog organiza historias y criterios de aceptaci�n; cada Sprint Backlog selecciona trabajo verificable. La Definition of Done debe incluir c�digo integrado, revisi�n de permisos, prueba pertinente, documentaci�n m�nima y ausencia de secretos expuestos.'
+P109 [Normal] ''
+P110 [Heading 1] '7.8 Puesta en marcha y verificaci�n t�cnica'
+P111 [Normal] 'Requisitos: Node.js 20 o superior, npm 10 o pnpm y PostgreSQL 16 o Docker Desktop para persistencia. Secuencia base:'
+P112 [Intense Quote] 'npm install � Copy-Item .env.example .env � npm run db:up � npm run dev:api � npm run dev:web'
+P113 [Normal] 'Antes de presentar se deben ejecutar npm run typecheck, npm run build y npm run test -w apps/api. Esta entrega no infiere sus resultados: cualquier aprobaci�n debe respaldarse con la salida real de esos comandos y con evidencia fechada.'
+P114 [Title] '8. Calidad disciplinaria y estrategia de pruebas'
+P115 [Heading 1] '8.1 Enfoque'
+P116 [Normal] 'La validaci�n combina pruebas automatizadas para reglas de negocio cr�ticas y pruebas manuales para experiencia, compatibilidad m�vil, permisos visibles, c�mara, PWA y comportamiento offline. Cada caso debe registrar ambiente, pasos, resultado observado, evidencia, responsable y fecha. Un caso pendiente no se considera aprobado hasta ejecutar y documentar su resultado.'
+P117 [Heading 1] '8.2 Estado verificable seg�n la matriz'
+P118 [Normal] ''
+P119 [Normal] 'Nota de consistencia: el documento fuente lista siete casos como �Automatizada aprobada�. La entrega conserva ese conteo y evita elevar a aprobado cualquier caso cuyo estado sea �Pendiente evidencia�.'
+P120 [Heading 1] '8.3 Plan de pruebas prioritario antes de la defensa'
+P121 [Normal] ''
+P122 [Heading 1] '8.4 Ciclo de mejora'
+P123 [List Number] 'Ejecutar caso y capturar evidencia.'
+P124 [List Number] 'Registrar resultado observado y desviaci�n.'
+P125 [List Number] 'Clasificar severidad y causa probable.'
+P126 [List Number] 'Corregir en una rama controlada.'
+P127 [List Number] 'Repetir el caso y la regresi�n asociada.'
+P128 [List Number] 'Actualizar la matriz solo con evidencia verificable.'
+P129 [Normal] ''
+P130 [Title] '9. Individual conclusions'
+P131 [Heading 1] '[Student 1 name]'
+P132 [Normal] 'Localito demonstrates that a neighborhood-business problem can be addressed through an integrated software product rather than isolated screens. The project connects user experience, APIs, data consistency, security, and testing. Its main strength is the coherent operational core; its main challenge is to complete manual evidence and keep the scope controlled. My contribution and specific learning must be completed here before submission: [DESCRIBE CONTRIBUTION AND LEARNING].'
+P133 [Heading 1] '[Student 2 name]'
+P134 [Normal] 'This project helped me understand how technical decisions affect real business processes. Multi-tenant isolation, idempotent sales, credit limits, and inventory movements are not only implementation details; they protect the reliability of the service. Before presenting the project, our team must validate the pending mobile and end-to-end scenarios and document the results honestly. My individual contribution must be completed here: [DESCRIBE CONTRIBUTION AND LEARNING].'
+P135 [Heading 1] '[Student 3 name, if applicable]'
+P136 [Normal] 'Building Localito requires balancing innovation and feasibility. Computer vision adds value, but barcode scanning, confirmation, and fallback flows keep the product usable when an external service is unavailable. The project is feasible as an academic MVP because its boundaries are explicit and the critical features can be demonstrated independently. My individual contribution must be completed here: [DESCRIBE CONTRIBUTION AND LEARNING].'
+P137 [Normal] ''
+P138 [Title] '10. Reflection'
+P139 [Normal] 'The first phase confirms that defining boundaries is as important as adding features. A credible project does not claim that every scenario is already validated: it separates implemented scope, automated evidence, manual work, simulated integrations, and future work. This distinction improves technical decision-making and academic transparency. The next step is to execute the prioritized test plan, collect reproducible evidence, correct defects, and rehearse a demonstration that clearly explains both the value of Localito and its current limitations.'
+P140 [Normal] ''
+P141 [Title] '11. Bibliograf�a y fuentes del proyecto'
+P142 [Normal] 'Repositorio Localito. README.md. Descripci�n funcional, requisitos, variables de entorno, puesta en marcha y verificaci�n t�cnica. Consulta interna: 24-08-2026.'
+P143 [Normal] 'Equipo Localito. Documento-Proyecto-Localito.md. Definici�n, objetivos, alcance, arquitectura, datos, Scrum, riesgos y estado de desarrollo. Consulta interna: 24-08-2026.'
+P144 [Normal] 'Equipo Localito. Matriz-Pruebas-Localito.md. Casos funcionales, estados y evidencias recomendadas. Consulta interna: 24-08-2026.'
+P145 [Normal] 'Duoc UC. 1.4_APT122_FormativaFase1.docx. Pauta de evaluaci�n formativa de Definici�n Proyecto APT.'
+P146 [Heading 1] 'Declaraci�n de alcance de las fuentes'
+P147 [Normal] 'Las afirmaciones de implementaci�n y pruebas provienen de los documentos internos indicados. Este informe no agrega resultados manuales inexistentes ni presenta como productivas las integraciones simuladas u opcionales.'
+P148 [Normal] ''
+P149 [Title] 'Anexo A. Trazabilidad con la pauta y evidencia'
+P150 [Normal] ''
+P151 [Heading 1] 'A.1 Evidencias que deben adjuntarse despu�s de ejecutarlas'
+P152 [List Bullet] 'Captura de inicio de sesi�n y dashboard.'
+P153 [List Bullet] 'Venta completa y ticket interno.'
+P154 [List Bullet] 'Stock antes/despu�s de venta o devoluci�n.'
+P155 [List Bullet] 'Fiado, abono y saldo actualizado.'
+P156 [List Bullet] 'Permisos de vendedor y rechazo 403 en API.'
+P157 [List Bullet] 'Caja: apertura, movimientos, cierre y diferencia.'
+P158 [List Bullet] 'PWA/celular, c�mara o c�digo de barras seg�n ambiente.'
+P159 [List Bullet] 'Salida real de typecheck, build y pruebas automatizadas.'
+P160 [List Bullet] 'Registro de defectos corregidos y reejecuci�n de casos afectados.'
+
+TABLE 0 rows=6 cols=2
+R000: Asignatura || Capstone (PTY4614)
+R001: Integrantes || [NOMBRE INTEGRANTE 1] � [NOMBRE INTEGRANTE 2] � [NOMBRE INTEGRANTE 3, si corresponde]
+R002: Docente || [NOMBRE DEL/DE LA DOCENTE]
+R003: Secci�n || [SECCI�N]
+R004: Instituci�n || Duoc UC
+R005: Fecha || [DD/MM/AAAA]
+
+TABLE 1 rows=7 cols=3
+R000: �rea || Capacidad de Localito || Beneficio esperado
+R001: Ventas || Ticket, descuentos, notas, pagos simples/divididos e idempotencia || Atenci�n m�s r�pida y menor riesgo de cobros duplicados.
+R002: Inventario || Productos, variantes, unidades, packs, stock m�nimo, vencimientos y kardex || Mejor control de existencias y reposici�n.
+R003: Clientes y fiado || Cupo, plazo, bloqueo, cuentas por cobrar, abonos y recordatorios || Trazabilidad del cr�dito informal.
+R004: Caja y compras || Turnos, movimientos, cierre; proveedores, �rdenes y recepci�n || Conciliaci�n operativa y actualizaci�n de costos.
+R005: C�mara e IA || ZXing para c�digos y visi�n opcional comparada con el cat�logo || Ingreso y consulta de productos con una interfaz natural.
+R006: Administraci�n || Roles system_admin, owner y seller; suspensi�n y auditor�a || Gobierno multi-negocio y separaci�n de responsabilidades.
+
+TABLE 2 rows=5 cols=3
+R000: Competencia || Aplicaci�n concreta en Localito || Evidencia/resultado
+R001: Realizar pruebas de certificaci�n || Dise�o de matriz funcional, pruebas automatizadas de reglas cr�ticas y planificaci�n de pruebas manuales en navegador y m�vil. || Casos CP-01 a CP-46; siete casos automatizados figuran aprobados y el resto conserva estado pendiente de evidencia.
+R002: Gestionar proyectos inform�ticos || Definici�n de alcance, backlog, sprints, riesgos, criterios de aceptaci�n y prioridades de MVP. || Plan de nueve sprints (0�8), roadmap y mitigaciones documentadas.
+R003: Construir modelos de datos || Modelo multi-tenant para negocios, usuarios, productos, stock, ventas, clientes, deudas, pagos, compras y auditor�a. || Esquema PostgreSQL y modo memoria para demostraci�n; tenant derivado desde la sesi�n.
+R004: Desarrollar una soluci�n de software || Implementaci�n full-stack de una PWA, API REST, autenticaci�n, roles, m�dulos operacionales, cola offline y despliegue preparado. || C�digo organizado en frontend/backend, scripts de compilaci�n, pruebas y configuraci�n de Vercel/PostgreSQL.
+
+TABLE 3 rows=7 cols=3
+R000: Dimensi�n || Condici�n || Respuesta de factibilidad
+R001: Tiempo || Asignatura organizada por sprints || Priorizar n�cleo operacional y congelar alcance antes de pruebas finales.
+R002: Materiales || PC, Node.js, navegador; PostgreSQL/Docker para persistencia || Herramientas disponibles y reproducibles mediante comandos documentados.
+R003: Dispositivo || Tel�fono para c�mara y experiencia m�vil || La demostraci�n base funciona en navegador; c�mara real requiere HTTPS o una red configurada.
+R004: Servicios externos || OpenAI, correo, Vercel y base remota son configurables || Usar degradaci�n controlada y no exponer claves en frontend o repositorio.
+R005: Normativa || Boleta electr�nica chilena fuera del MVP || Presentar solo ticket interno y declarar futura integraci�n SII.
+R006: Validaci�n || Evidencia manual incompleta || Ejecutar matriz priorizada, capturar resultados y corregir antes de la defensa.
+
+TABLE 4 rows=7 cols=3
+R000: Riesgo || Efecto || Mitigaci�n
+R001: Alcance excesivo || Retraso o calidad irregular || Separar MVP, pendientes y roadmap; trabajar por prioridad.
+R002: Conectividad inestable || Venta interrumpida o duplicada || Cola local, sincronizaci�n e idempotencia.
+R003: Reconocimiento incorrecto || Producto equivocado || C�digo de barra primero, confianza visible y confirmaci�n/correcci�n humana.
+R004: P�rdida o cruce de datos || Impacto de seguridad || Sesiones seguras, autorizaci�n por rol y tenant derivado del token.
+R005: Dependencia externa || Demo bloqueada || Flujos alternativos controlados y variables opcionales.
+R006: Falta de evidencia || Resultado acad�mico no demostrable || Matriz, capturas, registro de hallazgos y repetici�n de pruebas.
+
+TABLE 5 rows=5 cols=2
+R000: Estado || Contenido
+R001: Implementado || N�cleo operacional: plataforma/negocios, usuarios, sesiones, productos, stock, ventas, clientes y fiado, devoluciones, compras, caja, auditor�a, CSV, offline/PWA, c�digos de barra y visi�n opcional.
+R002: Simulado/controlado || Webpay para demostraci�n acad�mica; reconocimiento por pista cuando no existe clave de visi�n.
+R003: Pendiente de evidencia || Pruebas manuales de interfaz, m�vil, PWA, permisos, c�mara, red y flujos integrales indicadas en la matriz.
+R004: Fuera de alcance || Boleta/factura electr�nica SII, contabilidad completa, hardware fiscal y operaci�n productiva sin una base persistente configurada.
+
+TABLE 6 rows=5 cols=3
+R000: Capa || Responsabilidad || Tecnolog�a
+R001: Presentaci�n || Interfaz mobile-first, PWA, cach�, cola local y captura de c�mara. || React + TypeScript + Vite.
+R002: Aplicaci�n || API, autenticaci�n, permisos, reglas de venta, stock, fiado, caja y compras. || Node.js + Express + TypeScript.
+R003: Datos || Persistencia multi-negocio, auditor�a y transacciones. || PostgreSQL; memoria solo para demo.
+R004: Integraciones || Visi�n, correo, despliegue y pagos de demostraci�n. || OpenAI opcional, Gmail/Resend, Vercel y Webpay simulado.
+
+TABLE 7 rows=8 cols=2
+R000: Control || Implementaci�n o criterio
+R001: Contrase�as || Derivaci�n mediante scrypt; no se almacenan en texto claro.
+R002: Sesiones || Tokens aleatorios almacenados como hash, con expiraci�n y revocaci�n.
+R003: Autorizaci�n || Roles system_admin, owner y seller protegidos en interfaz y API.
+R004: Multi-tenant || El negocio se deriva desde la sesi�n; no se conf�a en x-tenant-id.
+R005: Recuperaci�n || Enlace de un solo uso, vencimiento de 30 minutos y revocaci�n de sesiones anteriores.
+R006: Secretos || Claves solo en variables privadas; nunca con prefijo VITE_ ni en el repositorio.
+R007: Auditor�a || Registro de operaciones cr�ticas para trazabilidad.
+
+TABLE 8 rows=10 cols=2
+R000: Sprint || Objetivo principal
+R001: 0 || Preparaci�n, arquitectura, backlog y repositorio.
+R002: 1 || Base t�cnica, autenticaci�n y multi-tenant.
+R003: 2 || Productos e inventario.
+R004: 3 || Ventas y comprobante interno.
+R005: 4 || Clientes, fiado y abonos.
+R006: 5 || C�mara, c�digos e IA.
+R007: 6 || Pagos de demostraci�n y alertas.
+R008: 7 || Reportes, PWA y experiencia m�vil.
+R009: 8 || Pruebas, correcciones, documentaci�n y defensa.
+
+TABLE 9 rows=3 cols=3
+R000: Estado || Casos || Interpretaci�n
+R001: Automatizada aprobada || CP-35, CP-36, CP-37, CP-38, CP-39, CP-41 y CP-46. || La matriz registra aprobaci�n automatizada de idempotencia, devoluciones, cr�dito, caja, compras y recuperaci�n de contrase�a.
+R002: Pendiente evidencia || CP-01 a CP-34, CP-40 y CP-42 a CP-45. || Requieren ejecuci�n/captura manual o evidencia adicional; no se declaran aprobados en este informe.
+
+TABLE 10 rows=5 cols=3
+R000: Prioridad || Casos || Criterio de salida
+R001: Alta || CP-01, CP-02, CP-07, CP-08, CP-24 a CP-26, CP-31 a CP-34 || Flujos cr�ticos y seguridad ejecutados sin defectos bloqueantes; capturas y respuestas API registradas.
+R002: Alta || CP-22, CP-23, CP-44 y CP-45 || Compatibilidad m�vil/offline/visi�n validada en ambiente declarado; registrar limitaciones reales.
+R003: Media || CP-03 a CP-06, CP-09 a CP-21, CP-27 a CP-30, CP-40, CP-42 y CP-43 || Funciones administrativas y de soporte ejecutadas con evidencia.
+R004: Regresi�n || CP-35 a CP-39, CP-41 y CP-46 || Volver a ejecutar suite automatizada despu�s de correcciones; conservar reporte de salida.
+
+TABLE 11 rows=6 cols=3
+R000: Indicador de evaluaci�n || Secci�n de respuesta || Evidencia prevista
+R001: 1. Descripci�n y relevancia || Secciones 1, 2 y 3 || Problema, soluci�n, alcance, beneficios y relaci�n con el campo laboral.
+R002: 2. Perfil de egreso || Secci�n 4 || Matriz de competencias e indicadores disciplinarios.
+R003: 3. Intereses profesionales || Secci�n 5 || Relaci�n t�cnica y placeholders para personalizaci�n individual.
+R004: 4. Factibilidad || Secci�n 6 || Tiempo, materiales, externos, riesgos y mitigaciones.
+R005: 5. Calidad disciplinaria || Secciones 7 y 8 || Arquitectura, datos, seguridad, gesti�n, matriz y ciclo de mejora.
+
+HEADER 0
+'INFORME FORMATIVO � LOCALITO'
+FOOTER 0
+'P�gina '

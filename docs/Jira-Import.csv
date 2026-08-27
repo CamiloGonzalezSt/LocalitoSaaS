@@ -20,7 +20,7 @@ Story,Controlar stock y kardex,"Como dueño quiero ajustes y movimientos de stoc
 Story,Gestionar compras y proveedores,"Como dueño quiero órdenes y recepción de mercadería con costo promedio.",,EPIC-04,High,8,"purchases inventory",Sprint 3
 Story,Ingresar factura con IA,"Como dueño quiero fotografiar una factura y confirmar sus productos antes de recibir stock.",,EPIC-04,High,13,"ai inventory",Sprint 7
 Story,Armar ticket POS,"Como vendedor quiero agregar corregir y eliminar productos antes de cobrar.",,EPIC-05,Highest,8,"pos mvp",Sprint 4
-Story,Registrar pagos externos manuales,"Como vendedor quiero registrar tarjeta transferencia QR o Webpay sin enviar montos a terminales.",,EPIC-05,Highest,5,"pos payments",Sprint 8
+Story,Registrar pagos externos manuales,"Como vendedor quiero registrar tarjeta transferencia Webpay o Mercado Pago externos sin enviar montos a terminales.",,EPIC-05,Highest,5,"pos payments",Sprint 8
 Story,Evitar ventas duplicadas,"Como negocio quiero idempotencia para no descontar stock dos veces.",,EPIC-05,Highest,5,"pos integrity",Sprint 4
 Story,Anular y devolver ventas,"Como dueño quiero devolver o anular restaurando stock y deuda correctamente.",,EPIC-05,High,8,"pos inventory",Sprint 4
 Story,Administrar fiado,"Como dueño quiero cupo plazo bloqueo deuda y abonos por cliente.",,EPIC-06,High,8,"credit customers",Sprint 5
@@ -61,10 +61,10 @@ Story,Simplificar navegación por rol,"HU-047: Como usuario quiero encontrar cad
 Story,Confirmar pagos externos,"HU-048: Como vendedor quiero verificar el terminal o comprobante antes de registrar la venta.",,EPIC-12,Highest,8,"pos payments human-confirmation",Sprint 11
 Story,Agregar tema claro oscuro y sistema,"HU-049: Como usuario quiero una apariencia legible persistida en cualquier dispositivo.",,EPIC-12,High,5,"ux theme accessibility",Sprint 11
 Story,Priorizar el resumen diario,"HU-050: Como dueño quiero ventas acciones frecuentes atención y métricas financieras claras en Inicio.",,EPIC-12,High,5,"ux dashboard",Sprint 12
-Story,Editar datos del negocio,"HU-051: Como dueño quiero actualizar nombre rubro dirección y teléfono desde Más.",,EPIC-12,High,5,"account tenant",Sprint 12
+Story,Editar datos del negocio,"HU-051: Como dueño quiero actualizar nombre rubro dirección y teléfono desde Configuración.",,EPIC-12,High,5,"account tenant",Sprint 12
 Story,Solicitar activación manual segura,"HU-052: Como dueño quiero solicitar plan sin recibir acceso antes de confirmar el pago.",,EPIC-12,Highest,8,"saas billing pending-plan",Sprint 12
 Story,Demostrar no regresión,"HU-053: Como equipo quiero trazabilidad de función anterior nueva ubicación y prueba.",,EPIC-12,Highest,8,"qa regression",Sprint 12
-Epic,Preparación comercial y hardening,"Alta pública administración completa operación financiera y UI lista para piloto.",EPIC-13,,Highest,,,Sprint 13
+Epic,Cierre académico y hardening,"Alta pública administración completa simulaciones financieras y UI consistente para evaluación de tesis.",EPIC-13,,Highest,,,Sprint 13
 Story,Registrar una empresa nueva,"HU-054: Como empresa nueva quiero crear mi cuenta y comenzar una prueba Pro de 30 días.",,EPIC-13,Highest,8,"auth onboarding trial",Sprint 13
 Story,Persistir planes y estados,"HU-055: Como administrador quiero que los cambios de suscripción sobrevivan a la recarga.",,EPIC-13,Highest,5,"platform subscription",Sprint 13
 Story,Eliminar locales y usuarios,"HU-056: Como administrador quiero eliminación definitiva y segura para controlar el volumen de datos.",,EPIC-13,High,8,"platform crud security",Sprint 13

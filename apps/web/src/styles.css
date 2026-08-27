@@ -5210,12 +5210,47 @@ button:active:not(:disabled) { transform: none; }
 .auth-divider::after { flex: 1; height: 1px; content: ""; background: var(--border); }
 
 .auth-register-link {
-  min-height: 46px;
-  color: var(--primary-hover);
-  background: var(--primary-soft);
-  border: 1px solid #b9ddd4;
-  border-radius: 10px;
-  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 15px 12px 17px;
+  color: #713f12;
+  text-align: left;
+  background: linear-gradient(135deg, #fff4d8, #ffe8c2);
+  border: 1px solid #f0c987;
+  border-radius: 16px;
+  box-shadow: 0 8px 18px rgba(190, 125, 44, 0.12);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.auth-register-link:hover:not(:disabled) {
+  border-color: #dfaa5c;
+  box-shadow: 0 12px 24px rgba(190, 125, 44, 0.19);
+  transform: translateY(-2px);
+}
+
+.auth-register-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.auth-register-copy strong { font-size: .94rem; }
+.auth-register-copy small { color: #95652d; font-size: .78rem; font-weight: 650; }
+
+.auth-register-arrow {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  color: #fffaf0;
+  background: #d88932;
+  border-radius: 50%;
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
 .trial-offer {

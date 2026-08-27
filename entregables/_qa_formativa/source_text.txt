@@ -1,0 +1,85 @@
+P000 [Normal] 'Evaluaci�n Fase 1'
+P001 [Footer] 'Nombre: Formativa Definici�n Proyecto APT'
+P002 [Footer] ''
+P003 [List Paragraph] 'Agente evaluativo'
+P004 [Footer] ''
+P005 [List Paragraph] 'Tabla de Especificaciones'
+P006 [Footer] 'Para evaluar el logro del IL 1.5, el/la docente deber� revisar si la Definici�n de Proyecto APT que cada estudiante est� desarrollando cumple con los indicadores de calidad disciplinarios, propios de las competencias del Perfil de Egreso de la Carrera que est�n involucradas en el Proyecto. Para ello, deber� seleccionar de la siguiente tabla aquellos indicadores de calidad propios de cada una de las competencias del perfil de egreso que se est� desarrollando en el Proyecto presentado y determinar si estos est�n o no presentes en la propuesta.'
+P007 [Footer] ''
+P008 [List Paragraph] 'Instrucciones para el/la estudiante'
+P009 [Footer] ''
+P010 [Header] 'Pauta de Evaluaci�n'
+P011 [Normal] 'Pauta tipo: R�brica'
+P012 [Normal] ''
+P013 [Normal] ''
+P014 [Normal] ''
+P015 [Normal] ''
+P016 [Normal] ''
+P017 [Normal] ''
+P018 [Normal] ''
+
+TABLE 0 rows=2 cols=4
+R000: Sigla || Nombre Asignatura || Tiempo Asignado || % Ponderaci�n
+R001: PTY4614 || Capstone || Semana 2 || 0%
+
+TABLE 1 rows=1 cols=8
+R000: X || Heteroevaluaci�n ||  ||  || Coevaluaci�n ||  ||  || Autoevaluaci�n
+
+TABLE 2 rows=8 cols=5
+R000: Resultado de Aprendizaje || Indicador de Logro (IL) || Indicador de Evaluaci�n (IE)* || Ponderaci�n Indicador Logro || Ponderaci�n Indicador de Evaluaci�n
+R001: RA1  / Dise�a una propuesta de proyecto que considera los intereses profesionales y la integraci�n de competencias del perfil de egreso. || IL 1.1 / Fundamenta el Proyecto APT considerando intereses profesionales, competencias del perfil de egreso, factibilidad y relevancia. || 1. Describe brevemente en qu� consiste el Proyecto APT, justificando su relevancia para el campo laboral de su carrera. || 40 || 12
+R002: RA1  / Dise�a una propuesta de proyecto que considera los intereses profesionales y la integraci�n de competencias del perfil de egreso. || IL 1.1 / Fundamenta el Proyecto APT considerando intereses profesionales, competencias del perfil de egreso, factibilidad y relevancia. || 2. Relaciona el Proyecto APT con las competencias del perfil de egreso de su Plan de Estudio. || 40 || 15
+R003: RA1  / Dise�a una propuesta de proyecto que considera los intereses profesionales y la integraci�n de competencias del perfil de egreso. || IL 1.1 / Fundamenta el Proyecto APT considerando intereses profesionales, competencias del perfil de egreso, factibilidad y relevancia. || 3. Relaciona el Proyecto APT con sus intereses profesionales. || 40 || 10
+R004: RA1  / Dise�a una propuesta de proyecto que considera los intereses profesionales y la integraci�n de competencias del perfil de egreso. || IL 1.1 / Fundamenta el Proyecto APT considerando intereses profesionales, competencias del perfil de egreso, factibilidad y relevancia. || 4.  Argumenta por qu� el proyecto es factible de realizarse en el marco de la asignatura.  || 40 || 13
+R005: RA1  / Dise�a una propuesta de proyecto que considera los intereses profesionales y la integraci�n de competencias del perfil de egreso. || IL 1.5 Cumple con los indicadores de calidad requeridos en la presentaci�n del dise�o del Proyecto APT de acuerdo a est�ndares definidos por la disciplina. || 5. Cumple con los indicadores de calidad requeridos en la presentaci�n del dise�o del Proyecto APT de acuerdo a est�ndares definidos por la disciplina. || 60 || 50
+R006: RA1  / Dise�a una propuesta de proyecto que considera los intereses profesionales y la integraci�n de competencias del perfil de egreso. || IL 1.5 Cumple con los indicadores de calidad requeridos en la presentaci�n del dise�o del Proyecto APT de acuerdo a est�ndares definidos por la disciplina. ||  || 60 || 
+R007: Total || Total || Total || 100% || 100%
+
+TABLE 3 rows=11 cols=2
+R000: Competencia del Perfil de Egreso || Indicadores de Calidad
+R001: Realizar pruebas de certificaci�n tanto de los productos como de los procesos utilizando buenas pr�cticas definidas por la industria. || 1.1 Dise�a pruebas de validaci�n tanto de los productos como de los procesos utilizando buenas pr�cticas definidas por la industria.
+R002: Realizar pruebas de certificaci�n tanto de los productos como de los procesos utilizando buenas pr�cticas definidas por la industria. || 1.2 Aplica Pruebas de validaci�n tanto de los productos como de los procesos utilizando buenas pr�cticas definidas por la industria.
+R003: Realizar pruebas de certificaci�n tanto de los productos como de los procesos utilizando buenas pr�cticas definidas por la industria. || 1.3 Desarrolla mejoras al producto en base al resultado de las mismas. 
+R004: Gestionar proyectos inform�ticos, ofreciendo alternativas para la toma de decisiones de acuerdo a los requerimientos de la organizaci�n. || 2.1 Planifica proyectos inform�ticos, ofreciendo alternativas para la toma de decisiones de acuerdo a los requerimientos de la organizaci�n.
+R005: Gestionar proyectos inform�ticos, ofreciendo alternativas para la toma de decisiones de acuerdo a los requerimientos de la organizaci�n. || 2.2 Controla proyectos inform�ticos, ofreciendo alternativas para la toma de decisiones de acuerdo a los requerimientos de la organizaci�n.
+R006: Construir modelos de datos para soportar los requerimientos de la organizaci�n de acuerdo a un dise�o definido y escalable en el tiempo. || 3.1 Dise�a modelos de datos para soportar los requerimientos de la organizaci�n de acuerdo a un dise�o definido y escalable en el tiempo.
+R007: Construir modelos de datos para soportar los requerimientos de la organizaci�n de acuerdo a un dise�o definido y escalable en el tiempo. || 3.2 Implementa modelos de datos para soportar los requerimientos de la organizaci�n de acuerdo a un dise�o definido y escalable en el tiempo.
+R008: Desarrollar una soluci�n de software utilizando t�cnicas que permitan sistematizar el proceso de desarrollo y mantenimiento, asegurando el logro de los objetivos. || 4.1 Construye una soluci�n de software utilizando t�cnicas que permitan sistematizar el proceso de desarrollo y mantenimiento, asegurando el logro de los objetivos.
+R009: Desarrollar una soluci�n de software utilizando t�cnicas que permitan sistematizar el proceso de desarrollo y mantenimiento, asegurando el logro de los objetivos. || 4.2 Integra los distintos componentes de una soluci�n de software utilizando t�cnicas que permitan sistematizar el proceso de desarrollo y mantenimiento, asegurando el logro de los objetivos.
+R010: Desarrollar una soluci�n de software utilizando t�cnicas que permitan sistematizar el proceso de desarrollo y mantenimiento, asegurando el logro de los objetivos. || 4.3 Implanta una soluci�n de software utilizando t�cnicas que permitan sistematizar el proceso de desarrollo y mantenimiento, asegurando el logro de los objetivos.
+
+TABLE 4 rows=1 cols=1
+R000: Esta es una evaluaci�n que corresponde a una entrega de encargo de car�cter formativo, por lo que no tiene ponderaci�n sobre la nota final de la asignatura.   /  / Deber�n redactar los siguientes apartados seg�n este formato:� / Abstract (ingl�s y espa�ol)� / Conclusiones individuales solo en ingl�s.� / Reflexi�n solo en ingl�s.� /  / Tu informe debe contener: / Descripci�n breve del proyecto APT, justificando su relevancia. / Relaci�n del proyecto APT con las competencias del perfil de egreso. / Relaci�n del proyecto APT con tus intereses profesionales. / Argumento sobre la factibilidad del proyecto dentro de la asignatura. /  / Adem�s, debe cumplir con:  / Los indicadores de calidad requeridos en la presentaci�n del dise�o del proyecto APT. /  / El formato informe t�cnico: Portada, �ndice, abstract, desarrollo de ingenier�a, conclusiones y reflexiones. /  / Letra: Arial, verdana o calibri / Tama�o: 11 o 12 / Interlineado: 1,0 o 1,5 seg�n corresponda / N�mero de p�gina / Fuente o bibliograf�a (Si corresponde) / Anexo de evidencia (Si corresponde)  /  / La evaluaci�n se realiza en la segunda semana de la asignatura y se lleva a cabo en equipos de 2 o 3 integrantes en el taller de proyectos, con una duraci�n de 40 minutos. /  / La siguiente pauta ser� aplicada por el/la docente de la signatura para evaluar la primera parte de la gu�a Definici�n Proyecto APT.  / El/la docente evaluar� el cumplimiento de las condiciones definidas para la primera fase de tu proyecto. A partir de esta evaluaci�n se te entregar�n recomendaciones sobre c�mo mejorar tu proyecto o te proporcionar� alternativas para que puedas seleccionar uno de los proyectos propuestos por la escuela de acuerdo con tus intereses profesionales. / 
+
+TABLE 5 rows=5 cols=3
+R000: Categor�a || % logro || Descripci�n niveles de logro
+R001: Completamente Logrado || 100% || Demuestra logro destacado en todos los aspectos evaluados en el indicador. Se considera como el punto �ptimo dentro del rango competente.
+R002: Logrado  || 60% || Demuestra logro en los elementos b�sicos del indicador, las omisiones, dificultades o errores le permiten ser considerado competente.
+R003: Logro incipiente  || 30% || Presenta importantes omisiones, dificultades o errores que no permiten evidenciar los elementos b�sicos del logro del indicador, por lo que no puede ser considerado competente.
+R004: No Logrado || 0% || Presenta ausencia o incorrecto logro de los aspectos evaluados en el indicador.
+
+TABLE 6 rows=8 cols=6
+R000: Indicador de Evaluaci�n || Categor�as de Respuesta || Categor�as de Respuesta || Categor�as de Respuesta || Categor�as de Respuesta || Ponderaci�n del Indicador de Evaluaci�n
+R001: Indicador de Evaluaci�n || Completamente Logrado  (100%) || Logrado  (60%) || Logro incipiente  / (30%) || No logrado / (0%) || Ponderaci�n del Indicador de Evaluaci�n
+R002: 1. Describe brevemente en qu� consiste el Proyecto APT, justificando su relevancia para el campo laboral de su carrera. || Describe brevemente en qu� consiste el proyecto APT, justificando la relevancia, impacto o beneficio (real o simulado) que tendr�a en el campo laboral de su carrera. || Describe brevemente en qu� consiste el proyecto APT, se�alando la relevancia, impacto o beneficio (real o simulado) que tendr�a, pero no queda clara la relaci�n con el campo laboral de su carrera. || Describe brevemente en qu� consiste el proyecto APT, pero no lo justifica ni relaciona con el campo laboral de su carrera.  || No describe o es confuso el proyecto APT, sin justificar ni relacionarlo con el campo laboral de su carrera.  || 12
+R003: 2. Relaciona el Proyecto APT con las competencias del perfil de egreso de su Plan de Estudio. || Describe una relaci�n coherente entre su proyecto y el perfil de egreso de su plan de estudio, especificando c�mo debe utilizar distintas competencias para desarrollar su Proyecto APT.  || Describe una relaci�n coherente entre su proyecto y el perfil de egreso de su plan de estudio, pero no especifica c�mo debe utilizar distintas competencias para desarrollar su Proyecto APT. || Describe una relaci�n que tiene elementos que no son coherentes entre su proyecto y el perfil de egreso de su plan de estudio. || Describe una relaci�n sin coherencia entre su proyecto y el perfil de egreso de su plan de estudio. | O | No relaciona el proyecto con el perfil de egreso.  || 15
+R004: 3. Relaciona el Proyecto APT con sus intereses profesionales. || Menciona sus intereses profesionales y explica con claridad c�mo estos se ven reflejados en su proyecto.  || Menciona sus intereses profesionales, pero no queda completamente clara su conexi�n con el proyecto. || Menciona sus intereses profesionales sin conectarlos con el proyecto.  || No menciona sus intereses profesionales. || 10
+R005: 4.  Argumenta por qu� el proyecto es factible de realizarse en el marco de la asignatura.  || Justifica por qu� el proyecto puede desarrollarse considerado tiempo, materiales y factores externos, y en caso de posibles dificultades plantea como las abordar�a. || Justifica por qu� el proyecto puede desarrollarse, considerando el tiempo y materiales o factores externos | Y | En caso de posibles dificultades no plantea claramente como las abordar�a. || Justifica por qu� el proyecto puede desarrollarse en el tiempo de la asignatura, sin considerar materiales ni factores externos.  | Y | En caso de posibles dificultades no plantea como abordarlas. || No justifica las razones de porque el proyecto puede desarrollarse.  | O | El proyecto presentado no es factible de realizarse en el tiempo asignado. || 13
+R006: 5. Cumple con los indicadores de calidad requeridos en la presentaci�n del dise�o del Proyecto APT de acuerdo a est�ndares definidos por la disciplina. || El informe cumple con el 100% de los indicadores de calidad disciplinarios requeridos en el dise�o del Proyecto APT. || El informe cumple con el 60% de los indicadores de calidad disciplinarios requeridos en el dise�o del Proyecto APT. || El informe cumple solo con el 30% de los indicadores de calidad disciplinarios requeridos en el dise�o del Proyecto APT. || El informe no cumple con los indicadores de calidad disciplinarios requeridos en el dise�o del Proyecto APT. || 50
+R007: Total || Total || Total || Total || Total || 100%
+
+TABLE 7 rows=5 cols=2
+R000: Recomendaci�n || Recomendaci�n
+R001: A partir de esta evaluaci�n y de los criterios establecidos para construir proyecto se establece que la definici�n del proyecto (marque la opci�n que corresponda): || 
+R002: 1. Cumple las condiciones definidas para los proyectos APT. || 
+R003: 2. Cumple algunas condiciones definidas para los proyectos APT, pero requiere algunas modificaciones para ser aprobado. || 
+R004: 3. No cumple los criterios definidos para los proyectos APT y, por tanto, se recomienda cambiar el proyecto o seleccionar alguno propuesto por la escuela. || 
+
+TABLE 8 rows=2 cols=1
+R000: En caso de que el proyecto no cumpla algunos criterios o se recomiende cambiar el proyecto, se�alar los criterios que no cumplen el proyecto y sugerencias de mejoras, en caso de que corresponda. 
+R001:  /  /  /  /  /  /  / 
+
+HEADER 0
+''
+FOOTER 0
+''

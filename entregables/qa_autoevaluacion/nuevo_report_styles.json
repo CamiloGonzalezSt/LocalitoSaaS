@@ -1,0 +1,95 @@
+{
+  "input": "C:\\Users\\cajgo\\Documents\\Codex\\LocalitoSaaS\\entregables\\NUEVOS\\Informe_Autoevaluacion_Proyecto_APT_Localito.docx",
+  "fonts_by_char_count": {
+    "Arial": 467
+  },
+  "direct_run_formatting_runs": 208,
+  "direct_paragraph_formatting_paragraphs": 208,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 2,
+      "text": "PROYECTO APT \u00b7 FASE 1",
+      "style": "Normal"
+    },
+    {
+      "para_index": 3,
+      "text": "Informe de Autoevaluaci\u00f3n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 4,
+      "text": "Localito",
+      "style": "Normal"
+    },
+    {
+      "para_index": 6,
+      "text": "Estudiante: [NOMBRE COMPLETO]",
+      "style": "Normal"
+    },
+    {
+      "para_index": 254,
+      "text": "LOCALITO  |  INFORME DE AUTOEVALUACI\u00d3N APT",
+      "style": "Header"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "text": "PROYECTO APT \u00b7 FASE 1",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "text": "Localito",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "text": "PWA SaaS multi-negocio para comercios de barrio",
+        "style": "Normal"
+      },
+      {
+        "para_index": 6,
+        "text": "Estudiante: [NOMBRE COMPLETO]",
+        "style": "Normal"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 2,
+        "run_text": "PROYECTO APT \u00b7 FASE 1",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Informe de Autoevaluaci\u00f3n",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "run_text": "Localito",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "run_text": "PWA SaaS multi-negocio para comercios de barrio",
+        "style": "Normal"
+      },
+      {
+        "para_index": 6,
+        "run_text": "Estudiante: [NOMBRE COMPLETO]",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

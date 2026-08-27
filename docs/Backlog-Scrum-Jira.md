@@ -1,4 +1,4 @@
-# Backlog Scrum y guía Jira - Localito SaaS
+# Backlog Scrum y guía Jira - Localito (tesis)
 
 Documento operativo para registrar en Jira el alcance construido de Localito, planificar sprints y conservar trazabilidad entre requerimientos, historias, pruebas y entregables.
 
@@ -16,9 +16,9 @@ El CSV [Jira-Import.csv](Jira-Import.csv) contiene épicas e historias listas pa
 
 ## 2. Visión y alcance vigente
 
-Localito es un SaaS/PWA multi-tenant para negocios de barrio. Dueño y vendedor operan la aplicación; el cliente final no inicia sesión ni interactúa con Localito. El sistema administra catálogo, inventario, ventas, clientes, fiado, caja, gastos, compras, reportes y asistencia visual.
+Localito es una PWA académica multi-tenant para negocios de barrio. Dueño y vendedor operan la aplicación; el cliente final no inicia sesión ni interactúa con Localito. El sistema administra catálogo, inventario, ventas, clientes, fiado, caja, gastos, compras, reportes y asistencia visual.
 
-Los pagos presenciales son externos y manuales. Localito registra efectivo, tarjeta en terminal externa, transferencia/QR, Webpay externo, Mercado Pago QR, fiado o pago mixto, pero no envía automáticamente el monto a un POS ni almacena datos de tarjeta. La contratación de planes incluye una simulación sandbox de Webpay/Mercado Pago y transferencia sujeta a aprobación; la pasarela real queda pendiente de credenciales comerciales.
+Los pagos presenciales son externos y manuales. Localito registra efectivo, tarjeta en terminal externa, transferencia, Webpay externo, Mercado Pago externo, fiado o pago mixto, pero no envía automáticamente el monto a un POS, no genera QR y no almacena datos de tarjeta. La contratación de planes usa simulaciones académicas de Webpay/Mercado Pago; la transferencia queda sujeta a aprobación manual. No se procesa dinero real.
 
 ## 3. Épicas
 
@@ -36,7 +36,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | EPIC-10 | PWA y experiencia móvil | Operación instalable, responsive y tolerante a desconexiones. | Terminado |
 | EPIC-11 | Calidad y producción | Despliegue persistente, observable, probado y documentado. | Terminado |
 | EPIC-12 | Suscripciones y rediseño SaaS | Prueba, planes, permisos y experiencia profesional coherente por rol. | Terminado |
-| EPIC-13 | Preparación comercial y hardening | Alta pública, administración completa, operación financiera y UI lista para piloto. | Terminado |
+| EPIC-13 | Cierre académico y hardening | Alta pública, administración completa, simulaciones financieras y UI consistente para evaluación de tesis. | Terminado |
 
 ## 4. Product Backlog
 
@@ -59,7 +59,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | HU-015 | EPIC-04 | Como dueño quiero alertas de reposición y vencimiento. | Stock bajo/agotado; sugerencia de compra; vencimientos dentro de 30 días. | 5 | Media | 3 | Terminado |
 | HU-016 | EPIC-05 | Como vendedor quiero armar un ticket con varios productos. | Agregar, sumar, restar, eliminar; total y subtotales correctos; búsqueda rápida. | 8 | Crítica | 4 | Terminado |
 | HU-017 | EPIC-05 | Como vendedor quiero aplicar descuento y nota. | Descuento no supera subtotal; nota persiste; total recalculado. | 3 | Alta | 4 | Terminado |
-| HU-018 | EPIC-05 | Como vendedor quiero cobrar con medios externos manuales. | Efectivo, terminal externa, transferencia/QR, Webpay externo, fiado y mixto; sin API POS. | 5 | Crítica | 8 | Terminado |
+| HU-018 | EPIC-05 | Como vendedor quiero registrar medios externos manuales. | Efectivo, terminal externa, transferencia, Webpay/Mercado Pago externos, fiado y mixto; sin API POS ni QR generado. | 5 | Crítica | 8 | Terminado |
 | HU-019 | EPIC-05 | Como vendedor quiero dividir un pago. | Suma de partes igual al total; efectivo/tarjeta/fiado registrados por separado. | 5 | Alta | 4 | Terminado |
 | HU-020 | EPIC-05 | Como negocio quiero evitar ventas duplicadas. | Idempotency key devuelve la misma venta; stock se descuenta una sola vez. | 5 | Crítica | 4 | Terminado |
 | HU-021 | EPIC-05 | Como dueño quiero anular o devolver una venta. | Reposición exacta; devolución parcial; ventas netas y fiado ajustados; auditoría. | 8 | Alta | 4 | Terminado |
@@ -92,7 +92,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | HU-048 | EPIC-12 | Como vendedor quiero confirmar pagos externos antes de registrar. | Medios aparecen tras Cobrar; pago externo requiere confirmación; venta/stock mutan una sola vez. | 8 | Crítica | 11 | Terminado |
 | HU-049 | EPIC-12 | Como usuario quiero tema claro, oscuro o del sistema. | Persistencia por usuario, contraste, Source Sans 3 y responsive sin desborde. | 5 | Alta | 11 | Terminado |
 | HU-050 | EPIC-12 | Como dueño quiero un Inicio que priorice lo que debo hacer hoy. | Venta diaria dominante, acciones frecuentes, atención y métricas financieras sin gráficos innecesarios. | 5 | Alta | 12 | Terminado |
-| HU-051 | EPIC-12 | Como dueño quiero editar los datos de mi negocio desde Más. | Nombre, rubro, dirección y teléfono tienen labels, validación, endpoint owner y auditoría. | 5 | Alta | 12 | Terminado |
+| HU-051 | EPIC-12 | Como dueño quiero editar los datos de mi negocio desde Configuración. | Nombre, rubro, dirección y teléfono tienen labels, validación, endpoint owner y auditoría. | 5 | Alta | 12 | Terminado |
 | HU-052 | EPIC-12 | Como dueño quiero solicitar un plan sin obtener acceso no pagado. | `pendingPlan` preserva acceso actual; system_admin verifica y activa el período manual. | 8 | Crítica | 12 | Terminado |
 | HU-053 | EPIC-12 | Como equipo quiero demostrar no regresión del rediseño. | Matriz anterior/nueva ubicación, pruebas y evidencia responsive actualizadas. | 8 | Crítica | 12 | Terminado |
 | HU-054 | EPIC-13 | Como empresa nueva quiero registrarme sin ayuda del administrador. | Alta pública; prueba Pro de 30 días; funciones, días restantes y condición de continuidad visibles. | 8 | Crítica | 13 | Terminado |

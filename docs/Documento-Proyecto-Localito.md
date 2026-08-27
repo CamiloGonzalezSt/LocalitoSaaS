@@ -1,14 +1,16 @@
 # Documento de Proyecto - Localito
 
 **Proyecto:** Localito  
-**Tipo de solucion:** PWA SaaS para gestion inteligente de pequenos negocios  
-**Version del documento:** 2.0
+**Tipo de solucion:** PWA académica multi-tenant para gestión de pequeños negocios
+**Version del documento:** 2.1
 **Estado:** Documento actualizado para tesis, trazabilidad Scrum y operación
-**Fecha:** 25-08-2026
+**Fecha:** 27-08-2026
 
 ## 1. Resumen ejecutivo
 
-Localito es una plataforma PWA de tipo SaaS orientada a pequenos negocios de barrio, tales como almacenes, botillerias, peluquerias, bazares, minimarkets, ferias y comercios familiares. Su objetivo es digitalizar procesos que normalmente se realizan en cuadernos, planillas, memoria o mensajes informales, entregando una herramienta simple para registrar ventas, controlar stock, administrar clientes, manejar fiados, generar alertas y registrar pagos presenciales realizados mediante medios externos.
+Localito es una PWA académica con arquitectura multi-tenant orientada a pequeños negocios de barrio, tales como almacenes, botillerías, peluquerías, bazares, minimarkets, ferias y comercios familiares. Su objetivo es digitalizar procesos que normalmente se realizan en cuadernos, planillas, memoria o mensajes informales, entregando una herramienta simple para registrar ventas, controlar stock, administrar clientes, manejar fiados, generar alertas y registrar pagos presenciales realizados mediante medios externos.
+
+El alcance actual es el de una tesis: los flujos de Webpay y Mercado Pago son simulaciones controladas, no cobran dinero ni usan credenciales comerciales. La delimitación completa y verificable se mantiene en `docs/Alcance-Tesis.md`.
 
 La propuesta central es entregar una "caja inteligente de bolsillo" que funcione desde el celular, sin exigir infraestructura compleja ni conocimientos tecnicos avanzados. Al ser una PWA, el sistema puede instalarse desde el navegador, funcionar con una experiencia similar a una aplicacion movil y adaptarse a dispositivos de bajo costo.
 
@@ -45,7 +47,7 @@ Desde el punto de vista tecnologico, el proyecto integra varias areas relevantes
 - Arquitectura SaaS multi-tenant.
 - Backend con API REST.
 - Base de datos relacional.
-- Integracion con servicios de pago.
+- Registro manual y simulación académica de medios de pago externos.
 - Uso de camara desde dispositivos moviles.
 - Reconocimiento visual con IA.
 - Gestion de inventario, ventas y clientes.
@@ -57,7 +59,7 @@ Desde el punto de vista academico, el proyecto permite documentar un ciclo compl
 
 ### 4.1 Objetivo general
 
-Desarrollar una PWA SaaS inteligente para apoyar la gestion de ventas, inventario, clientes fiados y pagos digitales en pequenos negocios locales, incorporando reconocimiento de productos mediante camara e IA para agilizar la operacion diaria.
+Desarrollar una PWA académica multi-tenant para apoyar la gestión de ventas, inventario, clientes fiados y registro de medios de pago externos en pequeños negocios locales, incorporando reconocimiento de productos mediante cámara e IA para agilizar la operación diaria.
 
 ### 4.2 Objetivos especificos
 

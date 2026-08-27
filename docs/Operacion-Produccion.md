@@ -3,7 +3,7 @@
 ## Verificación diaria
 
 - Consultar `GET /api/health`: debe responder `status: ok`, `persistentStorage: true` y `storage: postgres`.
-- `quickSaleConfigured` e `invoiceAiConfigured` indican si existe un proveedor visual disponible, sin revelar credenciales.
+- `quickSaleConfigured`, `invoiceAiConfigured` y `passwordResetEmailConfigured` indican si los servicios opcionales están disponibles, sin revelar credenciales.
 - Realizar una venta demo pequeña, comprobar inventario y revisar el cierre de caja.
 
 ## Respaldos
@@ -26,7 +26,7 @@
 - Supabase/PostgreSQL: almacenamiento, conexiones y respaldos.
 - Groq u otro proveedor visual: cuota y solicitudes.
 - Dominio, correo transaccional y soporte.
-- Los terminales y pasarelas externas no forman parte del costo base: Localito registra el pago manualmente.
+- Los terminales y pasarelas externas no forman parte del costo base de la tesis: Localito registra el pago manualmente y sus pantallas Webpay/Mercado Pago son simulaciones académicas.
 
 ## Reglas de seguridad
 

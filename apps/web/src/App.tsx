@@ -138,7 +138,7 @@ const paymentOptions: Array<{ id: PaymentMethod; label: string; icon: LucideIcon
   { id: "card", label: "Tarjeta · terminal externo", icon: CreditCard },
   { id: "transfer", label: "Transferencia / QR externo", icon: Smartphone },
   { id: "webpay", label: "Webpay · externo", icon: WalletCards },
-  { id: "mercadopago", label: "Mercado Pago · QR prueba", icon: Smartphone },
+  { id: "mercadopago", label: "Mercado Pago · externo", icon: Smartphone },
   { id: "credit", label: "Fiado", icon: ReceiptText },
   { id: "mixed", label: "Mixto", icon: CreditCard }
 ];
@@ -234,10 +234,10 @@ function paymentMethodLabel(method: PaymentMethod) {
     cash: "Efectivo",
     card: "Tarjeta · terminal externo",
     transfer: "Transferencia / QR externo",
-  webpay: "Webpay · externo",
-  mercadopago: "Mercado Pago · QR prueba",
-  credit: "Fiado",
-  mixed: "Pago mixto"
+    webpay: "Webpay · externo",
+    mercadopago: "Mercado Pago · externo",
+    credit: "Fiado",
+    mixed: "Pago mixto"
   };
   return labels[method];
 }
@@ -772,9 +772,10 @@ function App() {
 
   function debtChargeMessage(charge: DebtChargeState) {
     return [
-      `Hola ${charge.customerName}, tienes un cobro pendiente en ${tenant?.name ?? "Localito"}.`,
+      `Hola ${charge.customerName}, tienes un cobro pendiente de demostración en ${tenant?.name ?? "Localito"}.`,
       `Monto: ${formatCLP(charge.amount)}.`,
-      `Puedes pagar con Webpay aqui: ${charge.redirectUrl}`,
+      `Enlace de prueba Webpay: ${charge.redirectUrl}`,
+      "Este enlace se usa solo para la demostración académica y no procesa pagos reales.",
       "Gracias."
     ].join("\n");
   }
@@ -801,34 +802,34 @@ function App() {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `Cobro ${tenant?.name ?? "Localito"}`,
+          title: `Simulación de cobro · ${tenant?.name ?? "Localito"}`,
           text,
           url: charge.redirectUrl
         });
-        setNotice({ message: `Cobro compartido para ${charge.customerName}.`, tone: "success" });
+        setNotice({ message: `Simulación de cobro compartida para ${charge.customerName}.`, tone: "success" });
         return;
       }
 
       await copyTextToClipboard(text);
-      setNotice({ message: "Tu dispositivo no abrio compartir, pero el cobro quedo copiado.", tone: "success" });
+      setNotice({ message: "Tu dispositivo no abrió compartir, pero la simulación quedó copiada.", tone: "success" });
     } catch {
-      setNotice({ message: "Cobro generado. Puedes compartirlo, copiarlo o enviarlo por WhatsApp.", tone: "warning" });
+      setNotice({ message: "Simulación generada. Puedes compartirla, copiarla o enviarla por WhatsApp.", tone: "warning" });
     }
   }
 
   async function copyDebtCharge(charge: DebtChargeState) {
     try {
       await copyTextToClipboard(debtChargeMessage(charge));
-      setNotice({ message: "Mensaje de cobro copiado.", tone: "success" });
+      setNotice({ message: "Mensaje de simulación copiado.", tone: "success" });
     } catch {
-      setNotice({ message: "No se pudo copiar el cobro.", tone: "warning" });
+      setNotice({ message: "No se pudo copiar la simulación.", tone: "warning" });
     }
   }
 
   function openWhatsAppDebtCharge(charge: DebtChargeState) {
     const url = `https://wa.me/?text=${encodeURIComponent(debtChargeMessage(charge))}`;
     window.open(url, "_blank", "noopener,noreferrer");
-    setNotice({ message: `Cobro listo para enviar por WhatsApp a ${charge.customerName}.`, tone: "success" });
+    setNotice({ message: `Simulación lista para enviar por WhatsApp a ${charge.customerName}.`, tone: "success" });
   }
 
   async function confirmDebtCharge(charge: DebtChargeState) {
@@ -836,9 +837,9 @@ function App() {
     try {
       await api.confirmWebpayPayment(charge.paymentId);
       setLastDebtCharge(null);
-      await loadWorkspace(`Pago Webpay demo confirmado para ${charge.customerName}. Deuda actualizada.`);
+      await loadWorkspace(`Simulación Webpay confirmada para ${charge.customerName}. Deuda actualizada.`);
     } catch (error) {
-      setNotice({ message: error instanceof Error ? error.message : "No se pudo confirmar el pago Webpay.", tone: "error" });
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo confirmar la simulación Webpay.", tone: "error" });
     } finally {
       setIsBusy(false);
     }
@@ -1086,7 +1087,7 @@ function App() {
   async function createDebtWebpay(customer: Customer) {
     const amount = numberFromInput(paymentAmounts[customer.id] || String(customer.debtBalance));
     if (amount <= 0) {
-      setNotice({ message: "Ingresa un monto para generar Webpay.", tone: "warning" });
+      setNotice({ message: "Ingresa un monto para generar la simulación Webpay.", tone: "warning" });
       return;
     }
 
@@ -1106,11 +1107,11 @@ function App() {
       setLastDebtCharge(charge);
       setPaymentAmounts((current) => ({ ...current, [customer.id]: "" }));
       setNotice({
-        message: `Cobro Webpay demo generado para ${customer.name}.`,
+        message: `Simulación Webpay generada para ${customer.name}.`,
         tone: "success"
       });
     } catch (error) {
-      setNotice({ message: error instanceof Error ? error.message : "No se pudo crear Webpay.", tone: "error" });
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo crear la simulación Webpay.", tone: "error" });
     } finally {
       setIsBusy(false);
     }
@@ -1711,7 +1712,10 @@ function LoginView({
             onForgot();
           }}>Olvidé mi contraseña</button>
           <div className="auth-divider"><span>¿Primera vez en Localito?</span></div>
-          <button className="auth-register-link" type="button" disabled={isBusy} onClick={onOpenRegister}>Crear una cuenta para mi negocio</button>
+          <button className="auth-register-link" type="button" disabled={isBusy} onClick={onOpenRegister}>
+            <span className="auth-register-copy"><strong>Tu negocio merece algo simple</strong><small>Comienza tu cuenta gratis en un par de minutos</small></span>
+            <span className="auth-register-arrow" aria-hidden="true">→</span>
+          </button>
         </form>}
 
         {mode === "register" && <form className="login-form registration-form" onSubmit={(event) => {
@@ -2276,12 +2280,12 @@ function CustomersView({
       {lastDebtCharge && (
         <section className="panel payment-share-panel">
           <div className="section-heading">
-            <h2>Cobro listo</h2>
+            <div><span>SIMULACIÓN ACADÉMICA</span><h2>Cobro de prueba listo</h2></div>
             <span>{formatCLP(lastDebtCharge.amount)}</span>
           </div>
           <div className="payment-link-box">
             <strong>{lastDebtCharge.customerName}</strong>
-            <p>{lastDebtCharge.redirectUrl}</p>
+            <p>Enlace de demostración: {lastDebtCharge.redirectUrl}</p>
           </div>
           <div className="share-actions">
             <button className="primary-action compact" type="button" onClick={() => onShareDebtCharge(lastDebtCharge)}>
@@ -2298,7 +2302,7 @@ function CustomersView({
             </button>
             <button className="secondary-action compact" type="button" onClick={() => onConfirmDebtCharge(lastDebtCharge)} disabled={isBusy || !canOperate}>
               <CheckCircle2 size={17} />
-              <span>Confirmar demo</span>
+              <span>Confirmar simulación</span>
             </button>
           </div>
         </section>
@@ -2325,7 +2329,7 @@ function CustomersView({
                 inputMode="numeric"
                 disabled={!canOperate || customer.debtBalance === 0}
               />
-              <select className="debt-method-select" aria-label={`Medio del abono de ${customer.name}`} value={debtMethods[customer.id] ?? "cash"} onChange={(event) => setDebtMethods((current) => ({ ...current, [customer.id]: event.target.value as Exclude<PaymentMethod, "credit" | "mixed"> }))} disabled={!canOperate || customer.debtBalance === 0}><option value="cash">Efectivo</option><option value="card">Tarjeta</option><option value="transfer">Transferencia</option><option value="webpay">Webpay</option><option value="mercadopago">Mercado Pago QR</option></select>
+              <select className="debt-method-select" aria-label={`Medio del abono de ${customer.name}`} value={debtMethods[customer.id] ?? "cash"} onChange={(event) => setDebtMethods((current) => ({ ...current, [customer.id]: event.target.value as Exclude<PaymentMethod, "credit" | "mixed"> }))} disabled={!canOperate || customer.debtBalance === 0}><option value="cash">Efectivo</option><option value="card">Tarjeta</option><option value="transfer">Transferencia</option><option value="webpay">Webpay externo</option><option value="mercadopago">Mercado Pago externo</option></select>
               <div className="customer-actions">
                 {canManageCustomers && (
                   <button className="secondary-action small" type="button" onClick={() => onEdit(customer)} disabled={isBusy}>
@@ -2339,7 +2343,7 @@ function CustomersView({
                 </button>
                 <button className="secondary-action small" type="button" onClick={() => onCreatePayment(customer)} disabled={isBusy || !canOperate || customer.debtBalance === 0}>
                   <Send size={16} />
-                  <span>Cobrar</span>
+                  <span>Simular cobro</span>
                 </button>
                 {canManageCustomers && (
                   <button className="secondary-action small danger-soft" type="button" onClick={() => onDeactivate(customer)} disabled={isBusy}>

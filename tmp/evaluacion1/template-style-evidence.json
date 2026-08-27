@@ -1,0 +1,170 @@
+{
+  "input": "C:\\Users\\cajgo\\Downloads\\1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT.docx",
+  "fonts_by_char_count": {
+    "Calibri": 6656
+  },
+  "direct_run_formatting_runs": 314,
+  "direct_paragraph_formatting_paragraphs": 121,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 8,
+      "text": "PARTE I",
+      "style": "List Paragraph"
+    },
+    {
+      "para_index": 16,
+      "text": "PARTE II ",
+      "style": "List Paragraph"
+    },
+    {
+      "para_index": 30,
+      "text": "1. Antecedentes Personales",
+      "style": "Normal"
+    },
+    {
+      "para_index": 40,
+      "text": "2. Descripci\u00f3n Proyecto APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 49,
+      "text": "3. Fundamentaci\u00f3n Proyecto APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 73,
+      "text": "4. Objetivos",
+      "style": "Normal"
+    },
+    {
+      "para_index": 79,
+      "text": "5. Metodolog\u00eda",
+      "style": "Normal"
+    },
+    {
+      "para_index": 84,
+      "text": "6. Evidencias",
+      "style": "Normal"
+    },
+    {
+      "para_index": 86,
+      "text": "Tipo de evidencia ",
+      "style": "Footer"
+    },
+    {
+      "para_index": 87,
+      "text": "(avance o final)",
+      "style": "Footer"
+    },
+    {
+      "para_index": 88,
+      "text": "Nombre de la evidencia",
+      "style": "Footer"
+    },
+    {
+      "para_index": 89,
+      "text": "Descripci\u00f3n",
+      "style": "Footer"
+    },
+    {
+      "para_index": 90,
+      "text": "Justificaci\u00f3n",
+      "style": "Footer"
+    },
+    {
+      "para_index": 107,
+      "text": "7. Plan de Trabajo",
+      "style": "Normal"
+    },
+    {
+      "para_index": 109,
+      "text": "Plan de Trabajo Proyecto APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 110,
+      "text": "Plan de Trabajo Proyecto APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 111,
+      "text": "Plan de Trabajo Proyecto APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 112,
+      "text": "Plan de Trabajo Proyecto APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 113,
+      "text": "Plan de Trabajo Proyecto APT",
+      "style": "Normal"
+    },
+    {
+      "para_index": 114,
+      "text": "Plan de Trabajo Proyecto APT",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_run_formatting": [
+      {
+        "para_index": 7,
+        "run_text": "\t",
+        "style": "Normal"
+      },
+      {
+        "para_index": 8,
+        "run_text": "PARTE I",
+        "style": "List Paragraph"
+      },
+      {
+        "para_index": 16,
+        "run_text": "PARTE II ",
+        "style": "List Paragraph"
+      },
+      {
+        "para_index": 30,
+        "run_text": "1. ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 30,
+        "run_text": "Antecedentes Personales",
+        "style": "Normal"
+      }
+    ],
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 12,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 13,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 14,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 17,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 18,
+        "text": "",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

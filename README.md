@@ -1,14 +1,14 @@
 # Localito
 
-Localito es una PWA SaaS multi-negocio para almacenes y comercios de barrio. Reúne punto de venta, inventario, caja, compras, proveedores, fiado y reconocimiento de productos desde el celular.
+Localito es una PWA académica multi-negocio para almacenes y comercios de barrio. Reúne punto de venta, inventario, caja, compras, proveedores, fiado y reconocimiento de productos desde el celular.
 
-Esta versión implementa el núcleo operacional solicitado. El cumplimiento tributario chileno (SII, boleta y factura electrónica) queda intencionalmente fuera de esta iteración.
+**Estado del proyecto:** versión para tesis. El núcleo operacional funciona con datos persistentes, pero las pasarelas de pago son simulaciones académicas y el cumplimiento tributario chileno (SII, boleta y factura electrónica) queda fuera de esta iteración. El alcance verificable está centralizado en [docs/Alcance-Tesis.md](docs/Alcance-Tesis.md).
 
 ## Funcionalidades implementadas
 
 - Administrador de plataforma separado del negocio: crea locales, crea su primer dueño, agrega vendedores y puede suspender o reactivar locales y usuarios.
 - Suscripciones SaaS por negocio con prueba Pro de 30 días, planes Básico/Pro, permisos centralizados, modo de solo lectura al vencer y métricas de MRR/pruebas en plataforma.
-- Creación de negocios y del primer usuario dueño exclusivamente desde la cuenta administradora de plataforma.
+- Registro público de un negocio y su primer dueño con prueba Pro de 30 días; el administrador de plataforma también puede crear y administrar locales para la demostración.
 - Recuperación de contraseña por correo con enlace de un solo uso, vencimiento de 30 minutos y revocación de sesiones anteriores.
 - Inicio y cierre de sesión con contraseñas `scrypt`, tokens aleatorios almacenados como hash, expiración y aislamiento por negocio.
 - Roles `system_admin`, `owner` y `seller` protegidos tanto en la interfaz como en la API.
@@ -30,7 +30,7 @@ Esta versión implementa el núcleo operacional solicitado. El cumplimiento trib
 - Lectura de códigos con ZXing cargado bajo demanda.
 - **Venta Rápida**: una fotografía puede proponer varios productos y cantidades usando exclusivamente el catálogo del negocio; el vendedor corrige la propuesta y la agrega al ticket POS existente. La lectura de códigos de barras continúa disponible como alternativa.
 - Ingreso de mercadería desde una foto de factura: extracción estructurada, coincidencia con catálogo, revisión obligatoria de cantidades/costos/precios, creación de productos y recepción de stock sin duplicar la factura.
-- Cobros presenciales en tres pasos: armar ticket, presionar **Cobrar** y elegir el medio. Tarjeta, transferencia/QR y Webpay externo exigen confirmar humanamente que el pago fue aprobado antes de crear la venta o descontar stock.
+- Cobros presenciales en tres pasos: armar ticket, presionar **Cobrar** y elegir el medio. Tarjeta, transferencia, Webpay y Mercado Pago se registran como medios externos: el vendedor confirma manualmente el pago antes de crear la venta o descontar stock.
 - Tema claro, oscuro o según el sistema, persistido por usuario, con tipografía Source Sans 3 y controles táctiles mobile-first.
 
 ## Requisitos
@@ -115,7 +115,7 @@ Las tablas tienen RLS activado y sin políticas públicas: Localito accede exclu
 | Dueño Peluqueria La Esquina | `peluqueria@localito.demo` | `Duoc2026` |
 | Vendedor Peluqueria La Esquina | `peluqueria+vendedor@localito.demo` | `Duoc2026V` |
 
-Los negocios nuevos solo se crean desde la cuenta administradora. En la pantalla de acceso, cada usuario puede solicitar por correo el restablecimiento de su contraseña; la nueva clave debe tener al menos 10 caracteres, una letra y un número.
+Los negocios nuevos pueden crearse desde **Crear cuenta** en la pantalla de acceso o por el administrador de plataforma durante la demostración. Cada usuario puede solicitar por correo el restablecimiento de su contraseña; la nueva clave debe tener al menos 10 caracteres, una letra y un número. El envío real depende de configurar un proveedor de correo en las variables de entorno.
 
 En desarrollo local, si no se define otra clave, el administrador usa `caj.gonzalez.st@gmail.com` / `AdminLocalito2026`. Ese valor de desarrollo se deshabilita automáticamente con `NODE_ENV=production`.
 
@@ -153,7 +153,9 @@ Este flujo organiza inventario a partir de un documento comercial; no emite, val
 
 ## Medios de pago presenciales
 
-Localito registra efectivo, tarjeta en terminal externa, transferencia o QR, Webpay externo, Mercado Pago QR, fiado y pago mixto. El vendedor cobra fuera de Localito, ingresa manualmente el monto en el terminal o aplicación correspondiente y confirma en la app que recibió el pago. El MVP no envía montos a un POS ni almacena datos de tarjeta. Para contratar un plan existen flujos sandbox de Webpay y Mercado Pago sin cobro real, además de transferencia con aprobación manual del administrador.
+Localito registra efectivo, tarjeta en terminal externa, transferencia, Webpay externo, Mercado Pago externo, fiado y pago mixto. El vendedor cobra fuera de Localito, ingresa manualmente el monto en el terminal o aplicación correspondiente y confirma en la app que recibió el pago. El MVP no envía montos a un POS, no genera QR de Mercado Pago y no almacena datos de tarjeta.
+
+Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mercado Pago activan una prueba sin mover dinero, mientras que la transferencia queda pendiente de aprobación manual. El cobro Webpay mostrado desde fiados también es una simulación académica; no debe utilizarse para cobrar a clientes reales.
 
 ## Calidad y verificación
 
@@ -173,7 +175,7 @@ Todo negocio nuevo recibe una prueba de **Localito Pro por 30 días**. `suscripc
 - **Pro ($19.990/mes):** agrega clientes, fiado, proveedores, compras, reportes avanzados, auditoría, alertas y Venta Rápida con foto.
 - Al vencer, los datos no se borran: quedan disponibles en modo lectura y las mutaciones responden `403` hasta reactivar.
 
-La selección manual registra un `pendingPlan`: no activa funciones sin confirmación ni interrumpe una prueba vigente. El administrador verifica el pago fuera de Localito y activa el período desde el panel SaaS. El cobro recurrente automático con un proveedor externo continúa fuera del MVP académico.
+La selección por transferencia registra un `pendingPlan`: no activa funciones sin confirmación ni interrumpe una prueba vigente. Las opciones Webpay y Mercado Pago de esta pantalla son únicamente una aprobación sandbox para demostrar el flujo. El cobro recurrente automático con un proveedor externo continúa fuera del MVP académico.
 
 ## Estructura
 
@@ -187,6 +189,7 @@ docs/
   Backlog-Scrum-Jira.md
   Documento-Proyecto-Localito.md
   Jira-Import.csv
+  Alcance-Tesis.md
   Matriz-Regresion-Rediseno.md
   Matriz-Pruebas-Localito.md
   Operacion-Produccion.md
@@ -197,7 +200,8 @@ packages/
 ## Alcance pendiente
 
 - Cumplimiento tributario chileno, excluido por decisión de esta iteración.
-- Integración automática con terminales o pasarelas, excluida del MVP: los pagos externos se registran manualmente para evitar costos y depender de hardware específico.
+- Integración real con terminales, Webpay o Mercado Pago, excluida del MVP de tesis: los pagos externos se registran manualmente y las simulaciones no cobran dinero.
+- Configuración de un proveedor real de correo en Vercel; el flujo de recuperación está implementado, pero requiere credenciales de Gmail o Resend para enviar correos.
 - Avisos automáticos por correo distintos de la recuperación de contraseña.
 - Múltiples sucursales, e-commerce público, fidelización y facturación de la suscripción SaaS; son expansiones de producto y no forman parte del núcleo operacional entregado aquí.
 
