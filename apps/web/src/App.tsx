@@ -1306,6 +1306,10 @@ function App() {
           <Store size={18} />
           <div><small>{isSystemAdmin ? "Plataforma" : "Local activo"}</small><strong>{tenant?.name ?? "Localito"}</strong></div>
         </div>
+        {!isSystemAdmin && <div className="sidebar-appearance-control">
+          <span>Apariencia</span>
+          <button className="theme-switch" type="button" role="switch" aria-checked={theme === "dark"} onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar entre modo claro y oscuro"><Sun size={14}/><span/><Moon size={14}/></button>
+        </div>}
         {isOwner && subscription && <button className="sidebar-plan-card" type="button" onClick={() => navigateTo("plan")}><span>{effectiveSubscriptionStatus(subscription) === "trialing" ? "PRO · PRUEBA" : LOCALITO_PLANS[subscription.plan].name.toLocaleUpperCase("es")}</span><strong>{effectiveSubscriptionStatus(subscription) === "trialing" ? `${subscriptionDaysRemaining(subscription)} días restantes` : subscription.status === "active" ? "Plan activo" : "Revisar suscripción"}</strong><small>Ver mi plan</small></button>}
         <nav className="sidebar-nav" aria-label="Navegación principal">
           <span className="sidebar-label">{isSystemAdmin ? "ADMINISTRACIÓN" : "TU NEGOCIO"}</span>
@@ -1318,7 +1322,6 @@ function App() {
           <span className="avatar-mini">{userInitials(currentUser)}</span>
           <div><strong>{currentUser.name}</strong><small>{currentUser.role === "system_admin" ? "Admin plataforma" : currentUser.role === "owner" ? "Dueño" : "Vendedor"}</small></div>
           {!isSystemAdmin && <button className="sidebar-icon-button" type="button" onClick={() => navigateTo("settings")} aria-label="Configuración"><Settings size={18}/></button>}
-          {!isSystemAdmin && <button className="theme-switch" type="button" role="switch" aria-checked={theme === "dark"} onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar entre modo claro y oscuro"><Sun size={14}/><span/><Moon size={14}/></button>}
           <button className="sidebar-icon-button" type="button" onClick={logout} aria-label="Cerrar sesión"><LogOut size={18}/></button>
         </div>
       </aside>

@@ -2791,6 +2791,11 @@ textarea:focus {
     padding: 26px clamp(24px, 3.4vw, 46px) 48px;
   }
 
+  .dashboard-stack {
+    width: 100%;
+    max-width: none;
+  }
+
   .bottom-nav,
   .mobile-cart-summary {
     display: none;
@@ -5076,6 +5081,23 @@ button:active:not(:disabled) { transform: none; }
   border-color: var(--sidebar-card-border);
 }
 
+.sidebar-appearance-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 4px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.sidebar-appearance-control .theme-switch {
+  min-height: 30px;
+  padding: 3px 6px;
+}
+
 .sidebar-plan-card {
   display: grid;
   gap: 5px;
@@ -5132,6 +5154,11 @@ button:active:not(:disabled) { transform: none; }
 }
 
 .theme-switch[aria-checked="true"] span::after { transform: translateX(13px); }
+
+.dashboard-stack {
+  width: 100%;
+  max-width: none;
+}
 
 .back-button {
   display: inline-flex;
