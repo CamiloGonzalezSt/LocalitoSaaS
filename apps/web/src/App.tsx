@@ -1288,6 +1288,7 @@ function App() {
         onLogin={() => void login()}
         onRegister={(payload) => void registerAccount(payload)}
         onOpenRegister={() => setLoginMode("register")}
+        onShowNotice={(message) => setNotice({ message, tone: "warning" })}
         onForgot={() => setLoginMode("forgot")}
         onRequestReset={(email) => void requestPasswordReset(email)}
         onConfirmReset={(password, confirmation) => void confirmPasswordReset(password, confirmation)}
@@ -1612,6 +1613,7 @@ function LoginView({
   onLogin,
   onRegister,
   onOpenRegister,
+  onShowNotice,
   onForgot,
   onRequestReset,
   onConfirmReset,
@@ -1625,6 +1627,7 @@ function LoginView({
   onLogin: () => void;
   onRegister: (payload: { businessName: string; businessType: string; ownerName: string; email: string; password: string }) => void;
   onOpenRegister: () => void;
+  onShowNotice: (message: string) => void;
   onForgot: () => void;
   onRequestReset: (email: string) => void;
   onConfirmReset: (password: string, confirmation: string) => void;
@@ -1712,7 +1715,7 @@ function LoginView({
             onForgot();
           }}>Olvidé mi contraseña</button>
           <div className="auth-divider"><span>¿Primera vez en Localito?</span></div>
-          <button className="social-login-button" type="button" disabled={isBusy} onClick={() => setNotice({ message: "El inicio con Google estará disponible cuando conectemos la cuenta de Google del proyecto.", tone: "warning" })}>
+          <button className="social-login-button" type="button" disabled={isBusy} onClick={() => onShowNotice("El inicio con Google está fuera del alcance de la tesis y no está disponible.")}>
             <span className="google-mark" aria-hidden="true">G</span>
             <span>Continuar con Google</span>
           </button>
