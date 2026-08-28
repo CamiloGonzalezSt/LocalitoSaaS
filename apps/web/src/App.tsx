@@ -358,6 +358,12 @@ function App() {
   const isOwner = isOwnerUser(currentUser);
   const isSystemAdmin = isSystemAdminUser(currentUser);
   const canOperate = !subscription || subscriptionCanMutate(subscription);
+  const compactPlanName = subscription ? LOCALITO_PLANS[subscription.plan].name.replace("Localito ", "") : "";
+  const compactPlanStatus = subscription
+    ? effectiveSubscriptionStatus(subscription) === "trialing"
+      ? `${subscriptionDaysRemaining(subscription)} días de prueba`
+      : subscription.status === "active" ? "Activo" : "Revisar"
+    : "";
   const visibleNavItems: NavItem[] = isSystemAdmin
     ? [{ id: "platform", label: "Locales y usuarios", icon: Store }]
     : navItems
@@ -1371,7 +1377,6 @@ function App() {
           <span>Apariencia</span>
           <button className="theme-switch" type="button" role="switch" aria-checked={theme === "dark"} onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar entre modo claro y oscuro"><Sun size={14}/><span/><Moon size={14}/></button>
         </div>}
-        {isOwner && subscription && <button className="sidebar-plan-card" type="button" onClick={() => navigateTo("plan")}><span>{effectiveSubscriptionStatus(subscription) === "trialing" ? "PRO · PRUEBA" : LOCALITO_PLANS[subscription.plan].name.toLocaleUpperCase("es")}</span><strong>{effectiveSubscriptionStatus(subscription) === "trialing" ? `${subscriptionDaysRemaining(subscription)} días restantes` : subscription.status === "active" ? "Plan activo" : "Revisar suscripción"}</strong><small>Ver mi plan</small></button>}
         <nav className="sidebar-nav" aria-label="Navegación principal">
           <span className="sidebar-label">{isSystemAdmin ? "ADMINISTRACIÓN" : "TU NEGOCIO"}</span>
           {visibleNavItems.map((item) => {
@@ -1400,6 +1405,7 @@ function App() {
         </div>
         <div className="topbar-actions desktop-topbar-actions">
           {!isSystemAdmin && <button className="icon-button" type="button" onClick={openGlobalSearch} aria-label="Buscar en el negocio"><Search size={20} /></button>}
+          {isOwner && subscription && <button className="topbar-plan-button" type="button" onClick={() => navigateTo("plan")} aria-label={`Mi plan: ${compactPlanName}, ${compactPlanStatus}`}><CreditCard size={17}/><span><strong>{compactPlanName}</strong><small>{compactPlanStatus}</small></span></button>}
           <button className="icon-button" type="button" onClick={() => void loadWorkspace("Datos refrescados.")} aria-label="Refrescar">
             <RefreshCw size={20} />
           </button>
@@ -1421,6 +1427,7 @@ function App() {
           <div className="mobile-actions-wrap" ref={mobileActionsRef}>
             <button className="icon-button mobile-menu-trigger" type="button" aria-label="Abrir acciones" aria-haspopup="menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)}><EllipsisVertical size={21}/></button>
             {mobileMenuOpen && <div className="mobile-actions-menu" role="menu">
+              {isOwner && subscription && <button className="mobile-plan-menu-item" type="button" role="menuitem" onClick={() => navigateTo("plan")}><CreditCard size={18}/><span><strong>Mi plan · {compactPlanName}</strong><small>{compactPlanStatus}</small></span></button>}
               {!isSystemAdmin && isOwner && <button type="button" role="menuitem" onClick={() => navigateTo("reports")}><BarChart3 size={18}/><span>Reportes</span></button>}
               <button type="button" role="menuitem" onClick={() => { setMobileMenuOpen(false); void loadWorkspace("Datos refrescados."); }}><RefreshCw size={18}/><span>Actualizar datos</span></button>
               {!isSystemAdmin && <button type="button" role="menuitem" onClick={() => navigateTo("settings")}><Settings size={18}/><span>{isOwner ? "Configuración" : "Mi perfil"}</span></button>}
@@ -1450,7 +1457,6 @@ function App() {
       <main className="content">
         {notice && <NoticeToast notice={notice} onDismiss={() => setNotice(null)} />}
 
-        {!isSystemAdmin && isOwner && subscription && effectiveSubscriptionStatus(subscription) === "trialing" && <section className="subscription-banner"><div><strong>Prueba Pro · {subscriptionDaysRemaining(subscription)} días restantes</strong><span>Incluye todas las funciones. Al terminar, elige un plan para seguir operando.</span></div><button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Ver mi plan</button></section>}
         {!isSystemAdmin && subscription && !subscriptionCanMutate(subscription) && <section className="subscription-lock-banner"><AlertTriangle size={18}/><span>Tu suscripción no está activa. Puedes revisar toda tu información, pero las acciones están pausadas.</span>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Elegir plan</button>}</section>}
 
         {isLoading && <p className="empty-state">Conectando con la API de Localito...</p>}

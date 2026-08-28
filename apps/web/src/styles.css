@@ -3480,29 +3480,6 @@ button,
   font-weight: 700;
 }
 
-.subscription-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 13px 16px;
-  color: #0f5f58;
-  background: var(--green-soft);
-  border: 1px solid #bfe3d9;
-  border-radius: 14px;
-}
-
-.subscription-banner div,
-.subscription-banner span {
-  display: grid;
-}
-
-.subscription-banner span {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 0.86rem;
-}
-
 .inventory-actions {
   display: flex;
   align-items: center;
@@ -3755,7 +3732,6 @@ button,
 
 [data-theme="dark"] .role-pill,
 [data-theme="dark"] .section-heading > span,
-[data-theme="dark"] .subscription-banner,
 [data-theme="dark"] .inline-command {
   color: #a7eee2;
   background: var(--green-soft);
@@ -3769,8 +3745,7 @@ button,
 }
 
 @media (max-width: 700px) {
-  .inventory-actions,
-  .subscription-banner {
+  .inventory-actions {
     align-items: stretch;
     flex-direction: column;
   }
@@ -5423,28 +5398,6 @@ button:active:not(:disabled) { transform: none; }
   padding: 3px 6px;
 }
 
-.sidebar-plan-card {
-  display: grid;
-  gap: 5px;
-  width: 100%;
-  padding: 14px;
-  color: #fff;
-  text-align: left;
-  background: rgba(24, 162, 141, 0.16);
-  border: 1px solid rgba(115, 229, 209, 0.25);
-  border-radius: 13px;
-}
-
-.sidebar-plan-card span {
-  color: #a9e6dc;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
-.sidebar-plan-card strong { font-size: 0.9rem; }
-.sidebar-plan-card small { color: #d8fff8; text-decoration: underline; text-underline-offset: 3px; }
-
 .theme-switch {
   display: inline-grid;
   grid-template-columns: 15px 30px 15px;
@@ -5935,7 +5888,6 @@ button:active:not(:disabled) { transform: none; }
 [data-theme="dark"] .hero-panel { color: var(--text-primary); background: var(--surface); border-color: var(--border); box-shadow: none; }
 [data-theme="dark"] .product-button:hover,
 [data-theme="dark"] .secondary-action:hover:not(:disabled) { background: var(--surface-hover); }
-[data-theme="dark"] .subscription-banner,
 [data-theme="dark"] .inline-command,
 [data-theme="dark"] .role-pill,
 [data-theme="dark"] .section-heading > span,
@@ -5963,7 +5915,6 @@ button:active:not(:disabled) { transform: none; }
 @media (max-width: 720px) {
   .mobile-theme-button,
   .mobile-report-button { display: inline-grid; }
-  .subscription-banner { display: flex; }
   .reports-toolbar { align-items: stretch; }
   .month-filter { min-width: 0; }
   .reports-toolbar-actions { display: grid; grid-template-columns: 1fr 1fr; }
@@ -5994,10 +5945,6 @@ button:active:not(:disabled) { transform: none; }
   .user-list .row p { white-space: normal; overflow-wrap: anywhere; }
   .section-tabs button { padding-inline: 9px; font-size: .86rem; }
   .section-tabs span { display: none; }
-}
-
-@media (min-width: 721px) {
-  .content > .subscription-banner { display: none; }
 }
 
 /* Cabecera móvil compacta: identidad primero, acciones secundarias en menú. */
@@ -7426,4 +7373,35 @@ summary:focus-visible {
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
+}
+
+.topbar-plan-button {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 5px 11px;
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: none;
+}
+
+.topbar-plan-button > svg { color: var(--primary); }
+.topbar-plan-button > span { display: grid; gap: 0; line-height: 1.12; }
+.topbar-plan-button strong { font-size: 0.78rem; font-weight: 700; }
+.topbar-plan-button small { color: var(--text-secondary); font-size: 0.66rem; font-weight: 600; }
+.topbar-plan-button:hover { background: var(--surface-hover); border-color: color-mix(in srgb, var(--primary) 34%, var(--border)); }
+
+@media (max-width: 959px) {
+  .mobile-actions-menu .mobile-plan-menu-item > span {
+    display: grid;
+    gap: 2px;
+  }
+
+  .mobile-actions-menu .mobile-plan-menu-item strong { font-size: 0.86rem; }
+  .mobile-actions-menu .mobile-plan-menu-item small { color: var(--text-secondary); font-size: 0.72rem; font-weight: 600; }
 }
