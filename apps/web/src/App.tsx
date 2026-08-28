@@ -1524,7 +1524,7 @@ function App() {
             onPaymentMethod={setPaymentMethod}
             onCustomer={setSelectedCustomerId}
             onConfirm={(options) => void confirmSale(options)}
-            onScan={() => !canOperate || (subscription && !hasEntitlement(subscription, "aiPhotoSale")) ? navigateTo("plan") : setActiveView("scan")}
+            onScan={() => !canOperate || (subscription && !hasEntitlement(subscription, "aiPhotoSale")) ? navigateTo("plan") : navigateTo("scan")}
             lastReceipt={lastReceipt}
             onPrintReceipt={printLastReceipt}
             onShareReceipt={() => void shareLastReceipt()}
