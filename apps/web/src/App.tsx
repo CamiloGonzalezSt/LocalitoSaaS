@@ -1617,6 +1617,7 @@ function App() {
 
         {!isLoading && activeView === "reports" && (
           <ReportsView
+            tenantId={tenant?.id ?? "local"}
             products={products}
             users={users}
             customers={customers}
@@ -2606,6 +2607,7 @@ function CustomerOverview({ customers }: { customers: Customer[] }) {
 }
 
 function ReportsView({
+  tenantId,
   products,
   users,
   customers,
@@ -2621,6 +2623,7 @@ function ReportsView({
   onCancelSale,
   onReturnSale
 }: {
+  tenantId: string;
   products: Product[];
   users: User[];
   customers: Customer[];
@@ -2638,14 +2641,45 @@ function ReportsView({
 }) {
   const latestMonth = sales[0]?.createdAt.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(latestMonth);
+  const [selectedSellerId, setSelectedSellerId] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [presetName, setPresetName] = useState("");
+  const presetStorageKey = `localito-report-presets:${tenantId}`;
+  const reminderStorageKey = `localito-report-reminder:${tenantId}`;
+  const [savedPresets, setSavedPresets] = useState<Array<{ id: string; name: string; month: string; sellerId: string; category: string }>>(() => {
+    try { return JSON.parse(localStorage.getItem(presetStorageKey) ?? "[]"); } catch { return []; }
+  });
+  const [weeklyReminderEnabled, setWeeklyReminderEnabled] = useState(() => localStorage.getItem(reminderStorageKey) === "enabled");
   const [selectedClosureId, setSelectedClosureId] = useState("");
   const [saleAction, setSaleAction] = useState<{ sale: Sale; type: "cancel" | "return" } | null>(null);
   const [actionReason, setActionReason] = useState("");
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+  useEffect(() => { localStorage.setItem(presetStorageKey, JSON.stringify(savedPresets)); }, [presetStorageKey, savedPresets]);
+  useEffect(() => { localStorage.setItem(reminderStorageKey, weeklyReminderEnabled ? "enabled" : "disabled"); }, [reminderStorageKey, weeklyReminderEnabled]);
+
   const selectedMonthLabel = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric" }).format(new Date(`${selectedMonth}-01T12:00:00`));
-  const monthSales = sales.filter((sale) => sale.createdAt.slice(0, 7) === selectedMonth);
+  const previousMonth = new Date(`${selectedMonth}-01T12:00:00`);
+  previousMonth.setMonth(previousMonth.getMonth() - 1);
+  const previousMonthKey = `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, "0")}`;
+  const previousMonthLabel = new Intl.DateTimeFormat("es-CL", { month: "short", year: "numeric" }).format(previousMonth);
+  const productCategoryById = new Map(products.map((product) => [product.id, product.category || "Sin categoría"]));
+  const categories = [...new Set(products.map((product) => product.category).filter(Boolean))].sort((left, right) => left.localeCompare(right, "es"));
+  const createFilteredSales = (period: string) => sales
+    .filter((sale) => sale.createdAt.slice(0, 7) === period)
+    .filter((sale) => selectedSellerId === "all" || sale.sellerId === selectedSellerId)
+    .map((sale) => {
+      const items = selectedCategory === "all" ? sale.items : sale.items.filter((item) => productCategoryById.get(item.productId) === selectedCategory);
+      const total = selectedCategory === "all" ? sale.total : items.reduce((sum, item) => sum + item.subtotal, 0);
+      return { ...sale, items, total };
+    })
+    .filter((sale) => sale.items.length > 0);
+  const monthSales = createFilteredSales(selectedMonth);
   const activeSales = monthSales.filter((sale) => sale.status !== "cancelled");
+  const previousActiveSales = createFilteredSales(previousMonthKey).filter((sale) => sale.status !== "cancelled");
   const monthTotal = activeSales.reduce((sum, sale) => sum + sale.total, 0);
+  const previousTotal = previousActiveSales.reduce((sum, sale) => sum + sale.total, 0);
+  const totalDifference = monthTotal - previousTotal;
+  const totalDifferencePercent = previousTotal ? Math.round(totalDifference / previousTotal * 100) : null;
   const monthUnits = activeSales.reduce((sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
   const dailyTotals = [...activeSales.reduce((map, sale) => { const day = sale.createdAt.slice(8, 10); map.set(day, (map.get(day) ?? 0) + sale.total); return map; }, new Map<string, number>())].sort((a, b) => a[0].localeCompare(b[0]));
   const maxDaily = Math.max(...dailyTotals.map(([, total]) => total), 1);
@@ -2657,8 +2691,43 @@ function ReportsView({
   const productTotals = activeSales.reduce((map, sale) => { sale.items.forEach((item) => { const current = map.get(item.productId) ?? { name: item.productName, units: 0, amount: 0 }; current.units += item.quantity; current.amount += item.subtotal; map.set(item.productId, current); }); return map; }, new Map<string, { name: string; units: number; amount: number }>());
   const topProducts = [...productTotals.values()].sort((a, b) => b.amount - a.amount).slice(0, 5);
   const sellerTotals = [...activeSales.reduce((map, sale) => map.set(sale.sellerId, (map.get(sale.sellerId) ?? 0) + sale.total), new Map<string, number>())].sort((a, b) => b[1] - a[1]);
+  const categoryTotals = [...activeSales.reduce((map, sale) => { sale.items.forEach((item) => { const category = productCategoryById.get(item.productId) ?? "Sin categoría"; map.set(category, (map.get(category) ?? 0) + item.subtotal); }); return map; }, new Map<string, number>())].sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const hourTotals = [...activeSales.reduce((map, sale) => { const hour = new Date(sale.createdAt).getHours(); map.set(hour, (map.get(hour) ?? 0) + sale.total); return map; }, new Map<number, number>())].sort((a, b) => a[0] - b[0]);
+  const maxHourly = Math.max(...hourTotals.map(([, total]) => total), 1);
+  const alerts = [
+    lowStockProducts.length ? { title: `${lowStockProducts.length} producto${lowStockProducts.length === 1 ? "" : "s"} con stock bajo`, detail: "Revisa reposición antes de que se agoten.", tone: "warning" } : null,
+    previousTotal > 0 && monthTotal < previousTotal ? { title: "Las ventas bajaron respecto al período anterior", detail: `${formatCLP(Math.abs(totalDifference))} menos que ${previousMonthLabel}.`, tone: "attention" } : null,
+    activeSales.length === 0 ? { title: "Sin ventas en este período", detail: "Cambia el filtro o revisa si faltan registros.", tone: "attention" } : null,
+    customers.some((customer) => customer.debtBalance > 0) ? { title: "Hay fiados pendientes por revisar", detail: "Puedes cobrar abonos desde Clientes.", tone: "warning" } : null
+  ].filter((alert): alert is { title: string; detail: string; tone: string } => Boolean(alert));
   const selectedClosure = cashClosures.find((closure) => closure.id === selectedClosureId);
   const closureSales = selectedClosure ? sales.filter((sale) => sale.createdAt.slice(0, 10) === selectedClosure.date) : [];
+
+  function applyPreset(preset: { month: string; sellerId: string; category: string }) {
+    setSelectedMonth(preset.month); setSelectedSellerId(preset.sellerId); setSelectedCategory(preset.category);
+  }
+
+  function savePreset() {
+    const name = presetName.trim() || `Filtro ${selectedMonthLabel}`;
+    setSavedPresets((current) => [{ id: `${Date.now()}`, name, month: selectedMonth, sellerId: selectedSellerId, category: selectedCategory }, ...current].slice(0, 6));
+    setPresetName("");
+  }
+
+  function exportFilteredSales() {
+    const rows = monthSales.flatMap((sale) => sale.items.map((item) => [
+      sale.createdAt.slice(0, 10), new Date(sale.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }), sale.id,
+      users.find((user) => user.id === sale.sellerId)?.name ?? "Usuario eliminado", productCategoryById.get(item.productId) ?? "Sin categoría",
+      item.productName, String(item.quantity), String(item.unitPrice), String(item.subtotal), String(sale.total), paymentMethodLabel(sale.paymentMethod), sale.status
+    ]));
+    const csv = [["Fecha", "Hora", "Venta", "Vendedor", "Categoría", "Producto", "Cantidad", "Precio unitario", "Subtotal", "Total venta", "Medio de pago", "Estado"], ...rows]
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(";"))
+      .join("\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" }));
+    link.download = `localito-reporte-${selectedMonth}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
 
   function openSaleAction(sale: Sale, type: "cancel" | "return") {
     setSaleAction({ sale, type }); setActionReason("");
@@ -2678,16 +2747,19 @@ function ReportsView({
 
   return (
     <div className="stack">
-      <section className="reports-toolbar"><div><span>REPORTES</span><h2>Así va tu negocio</h2><p>Revisa las ventas, la caja y el historial de {selectedMonthLabel}.</p></div><label className="month-filter"><span>Período a revisar</span><input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)}/></label></section>
+      <section className="reports-toolbar"><div><span>REPORTES</span><h2>Así va tu negocio</h2><p>Filtra, compara y exporta la información que necesitas para decidir.</p></div><div className="reports-toolbar-actions"><label className="month-filter"><span>Período a revisar</span><input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)}/></label><label className="month-filter"><span>Vendedor</span><select value={selectedSellerId} onChange={(event) => setSelectedSellerId(event.target.value)}><option value="all">Todo el equipo</option>{users.filter((user) => user.role !== "system_admin").map((user) => <option value={user.id} key={user.id}>{user.name}</option>)}</select></label><label className="month-filter"><span>Categoría</span><select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)}><option value="all">Todas las categorías</option>{categories.map((category) => <option value={category} key={category}>{category}</option>)}</select></label></div></section>
+      {canViewFullReports && <section className="panel report-filter-workspace"><div><span>FILTROS GUARDADOS</span><h3>Vuelve a una vista con un toque</h3><p>Los filtros se guardan solo para este local y este navegador.</p></div><div className="report-preset-actions"><input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder="Ej: revisión fin de mes"/><button className="secondary-action small" type="button" onClick={savePreset}><Save size={16}/> Guardar filtro</button><button className="secondary-action small" type="button" onClick={exportFilteredSales} disabled={monthSales.length === 0}><Share2 size={16}/> Exportar CSV</button></div>{savedPresets.length > 0 && <div className="report-preset-list">{savedPresets.map((preset) => <div key={preset.id}><button type="button" onClick={() => applyPreset(preset)}>{preset.name}</button><button className="icon-button preset-delete" type="button" onClick={() => setSavedPresets((current) => current.filter((item) => item.id !== preset.id))} aria-label={`Eliminar filtro ${preset.name}`}><X size={14}/></button></div>)}</div>}</section>}
       {canViewFullReports && (
-        <section className="report-period-summary" aria-label={`Resultado de ${selectedMonthLabel}`}><div className="report-period-copy"><span>RESULTADO DEL PERÍODO</span><h3>{selectedMonthLabel}</h3><p>{activeSales.length ? `${activeSales.length} ${activeSales.length === 1 ? "venta registrada" : "ventas registradas"} en el período seleccionado.` : "Aún no se han registrado ventas en este período."}</p></div><div className="report-period-total"><span>Ventas netas</span><strong>{formatCLP(monthTotal)}</strong></div><div className="stats-grid report-stats-grid"><StatCard label="Ventas" value={String(activeSales.length)} icon={ReceiptText} tone="blue" /><StatCard label="Unidades" value={String(monthUnits)} icon={Package} tone="amber" /><StatCard label="Ticket promedio" value={formatCLP(activeSales.length ? Math.round(monthTotal / activeSales.length) : 0)} icon={Banknote} tone="green" /></div></section>
+        <section className="report-period-summary" aria-label={`Resultado de ${selectedMonthLabel}`}><div className="report-period-copy"><span>RESULTADO DEL PERÍODO</span><h3>{selectedMonthLabel}</h3><p>{activeSales.length ? `${activeSales.length} ${activeSales.length === 1 ? "venta registrada" : "ventas registradas"} con los filtros seleccionados.` : "Aún no se han registrado ventas con estos filtros."}</p>{totalDifferencePercent !== null && <span className={totalDifference >= 0 ? "report-comparison positive" : "report-comparison negative"}>{totalDifference >= 0 ? "+" : "−"}{Math.abs(totalDifferencePercent)}% vs. {previousMonthLabel}</span>}</div><div className="report-period-total"><span>Ventas netas</span><strong>{formatCLP(monthTotal)}</strong><small>{previousTotal ? `Período anterior: ${formatCLP(previousTotal)}` : "Sin ventas comparables el período anterior"}</small></div><div className="stats-grid report-stats-grid"><StatCard label="Ventas" value={String(activeSales.length)} icon={ReceiptText} tone="blue" /><StatCard label="Unidades" value={String(monthUnits)} icon={Package} tone="amber" /><StatCard label="Ticket promedio" value={formatCLP(activeSales.length ? Math.round(monthTotal / activeSales.length) : 0)} icon={Banknote} tone="green" /></div></section>
       )}
+
+      {canViewFullReports && <section className="report-alerts" aria-label="Alertas operativas"><div className="section-heading"><div><span>ALERTAS OPERATIVAS</span><h2>Qué conviene revisar</h2><p>Se actualizan con los datos reales del local.</p></div><label className="report-reminder"><input type="checkbox" checked={weeklyReminderEnabled} onChange={(event) => setWeeklyReminderEnabled(event.target.checked)}/><span>Recordatorio semanal al abrir Reportes</span></label></div><div className="report-alert-grid">{alerts.length ? alerts.map((alert) => <article className={`report-alert ${alert.tone}`} key={alert.title}><AlertTriangle size={19}/><div><strong>{alert.title}</strong><p>{alert.detail}</p></div></article>) : <article className="report-alert success"><CheckCircle2 size={19}/><div><strong>Todo se ve en orden</strong><p>No hay alertas urgentes con los filtros actuales.</p></div></article>}</div>{weeklyReminderEnabled && <p className="helper-text">El recordatorio aparecerá como aviso dentro de Localito al iniciar una nueva semana. No envía correos ni notificaciones externas.</p>}</section>}
 
       {canViewFullReports && activeSales.length === 0 && <EmptyState icon={BarChart3} title="Aún no hay ventas en este período" description="Cambia el mes seleccionado o registra una venta para ver tendencias, medios de pago y productos más vendidos." />}
 
       {canViewFullReports && activeSales.length > 0 && <section className="panel report-overview"><div className="section-heading"><div><span>ANÁLISIS DEL PERÍODO</span><h2>Evolución de ventas</h2><p>Cómo se distribuyeron las ventas durante {selectedMonthLabel}.</p></div><span>{dailyTotals.length} días con ventas</span></div><div className="daily-chart" aria-label="Ventas diarias">{dailyTotals.map(([day, total]) => <div className="daily-column" key={day}><strong>{formatCLP(total)}</strong><div><span style={{ height: `${Math.max(5, total / maxDaily * 100)}%` }}/></div><small>{day}</small></div>)}</div></section>}
 
-      {canViewFullReports && activeSales.length > 0 && <div className="report-dashboard-grid"><section className="panel"><div className="section-heading"><div><h2>Medios de pago</h2><p>Cómo se pagaron las ventas del período.</p></div><span>{formatCLP(monthTotal)}</span></div><div className="horizontal-bars">{[...methodTotals.entries()].sort((a,b)=>b[1]-a[1]).map(([label,total]) => <div className="horizontal-bar" key={label}><span>{label}</span><div><i style={{ width: `${Math.max(4, total / Math.max(monthTotal,1) * 100)}%` }}/></div><strong>{formatCLP(total)}</strong></div>)}</div></section><section className="panel"><div className="section-heading"><div><h2>Ventas por vendedor</h2><p>Participación del equipo durante el período.</p></div><span>{sellerTotals.length}</span></div><div className="seller-breakdown">{sellerTotals.map(([sellerId,total]) => <div key={sellerId}><span>{users.find((item) => item.id === sellerId)?.name ?? "Usuario eliminado"}</span><strong>{formatCLP(total)}</strong></div>)}</div></section></div>}
+      {canViewFullReports && activeSales.length > 0 && <div className="report-dashboard-grid report-dashboard-grid-extended"><section className="panel"><div className="section-heading"><div><h2>Medios de pago</h2><p>Cómo se pagaron las ventas del período.</p></div><span>{formatCLP(monthTotal)}</span></div><div className="horizontal-bars">{[...methodTotals.entries()].sort((a,b)=>b[1]-a[1]).map(([label,total]) => <div className="horizontal-bar" key={label}><span>{label}</span><div><i style={{ width: `${Math.max(4, total / Math.max(monthTotal,1) * 100)}%` }}/></div><strong>{formatCLP(total)}</strong></div>)}</div></section><section className="panel"><div className="section-heading"><div><h2>Ventas por vendedor</h2><p>Participación del equipo durante el período.</p></div><span>{sellerTotals.length}</span></div><div className="seller-breakdown">{sellerTotals.map(([sellerId,total]) => <div key={sellerId}><span>{users.find((item) => item.id === sellerId)?.name ?? "Usuario eliminado"}</span><strong>{formatCLP(total)}</strong></div>)}</div></section><section className="panel"><div className="section-heading"><div><span>RITMO DE VENTA</span><h2>Ventas por hora</h2><p>Detecta tus horas más activas para organizar la atención.</p></div><span>{hourTotals.length} horarios</span></div><div className="hourly-chart">{hourTotals.map(([hour, total]) => <div className="hour-column" key={hour}><strong>{formatCLP(total)}</strong><div><span style={{ height: `${Math.max(6, total / maxHourly * 100)}%` }}/></div><small>{String(hour).padStart(2, "0")}:00</small></div>)}</div></section><section className="panel"><div className="section-heading"><div><span>MEZCLA DE VENTAS</span><h2>Ventas por categoría</h2><p>Qué categorías aportan más al período.</p></div><span>{categoryTotals.length}</span></div><div className="horizontal-bars">{categoryTotals.map(([category,total]) => <div className="horizontal-bar" key={category}><span>{category}</span><div><i style={{ width: `${Math.max(4, total / Math.max(monthTotal,1) * 100)}%` }}/></div><strong>{formatCLP(total)}</strong></div>)}</div></section></div>}
 
       <section className="panel">
         <div className="section-heading">

@@ -146,6 +146,7 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-106 | Búsqueda | Búsqueda global | Usar Buscar desde escritorio y menú móvil con producto, cliente, código y venta. | Los resultados son del negocio actual y dirigen al módulo correspondiente sin exponer datos no autorizados al vendedor. | Pendiente evidencia |
 | CP-107 | Seguridad operativa | Confirmaciones críticas | Intentar desactivar producto/cliente, eliminar usuario y cerrar caja. | Explica el efecto de la acción y permite volver; solo ejecuta después de confirmar explícitamente. | Pendiente evidencia |
 | CP-108 | Tesis | Guion de demostración | Seguir el documento de demostración desde una cuenta demo. | El recorrido cubre Inicio, Inventario, Venta, Venta Rápida, Clientes, Caja y Reportes sin requerir cobros reales. | Pendiente evidencia |
+| CP-109 | Reportes | Filtros, comparativas y exportación | Filtrar por mes, vendedor y categoría; guardar una vista; comparar el mes anterior y exportar CSV. | Las métricas, gráficos, alertas y CSV reflejan los filtros activos. El filtro guardado solo está disponible en el mismo local y navegador. | Pendiente evidencia |
 
 ## 5. Pruebas no funcionales sugeridas
 

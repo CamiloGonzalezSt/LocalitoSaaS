@@ -21,7 +21,7 @@ Localito es una PWA académica multi-negocio para almacenes y comercios de barri
 - Anulación de venta y devoluciones parciales con reposición de stock y ajuste de deuda.
 - Proveedores, órdenes de compra, recepción de mercadería y actualización del costo promedio ponderado.
 - Caja por turno: apertura, ingresos, gastos operativos categorizados, retiros, cierre, efectivo esperado, contado y diferencia.
-- Reporte financiero con ventas netas, margen bruto estimado, gastos operativos y resultado estimado. Los cálculos de utilidad se presentan como estimaciones porque usan el costo vigente del catálogo.
+- Reportes por período, vendedor y categoría; comparación con el período anterior, ventas por hora/categoría/vendedor, alertas operativas, filtros guardados por local y exportación CSV. El reporte financiero muestra ventas netas, margen bruto estimado, gastos operativos y resultado estimado; los cálculos de utilidad se presentan como estimaciones porque usan el costo vigente del catálogo.
 - Historial de auditoría para operaciones críticas.
 - Asistente automático de carga inicial para locales nuevos, con categorías sugeridas por rubro, progreso reanudable y acceso posterior desde el menú.
 - Importación masiva y exportación de productos en CSV: plantilla compatible con Excel, vista previa, validación por fila y prevención de duplicados, hasta 500 productos por carga.
