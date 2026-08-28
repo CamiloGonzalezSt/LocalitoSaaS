@@ -7411,3 +7411,19 @@ summary:focus-visible {
   line-height: 1.3;
   text-transform: none;
 }
+
+/* Las cantidades acompañan al título como texto; no son estados ni insignias. */
+.section-heading > span,
+[data-theme="dark"] .section-heading > span {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
