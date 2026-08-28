@@ -1423,7 +1423,7 @@ function App() {
         </div>
         <div className="mobile-topbar-tools">
           {!isSystemAdmin && <button className="icon-button mobile-search-button" type="button" onClick={openGlobalSearch} aria-label="Buscar en el negocio"><Search size={19}/></button>}
-          {!isSystemAdmin && <button className="mobile-theme-switch" type="button" role="switch" aria-checked={theme === "dark"} onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}><Sun size={14}/><span aria-hidden="true"/><Moon size={14}/></button>}
+          {!isSystemAdmin && <button className="icon-button mobile-theme-button" type="button" role="switch" aria-checked={theme === "dark"} onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}>{theme === "dark" ? <Sun size={19}/> : <Moon size={19}/>}</button>}
           <div className="mobile-actions-wrap" ref={mobileActionsRef}>
             <button className="icon-button mobile-menu-trigger" type="button" aria-label="Abrir acciones" aria-haspopup="menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)}><EllipsisVertical size={21}/></button>
             {mobileMenuOpen && <div className="mobile-actions-menu" role="menu">

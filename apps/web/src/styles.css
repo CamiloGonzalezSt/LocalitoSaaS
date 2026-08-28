@@ -6035,39 +6035,18 @@ button:active:not(:disabled) { transform: none; }
     border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
   }
 
-  .mobile-theme-switch {
-    position: relative;
+  .mobile-theme-button {
     display: grid;
-    grid-template-columns: 1fr 1fr;
     place-items: center;
-    width: 58px;
-    min-width: 58px;
-    height: 42px;
-    min-height: 42px;
-    padding: 0 5px;
-    color: var(--text-secondary);
-    background: var(--surface-secondary);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    box-shadow: none;
+    color: var(--primary);
   }
 
-  .mobile-theme-switch svg { position: relative; z-index: 1; transition: color .18s ease; }
-  .mobile-theme-switch > span {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    width: 30px;
-    height: 30px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: 0 3px 10px rgba(15, 30, 48, .1);
-    transition: transform .2s ease;
+  .mobile-theme-button:hover,
+  .mobile-theme-button:focus-visible {
+    color: var(--primary-hover);
+    background: var(--primary-soft);
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
   }
-  .mobile-theme-switch[aria-checked="false"] svg:first-child,
-  .mobile-theme-switch[aria-checked="true"] svg:last-child { color: var(--primary); }
-  .mobile-theme-switch[aria-checked="true"] > span { transform: translateX(18px); }
 
   .mobile-actions-wrap { position: relative; }
 
@@ -6126,20 +6105,12 @@ button:active:not(:disabled) { transform: none; }
   .mobile-topbar-tools { gap: 5px; }
   .mobile-topbar-tools > .icon-button,
   .mobile-menu-trigger { width: 40px; min-width: 40px; height: 40px; min-height: 40px; }
-  .mobile-theme-switch { width: 54px; min-width: 54px; height: 40px; min-height: 40px; }
-  .mobile-theme-switch > span { top: 4px; left: 4px; }
-  .mobile-theme-switch[aria-checked="true"] > span { transform: translateX(16px); }
 }
 
 [data-theme="dark"] .mobile-actions-menu {
   background: var(--surface-secondary);
   border-color: var(--border);
   box-shadow: 0 18px 45px rgba(0, 0, 0, .46);
-}
-
-[data-theme="dark"] .mobile-theme-switch > span {
-  background: var(--surface-hover);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, .35);
 }
 
 /* Blindaje responsive: ningún módulo debe ensanchar el lienzo móvil. */
