@@ -5875,8 +5875,7 @@ button:active:not(:disabled) { transform: none; }
   .customer-overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .customer-overview-metrics article:last-child { grid-column: 1 / -1; }
   .customer-overview-metrics small { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
-  .report-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .report-stats-grid .stat-card:last-child { grid-column: 1 / -1; }
+  .report-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .horizontal-bar { grid-template-columns: minmax(90px,.7fr) minmax(80px,1fr); }
   .horizontal-bar > span { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
   .horizontal-bar strong { grid-column: 2; }
@@ -6632,13 +6631,61 @@ button.inventory-task:hover:not(:disabled) {
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 720px) {
   .report-stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    padding: 4px;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+  }
+
+  .report-stats-grid .stat-card {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    min-height: 78px;
+    padding: 10px 6px;
+    text-align: center;
+    background: transparent;
+    border: 0;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .report-stats-grid .stat-card:last-child {
     grid-column: auto;
+    border-right: 0;
+  }
+
+  .report-stats-grid .stat-card svg {
+    display: none;
+  }
+
+  .report-stats-grid .stat-card div {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .report-stats-grid .stat-card span {
+    min-height: 2.45em;
+    color: var(--text-secondary);
+    font-size: clamp(0.68rem, 2.8vw, 0.78rem);
+    line-height: 1.2;
+  }
+
+  .report-stats-grid .stat-card strong {
+    margin-top: 0;
+    color: var(--text-primary);
+    font-size: clamp(0.95rem, 4.2vw, 1.18rem);
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow-wrap: normal;
   }
 }
 
