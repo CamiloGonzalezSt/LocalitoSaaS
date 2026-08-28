@@ -27,8 +27,7 @@ export function SearchView({
   users,
   canViewBusinessRecords,
   onProduct,
-  onCustomer,
-  onSale
+  onCustomer
 }: {
   products: Product[];
   customers: Customer[];
@@ -37,12 +36,12 @@ export function SearchView({
   canViewBusinessRecords: boolean;
   onProduct: (product: Product) => void;
   onCustomer: (customer: Customer) => void;
-  onSale: (sale: Sale) => void;
 }) {
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<SearchKind>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const normalizedQuery = normalize(query);
   const sellerById = useMemo(() => new Map(users.map((user) => [user.id, user.name])), [users]);
 
@@ -86,7 +85,7 @@ export function SearchView({
         </div>
         <label className="business-search-input">
           <Search size={22}/>
-          <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nombre, código, teléfono, producto o número de venta"/>
+          <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Producto, cliente, código o venta"/>
           {query && <button type="button" onClick={() => setQuery("")} aria-label="Limpiar búsqueda"><X size={17}/></button>}
         </label>
         <div className="business-search-controls">
@@ -130,7 +129,7 @@ export function SearchView({
       {visibleSales.length > 0 && <SearchSection title="Ventas" icon={ReceiptText} count={visibleSales.length}>
         {visibleSales.map((sale) => {
           const customer = customers.find((item) => item.id === sale.customerId);
-          return <button className="business-search-row" type="button" key={sale.id} onClick={() => onSale(sale)}>
+          return <button className="business-search-row" type="button" key={sale.id} onClick={() => setSelectedSale(sale)}>
             <span className="business-search-icon"><ReceiptText size={19}/></span>
             <span className="business-search-copy"><strong>Venta #{sale.id.slice(0, 8)}</strong><small>{formatDateTime(sale.createdAt)} · {customer?.name ?? "Venta sin cliente"} · {sellerById.get(sale.sellerId) ?? "Vendedor"}</small></span>
             <span className="business-search-meta"><strong>{formatCLP(sale.total)}</strong><small>{sale.items.length} producto(s) · {sale.status === "cancelled" ? "Anulada" : "Registrada"}</small></span>
@@ -138,10 +137,56 @@ export function SearchView({
           </button>;
         })}
       </SearchSection>}
+
+      {selectedSale && <SaleSearchDetail
+        sale={selectedSale}
+        customer={customers.find((item) => item.id === selectedSale.customerId)}
+        sellerName={sellerById.get(selectedSale.sellerId)}
+        onClose={() => setSelectedSale(null)}
+      />}
     </div>
   );
 }
 
 function SearchSection({ title, icon: Icon, count, children }: { title: string; icon: LucideIcon; count: number; children: ReactNode }) {
   return <section className="panel business-search-section"><div className="section-heading"><div><span>RESULTADOS</span><h2><Icon size={20}/> {title}</h2></div><span>{count}</span></div><div className="business-search-list">{children}</div></section>;
+}
+
+function SaleSearchDetail({ sale, customer, sellerName, onClose }: { sale: Sale; customer?: Customer; sellerName?: string; onClose: () => void }) {
+  const paymentLabels: Record<Sale["paymentMethod"], string> = {
+    cash: "Efectivo",
+    card: "Tarjeta",
+    transfer: "Transferencia / QR",
+    webpay: "Webpay",
+    mercadopago: "Mercado Pago",
+    credit: "Fiado",
+    mixed: "Pago mixto"
+  };
+  const statusLabel = sale.status === "cancelled" ? "Anulada" : sale.status === "refunded" ? "Devuelta" : sale.status === "partially_refunded" ? "Devolución parcial" : "Registrada";
+
+  return <div className="modal-backdrop sale-search-backdrop" role="presentation" onClick={onClose}>
+    <section className="panel sale-search-detail" role="dialog" aria-modal="true" aria-labelledby="sale-search-detail-title" onClick={(event) => event.stopPropagation()}>
+      <div className="sale-search-detail-head">
+        <div><span>DETALLE DE VENTA</span><h2 id="sale-search-detail-title">Venta #{sale.id.slice(0, 8)}</h2><p>{formatDateTime(sale.createdAt)}</p></div>
+        <button className="icon-button" type="button" onClick={onClose} aria-label="Cerrar detalle"><X size={19}/></button>
+      </div>
+      <div className="sale-search-summary">
+        <div><span>Estado</span><strong className={`sale-search-status ${sale.status}`}>{statusLabel}</strong></div>
+        <div><span>Medio de pago</span><strong>{paymentLabels[sale.paymentMethod]}</strong></div>
+        <div><span>Vendedor</span><strong>{sellerName ?? "Sin información"}</strong></div>
+        <div><span>Cliente</span><strong>{customer?.name ?? "Venta sin cliente"}</strong></div>
+      </div>
+      <section className="sale-search-items">
+        <div className="section-heading"><h3>Productos</h3><span>{sale.items.reduce((sum, item) => sum + item.quantity, 0)} unidades</span></div>
+        {sale.items.map((item, index) => <div className="sale-search-item" key={`${item.productId}-${index}`}>
+          <span><strong>{item.productName}</strong><small>{item.quantity} × {formatCLP(item.unitPrice)}</small></span>
+          <strong>{formatCLP(item.subtotal)}</strong>
+        </div>)}
+      </section>
+      {(sale.discount ?? 0) > 0 && <div className="sale-search-line"><span>Descuento</span><strong>-{formatCLP(sale.discount ?? 0)}</strong></div>}
+      {sale.notes && <div className="sale-search-note"><span>Nota de venta</span><p>{sale.notes}</p></div>}
+      <div className="sale-search-total"><span>Total pagado</span><strong>{formatCLP(sale.total)}</strong></div>
+      <button className="primary-action" type="button" onClick={onClose}>Cerrar detalle</button>
+    </section>
+  </div>;
 }

@@ -395,10 +395,6 @@ function App() {
     navigateTo("customers");
   }
 
-  function selectGlobalSale(_sale?: Sale) {
-    navigateTo("reports");
-  }
-
   function requestCriticalAction(title: string, description: string, confirmLabel: string, action: () => Promise<void>) {
     setCriticalAction({ title, description, confirmLabel, action });
   }
@@ -1500,7 +1496,6 @@ function App() {
             canViewBusinessRecords={isOwner}
             onProduct={selectGlobalProduct}
             onCustomer={selectGlobalCustomer}
-            onSale={selectGlobalSale}
           />
         )}
 
