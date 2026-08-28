@@ -5682,7 +5682,7 @@ button:active:not(:disabled) { transform: none; }
 .report-date-fields > span { padding-bottom: 10px; color: var(--text-secondary); }
 .report-date-fields label { display: grid; gap: 4px; min-width: 0; }
 .report-date-fields label > span { color: var(--text-secondary); font-size: .68rem; font-weight: 800; }
-.report-date-fields input { width: 100%; min-height: 39px; padding: 7px 9px; color: var(--text-primary); background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 9px; font-family: inherit; font-size: .8rem; font-weight: 700; }
+.report-date-fields input { width: 100%; min-width: 0; max-width: 100%; min-height: 39px; padding: 7px 9px; color: var(--text-primary); background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 9px; font-family: inherit; font-size: .8rem; font-weight: 700; }
 .report-date-fields input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .82; }
 
 .report-filter-workspace { display: grid; grid-template-columns: minmax(210px, .7fr) minmax(0, 1.3fr); gap: 14px 20px; align-items: center; }
@@ -6110,10 +6110,19 @@ button:active:not(:disabled) { transform: none; }
 
   .reports-toolbar > div,
   .month-filter,
-  .month-filter input {
+  .month-filter input,
+  .month-filter select {
     width: 100%;
     min-width: 0;
   }
+}
+
+@media (max-width: 520px) {
+  .reports-toolbar-actions { grid-template-columns: minmax(0, 1fr); padding: 12px; }
+  .report-range-picker { grid-column: auto; }
+  .report-date-fields { grid-template-columns: minmax(0, 1fr); }
+  .report-date-fields > span { display: none; }
+  .report-quick-ranges button { flex: 1 1 auto; }
 }
 
 @media (max-width: 360px) {
