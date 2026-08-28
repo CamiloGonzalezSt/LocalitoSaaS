@@ -5867,12 +5867,18 @@ button:active:not(:disabled) { transform: none; }
   .report-filter-workspace { grid-template-columns: 1fr; }
   .report-preset-actions { grid-template-columns: 1fr 1fr; }
   .report-preset-actions input { grid-column: 1 / -1; }
-  .report-reminder { align-items: flex-start; }
+  .report-alerts > .section-heading { flex-direction: column; align-items: flex-start; }
+  .report-reminder { align-items: flex-start; width: 100%; }
   .customer-form-grid,
   .billing-method-grid { grid-template-columns: 1fr; }
   .customer-notes-field { grid-column: auto; }
-  .customer-overview-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .customer-overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .customer-overview-metrics article:last-child { grid-column: 1 / -1; }
+  .customer-overview-metrics small { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
+  .report-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .report-stats-grid .stat-card:last-child { grid-column: 1 / -1; }
   .horizontal-bar { grid-template-columns: minmax(90px,.7fr) minmax(80px,1fr); }
+  .horizontal-bar > span { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
   .horizontal-bar strong { grid-column: 2; }
   .customer-row { grid-template-columns: minmax(0,1fr) auto; }
   .customer-row .amount-input,
@@ -6147,6 +6153,16 @@ button:active:not(:disabled) { transform: none; }
 @media (max-width: 720px) {
   .content {
     margin-inline: 0;
+  }
+
+  .category-filter-list,
+  .sale-featured-list {
+    scrollbar-width: none;
+  }
+
+  .category-filter-list::-webkit-scrollbar,
+  .sale-featured-list::-webkit-scrollbar {
+    display: none;
   }
 
   .operations-intro .section-heading {
@@ -6617,6 +6633,10 @@ button.inventory-task:hover:not(:disabled) {
 @media (max-width: 420px) {
   .report-stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .report-stats-grid .stat-card:last-child {
+    grid-column: auto;
   }
 }
 
