@@ -64,10 +64,11 @@ import { PlatformAdminView } from "./PlatformAdminView";
 import { InventorySetupView } from "./InventorySetupView";
 import { QuickSaleView } from "./QuickSaleView";
 import { DashboardView } from "./DashboardView";
+import { SearchView } from "./SearchView";
 import { PlanView, SettingsView } from "./AccountViews";
 import type { BusinessFormState, ProfileFormState, ThemePreference, UserFormState } from "./AccountViews";
 
-type View = "dashboard" | "sale" | "scan" | "product_create" | "setup" | "invoice" | "products" | "customers" | "operations" | "reports" | "settings" | "plan" | "platform";
+type View = "dashboard" | "search" | "sale" | "scan" | "product_create" | "setup" | "invoice" | "products" | "customers" | "operations" | "reports" | "settings" | "plan" | "platform";
 
 type NoticeTone = "success" | "warning" | "error";
 
@@ -136,6 +137,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: "dashboard", label: "Inicio", icon: Home },
+  { id: "search", label: "Buscar", icon: Search },
   { id: "sale", label: "Vender", icon: ShoppingCart },
   { id: "products", label: "Inventario", icon: Package },
   { id: "customers", label: "Clientes", icon: Users },
@@ -324,8 +326,6 @@ function App() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
-  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [notice, setNotice] = useState<NoticeState | null>({
     message: "Cargando Localito...",
     tone: "success"
@@ -358,23 +358,13 @@ function App() {
   const activeSales = useMemo(() => sales.filter((sale) => sale.status !== "cancelled"), [sales]);
   const cancelledSales = useMemo(() => sales.filter((sale) => sale.status === "cancelled"), [sales]);
   const topDebtor = useMemo(() => [...customers].sort((a, b) => b.debtBalance - a.debtBalance)[0], [customers]);
-  const globalSearchResults = useMemo(() => {
-    const query = globalSearchQuery.trim().toLocaleLowerCase("es");
-    if (!query) return { products: products.slice(0, 5), customers: customers.slice(0, 4), sales: activeSales.slice(0, 4) };
-    const includesQuery = (...values: Array<string | undefined>) => values.filter(Boolean).some((value) => value?.toLocaleLowerCase("es").includes(query));
-    return {
-      products: products.filter((product) => includesQuery(product.name, product.brand, product.category, product.barcode, product.sku)).slice(0, 5),
-      customers: customers.filter((customer) => includesQuery(customer.name, customer.phone, customer.email)).slice(0, 4),
-      sales: activeSales.filter((sale) => includesQuery(sale.id, sale.items.map((item) => item.productName).join(" "))).slice(0, 4)
-    };
-  }, [activeSales, customers, globalSearchQuery, products]);
   const isOwner = isOwnerUser(currentUser);
   const isSystemAdmin = isSystemAdminUser(currentUser);
   const canOperate = !subscription || subscriptionCanMutate(subscription);
   const visibleNavItems: NavItem[] = isSystemAdmin
     ? [{ id: "platform", label: "Locales y usuarios", icon: Store }]
     : navItems
-        .filter((item) => isOwner || ["sale", "products", "customers", "operations"].includes(item.id))
+        .filter((item) => isOwner || ["search", "sale", "products", "customers", "operations"].includes(item.id))
         .filter((item) => item.id !== "customers" || !subscription || hasEntitlement(subscription, "customers"))
         .filter((item) => item.id !== "reports" || !subscription || hasEntitlement(subscription, "advancedReports"));
   const mobilePrimaryIds: View[] = isOwner
@@ -392,24 +382,20 @@ function App() {
   }
 
   function openGlobalSearch() {
-    setGlobalSearchQuery("");
     setMobileMenuOpen(false);
-    setGlobalSearchOpen(true);
+    navigateTo("search");
   }
 
   function selectGlobalProduct(product: Product) {
     setSearchTerm(product.name);
-    setGlobalSearchOpen(false);
     navigateTo("sale");
   }
 
-  function selectGlobalCustomer() {
-    setGlobalSearchOpen(false);
+  function selectGlobalCustomer(_customer?: Customer) {
     navigateTo("customers");
   }
 
-  function selectGlobalSale() {
-    setGlobalSearchOpen(false);
+  function selectGlobalSale(_sale?: Sale) {
     navigateTo("reports");
   }
 
@@ -1505,6 +1491,19 @@ function App() {
           />
         )}
 
+        {!isLoading && activeView === "search" && (
+          <SearchView
+            products={products}
+            customers={customers}
+            sales={sales}
+            users={users}
+            canViewBusinessRecords={isOwner}
+            onProduct={selectGlobalProduct}
+            onCustomer={selectGlobalCustomer}
+            onSale={selectGlobalSale}
+          />
+        )}
+
         {!isLoading && activeView === "sale" && (
           <SaleView
             products={products}
@@ -1668,17 +1667,6 @@ function App() {
         {!isLoading && activeView === "plan" && isOwner && subscription && <PlanView subscription={subscription} isBusy={isBusy} onSelect={(plan, provider) => void changePlan(plan, provider)} />}
       </main>
 
-      {globalSearchOpen && <GlobalSearchDialog
-        query={globalSearchQuery}
-        products={globalSearchResults.products}
-        customers={isOwner ? globalSearchResults.customers : []}
-        sales={isOwner ? globalSearchResults.sales : []}
-        onQuery={setGlobalSearchQuery}
-        onClose={() => setGlobalSearchOpen(false)}
-        onProduct={selectGlobalProduct}
-        onCustomer={selectGlobalCustomer}
-        onSale={selectGlobalSale}
-      />}
       {criticalAction && <CriticalActionDialog action={criticalAction} isBusy={isBusy} onCancel={() => setCriticalAction(null)} onConfirm={() => void confirmCriticalAction()} />}
       <ReceiptPrintArea sale={lastReceipt} tenant={tenant} user={currentUser} customers={customers} />
 
@@ -1689,6 +1677,7 @@ function App() {
 function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
   const labels: Record<View, string> = {
     dashboard: "Panel del día",
+    search: "Buscar",
     sale: "Vender",
     scan: "Venta Rápida",
     product_create: "Crear producto",
@@ -1703,31 +1692,6 @@ function viewTitle(view: View, isOwner: boolean, isSystemAdmin: boolean) {
     platform: isSystemAdmin ? "Locales y usuarios" : "Administración"
   };
   return labels[view];
-}
-
-function GlobalSearchDialog({
-  query,
-  products,
-  customers,
-  sales,
-  onQuery,
-  onClose,
-  onProduct,
-  onCustomer,
-  onSale
-}: {
-  query: string;
-  products: Product[];
-  customers: Customer[];
-  sales: Sale[];
-  onQuery: (value: string) => void;
-  onClose: () => void;
-  onProduct: (product: Product) => void;
-  onCustomer: () => void;
-  onSale: () => void;
-}) {
-  const hasResults = products.length + customers.length + sales.length > 0;
-  return <div className="modal-backdrop global-search-backdrop" role="presentation" onClick={onClose}><section className="panel global-search-dialog" role="dialog" aria-modal="true" aria-labelledby="global-search-title" onClick={(event) => event.stopPropagation()}><div className="section-heading"><div><span>BÚSQUEDA RÁPIDA</span><h2 id="global-search-title">Encuentra lo que necesitas</h2></div><button className="icon-button" type="button" onClick={onClose} aria-label="Cerrar búsqueda"><X size={18}/></button></div><label className="global-search-input"><Search size={19}/><input autoFocus value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Producto, cliente, código o venta" /></label><div className="global-search-results">{products.length > 0 && <section><h3>Productos</h3>{products.map((product) => <button type="button" key={product.id} onClick={() => onProduct(product)}><Package size={18}/><span><strong>{product.name}</strong><small>{product.category} · {formatCLP(product.salePrice)}</small></span><ArrowRight size={17}/></button>)}</section>}{customers.length > 0 && <section><h3>Clientes</h3>{customers.map((customer) => <button type="button" key={customer.id} onClick={onCustomer}><Users size={18}/><span><strong>{customer.name}</strong><small>{customer.phone ?? "Sin teléfono"} · Deuda {formatCLP(customer.debtBalance)}</small></span><ArrowRight size={17}/></button>)}</section>}{sales.length > 0 && <section><h3>Ventas</h3>{sales.map((sale) => <button type="button" key={sale.id} onClick={onSale}><ReceiptText size={18}/><span><strong>Venta #{sale.id.slice(0, 8)}</strong><small>{sale.items.length} producto(s) · {formatCLP(sale.total)}</small></span><ArrowRight size={17}/></button>)}</section>}{!hasResults && <EmptyState icon={Search} title="Sin resultados" description="Prueba con otro nombre, código o dato del cliente." />}</div></section></div>;
 }
 
 function CriticalActionDialog({ action, isBusy, onCancel, onConfirm }: { action: CriticalActionState; isBusy: boolean; onCancel: () => void; onConfirm: () => void }) {
