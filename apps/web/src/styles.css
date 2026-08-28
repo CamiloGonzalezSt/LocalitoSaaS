@@ -3782,13 +3782,54 @@ button,
 
 /* Venta Rápida */
 .quick-sale-stack {
+  --quick-card-bg: #ffffff;
+  --quick-card-soft: #f4faf7;
+  --quick-card-accent: #eef8f4;
+  --quick-card-text: #111817;
+  --quick-card-muted: #616b69;
+  --quick-card-border: #c9e1d8;
+  --quick-accent: #0b8068;
+  --quick-accent-soft: #e9f7f1;
+  --quick-warning-bg: #fff7e8;
+  --quick-warning-text: #8a4b06;
+  --quick-warning-border: #f8d89c;
+  --quick-danger-bg: #fff3f1;
+  --quick-danger-text: #c84337;
+  --quick-danger-border: #ffd1ca;
   display: grid;
   gap: 16px;
   width: 100%;
   min-width: 0;
 }
 
-section.panel.quick-sale-hero {
+[data-theme="dark"] .quick-sale-stack {
+  --quick-card-bg: #111111;
+  --quick-card-soft: #171717;
+  --quick-card-accent: #102925;
+  --quick-card-text: #ffffff;
+  --quick-card-muted: #bcbcbc;
+  --quick-card-border: #2d3e3a;
+  --quick-accent: #55d6c2;
+  --quick-accent-soft: #102925;
+  --quick-warning-bg: #2b2110;
+  --quick-warning-text: #f6c76d;
+  --quick-warning-border: #5f4720;
+  --quick-danger-bg: #2d1715;
+  --quick-danger-text: #ff958a;
+  --quick-danger-border: #60302b;
+}
+
+.quick-sale-card {
+  min-width: 0;
+  padding: clamp(16px, 2.5vw, 20px);
+  color: var(--quick-card-text);
+  background: var(--quick-card-bg);
+  border: 1px solid var(--quick-card-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.quick-sale-card.quick-sale-hero {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 14px;
@@ -3906,17 +3947,17 @@ section.panel.quick-sale-hero {
   gap: 12px;
   min-height: 190px;
   padding: 24px;
-  color: #0b8068;
+  color: var(--quick-accent);
   background:
     radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.12), transparent 42%),
-    #f4faf7;
-  border: 2px dashed #b9ddcf;
+    var(--quick-card-soft);
+  border: 2px dashed var(--quick-card-border);
   border-radius: 18px;
 }
 
 .quick-capture-illustration span {
   max-width: 260px;
-  color: var(--ink);
+  color: var(--quick-card-text);
   font-weight: 800;
   line-height: 1.4;
 }
@@ -3943,7 +3984,7 @@ section.panel.quick-sale-hero {
 }
 
 .quick-capture-empty small {
-  color: var(--muted);
+  color: var(--quick-card-muted);
   line-height: 1.45;
 }
 
@@ -3966,9 +4007,9 @@ section.panel.quick-sale-hero {
   align-items: flex-start;
   gap: 9px;
   padding: 12px 13px;
-  color: #165c4d;
-  background: #effaf5;
-  border: 1px solid #c9e8da;
+  color: var(--quick-accent);
+  background: var(--quick-card-accent);
+  border: 1px solid var(--quick-card-border);
   border-radius: 13px;
   font-size: 0.84rem;
   font-weight: 750;
@@ -3983,14 +4024,16 @@ section.panel.quick-sale-hero {
 }
 
 .quick-status.warning {
-  color: #8a4b06;
-  background: #fffaf0;
-  border-color: #f8d89c;
+  color: var(--quick-warning-text);
+  background: var(--quick-warning-bg);
+  border-color: var(--quick-warning-border);
 }
 
 .quick-barcode-option {
   overflow: hidden;
-  border: 1px solid var(--line);
+  color: var(--quick-card-text);
+  background: var(--quick-card-bg);
+  border: 1px solid var(--quick-card-border);
   border-radius: 14px;
 }
 
@@ -4000,7 +4043,7 @@ section.panel.quick-sale-hero {
   gap: 8px;
   min-height: 48px;
   padding: 11px 13px;
-  color: var(--ink);
+  color: var(--quick-card-text);
   font-weight: 850;
   cursor: pointer;
   list-style: none;
@@ -4023,7 +4066,7 @@ section.panel.quick-sale-hero {
 
 .quick-barcode-option p {
   margin-top: 0;
-  color: var(--muted);
+  color: var(--quick-card-muted);
   font-size: 0.8rem;
 }
 
@@ -4042,7 +4085,7 @@ section.panel.quick-sale-hero {
 }
 
 .quick-review-heading span {
-  color: var(--green);
+  color: var(--quick-accent);
 }
 
 .quick-review-heading h2 {
@@ -4053,9 +4096,9 @@ section.panel.quick-sale-hero {
 .quick-review-heading > strong {
   flex: 0 0 auto;
   padding: 7px 10px;
-  color: #165c4d;
-  background: var(--green-soft);
-  border: 1px solid #c9e8da;
+  color: var(--quick-accent);
+  background: var(--quick-card-accent);
+  border: 1px solid var(--quick-card-border);
   border-radius: 999px;
   font-size: 0.74rem;
 }
@@ -4067,9 +4110,9 @@ section.panel.quick-sale-hero {
   gap: 8px;
   margin: 0;
   padding: 11px 12px;
-  color: #8a4b06;
-  background: #fffaf0;
-  border: 1px solid #f8d89c;
+  color: var(--quick-warning-text);
+  background: var(--quick-warning-bg);
+  border: 1px solid var(--quick-warning-border);
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 750;
@@ -4086,14 +4129,15 @@ section.panel.quick-sale-hero {
   gap: 12px;
   min-width: 0;
   padding: 14px;
-  background: #ffffff;
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--green);
+  color: var(--quick-card-text);
+  background: var(--quick-card-bg);
+  border: 1px solid var(--quick-card-border);
+  border-left: 4px solid var(--quick-accent);
   border-radius: 16px;
 }
 
 .quick-detected-item.needs-review {
-  border-left-color: #d97706;
+  border-left-color: var(--quick-warning-text);
 }
 
 .quick-item-top {
@@ -4109,14 +4153,14 @@ section.panel.quick-sale-hero {
   place-items: center;
   width: 44px;
   height: 44px;
-  color: #075e54;
-  background: #e9f7f1;
+  color: var(--quick-accent);
+  background: var(--quick-accent-soft);
   border-radius: 13px;
 }
 
 .needs-review .quick-item-icon {
-  color: #b45309;
-  background: #fff7e8;
+  color: var(--quick-warning-text);
+  background: var(--quick-warning-bg);
 }
 
 .quick-item-copy {
@@ -4126,7 +4170,7 @@ section.panel.quick-sale-hero {
 }
 
 .quick-item-copy > span {
-  color: var(--green);
+  color: var(--quick-accent);
   font-size: 0.66rem;
   font-weight: 900;
   letter-spacing: 0.045em;
@@ -4134,7 +4178,7 @@ section.panel.quick-sale-hero {
 }
 
 .needs-review .quick-item-copy > span {
-  color: #a55208;
+  color: var(--quick-warning-text);
 }
 
 .quick-item-copy strong {
@@ -4144,7 +4188,7 @@ section.panel.quick-sale-hero {
 }
 
 .quick-item-copy small {
-  color: var(--muted);
+  color: var(--quick-card-muted);
 }
 
 .quick-remove {
@@ -4153,9 +4197,9 @@ section.panel.quick-sale-hero {
   width: 42px;
   height: 42px;
   padding: 0;
-  color: #d64b3c;
-  background: #fff3f1;
-  border: 1px solid #ffd1ca;
+  color: var(--quick-danger-text);
+  background: var(--quick-danger-bg);
+  border: 1px solid var(--quick-danger-border);
   border-radius: 12px;
 }
 
@@ -4163,9 +4207,9 @@ section.panel.quick-sale-hero {
   display: grid;
   gap: 9px;
   padding: 11px;
-  color: #713f12;
-  background: #fffaf0;
-  border: 1px solid #f8d89c;
+  color: var(--quick-warning-text);
+  background: var(--quick-warning-bg);
+  border: 1px solid var(--quick-warning-border);
   border-radius: 12px;
 }
 
@@ -4183,10 +4227,10 @@ section.panel.quick-sale-hero {
 .quick-candidate-box > div button {
   min-height: 44px;
   padding: 9px 11px;
-  color: var(--ink);
+  color: var(--quick-card-text);
   text-align: left;
-  background: #ffffff;
-  border: 1px solid #ead9bd;
+  background: var(--quick-card-bg);
+  border: 1px solid var(--quick-warning-border);
   border-radius: 10px;
   font-weight: 800;
 }
@@ -4203,7 +4247,7 @@ section.panel.quick-sale-hero {
   grid-template-columns: 46px 48px 46px;
   align-items: center;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 1px solid var(--quick-card-border);
   border-radius: 13px;
 }
 
@@ -4212,8 +4256,8 @@ section.panel.quick-sale-hero {
   place-items: center;
   min-height: 48px;
   padding: 0;
-  color: var(--ink);
-  background: #ffffff;
+  color: var(--quick-card-text);
+  background: var(--quick-card-bg);
   border: 0;
 }
 
@@ -4221,9 +4265,10 @@ section.panel.quick-sale-hero {
   display: grid;
   place-items: center;
   min-height: 48px;
-  background: var(--surface-soft);
-  border-right: 1px solid var(--line);
-  border-left: 1px solid var(--line);
+  color: var(--quick-card-text);
+  background: var(--quick-card-soft);
+  border-right: 1px solid var(--quick-card-border);
+  border-left: 1px solid var(--quick-card-border);
   font-size: 1.05rem;
 }
 
@@ -4234,12 +4279,12 @@ section.panel.quick-sale-hero {
 }
 
 .quick-item-price span {
-  color: var(--muted);
+  color: var(--quick-card-muted);
   font-size: 0.75rem;
 }
 
 .quick-item-price strong {
-  color: #0f3d73;
+  color: var(--quick-accent);
   font-size: 1.05rem;
 }
 
@@ -4248,9 +4293,9 @@ section.panel.quick-sale-hero {
   align-items: flex-start;
   gap: 8px;
   padding: 10px;
-  color: #9a3412;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
+  color: var(--quick-warning-text);
+  background: var(--quick-warning-bg);
+  border: 1px solid var(--quick-warning-border);
   border-radius: 11px;
   font-size: 0.76rem;
   line-height: 1.4;
@@ -4262,9 +4307,9 @@ section.panel.quick-sale-hero {
   justify-content: center;
   gap: 7px;
   min-height: 44px;
-  color: #0b6f5a;
+  color: var(--quick-accent);
   background: transparent;
-  border: 1px solid #b9ddcf;
+  border: 1px solid var(--quick-card-border);
   border-radius: 11px;
   font-weight: 850;
 }
@@ -4273,8 +4318,8 @@ section.panel.quick-sale-hero {
   display: grid;
   gap: 8px;
   padding: 10px;
-  background: #f8fafc;
-  border: 1px solid #dfe6ef;
+  background: var(--quick-card-soft);
+  border: 1px solid var(--quick-card-border);
   border-radius: 12px;
 }
 
@@ -4292,10 +4337,10 @@ section.panel.quick-sale-hero {
   align-items: center;
   min-height: 48px;
   padding: 9px 10px;
-  color: var(--ink);
+  color: var(--quick-card-text);
   text-align: left;
-  background: #ffffff;
-  border: 1px solid var(--line);
+  background: var(--quick-card-bg);
+  border: 1px solid var(--quick-card-border);
   border-radius: 10px;
 }
 
@@ -4313,12 +4358,12 @@ section.panel.quick-sale-hero {
 
 .quick-product-search > div button small,
 .quick-product-search > p {
-  color: var(--muted);
+  color: var(--quick-card-muted);
   font-size: 0.72rem;
 }
 
 .quick-product-search > div button b {
-  color: #0f3d73;
+  color: var(--quick-accent);
   font-size: 0.8rem;
 }
 
@@ -4328,9 +4373,9 @@ section.panel.quick-sale-hero {
   gap: 3px 12px;
   align-items: center;
   padding: 16px;
-  color: var(--ink);
-  background: #eef8f4;
-  border: 1px solid #c9e8da;
+  color: var(--quick-card-text);
+  background: var(--quick-card-accent);
+  border: 1px solid var(--quick-card-border);
   border-radius: 15px;
 }
 
@@ -4339,13 +4384,13 @@ section.panel.quick-sale-hero {
 }
 
 .quick-total strong {
-  color: #072b4e;
+  color: var(--quick-card-text);
   font-size: 1.55rem;
 }
 
 .quick-total small {
   grid-column: 1 / -1;
-  color: var(--muted);
+  color: var(--quick-card-muted);
 }
 
 @media (max-width: 374px) {

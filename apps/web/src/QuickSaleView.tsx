@@ -276,12 +276,12 @@ export function QuickSaleView({
   useEffect(() => stopCamera, []);
 
   return <div className="quick-sale-stack">
-    <section className="panel quick-sale-hero">
+    <section className="quick-sale-card quick-sale-hero">
       <div className="quick-sale-hero-icon"><Camera size={30} /></div>
       <div><span>MENOS PASOS PARA VENDER</span><h2>Venta Rápida</h2><p>Toma una foto de los productos y Localito preparará la venta automáticamente.</p></div>
     </section>
 
-    <section className="panel quick-sale-capture">
+    <section className="quick-sale-card quick-sale-capture">
       <input ref={cameraInputRef} className="capture-input" type="file" accept="image/*" capture="environment" onChange={(event) => void selectPhoto(event)} />
       <input ref={uploadInputRef} className="capture-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void selectPhoto(event)} />
 
@@ -325,7 +325,7 @@ export function QuickSaleView({
       </details>}
     </section>
 
-    {drafts.length > 0 && <section className="panel quick-review-panel">
+    {drafts.length > 0 && <section className="quick-sale-card quick-review-panel">
       <div className="quick-review-heading"><div><span>REVISA ANTES DE CONTINUAR</span><h2>Venta detectada</h2></div><strong>{drafts.length} {drafts.length === 1 ? "producto" : "productos"}</strong></div>
       {warnings.length > 0 && <div className="quick-warning-summary"><AlertTriangle size={18} /><span>{warnings[0]}{warnings.length > 1 ? ` y ${warnings.length - 1} advertencias más.` : ""}</span></div>}
 
