@@ -3788,7 +3788,7 @@ button,
   min-width: 0;
 }
 
-.panel.quick-sale-hero {
+section.panel.quick-sale-hero {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 14px;
