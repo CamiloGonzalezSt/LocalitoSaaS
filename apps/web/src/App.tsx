@@ -2614,8 +2614,10 @@ function ReportsView({
   const [saleAction, setSaleAction] = useState<{ sale: Sale; type: "cancel" | "return" } | null>(null);
   const [actionReason, setActionReason] = useState("");
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+  const [historyPage, setHistoryPage] = useState(0);
   useEffect(() => { localStorage.setItem(presetStorageKey, JSON.stringify(savedPresets)); }, [presetStorageKey, savedPresets]);
   useEffect(() => { localStorage.setItem(reminderStorageKey, weeklyReminderEnabled ? "enabled" : "disabled"); }, [reminderStorageKey, weeklyReminderEnabled]);
+  useEffect(() => { setHistoryPage(0); }, [startDate, endDate, selectedSellerId, selectedCategory]);
 
   const formatRangeDate = (value: string) => new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`));
   const selectedPeriodLabel = startDate === endDate ? formatRangeDate(startDate) : `${formatRangeDate(startDate)} — ${formatRangeDate(endDate)}`;
@@ -2640,6 +2642,10 @@ function ReportsView({
     })
     .filter((sale) => sale.items.length > 0);
   const monthSales = createFilteredSales(startDate, endDate);
+  const historyPageSize = 3;
+  const historyPageCount = Math.max(1, Math.ceil(monthSales.length / historyPageSize));
+  const visibleHistoryPage = Math.min(historyPage, historyPageCount - 1);
+  const visibleHistorySales = monthSales.slice(visibleHistoryPage * historyPageSize, (visibleHistoryPage + 1) * historyPageSize);
   const activeSales = monthSales.filter((sale) => sale.status !== "cancelled");
   const previousActiveSales = createFilteredSales(previousStartDate, previousEndDate).filter((sale) => sale.status !== "cancelled");
   const monthTotal = activeSales.reduce((sum, sale) => sum + sale.total, 0);
@@ -2830,23 +2836,23 @@ function ReportsView({
             </div>
           </section>
 
-          <section className="panel">
+          <section className="panel period-sales-history">
             <div className="section-heading">
               <div><span>HISTORIAL DEL PERÍODO</span><h2>Ventas, anulaciones y devoluciones</h2></div>
               <span>{monthSales.length} registros</span>
             </div>
-            <div className="list">
-              {monthSales.slice(0, 20).map((sale) => (
-                <div className="row report-history-row" key={sale.id}>
-                  <div>
+            <div className="list period-sales-list">
+              {visibleHistorySales.map((sale) => (
+                <article className="period-sale-row" key={sale.id}>
+                  <div className="period-sale-copy">
                     <strong>Venta #{sale.id.slice(0, 8)}</strong>
                     <p>
                       {formatDateTime(sale.createdAt)} - {paymentMethodLabel(sale.paymentMethod)}
                     </p>
                     {sale.status === "cancelled" && <p className="warning-text">Anulada: {sale.cancellationReason ?? "sin motivo"}</p>}
                   </div>
-                  <div className="row-actions report-row-actions">
-                    <span className={sale.status === "cancelled" ? "debt report-row-amount" : "amount report-row-amount"}>{formatCLP(sale.total)}</span>
+                  <span className={sale.status === "cancelled" ? "debt period-sale-amount" : "amount period-sale-amount"}>{formatCLP(sale.total)}</span>
+                  <div className="period-sale-actions">
                     <button className="secondary-action small danger-soft" type="button" onClick={() => openSaleAction(sale, "cancel")} disabled={sale.status === "cancelled"}>
                       <Trash2 size={16} />
                       <span>Anular</span>
@@ -2855,10 +2861,15 @@ function ReportsView({
                       <RefreshCw size={16} /><span>Devolver</span>
                     </button>
                   </div>
-                </div>
+                </article>
               ))}
               {monthSales.length === 0 && <EmptyState icon={ReceiptText} title="No hay ventas ni anulaciones" description="Cuando registres movimientos en este mes, podrás revisarlos y gestionar anulaciones o devoluciones desde aquí." />}
             </div>
+            {historyPageCount > 1 && <nav className="history-pagination" aria-label="Páginas del historial de ventas">
+              <button className="secondary-action small" type="button" onClick={() => setHistoryPage((page) => Math.max(0, page - 1))} disabled={visibleHistoryPage === 0}><ArrowLeft size={16}/><span>Anterior</span></button>
+              <span>Página {visibleHistoryPage + 1} de {historyPageCount}</span>
+              <button className="secondary-action small" type="button" onClick={() => setHistoryPage((page) => Math.min(historyPageCount - 1, page + 1))} disabled={visibleHistoryPage === historyPageCount - 1}><span>Siguiente</span><ArrowRight size={16}/></button>
+            </nav>}
           </section>
         </>
       )}
