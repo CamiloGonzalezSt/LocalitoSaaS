@@ -7390,3 +7390,24 @@ summary:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .notice.app-snackbar { animation: none; }
 }
+
+/* Etiquetas de sección sobrias: jerarquía editorial, sin apariencia de insignia. */
+.dashboard-summary-copy > span,
+.dashboard-summary-copy h2,
+.dashboard-priority-copy > span,
+.section-heading > div > span,
+.reports-toolbar > div > span,
+.report-filter-workspace > div:first-child > span,
+.report-period-copy > span:not(.report-comparison),
+.inventory-actions-heading > span,
+.progressive-form-heading > span,
+.business-search-heading > div:first-child > span,
+.invoice-ai-heading .invoice-ai-kicker,
+.sale-search-detail-head > div > span {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-transform: none;
+}

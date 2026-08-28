@@ -94,7 +94,7 @@ export function DashboardView({
       </section>
 
       {needsOnboarding && <section className="panel onboarding-panel" aria-label="Puesta en marcha">
-        <div className="section-heading"><div><span>PUESTA EN MARCHA</span><h2>Deja listo tu local</h2><p>Completa estos pasos una sola vez para comenzar a operar con tranquilidad.</p></div><span>{products.length ? "1 paso" : "2 pasos"}</span></div>
+        <div className="section-heading"><div><span>Puesta en marcha</span><h2>Deja listo tu local</h2><p>Completa estos pasos una sola vez para comenzar a operar con tranquilidad.</p></div><span>{products.length ? "1 paso" : "2 pasos"}</span></div>
         <div className="onboarding-steps">
           <button className={products.length ? "onboarding-step complete" : "onboarding-step"} type="button" onClick={onAddProduct} disabled={!canOperate}><PackageCheck size={20}/><span><strong>{products.length ? "Catálogo preparado" : "Carga tus productos"}</strong><small>{products.length ? `${products.length} productos disponibles para vender.` : "Crea uno o carga varios desde una factura o archivo."}</small></span><ArrowRight size={17}/></button>
           <button className={sales.length ? "onboarding-step complete" : "onboarding-step"} type="button" onClick={onStartSale} disabled={!canOperate}><ShoppingCart size={20}/><span><strong>{sales.length ? "Primera venta registrada" : "Realiza tu primera venta"}</strong><small>{sales.length ? "El flujo de venta ya está en marcha." : "Elige productos, revisa el ticket y registra el pago."}</small></span><ArrowRight size={17}/></button>
@@ -109,7 +109,7 @@ export function DashboardView({
 
       <section className={`dashboard-priority-panel ${priority.tone}`} aria-label="Prioridad de hoy">
         <div className="dashboard-priority-icon"><PriorityIcon size={23} /></div>
-        <div className="dashboard-priority-copy"><span>PRIORIDAD DE HOY</span><strong>{priority.title}</strong><small>{priority.description}</small></div>
+        <div className="dashboard-priority-copy"><span>Prioridad de hoy</span><strong>{priority.title}</strong><small>{priority.description}</small></div>
         <button className="secondary-action" type="button" onClick={priority.onClick} disabled={priority.requiresOperation && !canOperate}><span>{priority.action}</span><ArrowRight size={17} /></button>
       </section>
 
@@ -121,7 +121,7 @@ export function DashboardView({
 
       {(lowStockProducts.length > 0 || hasPendingDebt) && <section className="panel attention-panel">
         <div className="section-heading">
-          <div><span>RESUMEN OPERATIVO</span><h2>Necesitan atención</h2></div>
+          <div><span>Resumen operativo</span><h2>Necesitan atención</h2></div>
           <span>{lowStockProducts.length + (hasPendingDebt ? 1 : 0)} pendientes</span>
         </div>
         <div className="attention-grid">

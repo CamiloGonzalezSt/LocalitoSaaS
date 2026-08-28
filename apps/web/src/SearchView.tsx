@@ -80,7 +80,7 @@ export function SearchView({
     <div className="stack business-search-page">
       <section className="panel business-search-hero">
         <div className="business-search-heading">
-          <div><span>BÚSQUEDA CENTRAL</span><h2>Encuentra cualquier registro</h2><p>Busca productos, clientes y ventas del local desde un solo lugar.</p></div>
+          <div><span>Búsqueda central</span><h2>Encuentra cualquier registro</h2><p>Busca productos, clientes y ventas del local desde un solo lugar.</p></div>
           <div className="business-search-total"><strong>{totalResults}</strong><span>{totalResults === 1 ? "resultado" : "resultados"}</span></div>
         </div>
         <label className="business-search-input">
@@ -149,7 +149,7 @@ export function SearchView({
 }
 
 function SearchSection({ title, icon: Icon, count, children }: { title: string; icon: LucideIcon; count: number; children: ReactNode }) {
-  return <section className="panel business-search-section"><div className="section-heading"><div><span>RESULTADOS</span><h2><Icon size={20}/> {title}</h2></div><span>{count}</span></div><div className="business-search-list">{children}</div></section>;
+  return <section className="panel business-search-section"><div className="section-heading"><div><span>Resultados</span><h2><Icon size={20}/> {title}</h2></div><span>{count}</span></div><div className="business-search-list">{children}</div></section>;
 }
 
 function SaleSearchDetail({ sale, customer, sellerName, onClose }: { sale: Sale; customer?: Customer; sellerName?: string; onClose: () => void }) {
@@ -167,7 +167,7 @@ function SaleSearchDetail({ sale, customer, sellerName, onClose }: { sale: Sale;
   return <div className="modal-backdrop sale-search-backdrop" role="presentation" onClick={onClose}>
     <section className="panel sale-search-detail" role="dialog" aria-modal="true" aria-labelledby="sale-search-detail-title" onClick={(event) => event.stopPropagation()}>
       <div className="sale-search-detail-head">
-        <div><span>DETALLE DE VENTA</span><h2 id="sale-search-detail-title">Venta #{sale.id.slice(0, 8)}</h2><p>{formatDateTime(sale.createdAt)}</p></div>
+        <div><span>Detalle de venta</span><h2 id="sale-search-detail-title">Venta #{sale.id.slice(0, 8)}</h2><p>{formatDateTime(sale.createdAt)}</p></div>
         <button className="icon-button" type="button" onClick={onClose} aria-label="Cerrar detalle"><X size={19}/></button>
       </div>
       <div className="sale-search-summary">
