@@ -5674,6 +5674,17 @@ button:active:not(:disabled) { transform: none; }
 .month-filter select { min-height: 45px; padding: 8px 12px; color: var(--text-primary); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
 .reports-toolbar-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .reports-toolbar-actions .month-filter { min-width: 170px; }
+.report-range-picker { display: grid; gap: 8px; min-width: min(100%, 390px); padding: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+.report-range-picker > span { color: var(--text-secondary); font-size: .78rem; font-weight: 800; }
+.report-quick-ranges { display: flex; flex-wrap: wrap; gap: 6px; }
+.report-quick-ranges button { min-height: 30px; padding: 5px 9px; color: var(--text-secondary); background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 999px; font-size: .75rem; font-weight: 800; }
+.report-quick-ranges button:hover { color: var(--primary-hover); border-color: var(--primary); }
+.report-date-fields { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 7px; }
+.report-date-fields > span { padding-bottom: 10px; color: var(--text-secondary); }
+.report-date-fields label { display: grid; gap: 4px; min-width: 0; }
+.report-date-fields label > span { color: var(--text-secondary); font-size: .68rem; font-weight: 800; }
+.report-date-fields input { width: 100%; min-height: 39px; padding: 7px 9px; color: var(--text-primary); background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 9px; font-family: inherit; font-size: .8rem; font-weight: 700; }
+.report-date-fields input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .82; }
 
 .report-filter-workspace { display: grid; grid-template-columns: minmax(210px, .7fr) minmax(0, 1.3fr); gap: 14px 20px; align-items: center; }
 .report-filter-workspace > div:first-child > span,
@@ -5847,7 +5858,7 @@ button:active:not(:disabled) { transform: none; }
   .reports-toolbar { align-items: stretch; flex-direction: column; }
   .month-filter { min-width: 0; }
   .reports-toolbar-actions { display: grid; grid-template-columns: 1fr 1fr; }
-  .reports-toolbar-actions .month-filter:first-child { grid-column: 1 / -1; }
+  .report-range-picker { grid-column: 1 / -1; }
   .reports-toolbar-actions .month-filter { min-width: 0; }
   .report-filter-workspace { grid-template-columns: 1fr; }
   .report-preset-actions { grid-template-columns: 1fr 1fr; }
