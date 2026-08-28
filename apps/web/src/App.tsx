@@ -326,10 +326,7 @@ function App() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [notice, setNotice] = useState<NoticeState | null>({
-    message: "Cargando Localito...",
-    tone: "success"
-  });
+  const [notice, setNotice] = useState<NoticeState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [loginForm, setLoginForm] = useState<LoginFormState>({
@@ -480,7 +477,6 @@ function App() {
 
     const storedSession = localStorage.getItem("localito-session");
     if (!storedSession) {
-      setNotice({ message: "Inicia sesión para operar el local.", tone: "success" });
       setIsLoading(false);
       return;
     }
@@ -489,11 +485,10 @@ function App() {
       const restored = JSON.parse(storedSession) as AuthSession;
       saveSession(restored);
       if (restored.user.role === "seller") setActiveView("sale");
-      void loadWorkspace("Sesión restaurada.", restored.user);
+      void loadWorkspace(undefined, restored.user);
     } catch {
       localStorage.removeItem("localito-session");
       localStorage.removeItem("localito-token");
-      setNotice({ message: "Inicia sesión para operar el local.", tone: "success" });
       setIsLoading(false);
     }
   }, []);
@@ -515,7 +510,7 @@ function App() {
 
     const timeoutId = window.setTimeout(() => {
       setNotice((current) => current === notice ? null : current);
-    }, 2_000);
+    }, notice.tone === "error" ? 6_000 : notice.tone === "warning" ? 4_200 : 3_000);
 
     return () => window.clearTimeout(timeoutId);
   }, [notice]);
@@ -668,7 +663,7 @@ function App() {
     setCashClosureNote("");
     setLastDebtCharge(null);
     setActiveView("dashboard");
-    setNotice({ message: "Sesión cerrada. Puedes iniciar como dueño o vendedor.", tone: "success" });
+    setNotice(null);
   }
 
   function addToTicket(product: Product) {
@@ -699,8 +694,6 @@ function App() {
         }
       ];
     });
-
-    setNotice({ message: `${product.name} agregado al ticket.`, tone: "success" });
   }
 
   function addQuickSaleToTicket(detectedItems: Array<{ productId: string; quantity: number }>) {
@@ -1354,6 +1347,7 @@ function App() {
         onRegister={(payload) => void registerAccount(payload)}
         onOpenRegister={() => setLoginMode("register")}
         onShowNotice={(message) => setNotice({ message, tone: "warning" })}
+        onDismissNotice={() => setNotice(null)}
         onForgot={() => setLoginMode("forgot")}
         onRequestReset={(email) => void requestPasswordReset(email)}
         onConfirmReset={(password, confirmation) => void confirmPasswordReset(password, confirmation)}
@@ -1454,13 +1448,10 @@ function App() {
       </nav>}
 
       <main className="content">
-        {notice && <section className={`notice ${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
-          {notice.tone === "success" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
-          <span>{notice.message}</span>
-        </section>}
+        {notice && <NoticeToast notice={notice} onDismiss={() => setNotice(null)} />}
 
         {!isSystemAdmin && isOwner && subscription && effectiveSubscriptionStatus(subscription) === "trialing" && <section className="subscription-banner"><div><strong>Prueba Pro · {subscriptionDaysRemaining(subscription)} días restantes</strong><span>Incluye todas las funciones. Al terminar, elige un plan para seguir operando.</span></div><button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Ver mi plan</button></section>}
-        {!isSystemAdmin && subscription && !subscriptionCanMutate(subscription) && <section className="notice warning"><AlertTriangle size={18}/><span>Tu suscripción no está activa. Puedes revisar toda tu información, pero las acciones están pausadas.</span>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Elegir plan</button>}</section>}
+        {!isSystemAdmin && subscription && !subscriptionCanMutate(subscription) && <section className="subscription-lock-banner"><AlertTriangle size={18}/><span>Tu suscripción no está activa. Puedes revisar toda tu información, pero las acciones están pausadas.</span>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Elegir plan</button>}</section>}
 
         {isLoading && <p className="empty-state">Conectando con la API de Localito...</p>}
 
@@ -1693,6 +1684,14 @@ function CriticalActionDialog({ action, isBusy, onCancel, onConfirm }: { action:
   return <div className="modal-backdrop" role="presentation" onClick={isBusy ? undefined : onCancel}><section className="panel critical-action-dialog" role="dialog" aria-modal="true" aria-labelledby="critical-action-title" onClick={(event) => event.stopPropagation()}><AlertTriangle size={25}/><div><span>CONFIRMACIÓN REQUERIDA</span><h2 id="critical-action-title">{action.title}</h2><p>{action.description}</p></div><div className="action-grid"><button className="secondary-action" type="button" onClick={onCancel} disabled={isBusy}>Volver</button><button className="primary-action danger-action" type="button" onClick={onConfirm} disabled={isBusy}>{isBusy ? "Procesando..." : action.confirmLabel}</button></div></section></div>;
 }
 
+function NoticeToast({ notice, onDismiss }: { notice: NoticeState; onDismiss: () => void }) {
+  return <section className={`notice app-snackbar ${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"} aria-atomic="true">
+    {notice.tone === "success" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+    <span>{notice.message}</span>
+    <button className="notice-dismiss" type="button" onClick={onDismiss} aria-label="Cerrar aviso"><X size={16}/></button>
+  </section>;
+}
+
 function LoginView({
   loginForm,
   mode,
@@ -1703,6 +1702,7 @@ function LoginView({
   onRegister,
   onOpenRegister,
   onShowNotice,
+  onDismissNotice,
   onForgot,
   onRequestReset,
   onConfirmReset,
@@ -1717,6 +1717,7 @@ function LoginView({
   onRegister: (payload: { businessName: string; businessType: string; ownerName: string; email: string; password: string }) => void;
   onOpenRegister: () => void;
   onShowNotice: (message: string) => void;
+  onDismissNotice: () => void;
   onForgot: () => void;
   onRequestReset: (email: string) => void;
   onConfirmReset: (password: string, confirmation: string) => void;
@@ -1757,10 +1758,7 @@ function LoginView({
           </div>
         </div>
 
-        {notice && <section className={`notice ${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
-          {notice.tone === "success" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
-          <span>{notice.message}</span>
-        </section>}
+        {notice && <NoticeToast notice={notice} onDismiss={onDismissNotice} />}
 
         {mode === "login" && <form
           className="login-form"

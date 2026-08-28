@@ -220,7 +220,7 @@ button:active:not(:disabled) {
 }
 
 .role-pill,
-.section-heading span {
+.section-heading > span {
   display: inline-flex;
   align-items: center;
   min-height: 26px;
@@ -1934,7 +1934,7 @@ textarea:focus {
 }
 
 .role-pill,
-.section-heading span {
+.section-heading > span {
   color: #165c4d;
   background: var(--green-soft);
   border-color: #c9e8da;
@@ -3476,7 +3476,7 @@ h2,
 h3,
 button,
 .eyebrow,
-.section-heading span {
+.section-heading > span {
   font-weight: 700;
 }
 
@@ -3754,7 +3754,7 @@ button,
 }
 
 [data-theme="dark"] .role-pill,
-[data-theme="dark"] .section-heading span,
+[data-theme="dark"] .section-heading > span,
 [data-theme="dark"] .subscription-banner,
 [data-theme="dark"] .inline-command {
   color: #a7eee2;
@@ -5938,7 +5938,7 @@ button:active:not(:disabled) { transform: none; }
 [data-theme="dark"] .subscription-banner,
 [data-theme="dark"] .inline-command,
 [data-theme="dark"] .role-pill,
-[data-theme="dark"] .section-heading span,
+[data-theme="dark"] .section-heading > span,
 [data-theme="dark"] .billing-method.active { color: #8be1d2; background: var(--primary-soft); border-color: #255b52; }
 [data-theme="dark"] .external-payment-confirm { color: var(--text-primary); background: #211d10; border-color: #4d421d; }
 [data-theme="dark"] .login-shell { background: radial-gradient(circle at 12% 18%, #102925, transparent 34%), #090909; }
@@ -7304,3 +7304,89 @@ summary:focus-visible {
 .danger-action:hover:not(:disabled) { background: color-mix(in srgb, var(--red) 88%, #000); border-color: color-mix(in srgb, var(--red) 88%, #000); }
 
 [data-theme="dark"] .critical-action-dialog { background: var(--surface); border-color: var(--border); }
+
+/* Los avisos transitorios siguen el patron de snackbar: breves, discretos y no bloquean. */
+.notice.app-snackbar {
+  position: fixed;
+  inset: auto auto 24px 24px;
+  z-index: 1200;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+  min-height: 48px;
+  margin: 0;
+  padding: 10px 10px 10px 13px;
+  color: #f8fafc;
+  background: #30312f;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+  font-size: 0.88rem;
+  font-weight: 650;
+  line-height: 1.35;
+  animation: snackbar-enter 160ms ease-out both;
+}
+
+.notice.app-snackbar.success,
+.notice.app-snackbar.warning,
+.notice.app-snackbar.error {
+  color: #f8fafc;
+  background: #30312f;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.notice.app-snackbar.success > svg { color: #65d6c0; }
+.notice.app-snackbar.warning > svg { color: #f5c564; }
+.notice.app-snackbar.error > svg { color: #ff8b82; }
+.notice.app-snackbar > span { min-width: 0; overflow-wrap: anywhere; }
+
+.notice-dismiss {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.78);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+
+.notice-dismiss:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+
+@keyframes snackbar-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.subscription-lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-left: 3px solid #d99a2b;
+  border-radius: 12px;
+}
+
+.subscription-lock-banner > svg { flex: none; color: #d99a2b; }
+.subscription-lock-banner > span { flex: 1; min-width: 0; }
+
+@media (max-width: 720px) {
+  .notice.app-snackbar {
+    inset: auto 16px calc(84px + env(safe-area-inset-bottom)) 16px;
+    width: auto;
+  }
+
+  .login-shell .notice.app-snackbar { bottom: 24px; }
+  .subscription-lock-banner { align-items: flex-start; flex-wrap: wrap; }
+  .subscription-lock-banner .secondary-action { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice.app-snackbar { animation: none; }
+}
