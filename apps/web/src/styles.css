@@ -6048,6 +6048,10 @@ button:active:not(:disabled) { transform: none; }
     border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
   }
 
+  [data-theme="dark"] .mobile-theme-button { color: #8be1d2; }
+  [data-theme="dark"] .mobile-theme-button:hover,
+  [data-theme="dark"] .mobile-theme-button:focus-visible { color: #b8f2e8; }
+
   .mobile-actions-wrap { position: relative; }
 
   .mobile-actions-menu {
