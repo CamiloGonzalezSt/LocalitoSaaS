@@ -2780,7 +2780,7 @@ function ReportsView({
 
       <section className="panel">
         <div className="section-heading">
-          <div><span>OPERACIÓN ACTUAL</span><h2>Caja de hoy</h2><p>Movimientos del turno abierto, independientes del filtro mensual.</p></div>
+          <div><span>OPERACIÓN ACTUAL</span><h2>Caja de hoy</h2><p>Movimientos del turno abierto, independientes del período seleccionado.</p></div>
           <span>{cashRegister.date}</span>
         </div>
         <div className="report-grid">

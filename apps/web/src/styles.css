@@ -5661,9 +5661,8 @@ button:active:not(:disabled) { transform: none; }
 .customer-overview-empty p { margin: 0; color: var(--text-secondary); font-size: .84rem; line-height: 1.45; }
 
 .reports-toolbar {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
+  display: grid;
+  align-items: start;
   gap: 18px;
 }
 
@@ -5672,9 +5671,9 @@ button:active:not(:disabled) { transform: none; }
 .month-filter { display: grid; gap: 5px; min-width: 210px; color: var(--text-secondary); font-size: .78rem; font-weight: 700; }
 .month-filter input,
 .month-filter select { min-height: 45px; padding: 8px 12px; color: var(--text-primary); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
-.reports-toolbar-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
-.reports-toolbar-actions .month-filter { min-width: 170px; }
-.report-range-picker { display: grid; gap: 8px; min-width: min(100%, 390px); padding: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+.reports-toolbar-actions { display: grid; grid-template-columns: minmax(360px, 1.55fr) minmax(170px, .72fr) minmax(190px, .82fr); align-items: end; gap: 12px; width: 100%; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-soft); }
+.reports-toolbar-actions .month-filter { min-width: 0; }
+.report-range-picker { display: grid; gap: 8px; min-width: 0; padding: 0; background: transparent; border: 0; border-radius: 0; }
 .report-range-picker > span { color: var(--text-secondary); font-size: .78rem; font-weight: 800; }
 .report-quick-ranges { display: flex; flex-wrap: wrap; gap: 6px; }
 .report-quick-ranges button { min-height: 30px; padding: 5px 9px; color: var(--text-secondary); background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 999px; font-size: .75rem; font-weight: 800; }
@@ -5849,13 +5848,15 @@ button:active:not(:disabled) { transform: none; }
   .platform-tenant-row { grid-template-columns: minmax(0,1fr) auto auto; }
   .platform-tenant-row .subscription-admin-controls { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; width: 100%; }
   .report-dashboard-grid { grid-template-columns: 1fr; }
+  .reports-toolbar-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .report-range-picker { grid-column: 1 / -1; }
 }
 
 @media (max-width: 720px) {
   .mobile-theme-button,
   .mobile-report-button { display: inline-grid; }
   .subscription-banner { display: flex; }
-  .reports-toolbar { align-items: stretch; flex-direction: column; }
+  .reports-toolbar { align-items: stretch; }
   .month-filter { min-width: 0; }
   .reports-toolbar-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .report-range-picker { grid-column: 1 / -1; }
