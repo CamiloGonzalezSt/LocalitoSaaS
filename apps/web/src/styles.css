@@ -5886,6 +5886,8 @@ button:active:not(:disabled) { transform: none; }
   .customer-row .customer-actions { grid-column: 1 / -1; width: 100%; }
   .customer-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
   .customer-actions button { width: 100%; }
+  .user-list .row > div { min-width: 0; }
+  .user-list .row p { white-space: normal; overflow-wrap: anywhere; }
   .section-tabs button { padding-inline: 9px; font-size: .86rem; }
   .section-tabs span { display: none; }
 }
