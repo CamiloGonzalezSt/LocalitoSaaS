@@ -896,7 +896,6 @@ function App() {
     setIsBusy(true);
     try {
       const response = await api.closeCashRegister({
-        date: cashRegister.date,
         note: cashClosureNote.trim() || undefined,
         closedByUserId: currentUser.id
       });
@@ -912,7 +911,7 @@ function App() {
   function requestCloseCashRegister() {
     requestCriticalAction(
       "Registrar cierre de caja",
-      `Se guardará el cierre de ${cashRegister.date} con un total recibido de ${formatCLP(cashRegister.receivedTotal)}. Después podrás revisarlo en el historial.`,
+      `Se guardará el período actual con un total recibido de ${formatCLP(cashRegister.receivedTotal)}. El panel comenzará desde cero y las próximas ventas abrirán un nuevo período.`,
       "Confirmar cierre",
       closeCashRegister
     );
@@ -2776,7 +2775,7 @@ function ReportsView({
           <span>{isBusy ? "Cerrando..." : "Cerrar caja"}</span>
         </button>
         <p className="helper-text">
-          El resumen se actualiza durante el dia. El boton guarda una foto formal del cierre para dejar evidencia.
+          El cierre guarda el período actual. Luego estos totales vuelven a cero y las próximas ventas comienzan un período nuevo.
         </p>
       </section>
 

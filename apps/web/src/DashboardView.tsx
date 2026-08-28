@@ -69,8 +69,8 @@ export function DashboardView({
         <div className="dashboard-summary-copy">
           <span>{contextualGreeting()}, {firstName}</span>
           <p>{businessName}</p>
-          <h2 id="dashboard-sales-title">Ventas de hoy</h2>
-          <strong>{formatCLP(summary.totalSales)}</strong>
+          <h2 id="dashboard-sales-title">Ventas desde el último cierre</h2>
+          <strong>{formatCLP(cashRegister.grossTotal)}</strong>
           <small>{cashRegister.salesCount} {cashRegister.salesCount === 1 ? "venta registrada" : "ventas registradas"}</small>
         </div>
         <div className="dashboard-primary-actions" aria-label="Acciones rápidas">
@@ -86,11 +86,11 @@ export function DashboardView({
         </div>
       </section>
 
-      <section className="dashboard-secondary-metrics" aria-label="Resumen financiero del día">
+      <section className="dashboard-secondary-metrics" aria-label="Resumen financiero desde el último cierre">
         <DashboardMetric label="Efectivo esperado" value={formatCLP(cashRegister.expectedCash ?? cashRegister.totalsByMethod.cash)} />
-        <DashboardMetric label="Ganancia estimada" value={formatCLP(summary.estimatedGrossProfit)} />
+        <DashboardMetric label="Total recibido" value={formatCLP(cashRegister.receivedTotal)} />
         <DashboardMetric label="Ticket promedio" value={formatCLP(cashRegister.averageTicket)} />
-        <DashboardMetric label={canViewCustomers ? "Fiado pendiente" : "Alertas de stock"} value={canViewCustomers ? formatCLP(summary.pendingDebt) : String(lowStockProducts.length)} attention={canViewCustomers ? summary.pendingDebt > 0 : lowStockProducts.length > 0} />
+        <DashboardMetric label={canViewCustomers ? "Fiado total pendiente" : "Alertas de stock"} value={canViewCustomers ? formatCLP(summary.pendingDebt) : String(lowStockProducts.length)} attention={canViewCustomers ? summary.pendingDebt > 0 : lowStockProducts.length > 0} />
       </section>
 
       {needsOnboarding && <section className="panel onboarding-panel" aria-label="Puesta en marcha">
@@ -102,7 +102,7 @@ export function DashboardView({
       </section>}
 
       <section className="dashboard-insights" aria-label="Indicadores del negocio">
-        <article><span>Producto más vendido</span><strong>{topProduct?.name ?? "Aún sin ventas"}</strong><small>{topProduct ? `${topProduct.quantity} unidades registradas` : "Aparecerá después de la primera venta."}</small></article>
+        <article><span>Producto más vendido histórico</span><strong>{topProduct?.name ?? "Aún sin ventas"}</strong><small>{topProduct ? `${topProduct.quantity} unidades registradas` : "Aparecerá después de la primera venta."}</small></article>
         <article><span>Catálogo activo</span><strong>{products.length} productos</strong><small>{categoryCount ? `${categoryCount} ${categoryCount === 1 ? "categoría" : "categorías"} para ordenar la venta.` : "Carga productos para comenzar."}</small></article>
         <article><span>Valor de stock</span><strong>{formatCLP(summary.stockValue)}</strong><small>Estimación con los precios registrados.</small></article>
       </section>

@@ -368,6 +368,68 @@ test("critical business flows are consistent and idempotent", async () => {
   assert.equal(received?.status, "received");
 });
 
+test("closing the cash register resets the dashboard period without losing its history", async () => {
+  const repository = new MemoryRepository();
+  const suffix = `${Date.now()}-${Math.random()}`;
+  const registered = await repository.registerTenant({
+    name: "Dueña cierre",
+    email: `cierre-${suffix}@localito.test`,
+    password: "CierreSeguro2026",
+    businessName: `Local cierre ${suffix}`,
+    businessType: "Almacén"
+  });
+  const product = await repository.createProduct(registered.tenant.id, {
+    name: "Producto de caja",
+    category: "Prueba",
+    salePrice: 2_500,
+    stock: 10,
+    minimumStock: 1
+  });
+
+  await repository.createSale(registered.tenant.id, {
+    sellerId: registered.user.id,
+    paymentMethod: "cash",
+    items: [{ productId: product.id, quantity: 2 }]
+  });
+  const beforeClosure = await repository.getCashRegister(registered.tenant.id);
+  assert.equal(beforeClosure.salesCount, 1);
+  assert.equal(beforeClosure.grossTotal, 5_000);
+
+  const closure = await repository.closeCashRegister(registered.tenant.id, {
+    note: "Cierre de prueba",
+    closedByUserId: registered.user.id
+  });
+  assert.equal(closure.salesCount, 1);
+  assert.equal(closure.grossTotal, 5_000);
+
+  const afterClosure = await repository.getCashRegister(registered.tenant.id);
+  assert.equal(afterClosure.salesCount, 0);
+  assert.equal(afterClosure.grossTotal, 0);
+  assert.equal((await repository.bootstrap(registered.tenant.id)).cashRegister.grossTotal, 0);
+
+  await repository.openCashSession(registered.tenant.id, 10_000, registered.user.id);
+  await new Promise((resolve) => setTimeout(resolve, 2));
+  await repository.createSale(registered.tenant.id, {
+    sellerId: registered.user.id,
+    paymentMethod: "cash",
+    items: [{ productId: product.id, quantity: 1 }]
+  });
+  const nextPeriod = await repository.getCashRegister(registered.tenant.id);
+  assert.equal(nextPeriod.salesCount, 1);
+  assert.equal(nextPeriod.grossTotal, 2_500);
+  assert.equal((await repository.getCashClosures(registered.tenant.id))[0]?.grossTotal, 5_000);
+
+  await repository.closeCashSession(
+    registered.tenant.id,
+    nextPeriod.expectedCash ?? 0,
+    "Cierre y cuadratura de prueba",
+    registered.user.id
+  );
+  const afterSessionClosure = await repository.getCashRegister(registered.tenant.id);
+  assert.equal(afterSessionClosure.salesCount, 0);
+  assert.equal(afterSessionClosure.grossTotal, 0);
+});
+
 test("invoice vision output is normalized and only matches products from the tenant catalog", () => {
   const product = {
     id: "catalog-product",

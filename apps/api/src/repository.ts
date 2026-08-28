@@ -244,7 +244,7 @@ export async function createRepository() {
   }
 }
 
-function buildMemoryBootstrap(tenantId: string): BootstrapData {
+function buildMemoryBootstrap(tenantId: string, currentCashRegister?: CashRegisterSummary): BootstrapData {
   const tenant = store.tenants.find((candidate) => candidate.id === tenantId) ?? store.tenants[0];
   const user =
     store.users.find((candidate) => candidate.tenantId === tenant.id && candidate.id === demoOwnerId) ??
@@ -275,7 +275,7 @@ function buildMemoryBootstrap(tenantId: string): BootstrapData {
       .filter((recognition) => recognition.tenantId === tenant.id)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 12),
-    cashRegister: { ...cashSummary, openingAmount: cashSession?.openingAmount ?? 0, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: (cashSession?.openingAmount ?? 0) + cashSummary.totalsByMethod.cash + deposits - withdrawals },
+    cashRegister: currentCashRegister ?? { ...cashSummary, openingAmount: cashSession?.openingAmount ?? 0, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: (cashSession?.openingAmount ?? 0) + cashSummary.totalsByMethod.cash + deposits - withdrawals },
     cashClosures: store.cashClosures
       .filter((closure) => closure.tenantId === tenant.id)
       .sort((a, b) => b.closedAt.localeCompare(a.closedAt))
@@ -368,6 +368,16 @@ function salesDateFromInput(value?: string) {
   return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
+function cashPeriodStart(openedAt?: string, closedAt?: string) {
+  const afterClosure = closedAt
+    ? new Date(new Date(closedAt).getTime() + 1).toISOString()
+    : undefined;
+  return [openedAt, afterClosure]
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
+}
+
 function buildCashRegisterFromSales(sales: Sale[], date = new Date(), returnedTotals = new Map<string, number>(), openedAt?: string): CashRegisterSummary {
   const dayKey = date.toISOString().slice(0, 10);
   const salesForDay = sales.filter((sale) => sale.createdAt.slice(0, 10) === dayKey && (!openedAt || sale.createdAt >= openedAt));
@@ -418,7 +428,7 @@ export class MemoryRepository implements DataRepository {
   mode = "memory" as const;
 
   async bootstrap(tenantId: string) {
-    return buildMemoryBootstrap(tenantId);
+    return buildMemoryBootstrap(tenantId, await this.getCashRegister(tenantId));
   }
 
   async listTenants() {
@@ -900,14 +910,34 @@ export class MemoryRepository implements DataRepository {
   }
 
   async getCashRegister(tenantId: string, date?: string) {
-    const session = await this.getOpenCashSession(tenantId);
+    const session = date ? undefined : await this.getOpenCashSession(tenantId);
     const selectedDate = salesDateFromInput(date);
     const dayKey = selectedDate.toISOString().slice(0, 10);
-    const summary = getCashRegisterSummary(tenantId, selectedDate, date ? undefined : session?.openedAt);
-    const movements = store.cashMovements.filter((movement) => movement.tenantId === tenantId && (session ? movement.sessionId === session.id : movement.createdAt.slice(0, 10) === dayKey));
+    const latestClosure = date
+      ? undefined
+      : store.cashClosures
+          .filter((closure) => closure.tenantId === tenantId && closure.date === dayKey)
+          .sort((left, right) => right.closedAt.localeCompare(left.closedAt))[0];
+    const latestClosedSession = date
+      ? undefined
+      : store.cashSessions
+          .filter((candidate) => candidate.tenantId === tenantId && candidate.status === "closed" && candidate.closedAt?.slice(0, 10) === dayKey)
+          .sort((left, right) => (right.closedAt ?? "").localeCompare(left.closedAt ?? ""))[0];
+    const latestResetAt = [latestClosure?.closedAt, latestClosedSession?.closedAt]
+      .filter((value): value is string => Boolean(value))
+      .sort()
+      .at(-1);
+    const periodStart = cashPeriodStart(session?.openedAt, latestResetAt);
+    const summary = getCashRegisterSummary(tenantId, selectedDate, periodStart);
+    const movements = store.cashMovements.filter((movement) =>
+      movement.tenantId === tenantId &&
+      (session ? movement.sessionId === session.id : movement.createdAt.slice(0, 10) === dayKey) &&
+      (!periodStart || movement.createdAt >= periodStart)
+    );
     const deposits = movements.filter((movement) => movement.type === "deposit").reduce((sum, movement) => sum + movement.amount, 0);
     const withdrawals = movements.filter((movement) => movement.type !== "deposit").reduce((sum, movement) => sum + movement.amount, 0);
-    return { ...summary, openingAmount: session?.openingAmount ?? 0, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: (session?.openingAmount ?? 0) + summary.totalsByMethod.cash + deposits - withdrawals };
+    const openingAmount = session && (!latestResetAt || session.openedAt > latestResetAt) ? session.openingAmount : 0;
+    return { ...summary, openingAmount, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: openingAmount + summary.totalsByMethod.cash + deposits - withdrawals };
   }
 
   async getCashClosures(tenantId: string) {
@@ -918,7 +948,7 @@ export class MemoryRepository implements DataRepository {
   }
 
   async closeCashRegister(tenantId: string, payload: { date?: string; note?: string; closedByUserId?: string }) {
-    const summary = await this.getCashRegister(tenantId, payload.date);
+    const summary = await this.getCashRegister(tenantId);
     const user = store.users.find((candidate) => candidate.id === payload.closedByUserId && candidate.tenantId === tenantId);
     const closure: CashRegisterClosure = {
       ...summary,
@@ -1975,15 +2005,39 @@ class PostgresRepository implements DataRepository {
   async getCashRegister(tenantId: string, date?: string) {
     const returnRows = await this.pool.query(`select venta_id, coalesce(sum(total), 0) as total from devoluciones_venta where negocio_id = $1 group by venta_id`, [tenantId]);
     const returnedTotals = new Map(returnRows.rows.map((row) => [String(row.venta_id), Number(row.total)]));
-    const session = await this.getOpenCashSession(tenantId);
+    const session = date ? undefined : await this.getOpenCashSession(tenantId);
     const selectedDate = salesDateFromInput(date);
     const dayKey = selectedDate.toISOString().slice(0, 10);
-    const summary = buildCashRegisterFromSales(await this.getSales(tenantId), selectedDate, returnedTotals, date ? undefined : session?.openedAt);
+    const latestClosure = date
+      ? undefined
+      : (await this.getCashClosures(tenantId)).find((closure) => closure.date === dayKey);
+    const latestClosedSessionResult = date
+      ? undefined
+      : await this.pool.query(
+          `select fecha_cierre from sesiones_caja
+           where negocio_id = $1 and estado = 'closed' and fecha_cierre is not null
+           order by fecha_cierre desc
+           limit 1`,
+          [tenantId]
+        );
+    const latestClosedSessionAt = latestClosedSessionResult?.rows[0]?.fecha_cierre
+      ? new Date(latestClosedSessionResult.rows[0].fecha_cierre).toISOString()
+      : undefined;
+    const latestResetAt = [latestClosure?.closedAt, latestClosedSessionAt?.slice(0, 10) === dayKey ? latestClosedSessionAt : undefined]
+      .filter((value): value is string => Boolean(value))
+      .sort()
+      .at(-1);
+    const periodStart = cashPeriodStart(session?.openedAt, latestResetAt);
+    const summary = buildCashRegisterFromSales(await this.getSales(tenantId), selectedDate, returnedTotals, periodStart);
     const movements = await this.getCashMovements(tenantId);
-    const active = movements.filter((movement) => session ? movement.sessionId === session.id : movement.createdAt.slice(0, 10) === dayKey);
+    const active = movements.filter((movement) =>
+      (session ? movement.sessionId === session.id : movement.createdAt.slice(0, 10) === dayKey) &&
+      (!periodStart || movement.createdAt >= periodStart)
+    );
     const deposits = active.filter((movement) => movement.type === "deposit").reduce((sum, movement) => sum + movement.amount, 0);
     const withdrawals = active.filter((movement) => movement.type !== "deposit").reduce((sum, movement) => sum + movement.amount, 0);
-    return { ...summary, openingAmount: session?.openingAmount ?? 0, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: (session?.openingAmount ?? 0) + summary.totalsByMethod.cash + deposits - withdrawals };
+    const openingAmount = session && (!latestResetAt || session.openedAt > latestResetAt) ? session.openingAmount : 0;
+    return { ...summary, openingAmount, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: openingAmount + summary.totalsByMethod.cash + deposits - withdrawals };
   }
 
   async getCashClosures(tenantId: string) {
@@ -2000,7 +2054,7 @@ class PostgresRepository implements DataRepository {
   }
 
   async closeCashRegister(tenantId: string, payload: { date?: string; note?: string; closedByUserId?: string }) {
-    const summary = await this.getCashRegister(tenantId, payload.date);
+    const summary = await this.getCashRegister(tenantId);
     const closure: CashRegisterClosure = {
       ...summary,
       id: randomUUID(),
