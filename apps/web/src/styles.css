@@ -6780,7 +6780,7 @@ summary:focus-visible {
 
 /* Ayuda breve dentro del flujo: visible solo cuando la persona la necesita. */
 .context-help {
-  margin-top: 12px;
+  margin: 12px 0 8px;
   color: var(--text-primary);
   background: var(--surface-secondary);
   border: 1px solid var(--border);
