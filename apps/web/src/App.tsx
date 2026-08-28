@@ -1422,11 +1422,11 @@ function App() {
           </button>
         </div>
         <div className="mobile-topbar-tools">
-          {!isSystemAdmin && <button className="icon-button" type="button" onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label="Cambiar tema">{theme === "dark" ? <Sun size={19}/> : <Moon size={19}/>}</button>}
+          {!isSystemAdmin && <button className="icon-button mobile-search-button" type="button" onClick={openGlobalSearch} aria-label="Buscar en el negocio"><Search size={19}/></button>}
+          {!isSystemAdmin && <button className="mobile-theme-switch" type="button" role="switch" aria-checked={theme === "dark"} onClick={() => applyTheme(theme === "dark" ? "light" : "dark")} aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}><Sun size={14}/><span aria-hidden="true"/><Moon size={14}/></button>}
           <div className="mobile-actions-wrap" ref={mobileActionsRef}>
             <button className="icon-button mobile-menu-trigger" type="button" aria-label="Abrir acciones" aria-haspopup="menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)}><EllipsisVertical size={21}/></button>
             {mobileMenuOpen && <div className="mobile-actions-menu" role="menu">
-              {!isSystemAdmin && <button type="button" role="menuitem" onClick={openGlobalSearch}><Search size={18}/><span>Buscar</span></button>}
               {!isSystemAdmin && isOwner && <button type="button" role="menuitem" onClick={() => navigateTo("reports")}><BarChart3 size={18}/><span>Reportes</span></button>}
               <button type="button" role="menuitem" onClick={() => { setMobileMenuOpen(false); void loadWorkspace("Datos refrescados."); }}><RefreshCw size={18}/><span>Actualizar datos</span></button>
               {!isSystemAdmin && <button type="button" role="menuitem" onClick={() => navigateTo("settings")}><Settings size={18}/><span>{isOwner ? "Configuración" : "Mi perfil"}</span></button>}
