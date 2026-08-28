@@ -5708,6 +5708,7 @@ button:active:not(:disabled) { transform: none; }
 .report-alerts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; padding: clamp(17px, 2.5vw, 23px); background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-soft); }
 .report-reminder { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; color: var(--text-secondary); font-size: .83rem; font-weight: 700; white-space: normal; }
 .report-reminder input { width: 17px; height: 17px; accent-color: var(--primary); }
+.report-reminder span { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .report-alert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
 .report-alert { display: flex; gap: 10px; padding: 13px; background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 12px; }
 .report-alert svg { flex: none; margin-top: 1px; }
