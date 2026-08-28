@@ -5664,6 +5664,7 @@ button:active:not(:disabled) { transform: none; }
   display: grid;
   align-items: start;
   gap: 18px;
+  width: 100%;
 }
 
 .reports-toolbar h2 { margin: 3px 0 0; font-size: 1.6rem; }
@@ -6114,6 +6115,10 @@ button:active:not(:disabled) { transform: none; }
   .month-filter select {
     width: 100%;
     min-width: 0;
+  }
+
+  .reports-toolbar > * {
+    max-width: 100%;
   }
 }
 
