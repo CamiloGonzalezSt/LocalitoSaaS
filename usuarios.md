@@ -15,7 +15,6 @@ La cuenta admin puede variar si se configuran `PLATFORM_ADMIN_EMAIL` o `PLATFORM
 | Local | Rol | Correo | Clave |
 | --- | --- | --- | --- |
 | Botilleria Don Pepe | Dueno | `donpepe@localito.demo` | `Duoc2026` |
-| Botilleria Don Pepe | Vendedor | `donpepevendedor@localito.demo` | `Duoc2026V` |
 
 ## Ramas de trabajo
 
