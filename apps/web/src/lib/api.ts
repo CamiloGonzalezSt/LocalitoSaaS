@@ -63,6 +63,13 @@ export type AuthSession = {
 
 type OfflineRequest = { id: string; path: string; options: { method: string; body?: string; headers?: Record<string, string> }; createdAt: string };
 
+export class OfflineQueuedError extends Error {
+  constructor() {
+    super("Sin conexión: la operación quedó guardada y se sincronizará automáticamente.");
+    this.name = "OfflineQueuedError";
+  }
+}
+
 function readOfflineQueue(): OfflineRequest[] {
   try { return JSON.parse(localStorage.getItem("localito-offline-queue") ?? "[]") as OfflineRequest[]; } catch { return []; }
 }
@@ -84,7 +91,7 @@ async function request<T>(path: string, options: RequestInit = {}, queueWhenOffl
   } catch (error) {
     if (queueWhenOffline && options.method && options.method !== "GET") {
       queueOfflineRequest(path, options);
-      throw new Error("Sin conexión: la operación quedó guardada y se sincronizará automáticamente.");
+      throw new OfflineQueuedError();
     }
     throw error;
   }

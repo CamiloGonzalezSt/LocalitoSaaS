@@ -13,6 +13,8 @@ Localito es una PWA académica multi-negocio para almacenes y comercios de barri
 - Inicio y cierre de sesión con contraseñas `scrypt`, tokens aleatorios almacenados como hash, expiración y aislamiento por negocio.
 - Roles `system_admin`, `owner` y `seller` protegidos tanto en la interfaz como en la API.
 - Punto de venta con búsqueda, código de barras, descuento, notas y pagos simples o divididos.
+- Ticket recuperable al recargar, ventas en espera y favoritos guardados en el navegador por negocio y usuario. Retomar una venta guarda el ticket abierto y revisa precios y stock actuales.
+- Catálogo de venta con carga incremental y cobro móvil en un diálogo dedicado, con navegación por teclado y comprobante al finalizar.
 - Idempotencia de ventas para evitar cobros duplicados al reintentar desde una red inestable.
 - Navegación simplificada por rol: dueño (`Inicio`, `Vender`, `Inventario`, `Clientes`, `Caja`, `Reportes`) y vendedor (`Vender`, `Inventario`, `Clientes`, `Caja`). Configuración vive en el engranaje; crear/importar productos y Venta Rápida se abren dentro de su flujo natural.
 - Inventario con SKU, variante, unidad, packs, vencimiento, stock mínimo, productos sin control de stock y kardex de movimientos.

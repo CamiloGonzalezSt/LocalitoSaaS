@@ -1,0 +1,77 @@
+.inventory-table-header, .inventory-compact-row {
+  display: grid;
+  grid-template-columns: 34px minmax(230px, 2.2fr) 92px 108px 116px 170px;
+  align-items: center;
+  gap: 14px;
+}
+.product-row.inventory-compact-row { display: grid; grid-template-columns: 34px minmax(230px, 2.2fr) 92px 108px 116px 170px; align-items: center; gap: 14px; min-height: 66px; padding: 13px 14px; background: var(--surface); border: 0; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; }
+.product-row.inventory-compact-row::before { top: 10px; bottom: 10px; }
+.inventory-table-header { padding: 11px 14px; color: var(--text-secondary); font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.inventory-compact-row { padding: 13px 14px; border-bottom: 1px solid var(--border); }
+.inventory-compact-row:last-child { border-bottom: 0; }
+.inventory-compact-row:hover { background: var(--surface-hover); }
+.inventory-select { display: grid; place-items: center; }
+.inventory-select input { width: 18px; height: 18px; accent-color: var(--primary); }
+.inventory-product-cell { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.inventory-product-cell .product-visual { width: 38px; height: 38px; flex: none; }
+.inventory-product-cell .product-main { min-width: 0; }
+.inventory-product-cell .product-title-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.inventory-product-cell .product-title-line strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inventory-product-cell p, .inventory-product-cell .product-code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inventory-value { display: grid; gap: 3px; min-width: 0; }
+.inventory-value > span { color: var(--text-secondary); font-size: .68rem; }
+.inventory-value > strong { overflow-wrap: anywhere; }
+.inventory-value.stock-low strong { color: var(--amber); }
+.inventory-value.stock-out strong { color: var(--red); }
+.inventory-quick-fields { display: flex; align-items: center; gap: 6px; }
+.inventory-quick-fields { grid-column: 5; }
+.inventory-quick-fields label { display: grid; gap: 3px; min-width: 0; }
+.inventory-quick-fields span { color: var(--text-secondary); font-size: .65rem; }
+.inventory-quick-fields input { width: 78px; min-height: 34px; padding: 6px 8px; }
+.inventory-row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+.inventory-row-actions .icon-button { min-width: 34px; min-height: 34px; }
+.inventory-bulk-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; background: var(--blue-soft); border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--border)); border-radius: 8px; }
+.inventory-bulk-bar > span { color: var(--text-primary); font-size: .85rem; font-weight: 700; }
+.inventory-bulk-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.inventory-selection-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.inventory-proposal { display: grid; gap: 16px; padding: 18px; border: 1px solid var(--warning-border); border-radius: 8px; background: var(--amber-soft); }
+.inventory-proposal-heading { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+.inventory-proposal-heading h3 { margin: 3px 0 0; font-size: 1.05rem; }
+.inventory-proposal-heading p { margin: 5px 0 0; color: var(--text-secondary); font-size: .82rem; }
+.inventory-proposal-lines { display: grid; gap: 8px; }
+.inventory-proposal-line { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, var(--amber) 25%, transparent); }
+.inventory-proposal-line:last-child { border-bottom: 0; }
+.inventory-proposal-line strong { overflow-wrap: anywhere; }
+.inventory-proposal-line small { display: block; color: var(--text-secondary); margin-top: 3px; }
+.inventory-proposal-line input { min-height: 36px; }
+.inventory-proposal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.inventory-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; }
+.inventory-pagination span { color: var(--text-secondary); font-size: .8rem; }
+.purchase-proposal-review { display: grid; gap: 14px; margin-bottom: 18px; padding: 16px; border: 1px solid var(--warning-border); border-radius: 8px; background: var(--amber-soft); }
+.purchase-proposal-review h3 { margin: 3px 0 0; font-size: 1rem; }
+.purchase-proposal-review p { margin: 4px 0 0; color: var(--text-secondary); font-size: .82rem; }
+.purchase-proposal-review > div:first-child > span { color: var(--amber); font-size: .72rem; font-weight: 700; text-transform: uppercase; }
+.purchase-proposal-lines { display: grid; gap: 4px; }
+.purchase-proposal-lines .row { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, var(--amber) 25%, transparent); }
+.purchase-proposal-lines .row:last-child { border-bottom: 0; }
+.purchase-proposal-lines input { width: 90px; min-height: 34px; }
+@media (max-width: 900px) {
+  .inventory-table-header { display: none; }
+  .product-row.inventory-compact-row { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; min-height: 0; padding: 13px 8px; }
+  .inventory-compact-row .inventory-meta-desktop { display: none; }
+  .inventory-product-cell .product-visual { width: 42px; height: 42px; }
+  .inventory-row-actions { grid-column: 2 / -1; justify-content: flex-start; }
+  .inventory-row-actions .stock-edit-action { display: inline-flex; }
+  .inventory-quick-fields { grid-column: 2 / -1; }
+  .inventory-quick-fields input { flex: 1; width: auto; }
+  .inventory-proposal-line { grid-template-columns: minmax(0, 1fr) 94px auto; }
+}
+@media (max-width: 520px) {
+  .inventory-bulk-actions, .inventory-bulk-actions button, .inventory-selection-actions, .inventory-selection-actions button { width: 100%; }
+  .inventory-proposal-line { grid-template-columns: minmax(0, 1fr) 74px auto; }
+  .inventory-proposal-line input { width: 74px; }
+  .inventory-pagination { align-items: stretch; flex-direction: column; }
+  .inventory-pagination button { width: 100%; }
+  .purchase-proposal-lines .row { grid-template-columns: minmax(0, 1fr) 70px auto; }
+  .purchase-proposal-lines input { width: 70px; }
+}

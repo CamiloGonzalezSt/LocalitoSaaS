@@ -1,0 +1,184 @@
+/* Theme contract. Imported after layout styles so legacy colors cannot leak
+   into surfaces, interaction states or content rendered in portals. */
+:root {
+  --surface-hover: #edf1f0;
+  --primary: #0e7563;
+  --primary-hover: #095c4d;
+  --on-primary: #ffffff;
+  --blue: #2458b8;
+  --blue-soft: #eaf0fc;
+  --amber: #895400;
+  --amber-soft: #fff3d9;
+  --red: #b52c34;
+  --red-soft: #fff0f1;
+  --on-danger: #ffffff;
+  --success: #09664c;
+  --success-soft: #e2f3eb;
+  --warning-border: #d9b96d;
+  --danger-border: #e4a8af;
+  --success-border: #a7cebd;
+  --focus-ring: #2458b8;
+  color: var(--text-primary);
+  background: var(--background);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --surface-hover: #232323;
+  --primary: #36cbb0;
+  --primary-hover: #62dec6;
+  --on-primary: #06251f;
+  --blue: #a4c2ff;
+  --blue-soft: #182840;
+  --amber: #f4c36a;
+  --amber-soft: #302611;
+  --red: #ff969c;
+  --red-soft: #361b21;
+  --on-danger: #321015;
+  --success: #8ce3bb;
+  --success-soft: #142e24;
+  --warning-border: #665127;
+  --danger-border: #68353c;
+  --success-border: #315c48;
+  --focus-ring: #a4c2ff;
+  color-scheme: dark;
+}
+
+:root :is(
+  .receipt-card, .payment-link-box, .mobile-menu-item, .social-login-button,
+  .invoice-ai-panel, .invoice-line, .setup-method-panel, .setup-choice,
+  .plan-card, .report-grid p, .selected-row
+) {
+  color: var(--text-primary);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+:root :is(
+  .invoice-line-total, .bulk-preview-summary > *, .bulk-preview-table th,
+  .setup-steps > div, .setup-steps > div > span, .stat-card svg,
+  .chip:not(.active), .payment-link-box, .product-code
+) {
+  color: var(--text-secondary);
+  background: var(--surface-secondary);
+  border-color: var(--border);
+}
+
+:root :is(
+  input, select, textarea, .invoice-document-grid input:disabled,
+  .invoice-document-grid select, .invoice-new-product-fields input,
+  .invoice-number-fields input, .invoice-match-select select
+) {
+  color: var(--text-primary);
+  background-color: var(--surface);
+  border-color: var(--border);
+  caret-color: var(--primary);
+  accent-color: var(--primary);
+}
+:root :is(input, textarea)::placeholder { color: var(--text-secondary); opacity: 1; }
+:root :is(input, select, textarea):disabled { color: var(--text-secondary); background-color: var(--surface-secondary); }
+:root :is(.search-box, .business-search-input) input { background: transparent; }
+
+:root :is(
+  .invoice-capture, .invoice-ai-message, .invoice-total-card,
+  .invoice-confirm-bar, .bulk-import-message, .setup-choice.recommended,
+  .setup-category-chips span, .setup-choice-tag, .stock-actions .stock-edit-action,
+  .product-thumb, .trial-offer, .quick-action, .selected-row
+) {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: var(--success-border);
+}
+:root :is(.invoice-capture small, .setup-steps strong) { color: var(--text-secondary); }
+:root :is(.invoice-total-card strong, .invoice-confirm-bar strong, .setup-choice strong) { color: var(--text-primary); }
+:root .invoice-number-fields .sale-price-confirm input {
+  color: var(--text-primary);
+  background: var(--success-soft);
+  border-color: var(--success-border);
+}
+
+:root :is(
+  .invoice-ai-message.warning, .invoice-warning-list, .invoice-match-badge.new,
+  .bulk-import-message.warning, .bulk-server-issues, .bulk-preview-table tr.invalid td,
+  .status-badge.warning, .external-payment-confirm, .quick-action.scan,
+  .dashboard-priority-panel.warning .dashboard-priority-icon, .setup-choice-icon.amber
+) {
+  color: var(--amber);
+  background: var(--amber-soft);
+  border-color: var(--warning-border);
+}
+:root :is(.bulk-preview-summary span, .sale-search-status.partially_refunded) { color: var(--amber); }
+
+:root :is(
+  .danger-soft, .secondary-action.danger-soft, .icon-button.danger,
+  .stock-status.low, .stock-pill.low, .stock-warning, .mobile-menu-item.danger,
+  .report-comparison.negative, .quick-action.stock,
+  .dashboard-priority-panel.urgent .dashboard-priority-icon
+) {
+  color: var(--red);
+  background: var(--red-soft);
+  border-color: var(--danger-border);
+}
+:root :is(.field-error, .invoice-remove-line, .mobile-actions-menu button.danger) { color: var(--red); }
+:root :is(.status-badge.success, .invoice-match-badge.matched, .report-comparison.positive) {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: var(--success-border);
+}
+:root :is(.product-price, .setup-choice-icon.blue) { color: var(--blue); background: var(--blue-soft); }
+:root .bulk-preview-table :is(th, td) { border-color: var(--border); }
+:root .bar-track { background: var(--surface-hover); }
+
+/* Filled controls need a foreground paired with their fill, not the page text. */
+:root :is(
+  .primary-action, .chip.active, .category-filter.active,
+  .category-filter[aria-pressed="true"], .business-search-kinds button.active,
+  .inventory-task.primary, .flow-title > span, .checkout-step > span,
+  .nav-item.active, .mobile-cart-summary, .setup-steps > div.complete > span,
+  .setup-finish-icon.ready
+) {
+  color: var(--on-primary);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+:root :is(.primary-action, .chip.active, .nav-item.active, .inventory-task.primary, .mobile-cart-summary) :is(span, small, strong, svg) {
+  color: inherit;
+}
+:root .primary-action:hover:not(:disabled) { color: var(--on-primary); background: var(--primary-hover); border-color: var(--primary-hover); }
+:root .category-filter.active small,
+:root .category-filter[aria-pressed="true"] small { color: var(--on-primary); background: transparent; }
+:root .danger-action { color: var(--on-danger); background: var(--red); border-color: var(--red); }
+:root .danger-action:hover:not(:disabled) { color: var(--on-danger); background: var(--red); border-color: var(--red); }
+
+:root :is(.auth-register-link, .auth-register-link:hover:not(:disabled)) { color: var(--blue); }
+:root :is(.social-login-button, .mobile-menu-item, .setup-choice):hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border-color: var(--primary);
+}
+:root .mobile-menu-item.active { color: var(--primary); background: var(--primary-soft); border-color: var(--primary); }
+:root :is(button, a, input, select, textarea, summary):focus-visible { outline-color: var(--focus-ring); }
+
+:root .quick-sale-stack {
+  --quick-card-bg: var(--surface);
+  --quick-card-soft: var(--surface-secondary);
+  --quick-card-accent: var(--primary-soft);
+  --quick-card-text: var(--text-primary);
+  --quick-card-muted: var(--text-secondary);
+  --quick-card-border: var(--border);
+  --quick-accent: var(--primary);
+  --quick-accent-soft: var(--primary-soft);
+  --quick-warning-bg: var(--amber-soft);
+  --quick-warning-text: var(--amber);
+  --quick-warning-border: var(--warning-border);
+  --quick-danger-bg: var(--red-soft);
+  --quick-danger-text: var(--red);
+  --quick-danger-border: var(--danger-border);
+}
+
+/* The printable receipt stays black on paper, independent of the app theme. */
+@media print {
+  :root { color-scheme: light; }
+  :root .receipt-paper { color: #111827; background: #ffffff; }
+  :root .receipt-paper :is(span, small, p) { color: #374151; }
+}

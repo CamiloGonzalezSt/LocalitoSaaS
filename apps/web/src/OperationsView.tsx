@@ -1,13 +1,16 @@
+import { ReceiptText, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { AuditEvent, CashMovement, CashSession, DebtAccount, Product, PurchaseOrder, StockMovement, Supplier } from "@localito/shared";
 import { api } from "./lib/api";
 import { InvoiceImportPanel } from "./InvoiceImportPanel";
 import { readProductImportFile, validateProductImportRows } from "./productImport";
+import type { PurchaseProposalLine } from "./lib/inventory";
 
 const money = (value: number) => new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value);
+const emptyProposal: PurchaseProposalLine[] = [];
 
-export function OperationsView({ products, onRefresh, canManage, mode = "all" }: { products: Product[]; onRefresh: () => Promise<void>; canManage: boolean; mode?: "all" | "invoice" }) {
+export function OperationsView({ products, purchaseProposal = emptyProposal, onPurchaseProposalConsumed, onRefresh, canManage, mode = "all" }: { products: Product[]; purchaseProposal?: PurchaseProposalLine[]; onPurchaseProposalConsumed?: () => void; onRefresh: () => Promise<void>; canManage: boolean; mode?: "all" | "invoice" }) {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [purchases, setPurchases] = useState<PurchaseOrder[]>([]);
   const [debts, setDebts] = useState<DebtAccount[]>([]);
@@ -30,6 +33,9 @@ export function OperationsView({ products, onRefresh, canManage, mode = "all" }:
   const [movementCategory, setMovementCategory] = useState("Operación general");
   const [message, setMessage] = useState("Cargando gestión avanzada...");
   const [busy, setBusy] = useState(false);
+  const [proposalLines, setProposalLines] = useState<PurchaseProposalLine[]>(purchaseProposal);
+
+  useEffect(() => { setProposalLines(purchaseProposal); }, [purchaseProposal]);
 
   const overdue = useMemo(() => debts.filter((debt) => debt.status === "overdue" && debt.balance > 0), [debts]);
   const expenseTotals = useMemo(() => {
@@ -83,6 +89,15 @@ export function OperationsView({ products, onRefresh, canManage, mode = "all" }:
   async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true);
     try { await action(); await Promise.all([load(), onRefresh()]); setMessage(success); } catch (error) { setMessage(error instanceof Error ? error.message : "No se pudo completar la operación."); } finally { setBusy(false); }
+  }
+
+  function createProposalOrder() {
+    if (!purchaseSupplierId || !proposalLines.length) return;
+    return run(async () => {
+      await api.createPurchase({ supplierId: purchaseSupplierId, items: proposalLines.map(line => ({ productId: line.productId, quantity: line.quantity, unitCost: line.unitCost })) });
+      setProposalLines([]);
+      onPurchaseProposalConsumed?.();
+    }, "Propuesta convertida en orden de compra.");
   }
 
   function exportProducts() {
@@ -143,7 +158,7 @@ export function OperationsView({ products, onRefresh, canManage, mode = "all" }:
       </div>
     </section>}
 
-    {canManage && <section className="panel"><div className="section-heading"><h2>Qué comprar</h2><span>{purchases.length} órdenes</span></div><div className="form-grid"><select value={purchaseSupplierId} onChange={(event) => setPurchaseSupplierId(event.target.value)}>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select><select value={purchaseProductId} onChange={(event) => setPurchaseProductId(event.target.value)}>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select><input inputMode="numeric" value={purchaseQuantity} onChange={(event) => setPurchaseQuantity(event.target.value)} placeholder="Cantidad"/><input inputMode="numeric" value={purchaseCost} onChange={(event) => setPurchaseCost(event.target.value)} placeholder="Costo unitario"/><button className="primary-action" disabled={busy || !purchaseSupplierId || !purchaseProductId} onClick={() => run(() => api.createPurchase({ supplierId: purchaseSupplierId, items: [{ productId: purchaseProductId, quantity: Number(purchaseQuantity), unitCost: Number(purchaseCost) }] }), "Orden creada.")}>Crear orden</button></div><div className="list">{purchases.slice(0, 8).map((purchase) => <div className="row" key={purchase.id}><div><strong>{purchase.supplierName} · {money(purchase.total)}</strong><p>{purchase.status} · {purchase.items.map((item) => `${item.productName} x${item.quantity}`).join(", ")}</p></div>{purchase.status !== "received" && purchase.status !== "cancelled" && <button className="secondary-action small" disabled={busy} onClick={() => run(() => api.receivePurchase(purchase.id), "Mercadería recibida y stock actualizado.")}>Recibir</button>}</div>)}</div></section>}
+    {canManage && <section className="panel"><div className="section-heading"><h2>Qué comprar</h2><span>{purchases.length} órdenes</span></div>{proposalLines.length > 0 && <div className="purchase-proposal-review"><div><span>Desde Inventario</span><h3>Propuesta lista para revisar</h3><p>{proposalLines.length} productos · ajusta el proveedor o crea la orden cuando estés seguro.</p></div><div className="purchase-proposal-lines">{proposalLines.map(line => <div className="row" key={line.productId}><div><strong>{line.productName}</strong><p>{line.quantity} unidades · costo {money(line.unitCost)}</p></div><input aria-label={`Cantidad propuesta de ${line.productName}`} type="number" min="1" value={line.quantity} onChange={event => setProposalLines(current => current.map(item => item.productId === line.productId ? { ...item, quantity: Math.max(1, Number(event.target.value) || 1) } : item))}/><button className="icon-button danger" type="button" aria-label={`Quitar propuesta de ${line.productName}`} onClick={() => setProposalLines(current => current.filter(item => item.productId !== line.productId))}><Trash2 size={16}/></button></div>)}</div><button className="primary-action" type="button" disabled={busy || !purchaseSupplierId} onClick={() => void createProposalOrder()}><ReceiptText size={18}/> Convertir en orden de compra</button></div>}<div className="form-grid"><select value={purchaseSupplierId} onChange={(event) => setPurchaseSupplierId(event.target.value)}>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select><select value={purchaseProductId} onChange={(event) => setPurchaseProductId(event.target.value)}>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select><input inputMode="numeric" value={purchaseQuantity} onChange={(event) => setPurchaseQuantity(event.target.value)} placeholder="Cantidad"/><input inputMode="numeric" value={purchaseCost} onChange={(event) => setPurchaseCost(event.target.value)} placeholder="Costo unitario"/><button className="primary-action" disabled={busy || !purchaseSupplierId || !purchaseProductId} onClick={() => run(() => api.createPurchase({ supplierId: purchaseSupplierId, items: [{ productId: purchaseProductId, quantity: Number(purchaseQuantity), unitCost: Number(purchaseCost) }] }), "Orden creada.")}>Crear orden</button></div><div className="list">{purchases.slice(0, 8).map((purchase) => <div className="row" key={purchase.id}><div><strong>{purchase.supplierName} · {money(purchase.total)}</strong><p>{purchase.status} · {purchase.items.map((item) => `${item.productName} x${item.quantity}`).join(", ")}</p></div>{purchase.status !== "received" && purchase.status !== "cancelled" && <button className="secondary-action small" disabled={busy} onClick={() => run(() => api.receivePurchase(purchase.id), "Mercadería recibida y stock actualizado.")}>Recibir</button>}</div>)}</div></section>}
 
     <section className="panel"><div className="section-heading"><h2>Fiados vencidos</h2><span>{overdue.length}</span></div><div className="list">{overdue.map((debt) => { const reminder = reminders.find((item) => item.debt.id === debt.id); return <div className="row" key={debt.id}><div><strong>{debt.customerName}</strong><p>Venció {debt.dueDate}</p></div><strong className="debt">{money(debt.balance)}</strong>{reminder?.whatsappUrl && <a className="secondary-action small" href={reminder.whatsappUrl} target="_blank" rel="noreferrer">Recordar</a>}</div>; })}{!overdue.length && <p className="empty-state">No hay deudas vencidas.</p>}</div></section>
 

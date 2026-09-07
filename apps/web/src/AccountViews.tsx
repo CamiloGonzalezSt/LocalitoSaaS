@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { Subscription, SubscriptionPlan, Tenant, User } from "@localito/shared";
 import { effectiveSubscriptionStatus, LOCALITO_PLANS, subscriptionDaysRemaining } from "@localito/shared";
 import { formatCLP } from "./lib/format";
+import { FormField, FormSurface } from "./FormControls";
 
 export type ThemePreference = "light" | "dark" | "system";
 export type UserFormState = { name: string; email: string; role: User["role"]; password: string };
@@ -38,26 +39,25 @@ export function SettingsView({ tenant, user, users, userForm, profileForm, isBus
   }, [tenant?.id, tenant?.name, tenant?.businessType, tenant?.address, tenant?.phone]);
 
   return <div className="stack account-settings">
-    <section className="panel" aria-labelledby="account-title">
+    <FormSurface className="panel" label="Mi perfil" busy={isBusy} onSave={onSaveProfile}>
       <div className="section-heading"><div><span>MI CUENTA</span><h2 id="account-title">Mi perfil</h2></div><span>{user.role === "owner" ? "Dueño/admin" : "Vendedor"}</span></div>
       <div className="form-grid">
-        <LabeledInput label="Nombre" value={profileForm.name} onChange={(value) => onProfileForm({ ...profileForm, name: value })} autoComplete="name" />
-        <LabeledInput label="Correo" value={profileForm.email} onChange={(value) => onProfileForm({ ...profileForm, email: value })} type="email" autoComplete="email" />
+        <FormField label="Nombre" required pattern=".*\S.*" value={profileForm.name} onChange={(value) => onProfileForm({ ...profileForm, name: value })} autoComplete="name" />
+        <FormField label="Correo" required value={profileForm.email} onChange={(value) => onProfileForm({ ...profileForm, email: value })} type="email" autoComplete="email" />
       </div>
-      <button className="primary-action" type="button" onClick={onSaveProfile} disabled={isBusy || !profileForm.name.trim() || !profileForm.email.trim()}><Save size={19}/> Guardar mi perfil</button>
-    </section>
+      <button className="primary-action" type="submit"><Save size={19}/> {isBusy ? "Guardando..." : "Guardar mi perfil"}</button>
+    </FormSurface>
 
-    {canManageUsers && <section className="panel" aria-labelledby="business-title">
+    {canManageUsers && <FormSurface className="panel" label="Mi negocio" busy={isBusy} onSave={() => onSaveBusiness(businessForm)}>
       <div className="section-heading"><div><span>ADMINISTRACIÓN</span><h2 id="business-title">Mi negocio</h2></div><Building2 size={21}/></div>
-      <p className="helper-text">Estos datos identifican el local en comprobantes y pantallas operativas.</p>
       <div className="form-grid">
-        <LabeledInput label="Nombre del negocio" value={businessForm.name} onChange={(value) => setBusinessForm({ ...businessForm, name: value })} />
-        <LabeledInput label="Rubro" value={businessForm.businessType} onChange={(value) => setBusinessForm({ ...businessForm, businessType: value })} />
+        <FormField label="Nombre del negocio" required pattern=".*\S.*" value={businessForm.name} onChange={(value) => setBusinessForm({ ...businessForm, name: value })} />
+        <FormField label="Rubro" required pattern=".*\S.*" value={businessForm.businessType} onChange={(value) => setBusinessForm({ ...businessForm, businessType: value })} />
         <LabeledInput label="Dirección" value={businessForm.address ?? ""} onChange={(value) => setBusinessForm({ ...businessForm, address: value })} />
         <LabeledInput label="Teléfono" value={businessForm.phone ?? ""} onChange={(value) => setBusinessForm({ ...businessForm, phone: value })} type="tel" />
       </div>
-      <button className="primary-action" type="button" onClick={() => onSaveBusiness(businessForm)} disabled={isBusy || !businessForm.name.trim() || !businessForm.businessType.trim()}><Save size={19}/> Guardar negocio</button>
-    </section>}
+      <button className="primary-action" type="submit"><Save size={19}/> {isBusy ? "Guardando..." : "Guardar negocio"}</button>
+    </FormSurface>}
 
     {canManageUsers && <section className="panel more-links" aria-labelledby="tools-title">
       <div className="section-heading"><div><span>HERRAMIENTAS</span><h2 id="tools-title">Plan y datos</h2></div></div>
@@ -106,7 +106,7 @@ export function PlanView({ subscription, isBusy, onSelect }: { subscription: Sub
 }
 
 function LabeledInput({ label, value, onChange, type = "text", autoComplete }: { label: string; value: string; onChange: (value: string) => void; type?: string; autoComplete?: string }) {
-  return <label className="form-field"><span>{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} type={type} autoComplete={autoComplete}/></label>;
+  return <FormField label={label} value={value} onChange={onChange} type={type} autoComplete={autoComplete}/>;
 }
 
 function subscriptionStatusCopy(status: Subscription["status"], days: number) {

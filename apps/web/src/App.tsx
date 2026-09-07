@@ -31,6 +31,9 @@ import {
   ShoppingCart,
   Smartphone,
   Store,
+  Star,
+  Pause,
+  Play,
   Sun,
   TrendingUp,
   Trash2,
@@ -40,10 +43,14 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import type { ReactNode } from "react";
 import type {
   BootstrapData,
   CashRegisterClosure,
   CashRegisterSummary,
+  CashSession,
+  DebtAccount,
   Customer,
   PaymentMethod,
   Product,
@@ -56,7 +63,9 @@ import type {
   User
 } from "@localito/shared";
 import { effectiveSubscriptionStatus, LOCALITO_PLANS, hasEntitlement, mergeQuickSaleTicket, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
-import { api, flushOfflineQueue } from "./lib/api";
+import { api, flushOfflineQueue, OfflineQueuedError } from "./lib/api";
+import { useSaleWorkspace, reconcileDraft } from "./useSaleWorkspace";
+import type { SaleDraft } from "./useSaleWorkspace";
 import type { AuthSession } from "./lib/api";
 import { formatCLP, formatDateTime } from "./lib/format";
 import { OperationsView } from "./OperationsView";
@@ -64,6 +73,12 @@ import { PlatformAdminView } from "./PlatformAdminView";
 import { InventorySetupView } from "./InventorySetupView";
 import { QuickSaleView } from "./QuickSaleView";
 import { DashboardView } from "./DashboardView";
+import { businessDay, matchesInventoryFilter, overdueDebts } from "./lib/dashboard";
+import type { CustomerFilter, InventoryFilter } from "./lib/dashboard";
+import type { PurchaseProposalLine } from "./lib/inventory";
+import { suggestedReplenishment } from "./lib/inventory";
+import { FormField, FormSurface } from "./FormControls";
+import { InventoryRow } from "./InventoryRow";
 import { SearchView } from "./SearchView";
 import { PlanView, SettingsView } from "./AccountViews";
 import type { BusinessFormState, ProfileFormState, ThemePreference, UserFormState } from "./AccountViews";
@@ -315,16 +330,21 @@ function App() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [cashRegister, setCashRegister] = useState<CashRegisterSummary>(emptyCashRegister);
+  const [cashSession, setCashSession] = useState<CashSession>();
+  const [debts, setDebts] = useState<DebtAccount[]>([]);
+  const [purchaseProposal, setPurchaseProposal] = useState<PurchaseProposalLine[]>([]);
+  const [inventoryEntryFilter, setInventoryEntryFilter] = useState<InventoryFilter>("all");
+  const [customerEntryFilter, setCustomerEntryFilter] = useState<CustomerFilter>("clients");
   const [cashClosures, setCashClosures] = useState<CashRegisterClosure[]>([]);
   const [summary, setSummary] = useState<ReportSummary>(emptySummary);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [theme, setTheme] = useState<ThemePreference>("light");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileActionsRef = useRef<HTMLDivElement>(null);
-  const [ticket, setTicket] = useState<SaleItem[]>([]);
+  const saleWorkspace = useSaleWorkspace(tenant?.id, currentUser?.id);
+  const { active: saleDraft, setTicket, setPaymentMethod, setCustomerId: setSelectedCustomerId } = saleWorkspace;
+  const { items: ticket, paymentMethod, customerId: selectedCustomerId } = saleDraft;
   const [lastReceipt, setLastReceipt] = useState<Sale | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
-  const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [notice, setNotice] = useState<NoticeState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -354,7 +374,6 @@ function App() {
   const ticketTotal = useMemo(() => ticket.reduce((sum, item) => sum + item.subtotal, 0), [ticket]);
   const activeSales = useMemo(() => sales.filter((sale) => sale.status !== "cancelled"), [sales]);
   const cancelledSales = useMemo(() => sales.filter((sale) => sale.status === "cancelled"), [sales]);
-  const topDebtor = useMemo(() => [...customers].sort((a, b) => b.debtBalance - a.debtBalance)[0], [customers]);
   const isOwner = isOwnerUser(currentUser);
   const isSystemAdmin = isSystemAdminUser(currentUser);
   const canOperate = !subscription || subscriptionCanMutate(subscription);
@@ -376,6 +395,8 @@ function App() {
   const mobileNavItems = isSystemAdmin ? [] : visibleNavItems.filter((item) => mobilePrimaryIds.includes(item.id));
 
   function navigateTo(view: View) {
+    setInventoryEntryFilter("all");
+    setCustomerEntryFilter("clients");
     if (view !== activeView) setPreviousView(activeView);
     setMobileMenuOpen(false);
     setActiveView(view);
@@ -458,10 +479,11 @@ function App() {
     setCustomers(data.customers);
     setSales(data.sales);
     setCashRegister(data.cashRegister);
+    setCashSession(data.cashSession);
+    setDebts(data.debts ?? []);
     setCashClosures(data.cashClosures);
     setSummary(data.summary);
     setSubscription(data.subscription);
-    setSelectedCustomerId((current) => current || data.customers[0]?.id || "");
   }
 
   useEffect(() => {
@@ -655,10 +677,7 @@ function App() {
     setCashClosures([]);
     setSummary(emptySummary);
     setSubscription(null);
-    setTicket([]);
     setLastReceipt(null);
-    setPaymentMethod("cash");
-    setSelectedCustomerId("");
     setSearchTerm("");
     setEditingProductId(null);
     setEditingCustomerId(null);
@@ -673,6 +692,8 @@ function App() {
   }
 
   function addToTicket(product: Product) {
+    if (isBusy) return;
+    setLastReceipt(null);
     const currentQuantity = ticket.find((item) => item.productId === product.id)?.quantity ?? 0;
     if (product.trackStock !== false && currentQuantity >= product.stock) {
       setNotice({ message: `No hay mas stock disponible para ${product.name}.`, tone: "warning" });
@@ -728,6 +749,7 @@ function App() {
   }
 
   async function confirmSale(options?: { discount?: number; notes?: string; payments?: Array<{ method: Exclude<PaymentMethod, "mixed">; amount: number }> }) {
+    if (isBusy) return;
     if (ticket.length === 0) {
       setNotice({ message: "Agrega al menos un producto antes de confirmar la venta.", tone: "warning" });
       return;
@@ -741,6 +763,7 @@ function App() {
     setIsBusy(true);
     try {
       const saleResponse = await api.createSale({
+        idempotencyKey: saleDraft.id,
         paymentMethod,
         customerId: paymentMethod === "credit" || options?.payments?.some((payment) => payment.method === "credit") ? selectedCustomerId : undefined,
         discount: options?.discount,
@@ -755,10 +778,11 @@ function App() {
         tone: "success"
       });
 
-      setTicket([]);
+      saleWorkspace.reset();
       await loadWorkspace();
     } catch (error) {
-      setNotice({ message: error instanceof Error ? error.message : "No se pudo registrar la venta.", tone: "error" });
+      if (error instanceof OfflineQueuedError) saleWorkspace.reset();
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo registrar la venta.", tone: error instanceof OfflineQueuedError ? "warning" : "error" });
     } finally {
       setIsBusy(false);
     }
@@ -1027,6 +1051,38 @@ function App() {
       await loadWorkspace(`Stock actualizado para ${product.name}.`);
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo actualizar stock.", tone: "error" });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function bulkAdjustStock(productsToAdjust: Product[], delta: number) {
+    if (!isOwner || !productsToAdjust.length) return;
+    setIsBusy(true);
+    try {
+      await Promise.all(productsToAdjust.map(product => api.updateStock(product.id, Math.max(0, product.stock + delta))));
+      await loadWorkspace(`${productsToAdjust.length} productos actualizados.`);
+    } catch (error) {
+      setNotice({ message: error instanceof Error ? error.message : "No se pudo actualizar el stock seleccionado.", tone: "error" });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function quickUpdateProduct(product: Product, salePrice: number, stock: number) {
+    if (!isOwner || !canOperate) throw new Error("No tienes permiso para guardar cambios.");
+    setIsBusy(true);
+    try {
+      const results = await Promise.allSettled([
+        salePrice !== product.salePrice ? api.updateProduct(product.id, { salePrice }) : Promise.resolve(),
+        stock !== product.stock ? api.updateStock(product.id, Math.max(0, stock)) : Promise.resolve()
+      ]);
+      const failure = results.find(result => result.status === "rejected");
+      if (failure?.status === "rejected") {
+        await loadWorkspace();
+        throw failure.reason;
+      }
+      await loadWorkspace(`${product.name} actualizado.`);
     } finally {
       setIsBusy(false);
     }
@@ -1467,19 +1523,18 @@ function App() {
             businessName={tenant?.name ?? "Localito"}
             userName={currentUser.name}
             products={products}
-            lowStockProducts={lowStockProducts}
             summary={summary}
             sales={activeSales}
             cashRegister={cashRegister}
-            topDebtor={topDebtor}
+            cashSession={cashSession}
+            debts={debts}
             canOperate={canOperate}
             canViewCustomers={!subscription || hasEntitlement(subscription, "customers")}
             onStartSale={() => navigateTo("sale")}
             onAddProduct={() => navigateTo("product_create")}
             onOpenCash={() => navigateTo("operations")}
-            onOpenStock={() => navigateTo("products")}
-            onOpenCustomers={() => navigateTo("customers")}
-            onOpenReports={() => navigateTo("reports")}
+            onOpenStock={(filter) => { navigateTo("products"); setSearchTerm(""); setInventoryEntryFilter(filter); }}
+            onOpenCustomers={(filter) => { navigateTo("customers"); setCustomerEntryFilter(filter); }}
           />
         )}
 
@@ -1497,6 +1552,17 @@ function App() {
 
         {!isLoading && activeView === "sale" && (
           <SaleView
+            workspace={saleWorkspace}
+            onResume={(draft) => {
+              const result = reconcileDraft(draft, products);
+              if (result.draft.customerId && !customers.some(customer => customer.id === result.draft.customerId && customer.active !== false)) {
+                result.draft.customerId = "";
+                result.changes.push("Selecciona nuevamente el cliente");
+              }
+              saleWorkspace.resume(draft.id, result.draft);
+              setNotice({ message: result.changes.length ? `Venta retomada. ${result.changes.join(". ")}.` : "Venta retomada. El ticket anterior quedó en espera si tenía productos.", tone: result.changes.length ? "warning" : "success" });
+            }}
+            onDiscard={(id) => requestCriticalAction("Descartar venta en espera", "Se eliminará este ticket guardado. Esta acción no registra una venta ni modifica el stock.", "Descartar", async () => { saleWorkspace.discard(id); })}
             products={products}
             sales={activeSales}
             ticket={ticket}
@@ -1559,8 +1625,9 @@ function App() {
         )}
 
         {!isLoading && activeView === "products" && (
-          <div className="stack"><section className="panel inventory-actions"><div className="inventory-actions-heading"><span>Inventario</span><h2>¿Qué necesitas hacer?</h2><p>Primero revisa el catálogo; después agrega productos de a uno, por carga masiva o desde una factura.</p></div><div className="inventory-task-grid"><div className="inventory-task current"><Package size={20}/><span><strong>Revisar catálogo</strong><small>Buscar, filtrar y ajustar stock</small></span></div>{isOwner && canOperate && <button className="inventory-task primary" type="button" onClick={() => navigateTo("product_create")}><Plus size={20}/><span><strong>Agregar producto</strong><small>Crear uno de forma manual</small></span></button>}{isOwner && canOperate && <button className="inventory-task" type="button" onClick={() => navigateTo("setup")}><ListPlus size={20}/><span><strong>Cargar varios</strong><small>Importar CSV o listado</small></span></button>}{isOwner && canOperate && (!subscription || hasEntitlement(subscription, "purchases")) && <button className="inventory-task" type="button" onClick={() => navigateTo("invoice")}><ReceiptText size={20}/><span><strong>Ingresar factura</strong><small>Recibir mercadería con IA</small></span></button>}</div>{!isOwner && <p className="helper-text">Puedes buscar y revisar el inventario. Los cambios los realiza la persona dueña del local.</p>}</section><ProductsView
+          <div className="stack"><header className="inventory-actions ui-work-toolbar"><div><h2>Catálogo del local</h2><span>{products.length} productos activos</span></div><div className="ui-toolbar-actions">{isOwner && canOperate && <><button className="primary-action" type="button" onClick={() => navigateTo("product_create")}><Plus size={18}/> Agregar producto</button><button className="secondary-action" type="button" onClick={() => navigateTo("setup")}><ListPlus size={18}/> Cargar varios</button>{(!subscription || hasEntitlement(subscription, "purchases")) && <button className="secondary-action" type="button" onClick={() => navigateTo("invoice")}><ReceiptText size={18}/> Ingresar factura</button>}</>}</div></header><ProductsView
             mode="stock"
+            initialFilter={inventoryEntryFilter}
             products={products}
             searchTerm={searchTerm}
             productForm={productForm}
@@ -1574,11 +1641,16 @@ function App() {
             onEdit={startEditProduct}
             onDeactivate={requestDeactivateProduct}
             onAdjustStock={(product, delta) => void adjustStock(product, delta)}
+            onBulkAdjustStock={(selected, delta) => void bulkAdjustStock(selected, delta)}
+            onQuickUpdate={quickUpdateProduct}
+            onOpenPurchases={(lines) => { setPurchaseProposal(lines); navigateTo("operations"); }}
           /></div>
         )}
 
         {!isLoading && activeView === "customers" && (
           <CustomersView
+            initialFilter={customerEntryFilter}
+            debts={debts}
             customers={customers}
             customerForm={customerForm}
             paymentAmounts={paymentAmounts}
@@ -1626,7 +1698,7 @@ function App() {
         )}
 
         {!isLoading && activeView === "operations" && (
-          <OperationsView products={products} canManage={isOwner && canOperate && (!subscription || hasEntitlement(subscription, "purchases"))} onRefresh={() => loadWorkspace()} />
+          <OperationsView products={products} purchaseProposal={purchaseProposal} onPurchaseProposalConsumed={() => setPurchaseProposal([])} canManage={isOwner && canOperate && (!subscription || hasEntitlement(subscription, "purchases"))} onRefresh={() => loadWorkspace()} />
         )}
 
         {!isLoading && activeView === "invoice" && isOwner && (
@@ -1896,6 +1968,9 @@ function LoginView({
 }
 
 function SaleView({
+  workspace,
+  onResume,
+  onDiscard,
   products,
   sales,
   ticket,
@@ -1918,6 +1993,9 @@ function SaleView({
   onPrintReceipt,
   onShareReceipt
 }: {
+  workspace: ReturnType<typeof useSaleWorkspace>;
+  onResume: (draft: SaleDraft) => void;
+  onDiscard: (id: string) => void;
   products: Product[];
   sales: Sale[];
   ticket: SaleItem[];
@@ -1940,13 +2018,16 @@ function SaleView({
   onPrintReceipt: () => void;
   onShareReceipt: () => void;
 }) {
-  const [discount, setDiscount] = useState("");
-  const [notes, setNotes] = useState("");
-  const [cashPart, setCashPart] = useState("");
+  const { discount, notes, cashPart } = workspace.active;
+  const { setDiscount, setNotes, setCashPart } = workspace;
+  const [mobileTicketOpen, setMobileTicketOpen] = useState(false);
+  const [showHeld, setShowHeld] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [visibleCount, setVisibleCount] = useState(60);
   const [isChoosingPayment, setIsChoosingPayment] = useState(false);
   const [externalPaymentConfirmed, setExternalPaymentConfirmed] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [featuredMode, setFeaturedMode] = useState<"popular" | "recent">("popular");
+  const [featuredMode, setFeaturedMode] = useState<"popular" | "recent" | "favorites">("favorites");
   const searchFilteredProducts = useMemo(() => {
     const normalized = searchTerm.trim().toLocaleLowerCase("es");
     if (!normalized) return products;
@@ -1969,6 +2050,7 @@ function SaleView({
     : searchFilteredProducts.filter((product) => (product.category.trim() || "Sin categoría").toLocaleLowerCase("es") === selectedCategory), [searchFilteredProducts, selectedCategory]);
   const featuredProducts = useMemo(() => {
     const productsById = new Map(products.map((product) => [product.id, product]));
+    if (featuredMode === "favorites") return workspace.favorites.map(id => productsById.get(id)).filter((product): product is Product => Boolean(product && product.active !== false));
     if (featuredMode === "popular") {
       const quantities = new Map<string, number>();
       sales.forEach((sale) => sale.items.forEach((item) => quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity)));
@@ -1977,12 +2059,17 @@ function SaleView({
 
     const recentIds = [...sales].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).flatMap((sale) => sale.items.map((item) => item.productId));
     return [...new Set(recentIds)].map((productId) => productsById.get(productId)).filter((product): product is Product => Boolean(product)).slice(0, 6);
-  }, [featuredMode, products, sales]);
+  }, [featuredMode, products, sales, workspace.favorites]);
   const selectedCategoryLabel = selectedCategory === "all" ? "Todos" : categoryOptions.find((category) => category.id === selectedCategory)?.label ?? "Todos";
-  const visibleProducts = categoryProducts.slice(0, 60);
+  const visibleProducts = categoryProducts.slice(0, visibleCount);
   const discountedTotal = Math.max(0, ticketTotal - numberFromInput(discount));
   const cardPart = Math.max(0, discountedTotal - numberFromInput(cashPart));
-  const isExternalPayment = ["card", "transfer", "webpay", "mercadopago"].includes(paymentMethod);
+  const isExternalPayment = ["card", "transfer", "webpay", "mercadopago"].includes(paymentMethod) || (paymentMethod === "mixed" && cardPart > 0);
+  const invalidAmounts = !Number.isFinite(Number(discount)) || Number(discount) < 0 || Number(discount) > ticketTotal || (paymentMethod === "mixed" && (!Number.isFinite(Number(cashPart)) || Number(cashPart) < 0 || Number(cashPart) > discountedTotal));
+
+  useEffect(() => { setVisibleCount(60); }, [searchTerm, selectedCategory]);
+  useEffect(() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); setReviewMessage(""); }, [workspace.active.id]);
+  useEffect(() => { setExternalPaymentConfirmed(false); }, [ticket, discount, cashPart, paymentMethod]);
 
   useEffect(() => {
     if (ticket.length === 0) {
@@ -2002,22 +2089,44 @@ function SaleView({
   }, [searchTerm]);
 
   function submitSale() {
+    if (isBusy || invalidAmounts || !ticket.length || (isExternalPayment && !externalPaymentConfirmed)) return;
+    const result = reconcileDraft(workspace.active, products);
+    if (result.changes.length) {
+      workspace.replaceActive(result.draft);
+      setExternalPaymentConfirmed(false);
+      setReviewMessage(`${result.changes.join(". ")}. Revisa el ticket antes de confirmar.`);
+      return;
+    }
     const payments = paymentMethod === "mixed" ? [{ method: "cash" as const, amount: numberFromInput(cashPart) }, { method: "card" as const, amount: cardPart }].filter((payment) => payment.amount > 0) : undefined;
     onConfirm({ discount: numberFromInput(discount), notes: notes.trim() || undefined, payments });
   }
 
   function scrollToTicket() {
-    document.getElementById("sale-ticket")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setMobileTicketOpen(true);
   }
 
   function openMobileCheckout() {
     setIsChoosingPayment(true);
     setExternalPaymentConfirmed(false);
-    window.setTimeout(scrollToTicket, 0);
+    setMobileTicketOpen(true);
   }
 
   return (
     <div className="workspace-grid sale-workspace">
+      <div className="sale-session-tools">
+        <button className="secondary-action" type="button" onClick={() => { workspace.hold(); setMobileTicketOpen(false); }} disabled={!ticket.length || isBusy || !canSell}><Pause size={18}/> Dejar en espera</button>
+        <button className="secondary-action" type="button" aria-expanded={showHeld} onClick={() => setShowHeld(value => !value)}><ReceiptText size={18}/> En espera ({workspace.held.length})</button>
+        {workspace.storageError && <p className="sale-storage-error" role="alert">{workspace.storageError}</p>}
+        {showHeld && <div className="held-sales-list">
+          {!workspace.held.length && <p className="empty-state">No hay ventas en espera.</p>}
+          {workspace.held.map(draft => <div className="held-sale" key={draft.id}>
+            <div><strong>{customers.find(customer => customer.id === draft.customerId)?.name || draft.items[0]?.productName || "Venta en espera"}</strong><small>{formatDateTime(draft.savedAt)} · {draft.items.reduce((sum, item) => sum + item.quantity, 0)} unidades</small>{draft.notes && <small>{draft.notes}</small>}</div>
+            <strong>{formatCLP(Math.max(0, draft.items.reduce((sum, item) => sum + item.subtotal, 0) - numberFromInput(draft.discount)))}</strong>
+            <button className="secondary-action small" type="button" onClick={() => { onResume(draft); setShowHeld(false); }} disabled={isBusy || !canSell}><Play size={16}/> Retomar</button>
+            <button className="icon-button danger" type="button" aria-label="Descartar venta en espera" title="Descartar venta en espera" onClick={() => onDiscard(draft.id)} disabled={isBusy || !canSell}><Trash2 size={17}/></button>
+          </div>)}
+        </div>}
+      </div>
       <section className="panel sale-products-panel" id="sale-product-picker">
         <div className="section-heading compact-heading">
           <div className="flow-title"><span>1</span><h2>Elige productos</h2></div>
@@ -2028,8 +2137,9 @@ function SaleView({
           <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
         </div>
         <ContextHelp title="¿Cómo preparo una venta rápida?" tips={["Busca por nombre, marca o código; también puedes elegir una categoría.", "Toca un producto para agregarlo al ticket y revisa cantidades antes de cobrar.", "Si tienes varios productos sobre el mesón, usa Venta Rápida con foto."]} />
-        {!searchTerm.trim() && featuredProducts.length > 0 && <section className="sale-featured-products" aria-label="Productos frecuentes">
-          <div className="sale-featured-heading"><strong>Productos frecuentes</strong><div role="group" aria-label="Tipo de productos frecuentes"><button className={featuredMode === "popular" ? "active" : ""} type="button" aria-pressed={featuredMode === "popular"} onClick={() => setFeaturedMode("popular")}><TrendingUp size={14}/> Más vendidos</button><button className={featuredMode === "recent" ? "active" : ""} type="button" aria-pressed={featuredMode === "recent"} onClick={() => setFeaturedMode("recent")}>Recientes</button></div></div>
+        {!searchTerm.trim() && <section className="sale-featured-products" aria-label="Productos frecuentes">
+          <div className="sale-featured-heading"><strong>Accesos rápidos</strong><div role="group" aria-label="Tipo de productos frecuentes"><button className={featuredMode === "favorites" ? "active" : ""} type="button" aria-pressed={featuredMode === "favorites"} onClick={() => setFeaturedMode("favorites")}><Star size={14}/> Favoritos</button><button className={featuredMode === "popular" ? "active" : ""} type="button" aria-pressed={featuredMode === "popular"} onClick={() => setFeaturedMode("popular")}><TrendingUp size={14}/> Más vendidos</button><button className={featuredMode === "recent" ? "active" : ""} type="button" aria-pressed={featuredMode === "recent"} onClick={() => setFeaturedMode("recent")}>Recientes</button></div></div>
+          {!featuredProducts.length && <p className="empty-state">{featuredMode === "favorites" ? "Aún no hay favoritos." : "Aún no hay ventas registradas."}</p>}
           <div className="sale-featured-list">
             {featuredProducts.map((product) => <button className="sale-featured-product" type="button" key={product.id} onClick={() => onAdd(product)} disabled={!canSell}><img src={productImageUrl(product)} alt="" aria-hidden="true"/><span><strong>{product.name}</strong><small>{formatCLP(product.salePrice)}</small></span></button>)}
           </div>
@@ -2056,7 +2166,7 @@ function SaleView({
         </button>
         <div className="list product-list">
           {visibleProducts.map((product) => (
-            <button className="product-button" type="button" key={product.id} onClick={() => onAdd(product)} disabled={!canSell}>
+            <div className="sale-product-entry" key={product.id}><button className="product-button" type="button" onClick={() => onAdd(product)} disabled={!canSell || isBusy || (product.trackStock !== false && product.stock <= 0)}>
               <span className="product-thumb">
                 <img src={productImageUrl(product)} alt="" aria-hidden="true" />
               </span>
@@ -2067,7 +2177,7 @@ function SaleView({
                 </p>
               </div>
               <span className="product-price">{formatCLP(product.salePrice)}</span>
-            </button>
+            </button><button className="icon-button sale-favorite" type="button" aria-label={`${workspace.favorites.includes(product.id) ? "Quitar de" : "Agregar a"} favoritos: ${product.name}`} title={workspace.favorites.includes(product.id) ? "Quitar de favoritos" : "Agregar a favoritos"} aria-pressed={workspace.favorites.includes(product.id)} onClick={() => workspace.toggleFavorite(product.id)}><Star size={19} fill={workspace.favorites.includes(product.id) ? "currentColor" : "none"}/></button></div>
           ))}
           {categoryProducts.length === 0 && (
             <EmptyState
@@ -2079,7 +2189,7 @@ function SaleView({
             />
           )}
           {categoryProducts.length > visibleProducts.length && (
-            <p className="helper-text">Mostrando los primeros {visibleProducts.length} de {categoryProducts.length} en {selectedCategoryLabel}. Escribe el nombre, marca o código para encontrar otro producto.</p>
+            <button className="secondary-action full" type="button" onClick={() => setVisibleCount(value => value + 60)}><Plus size={18}/> Mostrar más ({visibleProducts.length} de {categoryProducts.length})</button>
           )}
         </div>
       </section>
@@ -2093,7 +2203,9 @@ function SaleView({
         <button className="mobile-checkout-action" type="button" onClick={openMobileCheckout} disabled={!canSell || isBusy}><CheckCircle2 size={18}/><span>Cobrar</span></button>
       </div>}
 
-      <section className="panel ticket-panel" id="sale-ticket">
+      <SaleTicketSurface open={mobileTicketOpen} onClose={() => setMobileTicketOpen(false)} isBusy={isBusy}>
+        {reviewMessage && <p role="alert" className="sale-storage-error">{reviewMessage}</p>}
+        {(ticket.length > 0 || !lastReceipt) && <>
         <div className="section-heading">
           <div className="flow-title"><span>2</span><h2>Revisa el ticket</h2></div>
           <span>{ticket.length} items</span>
@@ -2109,16 +2221,16 @@ function SaleView({
               </div>
               <div className="row-actions">
                 <span className="amount">{formatCLP(item.subtotal)}</span>
-                <button className="icon-button" type="button" onClick={() => { const product = products.find((entry) => entry.id === item.productId); if (product) onAdd(product); }} aria-label="Agregar uno" disabled={!canSell}>
+                <button className="icon-button" type="button" onClick={() => { const product = products.find((entry) => entry.id === item.productId); if (product) onAdd(product); }} aria-label="Agregar uno" disabled={!canSell || isBusy}>
                   <Plus size={17} />
                 </button>
-                <button className="icon-button danger" type="button" onClick={() => onRemoveOne(item.productId)} aria-label="Quitar uno" disabled={!canSell}>
+                <button className="icon-button danger" type="button" onClick={() => onRemoveOne(item.productId)} aria-label="Quitar uno" disabled={!canSell || isBusy}>
                   <Minus size={17} />
                 </button>
               </div>
             </div>
           ))}
-          {ticket.length === 0 && <EmptyState icon={ShoppingCart} title="Tu ticket está vacío" description="Elige un producto del catálogo o usa Venta Rápida con foto para prepararlo." actionLabel="Elegir productos" onAction={() => document.getElementById("sale-product-picker")?.scrollIntoView({ behavior: "smooth", block: "start" })} />}
+          {ticket.length === 0 && <EmptyState icon={ShoppingCart} title="Tu ticket está vacío" description="" actionLabel="Elegir productos" onAction={() => { setMobileTicketOpen(false); document.querySelector<HTMLInputElement>(".sale-products-panel .search-box input")?.focus(); }} />}
         </div>
 
         {isChoosingPayment && <><div className="checkout-step"><span>3</span><div><strong>¿Cómo pagará?</strong><p>Registra el pago solo después de verificarlo.</p></div></div><div className="payment-methods">
@@ -2142,6 +2254,7 @@ function SaleView({
           <label className="field">
             Cliente para fiado
             <select value={selectedCustomerId} onChange={(event) => onCustomer(event.target.value)}>
+              <option value="">Seleccionar cliente</option>
               {customers.map((customer) => (
                 <option value={customer.id} key={customer.id}>
                   {customer.name} - deuda {formatCLP(customer.debtBalance)}
@@ -2162,11 +2275,14 @@ function SaleView({
           <strong>{formatCLP(discountedTotal)}</strong>
         </div>
 
-        {!isChoosingPayment ? <button className="primary-action full" type="button" onClick={() => setIsChoosingPayment(true)} disabled={isBusy || !canSell || ticket.length === 0}>
+        {invalidAmounts && <p role="alert" className="sale-storage-error">Revisa los montos: deben ser positivos o cero y no superar el total.</p>}
+        {!isChoosingPayment ? <button className="primary-action full" type="button" onClick={() => setIsChoosingPayment(true)} disabled={isBusy || !canSell || ticket.length === 0 || invalidAmounts}>
           <CheckCircle2 size={20} />
           <span>{`Cobrar ${formatCLP(discountedTotal)}`}</span>
-        </button> : <div className="stack compact-stack"><button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy || !canSell || (isExternalPayment && !externalPaymentConfirmed)}><CheckCircle2 size={20}/><span>{isBusy ? "Registrando..." : isExternalPayment ? "Confirmar pago y registrar venta" : `Registrar venta · ${formatCLP(discountedTotal)}`}</span></button><button className="secondary-action full" type="button" onClick={() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); }}>Volver al ticket</button></div>}
-        {lastReceipt && (
+        </button> : <div className="stack compact-stack"><button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy || !canSell || !ticket.length || invalidAmounts || (paymentMethod === "credit" && !selectedCustomerId) || (isExternalPayment && !externalPaymentConfirmed)}><CheckCircle2 size={20}/><span>{isBusy ? "Registrando..." : isExternalPayment ? "Confirmar pago y registrar venta" : `Registrar venta · ${formatCLP(discountedTotal)}`}</span></button><button className="secondary-action full" type="button" disabled={isBusy} onClick={() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); }}>Volver al ticket</button></div>}
+        {ticket.length > 0 && <button className="secondary-action full" type="button" disabled={isBusy || !canSell} onClick={() => { workspace.hold(); setMobileTicketOpen(false); }}><Pause size={18}/> Dejar en espera</button>}
+        </>}
+        {lastReceipt && ticket.length === 0 && (
           <div className="receipt-card">
             <div>
               <strong>Comprobante listo</strong>
@@ -2184,13 +2300,47 @@ function SaleView({
             </button>
           </div>
         )}
-      </section>
+        {lastReceipt && ticket.length === 0 && <button className="primary-action full" type="button" onClick={() => { setMobileTicketOpen(false); document.querySelector<HTMLInputElement>(".sale-products-panel .search-box input")?.focus(); }}><Plus size={19}/> Nueva venta</button>}
+      </SaleTicketSurface>
     </div>
   );
 }
 
+function SaleTicketSurface({ open, onClose, isBusy, children }: { open: boolean; onClose: () => void; isBusy: boolean; children: ReactNode }) {
+  const [mobile, setMobile] = useState(() => window.matchMedia("(max-width: 959px)").matches);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 959px)");
+    const update = () => setMobile(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!mobile || !open || !dialog) return;
+    const previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = "hidden";
+    return () => { dialog.close(); document.body.style.overflow = previousOverflow; };
+  }, [mobile, open]);
+  const content = <section className="panel ticket-panel" id="sale-ticket" aria-busy={isBusy}>
+    {mobile && <div className="mobile-ticket-heading"><strong id="mobile-ticket-title">Ticket de venta</strong><button className="icon-button" type="button" aria-label="Volver al catálogo" title="Volver al catálogo" onClick={onClose} disabled={isBusy}><X size={21}/></button></div>}
+    <fieldset className="sale-ticket-fields" disabled={isBusy}>{children}</fieldset>
+  </section>;
+  return mobile ? createPortal(<dialog ref={dialogRef} className="mobile-ticket-dialog" aria-labelledby="mobile-ticket-title" onKeyDown={event => {
+    if (event.key !== "Tab") return;
+    const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex='0']")).filter(control => control.getClientRects().length > 0);
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (!first) { event.preventDefault(); return; }
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }} onCancel={event => { event.preventDefault(); if (!isBusy) onClose(); }}>{content}</dialog>, document.body) : content;
+}
+
 function ProductsView({
   mode,
+  initialFilter = "all",
   products,
   searchTerm,
   productForm,
@@ -2203,9 +2353,13 @@ function ProductsView({
   onCancelEdit,
   onEdit,
   onDeactivate,
-  onAdjustStock
+  onAdjustStock,
+  onBulkAdjustStock,
+  onQuickUpdate,
+  onOpenPurchases
 }: {
   mode: "create" | "stock";
+  initialFilter?: InventoryFilter;
   products: Product[];
   searchTerm: string;
   productForm: ProductFormState;
@@ -2219,10 +2373,17 @@ function ProductsView({
   onEdit: (product: Product) => void;
   onDeactivate: (product: Product) => void;
   onAdjustStock: (product: Product, delta: number) => void;
+  onBulkAdjustStock?: (products: Product[], delta: number) => void;
+  onQuickUpdate?: (product: Product, salePrice: number, stock: number) => Promise<void>;
+  onOpenPurchases?: (lines: PurchaseProposalLine[]) => void;
 }) {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [stockFilter, setStockFilter] = useState<"all" | "low" | "out">("all");
+  const [stockFilter, setStockFilter] = useState<InventoryFilter>(initialFilter);
+  const [inventoryLimit, setInventoryLimit] = useState(60);
+  const today = businessDay();
   const [showAdvancedProductFields, setShowAdvancedProductFields] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [proposalLines, setProposalLines] = useState<PurchaseProposalLine[]>([]);
   const categoryOptions = useMemo(() => {
     const categories = new Map<string, { label: string; count: number }>();
 
@@ -2243,17 +2404,22 @@ function ProductsView({
     return products.filter((product) => {
       const productCategory = (product.category.trim() || "Sin categoría").toLocaleLowerCase("es");
       const matchesCategory = selectedCategory === "all" || productCategory === selectedCategory;
-      const matchesStock = stockFilter === "all" || (stockFilter === "out" ? product.trackStock !== false && product.stock <= 0 : product.trackStock !== false && product.stock <= product.minimumStock);
+      const matchesStock = matchesInventoryFilter(product, stockFilter, today);
       const matchesSearch = !normalizedSearch || [product.name, product.brand, product.category, product.barcode, product.sku]
         .filter(Boolean)
         .some((value) => value?.toLocaleLowerCase("es").includes(normalizedSearch));
 
       return matchesCategory && matchesStock && matchesSearch;
     });
-  }, [products, searchTerm, selectedCategory, stockFilter]);
+  }, [products, searchTerm, selectedCategory, stockFilter, today]);
   const visibleLowStock = inventoryProducts.filter((product) => product.trackStock !== false && product.stock <= product.minimumStock).length;
   const visibleStockValue = inventoryProducts.reduce((sum, product) => sum + product.stock * product.salePrice, 0);
-  const renderedInventoryProducts = inventoryProducts.slice(0, 60);
+  const renderedInventoryProducts = inventoryProducts.slice(0, inventoryLimit);
+  const selectedProducts = products.filter(product => selectedProductIds.includes(product.id));
+  const allVisibleSelected = renderedInventoryProducts.length > 0 && renderedInventoryProducts.every(product => selectedProductIds.includes(product.id));
+
+  useEffect(() => { setInventoryLimit(60); }, [searchTerm, selectedCategory, stockFilter]);
+  useEffect(() => { setSelectedProductIds(current => current.filter(id => products.some(product => product.id === id))); }, [products]);
 
   useEffect(() => {
     if (selectedCategory !== "all" && !categoryOptions.some((category) => category.id === selectedCategory)) {
@@ -2267,36 +2433,52 @@ function ProductsView({
     onSearch("");
   }
 
+  function toggleProduct(productId: string) {
+    setSelectedProductIds(current => current.includes(productId) ? current.filter(id => id !== productId) : [...current, productId]);
+  }
+
+  function toggleVisibleProducts() {
+    setSelectedProductIds(current => allVisibleSelected ? current.filter(id => !renderedInventoryProducts.some(product => product.id === id)) : [...new Set([...current, ...renderedInventoryProducts.map(product => product.id)])]);
+  }
+
+  function createProposal() {
+    setProposalLines(selectedProducts.filter(product => product.trackStock !== false && product.active !== false).map(product => ({ productId: product.id, productName: product.name, quantity: suggestedReplenishment(product), unitCost: product.costPrice })));
+  }
+
+  function updateProposalQuantity(productId: string, value: string) {
+    const quantity = Math.max(1, Number(value) || 1);
+    setProposalLines(current => current.map(line => line.productId === productId ? { ...line, quantity } : line));
+  }
+
   return (
     <div className="stack">
       {mode === "create" && canManageProducts && (
-        <section className="panel product-form-panel">
+        <FormSurface className="panel product-form-panel" label="Datos del producto" busy={isBusy} onSave={onCreate}>
           <div className="section-heading">
             <h2>{editingProductId ? "Editar producto" : "Crear producto"}</h2>
             <span>{editingProductId ? "Actualización" : "Catálogo del local"}</span>
           </div>
-          <div className="progressive-form-heading"><span>Datos principales</span><p>Solo necesitas estos cuatro datos para crear y vender el producto.</p></div>
+          <div className="progressive-form-heading"><span>Datos principales</span></div>
           <div className="form-grid product-form-primary-grid">
-            <label className="form-field"><span>Nombre del producto</span><input value={productForm.name} onChange={(event) => onForm({ ...productForm, name: event.target.value })} placeholder="Ej. Bebida cola 1,5 L" /></label>
-            <label className="form-field"><span>Categoría</span><input value={productForm.category} onChange={(event) => onForm({ ...productForm, category: event.target.value })} placeholder="Ej. Bebidas" list="product-category-options" /></label>
+            <FormField label="Nombre del producto" value={productForm.name} onChange={value => onForm({ ...productForm, name: value })} required pattern=".*\S.*" placeholder="Ej. Bebida cola 1,5 L" />
+            <FormField label="Categoría" value={productForm.category} onChange={value => onForm({ ...productForm, category: value })} required pattern=".*\S.*" list="product-category-options" placeholder="Ej. Bebidas" />
             <datalist id="product-category-options">
               {categoryOptions.map((category) => <option value={category.label} key={category.id} />)}
             </datalist>
-            <label className="form-field"><span>Precio de venta</span><input value={productForm.salePrice} onChange={(event) => onForm({ ...productForm, salePrice: event.target.value })} placeholder="$0" inputMode="numeric" /></label>
-            <label className="form-field"><span>Stock inicial</span><input value={productForm.stock} onChange={(event) => onForm({ ...productForm, stock: event.target.value })} placeholder="0" inputMode="numeric" /></label>
+            <FormField label="Precio de venta" value={productForm.salePrice} onChange={value => onForm({ ...productForm, salePrice: value })} type="number" min="1" step="1" required placeholder="$0" />
+            <FormField label="Stock inicial" value={productForm.stock} onChange={value => onForm({ ...productForm, stock: value })} type="number" min="0" step="any" placeholder="0" />
           </div>
-          {!editingProductId && <button className="secondary-action full progressive-form-toggle" type="button" aria-expanded={showAdvancedProductFields} onClick={() => setShowAdvancedProductFields((value) => !value)}>{showAdvancedProductFields ? "Ocultar información adicional" : "Agregar información adicional"}<span>{showAdvancedProductFields ? "Marca, código y control de stock" : "Marca, código, costo, vencimiento y más"}</span></button>}
-          {(showAdvancedProductFields || Boolean(editingProductId)) && <div className="progressive-form-additional"><div className="progressive-form-heading"><span>Información adicional</span><p>Completa solo lo que te ayude a ordenar mejor el inventario.</p></div><div className="form-grid advanced-product-fields"><label className="form-field"><span>Marca</span><input value={productForm.brand} onChange={(event) => onForm({ ...productForm, brand: event.target.value })} placeholder="Ej. Coca-Cola" /></label><label className="form-field"><span>Código de barras</span><input value={productForm.barcode} onChange={(event) => onForm({ ...productForm, barcode: event.target.value })} placeholder="Código del envase" inputMode="numeric" /></label><label className="form-field"><span>Costo</span><input value={productForm.costPrice} onChange={(event) => onForm({ ...productForm, costPrice: event.target.value })} placeholder="$0" inputMode="numeric" /></label><label className="form-field"><span>Stock mínimo</span><input value={productForm.minimumStock} onChange={(event) => onForm({ ...productForm, minimumStock: event.target.value })} placeholder="0" inputMode="numeric" /></label><label className="form-field"><span>SKU interno</span><input value={productForm.sku} onChange={(event) => onForm({ ...productForm, sku: event.target.value })} placeholder="Código interno" /></label><label className="form-field"><span>Variante o formato</span><input value={productForm.variant} onChange={(event) => onForm({ ...productForm, variant: event.target.value })} placeholder="Ej. Sin azúcar, pack 6" /></label><label className="form-field"><span>Unidad de venta</span><select value={productForm.unit} onChange={(event) => onForm({ ...productForm, unit: event.target.value as ProductFormState["unit"] })}><option value="unit">Unidad</option><option value="kg">Kilogramo</option><option value="gram">Gramo</option><option value="liter">Litro</option><option value="pack">Pack</option><option value="box">Caja</option></select></label><label className="form-field"><span>Unidades por pack</span><input value={productForm.unitsPerPack} onChange={(event) => onForm({ ...productForm, unitsPerPack: event.target.value })} placeholder="Ej. 6" inputMode="numeric" /></label><label className="form-field"><span>Vencimiento</span><input type="date" value={productForm.expiryDate} onChange={(event) => onForm({ ...productForm, expiryDate: event.target.value })} /></label><label className="field checkbox-field"><input type="checkbox" checked={productForm.trackStock} onChange={(event) => onForm({ ...productForm, trackStock: event.target.checked })} /> Controlar stock de este producto</label></div></div>}
-          <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy}>
+          <details className="progressive-form-additional" open={showAdvancedProductFields || Boolean(editingProductId)} onToggle={event => setShowAdvancedProductFields(event.currentTarget.open)}><summary>Información adicional</summary><div className="progressive-form-heading"><span>Información adicional</span><p>Completa solo lo que te ayude a ordenar mejor el inventario.</p></div><div className="form-grid advanced-product-fields"><label className="form-field"><span>Marca</span><input value={productForm.brand} onChange={(event) => onForm({ ...productForm, brand: event.target.value })} placeholder="Ej. Coca-Cola" /></label><label className="form-field"><span>Código de barras</span><input value={productForm.barcode} onChange={(event) => onForm({ ...productForm, barcode: event.target.value })} placeholder="Código del envase" inputMode="numeric" /></label><FormField label="Costo" value={productForm.costPrice} onChange={value => onForm({ ...productForm, costPrice: value })} type="number" min="0" step="1" placeholder="$0" /><FormField label="Stock mínimo" value={productForm.minimumStock} onChange={value => onForm({ ...productForm, minimumStock: value })} type="number" min="0" step="any" placeholder="0" /><label className="form-field"><span>SKU interno</span><input value={productForm.sku} onChange={(event) => onForm({ ...productForm, sku: event.target.value })} placeholder="Código interno" /></label><label className="form-field"><span>Variante o formato</span><input value={productForm.variant} onChange={(event) => onForm({ ...productForm, variant: event.target.value })} placeholder="Ej. Sin azúcar, pack 6" /></label><label className="form-field"><span>Unidad de venta</span><select value={productForm.unit} onChange={(event) => onForm({ ...productForm, unit: event.target.value as ProductFormState["unit"] })}><option value="unit">Unidad</option><option value="kg">Kilogramo</option><option value="gram">Gramo</option><option value="liter">Litro</option><option value="pack">Pack</option><option value="box">Caja</option></select></label><FormField label="Unidades por pack" value={productForm.unitsPerPack} onChange={value => onForm({ ...productForm, unitsPerPack: value })} type="number" min="1" step="1" placeholder="Ej. 6" /><label className="form-field"><span>Vencimiento</span><input type="date" value={productForm.expiryDate} onChange={(event) => onForm({ ...productForm, expiryDate: event.target.value })} /></label><label className="field checkbox-field"><input type="checkbox" checked={productForm.trackStock} onChange={(event) => onForm({ ...productForm, trackStock: event.target.checked })} /> Controlar stock de este producto</label></div></details>
+          <button className="primary-action full" type="submit" disabled={isBusy}>
             {editingProductId ? <Save size={19} /> : <Plus size={19} />}
-            <span>{editingProductId ? "Guardar producto" : "Crear producto"}</span>
+            <span>{isBusy ? "Guardando..." : editingProductId ? "Guardar producto" : "Crear producto"}</span>
           </button>
           {editingProductId && (
             <button className="secondary-action full" type="button" onClick={onCancelEdit}>
               Cancelar edición
             </button>
           )}
-        </section>
+        </FormSurface>
       )}
 
       {mode === "stock" && <section className="panel inventory-panel">
@@ -2304,7 +2486,6 @@ function ProductsView({
           <h2>Inventario</h2>
           <span>{inventoryProducts.length === products.length ? `${products.length} productos` : `${inventoryProducts.length} de ${products.length}`}</span>
         </div>
-        <ContextHelp title="¿Cómo ordeno el inventario?" tips={["Usa categorías, stock bajo o sin stock para encontrar lo que necesitas.", "Para un producto nuevo elige Crear producto; para varios, usa Cargar varios.", "Ingresa una factura solo cuando vayas a recibir mercadería y confirmar sus datos."]} />
         <div className="search-box">
           <Search size={18} />
           <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
@@ -2337,7 +2518,9 @@ function ProductsView({
               </button>
             ))}
           </div>
-          <div className="stock-filter-list" role="group" aria-label="Filtrar inventario por stock"><button className={stockFilter === "all" ? "category-filter active" : "category-filter"} type="button" onClick={() => setStockFilter("all")}>Todo stock</button><button className={stockFilter === "low" ? "category-filter active" : "category-filter"} type="button" onClick={() => setStockFilter("low")}>Stock bajo</button><button className={stockFilter === "out" ? "category-filter active" : "category-filter"} type="button" onClick={() => setStockFilter("out")}>Sin stock</button></div>
+          <div className="stock-filter-list" role="group" aria-label="Filtrar inventario por stock">
+            {([["all", "Todo stock"], ["low", "Stock bajo"], ["out", "Sin stock"], ["expired", "Vencidos"], ["expiring", "Por vencer (30 días)"]] as const).map(([filter, label]) => <button className={stockFilter === filter ? "category-filter active" : "category-filter"} type="button" aria-pressed={stockFilter === filter} onClick={() => setStockFilter(filter)} key={filter}>{label}</button>)}
+          </div>
         </div>
         {!canManageProducts && <p className="helper-text">Vista solo lectura para vendedores.</p>}
         <div className="inventory-strip" aria-label="Resumen de inventario visible">
@@ -2354,20 +2537,37 @@ function ProductsView({
             <strong>{formatCLP(visibleStockValue)}</strong>
           </div>
         </div>
+        {canManageProducts && <div className="inventory-selection-actions">
+          <button className="secondary-action small" type="button" onClick={toggleVisibleProducts}>{allVisibleSelected ? "Quitar selección visible" : "Seleccionar visibles"}</button>
+          {selectedProductIds.length > 0 && <button className="secondary-action small" type="button" onClick={() => setSelectedProductIds([])}>Limpiar selección ({selectedProductIds.length})</button>}
+        </div>}
+        {canManageProducts && selectedProductIds.length > 0 && <div className="inventory-bulk-bar" role="region" aria-label="Acciones para productos seleccionados">
+          <span>{selectedProductIds.length} producto{selectedProductIds.length === 1 ? "" : "s"} seleccionado{selectedProductIds.length === 1 ? "" : "s"}</span>
+          <div className="inventory-bulk-actions"><button className="secondary-action small" type="button" disabled={isBusy} onClick={() => onBulkAdjustStock?.(selectedProducts, 1)}><Plus size={16}/> Sumar 1</button><button className="secondary-action small" type="button" disabled={isBusy} onClick={() => onBulkAdjustStock?.(selectedProducts, -1)}><Minus size={16}/> Restar 1</button><button className="primary-action small" type="button" onClick={createProposal}><ReceiptText size={16}/> Proponer reposición</button></div>
+        </div>}
+        {proposalLines.length > 0 && <section className="inventory-proposal" aria-label="Propuesta de reposición">
+          <div className="inventory-proposal-heading"><div><span>Propuesta revisable</span><h3>Reposición sugerida</h3><p>Revisa cantidades antes de convertirla en una orden de compra.</p></div><button className="icon-button" type="button" aria-label="Cerrar propuesta" onClick={() => setProposalLines([])}><X size={17}/></button></div>
+          <div className="inventory-proposal-lines">{proposalLines.map(line => <div className="inventory-proposal-line" key={line.productId}><span><strong>{line.productName}</strong><small>Costo referencial {formatCLP(line.unitCost)}</small></span><label><span>Cantidad</span><input aria-label={`Cantidad de ${line.productName}`} type="number" min="1" value={line.quantity} onChange={event => updateProposalQuantity(line.productId, event.target.value)}/></label><button className="icon-button danger" type="button" aria-label={`Quitar ${line.productName}`} onClick={() => setProposalLines(current => current.filter(item => item.productId !== line.productId))}><Trash2 size={16}/></button></div>)}</div>
+          <div className="inventory-proposal-actions"><button className="primary-action" type="button" onClick={() => onOpenPurchases?.(proposalLines)}><ReceiptText size={18}/> Revisar en Compras</button><button className="secondary-action" type="button" onClick={() => setProposalLines([])}>Descartar propuesta</button></div>
+        </section>}
         <div className="list stock-list">
+          <div className="inventory-table-header" aria-hidden="true"><span></span><span>Producto</span><span>Stock</span><span>Mínimo</span><span>Costo</span><span>Precio</span><span>Acciones</span></div>
           {renderedInventoryProducts.map((product) => (
-            <ProductRow
+            <InventoryRow
+              imageUrl={productImageUrl(product)}
+              isBusy={isBusy}
               product={product}
               key={product.id}
               canManageProducts={canManageProducts}
               onAdjustStock={onAdjustStock}
               onEdit={onEdit}
               onDeactivate={onDeactivate}
+              selected={selectedProductIds.includes(product.id)}
+              onSelect={() => toggleProduct(product.id)}
+              onQuickUpdate={onQuickUpdate}
             />
           ))}
-          {inventoryProducts.length > renderedInventoryProducts.length && (
-            <p className="helper-text">Mostrando los primeros {renderedInventoryProducts.length} de {inventoryProducts.length}. Usa las categorías o el buscador para llegar al producto que necesitas.</p>
-          )}
+          {inventoryProducts.length > 0 && <div className="inventory-pagination"><span>Mostrando {renderedInventoryProducts.length} de {inventoryProducts.length}</span>{inventoryProducts.length > renderedInventoryProducts.length && <button className="secondary-action small" type="button" onClick={() => setInventoryLimit(limit => limit + 60)}>Mostrar más</button>}</div>}
           {inventoryProducts.length === 0 && (
             <div className="inventory-empty-state">
               <Search size={22} />
@@ -2385,6 +2585,8 @@ function ProductsView({
 }
 
 function CustomersView({
+  initialFilter = "clients",
+  debts,
   customers,
   customerForm,
   paymentAmounts,
@@ -2406,6 +2608,8 @@ function CustomersView({
   onWhatsAppDebtCharge,
   onConfirmDebtCharge
 }: {
+  initialFilter?: CustomerFilter;
+  debts: DebtAccount[];
   customers: Customer[];
   customerForm: CustomerFormState;
   paymentAmounts: Record<string, string>;
@@ -2427,43 +2631,46 @@ function CustomersView({
   onWhatsAppDebtCharge: (charge: DebtChargeState) => void;
   onConfirmDebtCharge: (charge: DebtChargeState) => void;
 }) {
-  const [customerTab, setCustomerTab] = useState<"clients" | "credit" | "pending">("clients");
+  const [customerTab, setCustomerTab] = useState<CustomerFilter>(initialFilter);
   const [debtMethods, setDebtMethods] = useState<Record<string, Exclude<PaymentMethod, "credit" | "mixed">>>({});
-  const visibleCustomers = customerTab === "clients" ? customers : customers.filter((customer) => customer.debtBalance > 0);
+  const overdue = overdueDebts(debts);
+  const overdueCustomerIds = new Set(overdue.map(debt => debt.customerId));
+  const visibleCustomers = customerTab === "clients" ? customers : customers.filter(customer => customer.debtBalance > 0 && (customerTab !== "overdue" || overdueCustomerIds.has(customer.id)));
   return (
-    <div className="stack"><nav className="section-tabs" aria-label="Secciones de clientes"><button className={customerTab === "clients" ? "active" : ""} type="button" onClick={() => setCustomerTab("clients")}>Clientes <span>{customers.length}</span></button><button className={customerTab === "credit" ? "active" : ""} type="button" onClick={() => setCustomerTab("credit")}>Fiado <span>{customers.filter((customer) => customer.debtBalance > 0).length}</span></button><button className={customerTab === "pending" ? "active" : ""} type="button" onClick={() => setCustomerTab("pending")}>Pendientes <span>{customers.filter((customer) => customer.debtBalance > 0).length}</span></button></nav><div className="workspace-grid customer-workspace">
-      {customerTab === "clients" && <section className="panel customer-form-panel">
+    <div className="stack">
+      <nav className="section-tabs" aria-label="Secciones de clientes">
+        {([["clients", "Clientes", customers.length], ["credit", "Fiado", customers.filter(customer => customer.debtBalance > 0).length], ["pending", "Pendientes", customers.filter(customer => customer.debtBalance > 0).length], ["overdue", "Vencidos", customers.filter(customer => customer.debtBalance > 0 && overdueCustomerIds.has(customer.id)).length]] as const).map(([tab, label, count]) => <button className={customerTab === tab ? "active" : ""} type="button" aria-pressed={customerTab === tab} onClick={() => setCustomerTab(tab)} key={tab}>{label} <span>{count}</span></button>)}
+      </nav><div className="workspace-grid customer-workspace">
+      {customerTab === "clients" && <FormSurface className="panel customer-form-panel" label="Datos del cliente" busy={isBusy || !canOperate} onSave={onCreate}>
         <div className="section-heading">
           <h2>{editingCustomerId ? "Editar cliente" : "Nuevo cliente"}</h2>
           <span>{canManageCustomers ? "Fiado" : "Alta rápida"}</span>
         </div>
-        <p className="helper-text customer-form-intro">Registra lo esencial primero. Puedes completar más datos cuando los necesites.</p>
-        <ContextHelp title="¿Cómo usar clientes y fiados?" tips={["Crea al cliente antes de hacer una venta a fiado.", "Define un límite y los días acordados solo si necesitas controlarlos.", "Cuando te paguen, registra un abono para que la deuda quede al día."]} />
         <div className="form-grid customer-form-grid customer-form-primary-grid">
-          <label className="form-field"><span>Nombre completo</span><input id="customer-name" value={customerForm.name} onChange={(event) => onForm({ ...customerForm, name: event.target.value })} placeholder="Ej. María González" /></label>
-          <label className="form-field"><span>Teléfono</span><input value={customerForm.phone} onChange={(event) => onForm({ ...customerForm, phone: event.target.value })} placeholder="+56 9..." /></label>
-          <label className="form-field"><span>Límite de fiado</span><input value={customerForm.creditLimit} onChange={(event) => onForm({ ...customerForm, creditLimit: event.target.value })} placeholder="0 = sin límite" inputMode="numeric" /></label>
-          <label className="form-field"><span>Días para pagar</span><input value={customerForm.creditDays} onChange={(event) => onForm({ ...customerForm, creditDays: event.target.value })} placeholder="30" inputMode="numeric" /></label>
+          <FormField label="Nombre completo" value={customerForm.name} onChange={value => onForm({ ...customerForm, name: value })} id="customer-name" required pattern=".*\S.*" placeholder="Ej. María González" />
+          <FormField label="Teléfono" value={customerForm.phone} onChange={value => onForm({ ...customerForm, phone: value })} type="tel" placeholder="+56 9..." />
+          <FormField label="Límite de fiado" value={customerForm.creditLimit} onChange={value => onForm({ ...customerForm, creditLimit: value })} type="number" min="0" step="1" placeholder="0 = sin límite" />
+          <FormField label="Días para pagar" value={customerForm.creditDays} onChange={value => onForm({ ...customerForm, creditDays: value })} type="number" min="1" step="1" placeholder="30" />
           {canManageCustomers && <label className="field checkbox-field"><input type="checkbox" checked={customerForm.creditBlocked} onChange={(event) => onForm({ ...customerForm, creditBlocked: event.target.checked })} /> Bloquear nuevos fiados</label>}
         </div>
         <details className="customer-additional-fields">
           <summary><span>Información adicional</span><small>Correo, dirección y observaciones</small></summary>
           <div className="form-grid customer-form-grid">
-            <label className="form-field"><span>Correo (opcional)</span><input value={customerForm.email} onChange={(event) => onForm({ ...customerForm, email: event.target.value })} placeholder="cliente@correo.cl" /></label>
+            <FormField label="Correo (opcional)" value={customerForm.email} onChange={value => onForm({ ...customerForm, email: value })} type="email" placeholder="cliente@correo.cl" />
             <label className="form-field"><span>Dirección (opcional)</span><input value={customerForm.address} onChange={(event) => onForm({ ...customerForm, address: event.target.value })} placeholder="Calle y número" /></label>
             <label className="form-field customer-notes-field"><span>Observaciones</span><input value={customerForm.notes} onChange={(event) => onForm({ ...customerForm, notes: event.target.value })} placeholder="Datos útiles del cliente" /></label>
           </div>
         </details>
-        <button className="primary-action full" type="button" onClick={onCreate} disabled={isBusy || !canOperate}>
+        <button className="primary-action full" type="submit" disabled={isBusy || !canOperate}>
           {editingCustomerId ? <Save size={19} /> : <Plus size={19} />}
-          <span>{editingCustomerId ? "Guardar cliente" : "Crear cliente"}</span>
+          <span>{isBusy ? "Guardando..." : editingCustomerId ? "Guardar cliente" : "Crear cliente"}</span>
         </button>
         {editingCustomerId && canManageCustomers && (
           <button className="secondary-action full" type="button" onClick={onCancelEdit}>
             Cancelar edición
           </button>
         )}
-      </section>}
+      </FormSurface>}
 
       {customerTab === "clients" && <CustomerOverview customers={customers} />}
 
@@ -2500,7 +2707,7 @@ function CustomersView({
 
       <section className="panel accounts-panel">
         <div className="section-heading">
-          <h2>{customerTab === "clients" ? "Todos los clientes" : customerTab === "credit" ? "Cuentas de fiado" : "Cobros pendientes"}</h2>
+          <h2>{customerTab === "clients" ? "Todos los clientes" : customerTab === "credit" ? "Cuentas de fiado" : customerTab === "overdue" ? "Clientes con fiado vencido" : "Cobros pendientes"}</h2>
           <span>{visibleCustomers.length} registros</span>
         </div>
         <div className="list">
@@ -2509,6 +2716,7 @@ function CustomersView({
               <div>
                 <strong>{customer.name}</strong>
                 <p>{customer.phone ?? "Sin teléfono"}</p>
+                {customerTab === "overdue" && <p>Vencido: {formatCLP(overdue.filter(debt => debt.customerId === customer.id).reduce((total, debt) => total + debt.balance, 0))}</p>}
               </div>
               <span className={customer.debtBalance > 0 ? "debt" : "paid"}>{formatCLP(customer.debtBalance)}</span>
               <input
@@ -2544,7 +2752,7 @@ function CustomersView({
               </div>
             </div>
           ))}
-          {visibleCustomers.length === 0 && <EmptyState icon={Users} title={customerTab === "clients" ? "Aún no has registrado clientes" : "No hay cuentas pendientes"} description={customerTab === "clients" ? "Crea tu primer cliente para guardar sus datos y administrar sus fiados." : "Cuando un cliente tenga un fiado activo, aparecerá aquí para que puedas revisarlo."} actionLabel={customerTab === "clients" ? "Crear cliente" : undefined} onAction={customerTab === "clients" ? () => document.getElementById("customer-name")?.focus() : undefined} />}
+          {visibleCustomers.length === 0 && <EmptyState icon={Users} title={customerTab === "clients" ? "Aún no has registrado clientes" : customerTab === "overdue" ? "No hay fiados vencidos" : "No hay cuentas pendientes"} description={customerTab === "clients" ? "Crea tu primer cliente para guardar sus datos y administrar sus fiados." : customerTab === "overdue" ? "Ningún cliente tiene un saldo con fecha de pago vencida." : "Cuando un cliente tenga un fiado activo, aparecerá aquí para que puedas revisarlo."} actionLabel={customerTab === "clients" ? "Crear cliente" : undefined} onAction={customerTab === "clients" ? () => document.getElementById("customer-name")?.focus() : undefined} />}
         </div>
       </section>
     </div></div>
@@ -3017,71 +3225,6 @@ function ReportMetric({ label, value, tone = "default" }: { label: string; value
     <div className={`report-metric ${tone}`}>
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
-  );
-}
-
-function ProductRow({
-  product,
-  canManageProducts,
-  onAdjustStock,
-  onEdit,
-  onDeactivate
-}: {
-  product: Product;
-  canManageProducts: boolean;
-  onAdjustStock: (product: Product, delta: number) => void;
-  onEdit: (product: Product) => void;
-  onDeactivate: (product: Product) => void;
-}) {
-  const isLow = product.trackStock !== false && product.stock <= product.minimumStock;
-  const stockGap = Math.max(0, product.minimumStock - product.stock);
-
-  return (
-    <div className={isLow ? "product-row stock-card low" : "product-row stock-card"}>
-      <div className="product-visual">
-        <img src={productImageUrl(product)} alt="" aria-hidden="true" />
-      </div>
-      <div className="product-main">
-        <div className="product-title-line">
-          <strong>{product.name}</strong>
-          <span className={isLow ? "stock-status low" : "stock-status"}>{isLow ? "Bajo" : "OK"}</span>
-        </div>
-        <p>{product.brand ?? "Sin marca"} · {product.category}</p>
-        {product.barcode && <span className="product-code">Cod. {product.barcode}</span>}
-      </div>
-      <div className="product-meta">
-        <div>
-          <span>Stock</span>
-          <strong>{product.stock}</strong>
-        </div>
-        <div>
-          <span>Minimo</span>
-          <strong>{product.minimumStock}</strong>
-        </div>
-        <div>
-          <span>Precio</span>
-          <strong>{formatCLP(product.salePrice)}</strong>
-        </div>
-      </div>
-      {isLow && <p className="stock-warning">Faltan {stockGap} para llegar al minimo.</p>}
-      {canManageProducts && (
-        <div className="stock-actions">
-          <button className="icon-button stock-edit-action" type="button" onClick={() => onEdit(product)} aria-label={`Editar ${product.name}`}>
-            <Edit3 size={17} />
-            <span>Editar</span>
-          </button>
-          <button className="icon-button" type="button" onClick={() => onAdjustStock(product, -1)} aria-label="Bajar stock">
-            <Minus size={17} />
-          </button>
-          <button className="icon-button" type="button" onClick={() => onAdjustStock(product, 1)} aria-label="Subir stock">
-            <Plus size={17} />
-          </button>
-          <button className="icon-button danger" type="button" onClick={() => onDeactivate(product)} aria-label="Desactivar producto">
-            <Trash2 size={17} />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
