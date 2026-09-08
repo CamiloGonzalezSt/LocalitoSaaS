@@ -3637,9 +3637,14 @@ button,
 }
 
 .plan-card {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
+}
+
+.plan-card .primary-action.full,
+.plan-card .secondary-action.full {
+  margin-top: auto;
 }
 
 .plan-card.current {
