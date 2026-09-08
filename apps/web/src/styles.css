@@ -540,8 +540,10 @@ button:active:not(:disabled) {
 
 .plan-card .primary-action.full,
 .plan-card .secondary-action.full {
+  align-self: start;
+  height: 42px;
   min-height: 42px;
-  padding-block: 9px;
+  padding: 9px 15px;
 }
 
 .primary-action.compact {
