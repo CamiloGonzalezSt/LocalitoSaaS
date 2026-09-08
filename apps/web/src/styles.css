@@ -3699,7 +3699,7 @@ button,
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 15px;
-  align-self: end;
+}
 
 .section-tabs button {
   display: flex;
