@@ -1,5 +1,13 @@
 # Contrato visual y de contenido
 
+## Vigencia documental: 08-09-2026
+
+Este contrato conserva las decisiones de formato del entregable original. Su actualización no regenera ni vuelve a validar los DOCX/PDF asociados. Para el contenido técnico vigente usar [Estado actual](../../docs/Estado-Actual.md), [Mejoras](../../MEJORAS.md) y [Matriz de pruebas](../../docs/Matriz-Pruebas-Localito.md): cobros configurables, fotos, sincronización, caja e historial completo.
+
+Las 56 pruebas y 62 capturas de la entrega son evidencia técnica local, no pruebas PostgreSQL ni validación con usuarios. Antes de reutilizar el informe, actualizar sus resultados, conservar las limitaciones y volver a renderizar/revisar su documento final. No incluir contraseñas ni respaldos de operaciones reales.
+
+## Contrato original
+
 - Artefacto netamente nuevo e independiente; no contiene el instrumento 1.4 ni reproduce su rúbrica.
 - El instrumento 1.4 se usa solo para identificar requisitos académicos.
 - Preset: `narrative_proposal`.

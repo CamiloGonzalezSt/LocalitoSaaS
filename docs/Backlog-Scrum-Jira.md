@@ -2,6 +2,8 @@
 
 Documento operativo para registrar en Jira el alcance construido de Localito, planificar sprints y conservar trazabilidad entre requerimientos, historias, pruebas y entregables.
 
+Actualización técnica: **08-09-2026**. Las épicas y sprints 0-13 son una reconstrucción histórica, no evidencia de despliegue ni de ejecución actual de Jira. El incremento operativo siguiente tiene pruebas locales y pendientes explícitos en [Estado actual](Estado-Actual.md).
+
 ## 1. Configuración recomendada en Jira
 
 - Tipo de proyecto: **Scrum administrado por el equipo**.
@@ -80,7 +82,7 @@ Los pagos presenciales son externos y manuales. Localito registra efectivo, tarj
 | HU-036 | EPIC-09 | Como dueño quiero reportes de venta y caja. | Ventas netas, ticket promedio, anuladas, medios y cierres históricos. | 5 | Alta | 6 | Terminado |
 | HU-037 | EPIC-09 | Como dueño quiero ver margen, gastos y resultado estimado. | Margen usa costo de catálogo; resultado=margen-gastos; etiquetas indican estimación. | 5 | Alta | 8 | Terminado |
 | HU-038 | EPIC-10 | Como usuario móvil quiero una interfaz sin zoom ni desbordes. | 320/390/768/1280 px; controles táctiles; barra inferior libre. | 8 | Crítica | 9 | Terminado |
-| HU-039 | EPIC-10 | Como usuario quiero instalar y usar funciones básicas sin conexión. | Manifest/service worker; caché; cola para ventas/stock; IA informa que necesita internet. | 8 | Alta | 9 | Terminado |
+| HU-039 | EPIC-10 | Como usuario quiero instalar y usar funciones básicas sin conexión. | Manifest/service worker; caché; cola exclusivamente de ventas por cuenta; stock manual e IA requieren internet. | 8 | Alta | 9 | Implementado; validación física pendiente |
 | HU-040 | EPIC-11 | Como equipo quiero producción persistente y observable. | PostgreSQL obligatorio; `/health`; estado de IA; variables seguras; guía operativa. | 8 | Crítica | 10 | Terminado |
 | HU-041 | EPIC-11 | Como equipo quiero pruebas repetibles. | Build completo; pruebas automatizadas; matriz manual; casos críticos cubiertos. | 8 | Crítica | 10 | Terminado |
 | HU-042 | EPIC-11 | Como tesista quiero documentación defendible. | Arquitectura, requisitos, backlog, sprints, pruebas, costos, operación y demo actualizados. | 5 | Alta | 10 | Terminado |
@@ -155,7 +157,31 @@ Cada ticket terminado debe enlazar commit, evidencia de prueba, captura cuando c
 | ID | Tipo | Descripción | Prioridad |
 | --- | --- | --- | --- |
 | ROAD-01 | Story | Exportar gastos y resultado financiero por período a CSV/PDF. | Media |
-| ROAD-02 | Story | Permitir configuración de QR estático y datos bancarios por local. | Media |
+| ROAD-02 | Story | QR estático por local pendiente; datos bancarios y orden de medios ya implementados y probados localmente. | Media |
 | ROAD-03 | Task | Ejecutar QA visual real en Android y Safari/iPhone y adjuntar evidencias. | Alta |
 | ROAD-04 | Task | Probar restauración de un respaldo PostgreSQL en un ambiente separado. | Alta |
 | ROAD-05 | Story | Integración tributaria con SII o proveedor autorizado, fuera del MVP. | Baja |
+
+## 10. Incremento operativo verificado el 08-09-2026
+
+| ID | Historia | Criterio implementado | Evidencia / estado |
+| --- | --- | --- | --- |
+| HU-064 | Como dueño quiero mostrar fotos reales del catálogo. | Cámara/archivo, encuadre, escala, WebP, reemplazo y eliminación. | Lógica y navegador aprobados; fondo automático excluido. |
+| HU-065 | Como dueño quiero mostrar solo los medios de cobro de mi negocio. | Activación, orden, datos bancarios y primeros tres medios visibles; efectivo/vuelto. | Navegador aprobado; integración financiera real excluida. |
+| HU-066 | Como vendedor quiero recuperar ventas ante pérdida de red. | Cola por cuenta, bloqueo entre pestañas, caché y reintentos idempotentes. | Lógica y navegador aprobados; PostgreSQL/dispositivos pendientes. |
+| HU-067 | Como vendedor quiero revisar una venta rechazada sin detener las demás. | Detalle, estado de revisión, respaldo sin token y reintento individual; sin borrar tickets. | `hardening.test.ts` y `test-hardening.cjs` aprobados. |
+| HU-068 | Como dueño quiero consultar cambios antiguos. | Filtros en servidor, cursor, más de 100 registros y valores Antes/Después reales. | Lógica, HTTP y navegador aprobados; consulta PostgreSQL pendiente. |
+| HU-069 | Como vendedor quiero conciliar efectivo y abonos del turno. | Desglose, contado, motivo de diferencia y turnos que cruzan medianoche. | Lógica e integración local aprobadas; concurrencia multi-puesto pendiente. |
+| HU-070 | Como dueño quiero preparar compras y revisar fiado. | Demanda 30 días, pendientes de recibir, estado de cuenta y recordatorio editable. | Lógica y navegador aprobados; no envía mensajes. |
+| HU-071 | Como equipo quiero detectar ventas inválidas y regresiones. | Validación antes de mutar, pruebas centrales y workflow `npm run check`. | 56 pruebas y compilación locales aprobadas; revisar resultado remoto en Actions. |
+
+No se asignaron retrospectivamente puntos ni un sprint ejecutado a estas historias. `Jira-Import.csv` conserva HU-001 a HU-063; las nuevas filas aún deben incorporarse allí o en Jira cuando se planifique ese trabajo. No se modificó ningún proyecto Jira externo.
+
+## 11. Próxima validación priorizada
+
+1. PostgreSQL: migración, consultas, ventas concurrentes, turnos simultáneos y restauración.
+2. Dispositivos físicos y pruebas de usabilidad con comerciantes, separadas de capturas automatizadas.
+3. Resolver diferencias de precio de tickets offline y definir tratamiento asistido de rechazos/colas antiguas.
+4. Escalabilidad de imágenes y reportes, observabilidad y soporte antes de ampliar pagos o alcance tributario.
+
+Estas tareas permanecen abiertas. Haber pasado pruebas en memoria no cumple por sí solo la Definition of Done de producción.

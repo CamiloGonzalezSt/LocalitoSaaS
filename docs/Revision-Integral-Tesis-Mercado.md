@@ -3,6 +3,8 @@
 **Fecha:** 27 de agosto de 2026  
 **Base de revisión:** repositorio Localito, documentación del proyecto y fuentes públicas consultadas hasta esta fecha.
 
+**Actualización técnica: 08-09-2026.** La evaluación de mercado y sus precios/fuentes son históricos al 27-08-2026; no se investigaron de nuevo en esta actualización. El estado de implementación y pruebas vigente está en [Estado actual](Estado-Actual.md).
+
 ## 1. Veredicto ejecutivo
 
 Localito es **suficiente para una tesis aplicada de desarrollo de software**, siempre que la defensa lo presente como una solución validada para apoyar la operación de pequeños comercios y no como un producto comercial ya terminado.
@@ -70,7 +72,7 @@ La calidad técnica debe demostrarse con evidencia reproducible. No basta con af
 
 5. **Aporte.** El aporte no debe ser “usar IA”. Debe ser el diseño y evaluación de un flujo móvil, progresivo y seguro que conecta operación diaria, fiado e inventario con asistencia visual controlada.
 
-## 4. Mercado chileno actual
+## 4. Mercado chileno: análisis histórico al 27-08-2026
 
 El mercado es real, pero competitivo. Defontana ofrece POS con emisión de boletas electrónicas, inventario integrado, cierre de caja y acceso desde distintos dispositivos; Bsale compite con punto de venta e inventario para pymes. [Defontana POS](https://digital.defontana.com/pos) · [Bsale](https://www.bsale.cl/)
 
@@ -161,3 +163,11 @@ Una solución integrada y evaluada para digitalizar operaciones frecuentes de pe
 6. Probar disposición a pagar frente a alternativas desde aproximadamente $9.990 mensuales.
 
 **Recomendación final:** mantener Localito como tesis aplicada, congelar el alcance funcional principal y concentrar el trabajo restante en validación con usuarios, métricas y calidad de la defensa. La expansión comercial debe quedar como roadmap respaldado por el análisis de mercado, no como promesa del MVP académico.
+
+## 9. Actualización técnica del 08-09-2026
+
+Se implementaron fotos de catálogo con encuadre, medios de pago configurables, datos bancarios, vuelto, estado de cuenta, reposición por demanda reciente y conciliación con abonos de fiado. Se reforzaron la validación de ventas, la continuidad por cuenta y la consulta completa del historial.
+
+La evidencia local comprende 56 pruebas de lógica aprobadas, tipos/build y 62 capturas de tres suites de navegador. Incluye rechazos sin mutaciones, búsqueda histórica, reintento idempotente, aislamiento de cuenta y recuperación de red. No demuestra mejora de tiempos ni satisfacción: aún faltan mediciones con usuarios externos.
+
+Se mantienen abiertas la validación PostgreSQL/restauración, dispositivos físicos, concurrencia de cierres y política de precios de ventas diferidas. Los cobros reales y la tributación siguen excluidos. Esta evolución mejora la evidencia técnica, pero no cambia por sí sola el diagnóstico histórico de preparación comercial ni acredita cumplimiento legal.

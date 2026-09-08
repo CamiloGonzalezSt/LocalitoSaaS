@@ -1,5 +1,13 @@
 # Contrato de entrega - Formativa Fase 1
 
+## Vigencia documental: 08-09-2026
+
+Se conserva el contrato académico original; no se modificó ni renderizó de nuevo el informe asociado. Las mejoras de cobro, fotos, continuidad offline, caja e historial deben contrastarse con [Estado actual](../../docs/Estado-Actual.md) y [Matriz de pruebas](../../docs/Matriz-Pruebas-Localito.md) antes de una nueva entrega.
+
+La evidencia reciente es local: 56 pruebas de lógica y 62 capturas automatizadas. PostgreSQL, dispositivos físicos y validación con comerciantes siguen pendientes. No trasladar esos resultados como aprobaciones manuales ni incorporar credenciales. Toda reedición del DOCX requiere una revisión visual independiente.
+
+## Contrato original
+
 - Referencia: `C:\Users\cajgo\Downloads\1.4_APT122_FormativaFase1.docx`
 - Uso: autoridad de requisitos académicos y de formato; la referencia es una pauta de evaluación, no un formulario de respuesta.
 - Estructura obligatoria: portada, índice, abstract en español e inglés, desarrollo de ingeniería, conclusiones individuales en inglés, reflexión en inglés, bibliografía y anexo de evidencia cuando corresponda.

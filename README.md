@@ -1,5 +1,7 @@
 # Localito
 
+**Actualización técnica: 08-09-2026.** El [estado actual](docs/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. El resumen de la entrega está en [MEJORAS.md](MEJORAS.md).
+
 Localito es una PWA académica multi-negocio para almacenes y comercios de barrio. Reúne punto de venta, inventario, caja, compras, proveedores, fiado y reconocimiento de productos desde el celular.
 
 **Estado del proyecto:** versión para tesis. El núcleo operacional funciona con datos persistentes, pero las pasarelas de pago son simulaciones académicas y el cumplimiento tributario chileno (SII, boleta y factura electrónica) queda fuera de esta iteración. El alcance verificable está centralizado en [docs/Alcance-Tesis.md](docs/Alcance-Tesis.md).
@@ -24,10 +26,15 @@ Localito es una PWA académica multi-negocio para almacenes y comercios de barri
 - Proveedores, órdenes de compra, recepción de mercadería y actualización del costo promedio ponderado.
 - Caja por turno: apertura, ingresos, gastos operativos categorizados, retiros, cierre, efectivo esperado, contado y diferencia.
 - Reportes por período, vendedor y categoría; comparación con el período anterior, ventas por hora/categoría/vendedor, alertas operativas, filtros guardados por local y exportación CSV. El reporte financiero muestra ventas netas, margen bruto estimado, gastos operativos y resultado estimado; los cálculos de utilidad se presentan como estimaciones porque usan el costo vigente del catálogo.
-- Historial de auditoría para operaciones críticas.
+- Historial completo de auditoría con búsqueda, acción, fechas y paginación por cursor; antes/después de precio y stock con autor y motivo.
 - Asistente automático de carga inicial para locales nuevos, con categorías sugeridas por rubro, progreso reanudable y acceso posterior desde el menú.
 - Importación masiva y exportación de productos en CSV: plantilla compatible con Excel, vista previa, validación por fila y prevención de duplicados, hasta 500 productos por carga.
-- Cola local para ventas y ajustes de stock cuando se pierde la conexión.
+- Cola local exclusivamente para ventas, separada por negocio y usuario, con bloqueo entre pestañas, errores visibles, reintento individual y respaldo JSON sin token. Los ajustes de stock requieren conexión.
+- Catálogo guardado en IndexedDB para recuperar el espacio de trabajo sin API, reservando el stock de ventas pendientes.
+- Fotos reales de productos desde cámara o archivo, encuadre y escala; salida WebP de 512 px con transparencia si el original la incluye. No elimina fondos automáticamente.
+- Medios de pago habilitados y ordenados por negocio, datos bancarios para transferencias y efectivo recibido/vuelto.
+- Estado de cuenta de clientes, recordatorio editable y conciliación de caja con abonos en efectivo y turnos que cruzan medianoche.
+- Reposición orientativa por ventas de 30 días, stock, mínimos y compras aún no recibidas.
 - PWA instalable con caché de aplicación y navegación sin conexión.
 - Lectura de códigos con ZXing cargado bajo demanda.
 - **Venta Rápida**: una fotografía puede proponer varios productos y cantidades usando exclusivamente el catálogo del negocio; el vendedor corrige la propuesta y la agrega al ticket POS existente. La lectura de códigos de barras continúa disponible como alternativa.
@@ -39,7 +46,7 @@ Localito es una PWA académica multi-negocio para almacenes y comercios de barri
 
 - Node.js 20 o superior.
 - npm 10 o pnpm.
-- PostgreSQL 16 o Docker Desktop para persistencia. Sin base disponible, la API usa memoria.
+- PostgreSQL 16 o Docker Desktop para persistencia. Memoria solo para desarrollo sin base configurada; en producción no hay fallback a memoria.
 
 ## Puesta en marcha
 
@@ -162,12 +169,12 @@ Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mer
 ## Calidad y verificación
 
 ```powershell
-npm run typecheck
-npm run build
-npm run test -w apps/api
+npm run check
 ```
 
-Las pruebas automatizadas cubren hashes de contraseñas y sesiones, idempotencia de ventas, límites de crédito, caja, compras, costo promedio, inventario, importación masiva reintentable, Venta Rápida multiproducto, rechazo de IDs ajenos al catálogo, cantidades agrupadas, esquemas estrictos de visión, extracción de facturas, recepción de stock y prevención de duplicados. La matriz manual vive en [docs/Matriz-Pruebas-Localito.md](docs/Matriz-Pruebas-Localito.md) y la trazabilidad anterior → nueva ubicación está en [docs/Matriz-Regresion-Rediseno.md](docs/Matriz-Regresion-Rediseno.md).
+`check` reúne tipos, `npm test` (56 pruebas en la última ejecución local) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado y las pruebas previas de autenticación, inventario e IA. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
+
+Las suites de navegador verificaron cobro, mejoras integradas y recuperación con 62 capturas entre ambos temas y tamaños móviles/escritorio. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance exacto y limitaciones en [Estado actual](docs/Estado-Actual.md); casos en [Matriz de pruebas](docs/Matriz-Pruebas-Localito.md) y [Matriz de regresión](docs/Matriz-Regresion-Rediseno.md).
 
 ## Planes y permisos
 

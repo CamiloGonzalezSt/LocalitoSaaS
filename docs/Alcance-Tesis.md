@@ -2,6 +2,8 @@
 
 Este documento es la fuente de verdad para presentar Localito. Distingue el núcleo que se puede demostrar de las simulaciones académicas y de lo que queda fuera del alcance.
 
+Revisión técnica: **08-09-2026**. Evidencia, contratos y pendientes de esta versión en [Estado actual](Estado-Actual.md).
+
 ## Propósito
 
 Localito demuestra cómo un comercio de barrio puede concentrar ventas, inventario, caja, clientes, fiado, compras y apoyo visual en una PWA multi-negocio. La evaluación se centra en trazabilidad, control de datos, experiencia móvil y reglas de negocio; no en operar dinero ni documentos tributarios reales.
@@ -17,7 +19,12 @@ Localito demuestra cómo un comercio de barrio puede concentrar ventas, inventar
 - Proveedores, compras, recepción, costo promedio y carga de factura asistida por IA.
 - Caja por turno, movimientos, cierres, reportes y auditoría.
 - Venta Rápida y lectura de factura con IA: la persona revisa productos, cantidades, costos y precios antes de confirmar.
-- Persistencia PostgreSQL en producción, PWA instalable y cola offline limitada a ventas y ajustes de stock.
+- Persistencia PostgreSQL en producción, PWA instalable y cola offline exclusivamente de ventas por negocio/usuario. Los ajustes de stock necesitan conexión.
+- Cobro compacto configurable por negocio, datos bancarios, efectivo recibido/vuelto y validación de pagos mixtos.
+- Fotos reales con encuadre y escala; WebP con transparencia cuando ya existe en la imagen original.
+- Estado de cuenta, recordatorio editable, conciliación con abonos en efectivo y reposición orientativa según ventas.
+- Auditoría completa por cursor, búsqueda y fechas; ventas inválidas rechazadas antes de alterar stock/deuda.
+- Sincronización con exclusión entre pestañas, detalle de errores, revisión de rechazos, reintento individual y respaldo local sin token.
 
 ## Simulaciones académicas
 
@@ -38,6 +45,8 @@ Las simulaciones son intencionales. Sirven para evaluar el flujo, estados y traz
 - Datos de tarjetas, integración con terminales físicos o envío automático de montos a un POS.
 - E-commerce público, múltiples sucursales, fidelización y notificaciones comerciales automáticas.
 - Reconocimiento facial o identificación de clientes mediante imágenes.
+- Eliminación automática de fondos y catálogo de imágenes generado sin fotografías aportadas.
+- Resolución automática de rechazos offline, migración automática de colas antiguas y precio congelado de una venta diferida.
 
 ## Dependencias de ambiente para la demostración
 
@@ -51,5 +60,7 @@ Las simulaciones son intencionales. Sirven para evaluar el flujo, estados y traz
 `GET /api/health` expone, sin revelar secretos, si la persistencia, Venta Rápida, Factura IA y el correo de recuperación están configurados.
 
 ## Criterio de presentación
+
+La verificación del 08-09-2026 comprende 56 pruebas de lógica, tipos, compilación y tres suites de navegador con 62 capturas. Las pruebas integradas usaron memoria y datos sintéticos. No presentar esto como validación de PostgreSQL, restauración, teléfonos físicos, usuarios finales ni pagos comerciales.
 
 En la defensa se debe describir el ticket como **comprobante interno no tributario** y cada pago de prueba como **simulación académica**. Para las evidencias funcionales, utilizar [Matriz-Pruebas-Localito.md](Matriz-Pruebas-Localito.md); los casos sin evidencia continúan siendo pendientes, no aprobados por inferencia.

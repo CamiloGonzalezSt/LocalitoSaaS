@@ -2,9 +2,11 @@
 
 **Proyecto:** Localito  
 **Tipo de solucion:** PWA académica multi-tenant para gestión de pequeños negocios
-**Version del documento:** 2.1
+**Version del documento:** 2.2
 **Estado:** Documento actualizado para tesis, trazabilidad Scrum y operación
-**Fecha:** 27-08-2026
+**Fecha:** 08-09-2026
+
+**Guía de lectura:** las secciones de arquitectura propuesta, backlog inicial y prototipado conservan el diseño histórico. El alcance implementado y verificado más reciente está en la sección 36 y en [Estado actual](Estado-Actual.md); no presentar propuestas como funcionalidades aprobadas.
 
 ## 1. Resumen ejecutivo
 
@@ -685,7 +687,7 @@ Ademas de estas tres capas, el backend se comunica con un proveedor de IA visual
 - **Base de datos PostgreSQL:** Persistencia de usuarios, negocios, productos, ventas, clientes, deudas y pagos.
 - **Servicio de IA:** Componente encargado de reconocimiento visual de productos.
 - **Medios de pago externos:** Terminal o aplicación independiente; no existe integración automática en el MVP.
-- **Almacenamiento de imagenes:** Servicio para fotos de productos y capturas necesarias.
+- **Fotos de catálogo:** imágenes WebP procesadas en el navegador y almacenadas inline en `productos.imagen_url`, o URL validada. Un servicio de objetos es una evolución pendiente, no un componente desplegado de esta versión.
 
 ### 14.3 Diagrama de arquitectura
 
@@ -699,7 +701,7 @@ flowchart TD
     B --> G["Camara del dispositivo"]
     G --> B
     E --> C
-    C --> H["Almacenamiento de imagenes"]
+    C --> H["Fotos: productos.imagen_url en PostgreSQL"]
 ```
 
 ### 14.4 Principios de diseno
@@ -1218,7 +1220,7 @@ Despues del MVP, Localito podria evolucionar con:
 - Prediccion de demanda.
 - Recomendaciones automaticas de compra.
 - Notificaciones push.
-- Modo offline parcial.
+- Evolución offline: resolución asistida de rechazos, migración de colas antiguas y definición del precio de tickets diferidos; la cola de ventas por cuenta ya está implementada.
 - Exportacion a Excel o PDF.
 - Lectura masiva de productos.
 - Panel administrativo para multiples sucursales.
@@ -1362,7 +1364,7 @@ La version actual deja un nucleo operacional conectado entre frontend, API REST 
 - Caja por turno con apertura, ingresos, gastos, retiros, efectivo esperado, contado y diferencia.
 - Proveedores, ordenes de compra, recepcion de mercaderia y costo promedio ponderado.
 - Alertas de reposicion y vencimiento, auditoria de operaciones e importacion/exportacion CSV.
-- Cola local para ventas y ajustes de stock cuando se pierde la conexion.
+- Cola local solo para ventas por negocio/usuario, caché del catálogo, revisión de rechazos y reintentos; los ajustes de stock requieren conexión.
 - Reconocimiento visual real opcional mediante OpenAI, con historial, confianza, confirmacion y correccion.
 - Lector de codigo de barras con ZXing: lectura desde foto en celular y camara en vivo cuando el navegador permite `getUserMedia`.
 - Registro manual de pagos externos: tarjeta, transferencia/QR y Webpay; Localito no envía montos a terminales.
@@ -1661,7 +1663,7 @@ La incorporacion de IA visual convierte la camara del celular en una herramienta
 
 El MVP se desarrolló por incrementos: plataforma multi-tenant, catálogo, inventario, ventas, caja, fiado, compras, Venta Rápida, gastos, reportes, PWA y producción persistente. Los pagos externos permanecen manuales por decisión de alcance y costos. El backlog ejecutable, la reconstrucción de sprints y la guía de importación a Jira viven en `docs/Backlog-Scrum-Jira.md` y `docs/Jira-Import.csv`.
 
-## 33. Evolución SaaS y rediseño profesional
+## 34. Evolución SaaS y rediseño profesional
 
 La versión vigente agrega una suscripción individual por negocio. Todo local nuevo inicia una prueba Pro de 30 días y posteriormente puede operar con Localito Básico ($9.990/mes) o Localito Pro ($19.990/mes). El backend mantiene una matriz central de entitlements, por lo que ocultar un botón nunca es la única defensa: las operaciones no permitidas también reciben rechazo HTTP 403. Cuando una prueba o periodo vence, la información permanece guardada y consultable, pero las escrituras se pausan hasta la reactivación.
 
@@ -1673,7 +1675,7 @@ El cierre del rediseño agrega un Inicio centrado en ventas y atención diaria, 
 
 La capa visual utiliza Source Sans 3, verde principal, sidebar azul premium en claro y grafito en oscuro, switch claro/oscuro persistido, controles táctiles y diseño responsive sin zoom inicial ni desborde horizontal.
 
-## 34. Trazabilidad Scrum y Jira
+## 35. Trazabilidad Scrum y Jira
 
 La documentación de gestión se separa de este documento extenso para mantenerla operativa:
 
@@ -1683,3 +1685,17 @@ La documentación de gestión se separa de este documento extenso para mantenerl
 - `docs/Operacion-Produccion.md`: monitoreo, respaldos, incidentes, costos y seguridad.
 
 Cada historia Jira debe enlazar su requerimiento funcional, caso de prueba, commit y evidencia de Sprint Review. El estado `Terminado` exige cumplir la Definition of Done y no solamente disponer de código implementado.
+
+## 36. Incremento operativo de septiembre de 2026
+
+La continuación agrega fotos reales con encuadre y transparencia preservada, cobros ordenables/configurables por negocio y datos bancarios, efectivo recibido y vuelto, estado de cuenta y recordatorio editable, reposición orientativa y conciliación de turnos con abonos de fiado en efectivo.
+
+La API y los repositorios validan cantidades positivas finitas, productos únicos y activos, pertenencia del cliente, descuentos e importes. Un pago mixto exige partes distintas y coherentes con el total. Las pruebas verifican que los rechazos no alteran stock, movimientos ni deuda y que la clave idempotente devuelve una sola venta.
+
+El historial completo se consulta mediante `GET /audit/history`, con búsqueda, acción, fechas y cursor de fecha/ID. La ruta anterior `/audit` conserva su límite por compatibilidad. Se corrigió la captura de valores anteriores en memoria para que una edición no reescriba el Antes de su propio evento.
+
+La cola offline es exclusiva de ventas, aislada por negocio y usuario en cada origen del navegador. Web Locks serializa envíos entre pestañas; IndexedDB permite recuperar el catálogo disponible. Un rechazo de datos queda para revisión y no detiene todas las demás ventas; errores transitorios o de acceso detienen el ciclo. Se puede descargar un respaldo sin token y reintentar cada venta, sin borrarla automáticamente.
+
+La verificación local aprobó 56 pruebas de lógica, TypeScript, build y tres suites de navegador con 62 capturas. El [estado actual](Estado-Actual.md) documenta contratos, comandos, origen de las pruebas y limitaciones. Se configuró CI, pero su estado remoto debe verificarse en Actions.
+
+No se ejecutó la nueva migración contra PostgreSQL ni pruebas en teléfonos físicos. Permanecen pendientes restauración, cierre concurrente multi-puesto y política de precios para ventas diferidas. Las fotos no eliminan el fondo automáticamente, los recordatorios no se envían solos y los pagos/tributación conservan el alcance académico.

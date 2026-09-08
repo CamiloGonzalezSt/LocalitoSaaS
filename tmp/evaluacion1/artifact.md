@@ -1,5 +1,11 @@
 # Contrato de plantilla — Evaluación 1, Definición Proyecto APT
 
+## Vigencia documental: 08-09-2026
+
+Este archivo es un registro histórico de fidelidad de la plantilla, no el estado operativo actual. Se preservan hashes, referencias, decisiones y geometría; esta actualización no regeneró ni verificó nuevamente el DOCX.
+
+Para nuevas respuestas técnicas usar [Estado actual](../../docs/Estado-Actual.md), [Documento del proyecto](../../docs/Documento-Proyecto-Localito.md) y [Matriz de pruebas](../../docs/Matriz-Pruebas-Localito.md). Declarar por separado pruebas locales aprobadas, pagos simulados y validación PostgreSQL/dispositivos pendiente. Incorporar cambios al documento final exige renderizarlo y revisar de nuevo su fidelidad.
+
 ## Referencia
 
 - Archivo retenido: `C:\Users\cajgo\Downloads\1.5_GuiaEstudiante_Fase 1_Definicion Proyecto APT.docx`

@@ -1,6 +1,6 @@
 # Matriz de regresión del rediseño Localito
 
-Fecha de revisión: 2026-08-27
+Fecha de revisión: 2026-09-08
 Alcance: rediseño académico, navegación por rol y demostración multi-negocio.
 
 Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sustituir el POS ni duplicar lógica de negocio. La API y PostgreSQL siguen siendo la fuente de verdad para ventas, precios, stock, caja y fiado.
@@ -39,7 +39,7 @@ Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sus
 | Roles owner/seller | Navegación y API | Conservados | Owner ve 7 secciones; seller ve Vender, Inventario, Clientes y Caja. |
 | System admin | Panel independiente **Locales y usuarios** | Rediseñado | No entra al POS; administra locales, usuarios, planes y estados. |
 | Multi-tenant | Backend/PostgreSQL | Conservado | Operaciones derivan tenant desde sesión; pruebas verifican aislamiento. |
-| PWA/offline | Shell y cola existente | Conservado | Cola mantiene idempotencia; IA informa que requiere conexión. |
+| PWA/offline | Indicador de Sincronización y caché por cuenta | Reforzado | Ventas únicamente, exclusión entre pestañas, recarga desde IndexedDB, rechazo aislado, respaldo y reintento individual comprobados. |
 | Prueba gratuita | **Mi plan** y banner | Nueva | Alta crea Pro `trialing` por 30 días sin tarjeta; es un flujo de demostración académica. |
 | Basic/Pro | **Mi plan** | Nueva | Entitlements centralizados y validación API 403 por función. |
 | Solicitud de plan | **Mi plan → Solicitar plan** | Nueva | Registra `pendingPlan`; no concede acceso ni corta una prueba activa. |
@@ -50,7 +50,7 @@ Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sus
 
 - Los botones de Webpay y Mercado Pago de planes, fiados y POS son demostraciones controladas: no procesan dinero ni sustituyen una pasarela real.
 - La recuperación de contraseña envía correo únicamente si se configura un proveedor transaccional; sin esa configuración, el sistema no revela cuentas y ofrece la alternativa administrativa.
-- La cola offline cubre ventas y ajustes de stock; las funciones que necesitan IA requieren conexión.
+- La cola offline cubre solo ventas; ajustes de stock, configuración e IA requieren conexión. Las colas antiguas no se migran automáticamente.
 
 ## Criterios de salida
 
@@ -60,4 +60,17 @@ Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sus
 - Validación visual en 320, 390, 768 y 1440 px sin desborde horizontal.
 - Flujos owner, seller y system_admin comprobados.
 - No se detectan emojis en la interfaz.
-- Las carpetas ajenas al código no se incluyen en el commit.
+- No incluir capturas o respaldos con datos reales. Los contratos `artifact.md` solo reciben una nota de vigencia documental, sin regenerar entregables binarios.
+
+## Regresión de la entrega 08-09-2026
+
+| Área | Verificación | Resultado local |
+| --- | --- | --- |
+| Medios de cobro | Orden/configuración, banco, vuelto, importe insuficiente, confirmación externa, mixto y cliente fiado. | Aprobado: `test-checkout.cjs` y `test-improvements.cjs`. |
+| Fotos | Subir PNG, encuadrar, guardar WebP y comprobar imagen cargada en inventario; reemplazar/eliminar en lógica. | Aprobado local. No elimina el fondo. |
+| Historial | Más de 100 eventos, búsqueda de un cambio antiguo, paginación, fechas y valores Antes/Después. | Aprobado: `test-hardening.cjs` y `hardening.test.ts`. |
+| Sincronización | Cuenta aislada, bloqueo concurrente, recarga sin API, rechazo que no bloquea otras ventas y reintento individual. | Aprobado local; respaldo sin token comprobado. |
+| Caja/fiado/reposición | Abonos en esperado, nota por diferencia, turnos nocturnos, demanda y compras pendientes, recordatorio editable. | Aprobado: pruebas de lógica e integración. |
+| Temas/tamaños | 62 capturas entre tres suites, en claro/oscuro y escritorio/viewports móviles; sin overflow horizontal en los escenarios medidos. | Aprobado en Chrome de escritorio. No acredita Safari ni teléfonos físicos. |
+
+Tipos y compilación aprobados; 56 pruebas de lógica aprobadas. Los criterios históricos de arriba no deben interpretarse como una nueva ejecución de cada caso anterior. Alcance reproducible y pendientes de PostgreSQL en [Estado actual](Estado-Actual.md).

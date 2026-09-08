@@ -4,6 +4,8 @@
 **Tipo:** PWA académica mobile-first para pequeños negocios
 **Objetivo del documento:** Servir como evidencia de validacion funcional para memoria, presentacion y defensa de tesis.
 
+**Revisión:** 08-09-2026. Los estados históricos se conservan salvo casos efectivamente comprobados. Esta ejecución aprobó 56 pruebas de lógica y tres suites de navegador (62 capturas), usando memoria y negocios sintéticos. PostgreSQL, teléfonos físicos y validación con usuarios siguen pendientes; [detalle reproducible](Estado-Actual.md).
+
 ## 1. Alcance de pruebas
 
 Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visual externo es opcional; todos los demás flujos pueden probarse en navegador de escritorio y celular en red local. El estado de cada caso es evidencia disponible, no una certificación comercial del sistema.
@@ -18,6 +20,8 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | URL web local | `http://localhost:5173` |
 | URL API local | `http://localhost:3000` |
 | URL movil en red local | `http://IP-DEL-PC:5174` |
+
+La ejecución reciente usó una instancia aislada: web `http://127.0.0.1:43200`, API `http://127.0.0.1:43201`, Chrome de escritorio y viewports móviles. Los puertos anteriores describen el arranque habitual, no endpoints de producción.
 
 ## 3. Credenciales demo
 
@@ -77,7 +81,7 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-41 | Compras | Recibir orden | Crear proveedor y orden, luego recibir mercaderia. | Aumenta stock, registra kardex y recalcula costo promedio. | Automatizada aprobada |
 | CP-42 | Inventario | Alerta de vencimiento | Asignar vencimiento dentro de 30 dias. | Gestion muestra alerta del producto. | Pendiente evidencia |
 | CP-43 | Datos | Importar y exportar CSV | Exportar catalogo e importar un archivo valido. | Se descarga CSV y se crean filas validas. | Pendiente evidencia |
-| CP-44 | Offline | Venta sin conexion | Perder red al confirmar y recuperarla. | La venta queda en cola y se sincroniza sin duplicarse. | Pendiente evidencia |
+| CP-44 | Offline | Venta sin conexion | Perder red al confirmar, recargar con API caída y recuperarla. | Cola por cuenta y catálogo guardado; venta se sincroniza una vez. | Automatizada en navegador local aprobada: `test-improvements.cjs` |
 | CP-45 | Vision | Reconocer envase | Configurar `GROQ_API_KEY` (o `OPENAI_API_KEY`), fotografiar un producto catalogado. | La API propone coincidencia con confianza y permite corregir. | Pendiente evidencia |
 | CP-46 | Seguridad | Recuperar contraseña | Solicitar el enlace, cambiar la clave y volver a usar el enlace. | La nueva clave funciona, sesiones anteriores quedan revocadas y el enlace no puede reutilizarse. | Automatizada aprobada |
 | CP-47 | Factura IA | Extraer factura | Fotografiar una factura legible desde Negocio. | Propone proveedor, folio, fecha, totales y líneas con confianza y advertencias. | Esquema automatizado aprobado; visual aprobado |
@@ -127,10 +131,10 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-91 | Inicio | Prioridad contextual | Abrir Inicio con stock agotado, stock bajo, fiado pendiente y sin alertas. | Muestra una única prioridad con acción directa; las tarjetas de atención aparecen solo cuando hay algo que revisar. | Pendiente evidencia |
 | CP-92 | POS | Productos frecuentes | Registrar ventas, abrir Vender y alternar Más vendidos/Recientes. | Muestra hasta seis productos existentes del catálogo; al tocar uno se agrega al ticket sin alterar filtros ni stock. | Pendiente evidencia |
 | CP-93 | POS móvil | Total y cobro fijo | Agregar un producto y desplazarse por el catálogo a 390 px. | La barra fija muestra cantidad, total, Revisar ticket y Cobrar sin tapar la navegación; Cobrar abre el paso de pago. | Pendiente evidencia |
-| CP-90 | Caja | Carga según plan y rol | Abrir Caja con Basic/Pro y dueño/vendedor. | No muestra el error genérico de API; solicita solo módulos autorizados. | Visual local aprobada |
-| CP-91 | Reportes | Filtro mensual | Cambiar mes y revisar métricas/gráficos/listas. | Todos los bloques usan el mismo período y valores netos. | Typecheck y visual aprobadas |
-| CP-92 | Ventas | Devolución parcial acumulada | Devolver unidades en dos operaciones. | Nunca supera cantidad original y repone stock exactamente una vez. | Automatizada aprobada |
-| CP-93 | Tema oscuro | Sin superficies blancas | Revisar POS, buscador, clientes, reportes y modales. | Fondo #090909, superficie #111111, bordes #292929 y sin sombras blancas. | CSS computado y visual a 320 px aprobados |
+| CP-110 | Caja | Carga según plan y rol | Abrir Caja con Basic/Pro y dueño/vendedor. | No muestra el error genérico de API; solicita solo módulos autorizados. | Visual local aprobada |
+| CP-111 | Reportes | Filtro mensual | Cambiar mes y revisar métricas/gráficos/listas. | Todos los bloques usan el mismo período y valores netos. | Typecheck y visual aprobadas |
+| CP-112 | Ventas | Devolución parcial acumulada | Devolver unidades en dos operaciones. | Nunca supera cantidad original y repone stock exactamente una vez. | Automatizada aprobada |
+| CP-113 | Tema oscuro | Sin superficies blancas | Revisar POS, buscador, clientes, reportes y modales. | Fondo #090909, superficie #111111, bordes #292929 y sin sombras blancas. | CSS computado y visual a 320 px aprobados |
 | CP-94 | Responsive | Controles a 320 px | Abrir POS y medir encabezado/navegación. | Cuatro botones de 44 px sin superposición y sin overflow horizontal. | Visual y medición aprobadas |
 | CP-95 | Rol vendedor | Plan oculto | Iniciar como vendedor en escritorio y móvil. | No ve tarjeta, días, contratación ni reportes del dueño. | Visual local aprobada |
 | CP-96 | Experiencia | Estados vacíos con orientación | Abrir Vender sin ticket, filtrar un catálogo sin resultados, abrir Clientes vacío y elegir un mes sin ventas. | Cada estado explica la situación y, cuando corresponde, entrega una acción segura para continuar sin crear datos de prueba. | Pendiente evidencia |
@@ -147,6 +151,28 @@ Estas pruebas validan el núcleo operacional de Localito. El reconocimiento visu
 | CP-107 | Seguridad operativa | Confirmaciones críticas | Intentar desactivar producto/cliente, eliminar usuario y cerrar caja. | Explica el efecto de la acción y permite volver; solo ejecuta después de confirmar explícitamente. | Pendiente evidencia |
 | CP-108 | Tesis | Guion de demostración | Seguir el documento de demostración desde una cuenta demo. | El recorrido cubre Inicio, Inventario, Venta, Venta Rápida, Clientes, Caja y Reportes sin requerir cobros reales. | Pendiente evidencia |
 | CP-109 | Reportes | Filtros, comparativas y exportación | Filtrar por mes, vendedor y categoría; guardar una vista; comparar el mes anterior y exportar CSV. | Las métricas, gráficos, alertas y CSV reflejan los filtros activos. El filtro guardado solo está disponible en el mismo local y navegador. | Pendiente evidencia |
+
+## 4.1. Casos del incremento operativo
+
+Los antiguos identificadores duplicados CP-90 a CP-93 de Caja, Reportes, Ventas y Tema oscuro se renumeraron CP-110 a CP-113. Se preservaron los IDs originales de POS/Inicio y sus estados.
+
+| ID | Área | Prueba y resultado esperado | Evidencia / estado |
+| --- | --- | --- | --- |
+| CP-114 | Cobro | Recibido, vuelto, insuficiente, fracciones, confirmación externa que se reinicia, mixto y fiado con cliente. | `test-checkout.cjs`, aprobado; ventas interceptadas. |
+| CP-115 | Configuración | Medios activos, orden, banco y persistencia tras recargar; vendedor no puede editar. | `test-improvements.cjs`, aprobado en memoria. |
+| CP-116 | Fotos | Carga PNG, encuadre, salida WebP cargada, reemplazo/eliminación y validación de imagen. | `improvements.test.ts` y `test-improvements.cjs`, aprobados. |
+| CP-117 | Caja | Esperado incluye abonos de fiado, ingresos, gastos y retiros en turnos nocturnos; diferencia exige nota. | Lógica e integración local aprobadas. |
+| CP-118 | Reposición | Demanda 30 días y unidades pendientes de recibir reducen la propuesta; productos sin ventas separados. | `improvements.test.ts` y navegador aprobados. |
+| CP-119 | Fiado | Estado de cuenta, saldo/abonos y texto editable antes de abrir WhatsApp; cliente ajeno no accesible. | `test-improvements.cjs`, aprobado sin enviar mensajes. |
+| CP-120 | Ventas | Cantidades inválidas, líneas duplicadas, descuentos/pagos incompatibles y clientes ajenos no mutan stock/deuda. | `hardening.test.ts` y HTTP local, aprobados. |
+| CP-121 | Auditoría | Más de 100 eventos sin duplicados, búsqueda antigua y Antes/Después conserva precio 1000 → 1100. | `hardening.test.ts` y `test-hardening.cjs`, aprobados. |
+| CP-122 | Auditoría | Filtros inválidos responden 400; vendedor sin permiso recibe 403; cursor ajeno no expone eventos. | Lógica y HTTP local aprobados. |
+| CP-123 | Offline | Rechazo 409 no bloquea otra venta válida; no reintenta solo el rechazo; admite reintento individual. | Lógica y navegador aprobados. |
+| CP-124 | Offline | Dos sincronizaciones envían una vez; otra cuenta no lee/envía la cola; 401/403/429/500 detienen el ciclo. | `hardening.test.ts` y navegador, aprobados. |
+| CP-125 | Recuperación | Respaldo descargado sin token; cola corrupta preservada sin borrado silencioso. | Navegador y lógica aprobados; importador no implementado. |
+| CP-126 | Visual | Cobro, gestión, historial y errores en claro/oscuro a tamaños de escritorio y móviles, sin overflow horizontal medido. | Tres suites aprobadas, 62 capturas; no sustituye dispositivos físicos. |
+| CP-127 | Producción | Migración PostgreSQL, venta concurrente idempotente, consultas y reinicio con persistencia. | Pendiente; no inferir aprobación desde memoria. |
+| CP-128 | Caja concurrente | Cierre frente a ventas simultáneas y pendientes en varios usuarios/dispositivos. | Pendiente; bloqueo local no cubre otros dispositivos. |
 
 ## 5. Pruebas no funcionales sugeridas
 
