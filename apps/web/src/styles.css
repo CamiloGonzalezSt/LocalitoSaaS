@@ -538,6 +538,12 @@ button:active:not(:disabled) {
   margin-top: 14px;
 }
 
+.plan-card .primary-action.full,
+.plan-card .secondary-action.full {
+  min-height: 42px;
+  padding-block: 9px;
+}
+
 .primary-action.compact {
   min-height: 44px;
   padding-inline: 16px;
