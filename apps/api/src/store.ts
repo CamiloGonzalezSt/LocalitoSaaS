@@ -272,7 +272,7 @@ export function getReportSummary(tenantId: string): ReportSummary {
 export function getCashRegisterSummary(tenantId: string, date = new Date(), openedAt?: string): CashRegisterSummary {
   const dayKey = date.toISOString().slice(0, 10);
   const salesForDay = store.sales.filter(
-    (sale) => sale.tenantId === tenantId && sale.createdAt.slice(0, 10) === dayKey && (!openedAt || sale.createdAt >= openedAt)
+    (sale) => sale.tenantId === tenantId && (openedAt ? sale.createdAt >= openedAt : sale.createdAt.slice(0, 10) === dayKey)
   );
   const activeSales = salesForDay
     .filter((sale) => sale.status !== "cancelled")

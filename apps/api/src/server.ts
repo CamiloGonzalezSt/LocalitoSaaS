@@ -10,6 +10,9 @@ import { createSessionToken, createSignedSessionToken, hashSessionToken, passwor
 import { isTransactionalEmailConfigured, sendPasswordResetEmail } from "./email.js";
 import { importInvoice } from "./invoiceImport.js";
 import { describeHttpError } from "./httpError.js";
+import { assertSalePayload } from "./saleValidation.js";
+import { parseAuditQuery } from "./auditQuery.js";
+import { parsePreferences, validProductImage } from "./businessPreferences.js";
 import { bulkImportProducts } from "./productImport.js";
 import { extractInvoiceImage, extractQuickSaleImage, identifyProductImage, isInvoiceAiConfigured, isQuickSaleAiConfigured } from "./vision.js";
 
@@ -574,6 +577,15 @@ app.patch("/platform/tenants/:id/subscription", asyncRoute(async (req, res) => {
   res.json({ data: subscription });
 }));
 
+app.patch("/tenant/preferences", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
+  let preferences;
+  try { preferences = parsePreferences(req.body); } catch (error) { res.status(400).json({ message: (error as Error).message }); return; }
+  const tenant = await repository.updateTenant(actor.tenantId, { preferences });
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "payment_settings", entityId: actor.tenantId, details: { paymentMethods: preferences.paymentMethods } });
+  res.json({ data: tenant });
+}));
+
 app.get("/subscription", asyncRoute(async (req, res) => {
   if (!(await requireRoles(req, res, ["owner", "seller"]))) return;
   res.json({ data: await repository.getSubscription(tenantIdFromRequest(req)) });
@@ -733,6 +745,7 @@ app.post(
       return;
     }
 
+    if (!validProductImage(body.imageUrl)) { res.status(400).json({ message: "Imagen inválida: usa PNG, JPG o WebP de hasta 500 KB." }); return; }
     const product = await repository.createProduct(tenantId, body);
     await repository.recordAudit({ tenantId, userId: actor.id, userName: actor.name, action: "create", entity: "product", entityId: product.id });
     res.status(201).json({ data: product });
@@ -757,12 +770,15 @@ app.patch(
   asyncRoute(async (req, res) => {
     const actor = await requireRoles(req, res, ["owner"]);
     if (!actor) return;
+    if (!validProductImage(req.body.imageUrl)) { res.status(400).json({ message: "Imagen inválida: usa PNG, JPG o WebP de hasta 500 KB." }); return; }
+    const current = (await repository.getProducts(actor.tenantId)).find(product => product.id === req.params.id);
+    const before = current ? { ...current } : undefined;
     const product = await repository.updateProduct(tenantIdFromRequest(req), req.params.id, req.body as Partial<Product>);
     if (!product) {
       res.status(404).json({ message: "Producto no encontrado." });
       return;
     }
-    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "product", entityId: product.id });
+    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "product", entityId: product.id, details: { name: product.name, before: { salePrice: before?.salePrice, stock: before?.stock }, after: { salePrice: product.salePrice, stock: product.stock }, reason: typeof req.body.reason === "string" ? req.body.reason.slice(0, 300) : "Edición del producto" } });
     res.json({ data: product });
   })
 );
@@ -794,12 +810,14 @@ app.patch(
       return;
     }
 
+    const current = (await repository.getProducts(actor.tenantId)).find(product => product.id === req.params.id);
+    const before = current ? { ...current } : undefined;
     const product = await repository.updateStock(tenantIdFromRequest(req), req.params.id, quantity);
     if (!product) {
       res.status(404).json({ message: "Producto no encontrado." });
       return;
     }
-    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "adjust_stock", entity: "product", entityId: product.id, details: { quantity } });
+    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "adjust_stock", entity: "product", entityId: product.id, details: { name: product.name, before: { stock: before?.stock }, after: { stock: quantity }, reason: typeof req.body.reason === "string" ? req.body.reason.slice(0, 300) : "Ajuste de inventario" } });
     res.json({ data: product });
   })
 );
@@ -878,10 +896,7 @@ app.post(
       items?: Array<{ productId: string; quantity: number }>;
     };
 
-    if (!body.items?.length || !body.paymentMethod) {
-      res.status(400).json({ message: "La venta requiere productos y metodo de pago." });
-      return;
-    }
+    assertSalePayload(body);
 
     const sale = await repository.createSale(tenantIdFromRequest(req), {
       sellerId: actor.id,
@@ -1187,6 +1202,27 @@ app.post("/cash/movements", asyncRoute(async (req, res) => {
   res.status(201).json({ data: movement });
 }));
 
+app.get("/customers/:id/statement", asyncRoute(async (req, res) => {
+  if (!(await requireRoles(req, res, ["owner", "seller"]))) return;
+  const tenantId = tenantIdFromRequest(req);
+  const customer = (await repository.getCustomers(tenantId)).find(customer => customer.id === req.params.id);
+  if (!customer) { res.status(404).json({ message: "Cliente no encontrado." }); return; }
+  const debts = (await repository.getDebts(tenantId)).filter(debt => debt.customerId === customer.id);
+  const payments = (await repository.getPayments(tenantId)).filter(payment => payment.customerId === customer.id && !payment.saleId);
+  res.json({ data: { customer, debts, payments } });
+}));
+
+app.get("/cash/reconciliation", asyncRoute(async (req, res) => {
+  if (!(await requireRoles(req, res, ["owner", "seller"]))) return;
+  const tenantId = tenantIdFromRequest(req), session = await repository.getOpenCashSession(tenantId);
+  if (!session) { res.json({ data: null }); return; }
+  const summary = await repository.getCashRegister(tenantId);
+  const movements = (await repository.getCashMovements(tenantId)).filter(movement => movement.sessionId === session.id);
+  const sum = (type: string) => movements.filter(movement => movement.type === type).reduce((sum, movement) => sum + movement.amount, 0);
+  const debtCash = (await repository.getPayments(tenantId)).filter(payment => !payment.saleId && payment.method === "cash" && payment.status === "approved" && payment.createdAt >= session.openedAt).reduce((sum, payment) => sum + payment.amount, 0);
+  res.json({ data: { sessionId: session.id, opening: session.openingAmount, salesCash: summary.totalsByMethod.cash, debtCash, deposits: sum("deposit"), expenses: sum("expense"), withdrawals: sum("withdrawal"), expected: session.openingAmount + summary.totalsByMethod.cash + debtCash + sum("deposit") - sum("expense") - sum("withdrawal") } });
+}));
+
 app.get("/cash/movements", asyncRoute(async (req, res) => {
   if (!(await requireRoles(req, res, ["owner", "seller"]))) return;
   res.json({ data: await repository.getCashMovements(tenantIdFromRequest(req)) });
@@ -1212,6 +1248,11 @@ app.get("/stock-movements", asyncRoute(async (req, res) => {
 app.get("/audit", asyncRoute(async (req, res) => {
   if (!(await requireRoles(req, res, ["owner"]))) return;
   res.json({ data: await repository.getAuditEvents(tenantIdFromRequest(req)) });
+}));
+
+app.get("/audit/history", asyncRoute(async (req, res) => {
+  if (!(await requireRoles(req, res, ["owner"]))) return;
+  res.json({ data: await repository.getAuditPage(tenantIdFromRequest(req), parseAuditQuery(req.query)) });
 }));
 
 app.get(

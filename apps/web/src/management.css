@@ -1,0 +1,36 @@
+.sync-status { margin: 0 0 14px; }
+.sync-detail { padding: 16px 0; border-block: 1px solid var(--border); }
+.sync-detail h2 { font-size: 18px; }
+.sync-entry { padding: 12px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.sync-entry summary { cursor: pointer; }
+.sync-entry summary span { display: block; color: var(--text-secondary); font-size: 12px; margin-top: 6px; }
+.sync-entry ul { padding-left: 20px; }
+.audit-browser .form-grid > *, .audit-browser input, .audit-browser select { min-width: 0; max-width: 100%; }
+.sync-detail .row, .customer-statement .row { flex-wrap: wrap; gap: 12px; }
+.product-photo-editor { margin-bottom: 20px; }
+.product-photo-editor > img, .product-photo-editor canvas { display: block; width: 200px; height: 200px; max-width: 100%; object-fit: contain; background: var(--surface-hover); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px; }
+.product-photo-editor label { display: grid; gap: 6px; max-width: 320px; margin-bottom: 10px; }
+.product-photo-editor input[type="range"] { width: 100%; }
+.business-methods { display: grid; gap: 4px; margin-bottom: 20px; }
+.business-methods .row { border-radius: 0; }
+.business-methods label { display: flex; align-items: center; gap: 10px; }
+.business-methods input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
+.bank-details { padding: 12px 0; border-block: 1px solid var(--border); font-size: 13px; }
+.bank-details dl, .cash-breakdown { margin: 10px 0; }
+.bank-details dl > div, .cash-breakdown > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; padding: 7px 0; }
+.bank-details dt, .cash-breakdown dt { color: var(--text-secondary); }
+.bank-details dd, .cash-breakdown dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.cash-breakdown > div:last-child { border-top: 1px solid var(--border); font-weight: 700; }
+.cash-reconciliation { padding-top: 20px; }
+.audit-event { border-bottom: 1px solid var(--border); padding: 12px 0; }
+.audit-event summary { cursor: pointer; }
+.audit-event summary span { display: block; font-size: 12px; color: var(--text-secondary); margin-top: 5px; }
+.audit-detail { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 12px; padding: 6px 0; overflow-wrap: anywhere; }
+.audit-event > div { overflow-wrap: anywhere; font-size: 13px; }
+.customer-statement { grid-column: 1 / -1; }
+.customer-statement textarea { min-height: 110px; resize: vertical; }
+.reminder-preview { padding-top: 16px; }
+.reminder-preview .row-actions { flex-wrap: wrap; }
+.product-thumb img, .sale-featured-product img, .inventory-product-identity img { object-fit: contain; }
+@media (max-width: 600px) { .sync-detail .section-heading { flex-wrap: wrap; } .cash-reconciliation .ui-form-body { min-width: 0; } .business-methods .row { gap: 8px; } }
+@media print { .sync-status { display: none; } }

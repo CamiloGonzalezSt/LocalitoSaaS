@@ -5,6 +5,8 @@ import "./styles.css";
 import "./themes.css";
 import "./inventory3.css";
 import "./ui.css";
+import "./checkout.css";
+import "./management.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

@@ -1,6 +1,8 @@
 import type {
   ApiResponse,
   AuditEvent,
+  AuditPage,
+  AuditQuery,
   CashRegisterClosure,
   BootstrapData,
   CashMovement,
@@ -31,6 +33,9 @@ import type {
   User
 } from "@localito/shared";
 
+import { enqueueSale, queueEntries, syncQueue, syncScope, SyncHttpError, type SyncOptions } from "./offline";
+import { cacheWorkspace } from "./workspaceCache";
+
 function resolveApiBaseUrl() {
   const configuredUrl = import.meta.env.VITE_API_BASE_URL;
   if (configuredUrl) return configuredUrl;
@@ -45,6 +50,14 @@ function resolveApiBaseUrl() {
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
+function reservePendingStock(data: BootstrapData, key?: string) {
+  const reserved = new Map<string, number>();
+  for (const entry of queueEntries(key)) {
+    const payload = JSON.parse(entry.body) as SalePayload;
+    for (const item of payload.items) reserved.set(item.productId, (reserved.get(item.productId) ?? 0) + item.quantity);
+  }
+  return { ...data, products: data.products.map(product => product.trackStock === false ? product : { ...product, stock: Math.max(0, product.stock - (reserved.get(product.id) ?? 0)) }) };
+}
 type SalePayload = {
   customerId?: string;
   paymentMethod: PaymentMethod;
@@ -61,7 +74,6 @@ export type AuthSession = {
   token: string;
 };
 
-type OfflineRequest = { id: string; path: string; options: { method: string; body?: string; headers?: Record<string, string> }; createdAt: string };
 
 export class OfflineQueuedError extends Error {
   constructor() {
@@ -70,18 +82,9 @@ export class OfflineQueuedError extends Error {
   }
 }
 
-function readOfflineQueue(): OfflineRequest[] {
-  try { return JSON.parse(localStorage.getItem("localito-offline-queue") ?? "[]") as OfflineRequest[]; } catch { return []; }
-}
-
-function queueOfflineRequest(path: string, options: RequestInit) {
-  const queue = readOfflineQueue();
-  queue.push({ id: crypto.randomUUID(), path, options: { method: options.method ?? "POST", body: typeof options.body === "string" ? options.body : undefined, headers: options.headers as Record<string, string> | undefined }, createdAt: new Date().toISOString() });
-  localStorage.setItem("localito-offline-queue", JSON.stringify(queue));
-}
-
 async function request<T>(path: string, options: RequestInit = {}, queueWhenOffline = false) {
   const token = localStorage.getItem("localito-token");
+  const scope = syncScope();
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
@@ -89,8 +92,8 @@ async function request<T>(path: string, options: RequestInit = {}, queueWhenOffl
       headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers }
     });
   } catch (error) {
-    if (queueWhenOffline && options.method && options.method !== "GET") {
-      queueOfflineRequest(path, options);
+    if (queueWhenOffline && path === "/sales" && scope && typeof options.body === "string") {
+      await enqueueSale(scope, options.body);
       throw new OfflineQueuedError();
     }
     throw error;
@@ -99,23 +102,22 @@ async function request<T>(path: string, options: RequestInit = {}, queueWhenOffl
   const payload = (await response.json().catch(() => ({}))) as ApiResponse<T> & { message?: string };
 
   if (!response.ok) {
-    throw new Error(payload.message ?? "No se pudo completar la operacion.");
+    throw new SyncHttpError(payload.message ?? "No se pudo completar la operacion.", response.status);
   }
 
   return payload;
 }
 
-export async function flushOfflineQueue() {
-  if (!navigator.onLine) return { synced: 0, pending: readOfflineQueue().length };
-  const queue = readOfflineQueue(); const pending: OfflineRequest[] = []; let synced = 0;
-  for (const entry of queue) {
-    try { await request(entry.path, { ...entry.options, headers: entry.options.headers }); synced += 1; } catch { pending.push(entry); }
-  }
-  localStorage.setItem("localito-offline-queue", JSON.stringify(pending));
-  return { synced, pending: pending.length };
+export async function flushOfflineQueue(options: SyncOptions = {}) {
+  return syncQueue(async (entry, token) => {
+    await request(entry.path, { method: "POST", body: entry.body, headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": entry.id } });
+  }, options);
 }
 
 export const api = {
+  async savePreferences(preferences: import("@localito/shared").BusinessPreferences) { return request<Tenant>("/tenant/preferences", { method: "PATCH", body: JSON.stringify(preferences) }); },
+  async getReconciliation() { return request<{ sessionId: string; opening: number; salesCash: number; debtCash: number; deposits: number; expenses: number; withdrawals: number; expected: number } | null>("/cash/reconciliation"); },
+  async getStatement(customerId: string) { return request<{ customer: Customer; debts: DebtAccount[]; payments: Array<{ id: string; amount: number; method: PaymentMethod; status: string; createdAt: string }> }>(`/customers/${encodeURIComponent(customerId)}/statement`); },
   async login(email: string, password: string) {
     return request<AuthSession>("/auth/login", {
       method: "POST",
@@ -144,7 +146,19 @@ export const api = {
   async logout() { return request<void>("/auth/logout", { method: "POST" }); },
 
   async bootstrap() {
-    return request<BootstrapData>("/bootstrap");
+    const scope = syncScope();
+    try {
+      const response = await request<BootstrapData>("/bootstrap");
+      if (scope) { try { await cacheWorkspace(scope.key, response.data); } catch { /* The live workspace remains usable if local storage is full. */ } }
+      window.dispatchEvent(new CustomEvent("localito-cache", { detail: false }));
+      return { ...response, data: reservePendingStock(response.data, scope?.key) };
+    } catch (error) {
+      if (!(error instanceof TypeError) || !scope || syncScope()?.key !== scope.key) throw error;
+      const saved = await cacheWorkspace(scope.key);
+      if (!saved) throw error;
+      window.dispatchEvent(new CustomEvent("localito-cache", { detail: true }));
+      return { data: reservePendingStock(saved, scope.key) };
+    }
   },
 
   async getPlatformTenants() { return request<PlatformTenantSummary[]>("/platform/tenants"); },
@@ -246,7 +260,7 @@ export const api = {
     return request<Product>(`/products/${productId}/stock`, {
       method: "PATCH",
       body: JSON.stringify({ quantity })
-    }, true);
+    });
   },
 
   async createCustomer(customer: Partial<Customer>) {
@@ -370,5 +384,10 @@ export const api = {
   async getCashMovements() { return request<CashMovement[]>("/cash/movements"); },
   async closeCashSession(countedAmount: number, note?: string) { return request<CashSession>("/cash/session/close", { method: "POST", body: JSON.stringify({ countedAmount, note }) }); },
   async getStockMovements(productId?: string) { return request<StockMovement[]>(`/stock-movements${productId ? `?productId=${encodeURIComponent(productId)}` : ""}`); },
+  async getAuditHistory(query: AuditQuery) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) if (value !== undefined && value !== "") params.set(key, String(value));
+    return request<AuditPage>(`/audit/history?${params}`);
+  },
   async getAuditEvents() { return request<AuditEvent[]>("/audit"); }
 };

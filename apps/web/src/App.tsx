@@ -79,6 +79,13 @@ import type { PurchaseProposalLine } from "./lib/inventory";
 import { suggestedReplenishment } from "./lib/inventory";
 import { FormField, FormSurface } from "./FormControls";
 import { InventoryRow } from "./InventoryRow";
+import { CheckoutPayment } from "./CheckoutPayment";
+import { ProductPhoto } from "./ProductPhoto";
+import { SyncStatus } from "./SyncStatus";
+import { syncScope } from "./lib/offline";
+import { BusinessSettings } from "./BusinessSettings";
+import { CustomerStatement } from "./ManagementPanels";
+import { defaultBusinessPreferences } from "@localito/shared";
 import { SearchView } from "./SearchView";
 import { PlanView, SettingsView } from "./AccountViews";
 import type { BusinessFormState, ProfileFormState, ThemePreference, UserFormState } from "./AccountViews";
@@ -88,6 +95,8 @@ type View = "dashboard" | "search" | "sale" | "scan" | "product_create" | "setup
 type NoticeTone = "success" | "warning" | "error";
 
 type ProductFormState = {
+  changeReason: string;
+  imageUrl: string;
   name: string;
   brand: string;
   category: string;
@@ -171,6 +180,8 @@ const paymentOptions: Array<{ id: PaymentMethod; label: string; icon: LucideIcon
 ];
 
 const emptyProductForm: ProductFormState = {
+  changeReason: "",
+  imageUrl: "",
   name: "",
   brand: "",
   category: "Abarrotes",
@@ -345,6 +356,7 @@ function App() {
   const { active: saleDraft, setTicket, setPaymentMethod, setCustomerId: setSelectedCustomerId } = saleWorkspace;
   const { items: ticket, paymentMethod, customerId: selectedCustomerId } = saleDraft;
   const [lastReceipt, setLastReceipt] = useState<Sale | null>(null);
+  const [lastReceivedCash, setLastReceivedCash] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState("");
   const [notice, setNotice] = useState<NoticeState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -446,6 +458,7 @@ function App() {
   }
 
   async function loadWorkspace(message?: string, sessionUser: User | null = currentUser) {
+    const scopeKey = syncScope()?.key;
     try {
       if (sessionUser?.role === "system_admin") {
         setActiveView("platform");
@@ -454,6 +467,7 @@ function App() {
       }
       const syncResult = await flushOfflineQueue();
       const response = await api.bootstrap();
+      if (syncScope()?.key !== scopeKey) return;
       applyWorkspace(response.data);
       if (sessionUser?.role === "owner" && response.data.products.length === 0 && !inventorySetupWasDismissed(response.data.tenant.id)) {
         setActiveView("setup");
@@ -748,7 +762,8 @@ function App() {
     );
   }
 
-  async function confirmSale(options?: { discount?: number; notes?: string; payments?: Array<{ method: Exclude<PaymentMethod, "mixed">; amount: number }> }) {
+  async function confirmSale(options?: { receivedCash?: number; discount?: number; notes?: string; payments?: Array<{ method: Exclude<PaymentMethod, "mixed">; amount: number }> }) {
+    const scopeKey = syncScope()?.key;
     if (isBusy) return;
     if (ticket.length === 0) {
       setNotice({ message: "Agrega al menos un producto antes de confirmar la venta.", tone: "warning" });
@@ -771,7 +786,9 @@ function App() {
         payments: options?.payments,
         items: ticket.map((item) => ({ productId: item.productId, quantity: item.quantity }))
       });
+      if (syncScope()?.key !== scopeKey) return;
       setLastReceipt(saleResponse.data);
+      setLastReceivedCash(options?.receivedCash);
 
       setNotice({
         message: `Venta registrada por ${formatCLP(saleResponse.data.total)}.`,
@@ -781,7 +798,12 @@ function App() {
       saleWorkspace.reset();
       await loadWorkspace();
     } catch (error) {
-      if (error instanceof OfflineQueuedError) saleWorkspace.reset();
+      if (syncScope()?.key !== scopeKey) return;
+      if (error instanceof OfflineQueuedError) {
+        setProducts(current => current.map(product => product.trackStock === false ? product : { ...product, stock: Math.max(0, product.stock - ticket.filter(item => item.productId === product.id).reduce((sum, item) => sum + item.quantity, 0)) }));
+        setLastReceipt(null);
+        saleWorkspace.reset();
+      }
       setNotice({ message: error instanceof Error ? error.message : "No se pudo registrar la venta.", tone: error instanceof OfflineQueuedError ? "warning" : "error" });
     } finally {
       setIsBusy(false);
@@ -955,6 +977,8 @@ function App() {
     setIsBusy(true);
     try {
       const payload = {
+        reason: productForm.changeReason.trim() || undefined,
+        imageUrl: productForm.imageUrl,
         name: productForm.name.trim(),
         brand: productForm.brand.trim(),
         category: productForm.category.trim(),
@@ -995,6 +1019,8 @@ function App() {
 
     setEditingProductId(product.id);
     setProductForm({
+      changeReason: "",
+      imageUrl: product.imageUrl ?? "",
       name: product.name,
       brand: product.brand ?? "",
       category: product.category,
@@ -1510,6 +1536,7 @@ function App() {
       </nav>}
 
       <main className="content">
+        {!isSystemAdmin && <SyncStatus key={`${tenant?.id}:${currentUser.id}`} onSynced={() => loadWorkspace("Ventas pendientes sincronizadas.")} />}
         {notice && <NoticeToast notice={notice} onDismiss={() => setNotice(null)} />}
 
         {!isSystemAdmin && subscription && !subscriptionCanMutate(subscription) && <section className="subscription-lock-banner"><AlertTriangle size={18}/><span>Tu suscripción no está activa. Puedes revisar toda tu información, pero las acciones están pausadas.</span>{isOwner && <button className="secondary-action small" type="button" onClick={() => navigateTo("plan")}>Elegir plan</button>}</section>}
@@ -1568,7 +1595,8 @@ function App() {
             ticket={ticket}
             ticketTotal={ticketTotal}
             paymentMethod={paymentMethod}
-            paymentOptions={subscription && !hasEntitlement(subscription, "credit") ? paymentOptions.filter((option) => option.id !== "credit") : paymentOptions}
+            paymentOptions={(tenant?.preferences ?? defaultBusinessPreferences).paymentMethods.map(id => paymentOptions.find(option => option.id === id)!).filter(option => option && (option.id !== "credit" || !subscription || hasEntitlement(subscription, "credit")))}
+            bank={(tenant?.preferences ?? defaultBusinessPreferences).bank}
             customers={customers}
             selectedCustomerId={selectedCustomerId}
             searchTerm={searchTerm}
@@ -1582,6 +1610,8 @@ function App() {
             onConfirm={(options) => void confirmSale(options)}
             onScan={() => !canOperate || (subscription && !hasEntitlement(subscription, "aiPhotoSale")) ? navigateTo("plan") : navigateTo("scan")}
             lastReceipt={lastReceipt}
+            lastReceivedCash={lastReceivedCash}
+            onNewSale={() => setLastReceipt(null)}
             onPrintReceipt={printLastReceipt}
             onShareReceipt={() => void shareLastReceipt()}
           />
@@ -1698,7 +1728,7 @@ function App() {
         )}
 
         {!isLoading && activeView === "operations" && (
-          <OperationsView products={products} purchaseProposal={purchaseProposal} onPurchaseProposalConsumed={() => setPurchaseProposal([])} canManage={isOwner && canOperate && (!subscription || hasEntitlement(subscription, "purchases"))} onRefresh={() => loadWorkspace()} />
+          <OperationsView products={products} sales={sales} preferences={tenant?.preferences} purchaseProposal={purchaseProposal} onPurchaseProposalConsumed={() => setPurchaseProposal([])} canManage={isOwner && canOperate && (!subscription || hasEntitlement(subscription, "purchases"))} onRefresh={() => loadWorkspace()} />
         )}
 
         {!isLoading && activeView === "invoice" && isOwner && (
@@ -1706,7 +1736,7 @@ function App() {
         )}
 
         {!isLoading && activeView === "settings" && (
-          <SettingsView
+          <>{tenant && isOwner && canOperate && <BusinessSettings key={tenant.id} tenant={tenant} onSaved={updated => { setTenant(updated); }} />}<SettingsView
             tenant={tenant}
             user={currentUser}
             users={users}
@@ -1724,7 +1754,7 @@ function App() {
             onResetUserPassword={(userToUpdate, password) => void resetManagedUserPassword(userToUpdate, password)}
             onOpenPlan={() => navigateTo("plan")}
             onExport={exportBusinessData}
-          />
+          /></>
         )}
 
         {!isLoading && activeView === "plan" && isOwner && subscription && <PlanView subscription={subscription} isBusy={isBusy} onSelect={(plan, provider) => void changePlan(plan, provider)} />}
@@ -1977,6 +2007,7 @@ function SaleView({
   ticketTotal,
   paymentMethod,
   paymentOptions,
+  bank,
   customers,
   selectedCustomerId,
   searchTerm,
@@ -1990,6 +2021,8 @@ function SaleView({
   onConfirm,
   onScan,
   lastReceipt,
+  lastReceivedCash,
+  onNewSale,
   onPrintReceipt,
   onShareReceipt
 }: {
@@ -2002,6 +2035,7 @@ function SaleView({
   ticketTotal: number;
   paymentMethod: PaymentMethod;
   paymentOptions: Array<{ id: PaymentMethod; label: string; icon: LucideIcon }>;
+  bank: import("@localito/shared").BusinessPreferences["bank"];
   customers: Customer[];
   selectedCustomerId: string;
   searchTerm: string;
@@ -2012,9 +2046,11 @@ function SaleView({
   onRemoveOne: (productId: string) => void;
   onPaymentMethod: (value: PaymentMethod) => void;
   onCustomer: (value: string) => void;
-  onConfirm: (options?: { discount?: number; notes?: string; payments?: Array<{ method: Exclude<PaymentMethod, "mixed">; amount: number }> }) => void;
+  onConfirm: (options?: { receivedCash?: number; discount?: number; notes?: string; payments?: Array<{ method: Exclude<PaymentMethod, "mixed">; amount: number }> }) => void;
   onScan: () => void;
   lastReceipt: Sale | null;
+  lastReceivedCash?: number;
+  onNewSale: () => void;
   onPrintReceipt: () => void;
   onShareReceipt: () => void;
 }) {
@@ -2026,6 +2062,7 @@ function SaleView({
   const [visibleCount, setVisibleCount] = useState(60);
   const [isChoosingPayment, setIsChoosingPayment] = useState(false);
   const [externalPaymentConfirmed, setExternalPaymentConfirmed] = useState(false);
+  const [receivedCash, setReceivedCash] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [featuredMode, setFeaturedMode] = useState<"popular" | "recent" | "favorites">("favorites");
   const searchFilteredProducts = useMemo(() => {
@@ -2064,11 +2101,14 @@ function SaleView({
   const visibleProducts = categoryProducts.slice(0, visibleCount);
   const discountedTotal = Math.max(0, ticketTotal - numberFromInput(discount));
   const cardPart = Math.max(0, discountedTotal - numberFromInput(cashPart));
+  const invalidCash = paymentMethod === "cash" && (receivedCash.trim() === "" || !Number.isSafeInteger(Number(receivedCash)) || Number(receivedCash) < discountedTotal);
+  const unavailableMethod = !paymentOptions.some(option => option.id === paymentMethod);
   const isExternalPayment = ["card", "transfer", "webpay", "mercadopago"].includes(paymentMethod) || (paymentMethod === "mixed" && cardPart > 0);
-  const invalidAmounts = !Number.isFinite(Number(discount)) || Number(discount) < 0 || Number(discount) > ticketTotal || (paymentMethod === "mixed" && (!Number.isFinite(Number(cashPart)) || Number(cashPart) < 0 || Number(cashPart) > discountedTotal));
+  const invalidAmounts = !Number.isSafeInteger(Number(discount)) || Number(discount) < 0 || Number(discount) > ticketTotal || (isChoosingPayment && paymentMethod === "mixed" && (!Number.isSafeInteger(Number(cashPart)) || Number(cashPart) <= 0 || Number(cashPart) >= discountedTotal));
 
   useEffect(() => { setVisibleCount(60); }, [searchTerm, selectedCategory]);
-  useEffect(() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); setReviewMessage(""); }, [workspace.active.id]);
+  useEffect(() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); setReceivedCash(""); setReviewMessage(""); }, [workspace.active.id]);
+  useEffect(() => { setReceivedCash(""); }, [paymentMethod]);
   useEffect(() => { setExternalPaymentConfirmed(false); }, [ticket, discount, cashPart, paymentMethod]);
 
   useEffect(() => {
@@ -2089,7 +2129,7 @@ function SaleView({
   }, [searchTerm]);
 
   function submitSale() {
-    if (isBusy || invalidAmounts || !ticket.length || (isExternalPayment && !externalPaymentConfirmed)) return;
+    if (isBusy || !canSell || unavailableMethod || invalidAmounts || invalidCash || !ticket.length || (paymentMethod === "credit" && !selectedCustomerId) || (isExternalPayment && !externalPaymentConfirmed)) return;
     const result = reconcileDraft(workspace.active, products);
     if (result.changes.length) {
       workspace.replaceActive(result.draft);
@@ -2098,7 +2138,7 @@ function SaleView({
       return;
     }
     const payments = paymentMethod === "mixed" ? [{ method: "cash" as const, amount: numberFromInput(cashPart) }, { method: "card" as const, amount: cardPart }].filter((payment) => payment.amount > 0) : undefined;
-    onConfirm({ discount: numberFromInput(discount), notes: notes.trim() || undefined, payments });
+    onConfirm({ receivedCash: paymentMethod === "cash" ? Number(receivedCash) : undefined, discount: numberFromInput(discount), notes: notes.trim() || undefined, payments });
   }
 
   function scrollToTicket() {
@@ -2136,7 +2176,6 @@ function SaleView({
           <Search size={18} />
           <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
         </div>
-        <ContextHelp title="¿Cómo preparo una venta rápida?" tips={["Busca por nombre, marca o código; también puedes elegir una categoría.", "Toca un producto para agregarlo al ticket y revisa cantidades antes de cobrar.", "Si tienes varios productos sobre el mesón, usa Venta Rápida con foto."]} />
         {!searchTerm.trim() && <section className="sale-featured-products" aria-label="Productos frecuentes">
           <div className="sale-featured-heading"><strong>Accesos rápidos</strong><div role="group" aria-label="Tipo de productos frecuentes"><button className={featuredMode === "favorites" ? "active" : ""} type="button" aria-pressed={featuredMode === "favorites"} onClick={() => setFeaturedMode("favorites")}><Star size={14}/> Favoritos</button><button className={featuredMode === "popular" ? "active" : ""} type="button" aria-pressed={featuredMode === "popular"} onClick={() => setFeaturedMode("popular")}><TrendingUp size={14}/> Más vendidos</button><button className={featuredMode === "recent" ? "active" : ""} type="button" aria-pressed={featuredMode === "recent"} onClick={() => setFeaturedMode("recent")}>Recientes</button></div></div>
           {!featuredProducts.length && <p className="empty-state">{featuredMode === "favorites" ? "Aún no hay favoritos." : "Aún no hay ventas registradas."}</p>}
@@ -2207,10 +2246,10 @@ function SaleView({
         {reviewMessage && <p role="alert" className="sale-storage-error">{reviewMessage}</p>}
         {(ticket.length > 0 || !lastReceipt) && <>
         <div className="section-heading">
-          <div className="flow-title"><span>2</span><h2>Revisa el ticket</h2></div>
+          <div className="flow-title"><span>{isChoosingPayment ? "3" : "2"}</span><h2>{isChoosingPayment ? "Cobrar venta" : "Revisa el ticket"}</h2></div>
           <span>{ticket.length} items</span>
         </div>
-        <div className="list ticket-list">
+        <div className={isChoosingPayment ? "list ticket-list checkout-ticket-summary" : "list ticket-list"}>
           {ticket.map((item) => (
             <div className="row" key={item.productId}>
               <div>
@@ -2221,39 +2260,41 @@ function SaleView({
               </div>
               <div className="row-actions">
                 <span className="amount">{formatCLP(item.subtotal)}</span>
-                <button className="icon-button" type="button" onClick={() => { const product = products.find((entry) => entry.id === item.productId); if (product) onAdd(product); }} aria-label="Agregar uno" disabled={!canSell || isBusy}>
+                {!isChoosingPayment && <><button className="icon-button" type="button" onClick={() => { const product = products.find((entry) => entry.id === item.productId); if (product) onAdd(product); }} aria-label="Agregar uno" disabled={!canSell || isBusy}>
                   <Plus size={17} />
                 </button>
                 <button className="icon-button danger" type="button" onClick={() => onRemoveOne(item.productId)} aria-label="Quitar uno" disabled={!canSell || isBusy}>
                   <Minus size={17} />
-                </button>
+                </button></>}
               </div>
             </div>
           ))}
           {ticket.length === 0 && <EmptyState icon={ShoppingCart} title="Tu ticket está vacío" description="" actionLabel="Elegir productos" onAction={() => { setMobileTicketOpen(false); document.querySelector<HTMLInputElement>(".sale-products-panel .search-box input")?.focus(); }} />}
         </div>
 
-        {isChoosingPayment && <><div className="checkout-step"><span>3</span><div><strong>¿Cómo pagará?</strong><p>Registra el pago solo después de verificarlo.</p></div></div><div className="payment-methods">
-          {paymentOptions.map((option) => {
-            const Icon = option.icon;
-            return (
-              <button
-                className={paymentMethod === option.id ? "chip active" : "chip"}
-                type="button"
-                key={option.id}
-                onClick={() => { onPaymentMethod(option.id); setExternalPaymentConfirmed(false); }}
-              >
-                <Icon size={16} />
-                <span>{option.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        <div className="ticket-total checkout-total"><span>Total a {paymentMethod === "credit" && isChoosingPayment ? "fiar" : "cobrar"}</span><strong>{formatCLP(discountedTotal)}</strong></div>
+        {isChoosingPayment && <div className="checkout-payment-body">
+        <CheckoutPayment value={paymentMethod} allowed={paymentOptions.map(option => option.id)} disabled={isBusy || !canSell}
+          onChange={method => { onPaymentMethod(method); setExternalPaymentConfirmed(false); }}/>
+        {paymentMethod === "transfer" && <div className="bank-details"><strong>Transferencia al local</strong>{bank.accountNumber ? <dl>{Object.entries({ Banco: bank.name, Titular: bank.holder, RUT: bank.taxId, Cuenta: `${bank.accountType} ${bank.accountNumber}`, Correo: bank.email }).filter(([, value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl> : <p>Datos bancarios aún no configurados.</p>}</div>}
+        {unavailableMethod && <p role="alert" className="sale-storage-error">Selecciona un medio de pago disponible.</p>}
+        {paymentMethod === "cash" && <div className="checkout-cash">
+          <label className="field">Efectivo recibido<input type="number" min={discountedTotal} step="1" inputMode="numeric" value={receivedCash}
+            aria-invalid={receivedCash !== "" && invalidCash} aria-describedby="checkout-cash-status" disabled={isBusy}
+            onChange={event => setReceivedCash(event.target.value)} placeholder="0"/></label>
+          <div className="checkout-cash-presets" role="group" aria-label="Montos de efectivo">
+            {[discountedTotal, ...[1000, 2000, 5000, 10000, 20000].filter(amount => amount > discountedTotal).slice(0, 2)].map((amount, index) =>
+              <button className="secondary-action small" type="button" key={amount} disabled={isBusy} onClick={() => setReceivedCash(String(amount))}>{index === 0 ? "Monto exacto" : formatCLP(amount)}</button>)}
+          </div>
+          <div className="checkout-change" id="checkout-cash-status" aria-live="polite"><span>{receivedCash !== "" && Number(receivedCash) < discountedTotal ? "Faltan" : "Vuelto"}</span>
+            <strong>{receivedCash === "" || !Number.isFinite(Number(receivedCash)) ? "—" : formatCLP(Math.abs(Number(receivedCash) - discountedTotal))}</strong></div>
+          {receivedCash !== "" && invalidCash && <p className="sale-storage-error" role="alert">Ingresa pesos enteros que cubran el total.</p>}
+        </div>}
 
         {paymentMethod === "credit" && (
           <label className="field">
             Cliente para fiado
-            <select value={selectedCustomerId} onChange={(event) => onCustomer(event.target.value)}>
+            <select value={selectedCustomerId} disabled={isBusy} onChange={(event) => onCustomer(event.target.value)}>
               <option value="">Seleccionar cliente</option>
               {customers.map((customer) => (
                 <option value={customer.id} key={customer.id}>
@@ -2264,32 +2305,34 @@ function SaleView({
           </label>
         )}
 
-        {paymentMethod === "mixed" && <div className="form-grid"><label className="field">Parte en efectivo<input value={cashPart} onChange={(event) => setCashPart(event.target.value)} inputMode="numeric" placeholder="Monto efectivo" /></label><div className="report-metric"><span>Parte en tarjeta</span><strong>{formatCLP(cardPart)}</strong></div></div>}
-        {isExternalPayment && <label className="external-payment-confirm"><input type="checkbox" checked={externalPaymentConfirmed} onChange={(event) => setExternalPaymentConfirmed(event.target.checked)}/><span><strong>Confirmo que el pago fue aprobado</strong><small>Revisa el terminal, QR o comprobante externo. Localito no cobra automáticamente.</small></span></label>}
-        </>}
+        {paymentMethod === "credit" && <p className="checkout-credit-status">{selectedCustomerId ? "Se registrará una deuda a nombre del cliente." : "Selecciona un cliente para continuar."}</p>}
+        {paymentMethod === "mixed" && <div className="checkout-split"><label className="field">Parte en efectivo<input type="number" min="0" max={discountedTotal} step="1" disabled={isBusy} value={cashPart} onChange={(event) => setCashPart(event.target.value)} inputMode="numeric" placeholder="0" /></label><div className="checkout-change"><span>Parte en tarjeta</span><strong>{formatCLP(cardPart)}</strong></div></div>}
+        {isExternalPayment && <label className="external-payment-confirm checkout-verification"><input type="checkbox" disabled={isBusy} checked={externalPaymentConfirmed} onChange={(event) => setExternalPaymentConfirmed(event.target.checked)}/><span><strong>{paymentMethod === "transfer" ? "Confirmo que recibí la transferencia" : "Confirmo que el pago fue aprobado"}</strong><small>{paymentMethod === "transfer" ? "Recepción verificada en la cuenta del local." : "Aprobación verificada en el terminal o proveedor externo."}</small></span></label>}
+        </div>}
 
-        <div className="form-grid"><label className="field">Descuento<input value={discount} onChange={(event) => setDiscount(event.target.value)} inputMode="numeric" placeholder="Monto descuento" /></label><label className="field">Nota de venta<input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Pedido, encargo u observación" /></label></div>
+        {!isChoosingPayment && <div className="form-grid"><label className="field">Descuento<input type="number" min="0" max={ticketTotal} step="1" disabled={isBusy} value={discount} onChange={(event) => setDiscount(event.target.value)} inputMode="numeric" placeholder="0" /></label><label className="field">Nota de venta<input disabled={isBusy} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Pedido, encargo u observación" /></label></div>}
+        {isChoosingPayment && (numberFromInput(discount) > 0 || notes.trim()) && <div className="checkout-meta">{numberFromInput(discount) > 0 && <span>Descuento: {formatCLP(numberFromInput(discount))}</span>}{notes.trim() && <span>{notes}</span>}</div>}
 
-        <div className="ticket-total">
-          <span>Total</span>
-          <strong>{formatCLP(discountedTotal)}</strong>
-        </div>
-
-        {invalidAmounts && <p role="alert" className="sale-storage-error">Revisa los montos: deben ser positivos o cero y no superar el total.</p>}
+        {invalidAmounts && <p role="alert" className="sale-storage-error">Revisa los montos en pesos enteros. El descuento no puede superar el subtotal; en pago mixto ambas partes deben ser mayores que cero.</p>}
         {!isChoosingPayment ? <button className="primary-action full" type="button" onClick={() => setIsChoosingPayment(true)} disabled={isBusy || !canSell || ticket.length === 0 || invalidAmounts}>
           <CheckCircle2 size={20} />
           <span>{`Cobrar ${formatCLP(discountedTotal)}`}</span>
-        </button> : <div className="stack compact-stack"><button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy || !canSell || !ticket.length || invalidAmounts || (paymentMethod === "credit" && !selectedCustomerId) || (isExternalPayment && !externalPaymentConfirmed)}><CheckCircle2 size={20}/><span>{isBusy ? "Registrando..." : isExternalPayment ? "Confirmar pago y registrar venta" : `Registrar venta · ${formatCLP(discountedTotal)}`}</span></button><button className="secondary-action full" type="button" disabled={isBusy} onClick={() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); }}>Volver al ticket</button></div>}
-        {ticket.length > 0 && <button className="secondary-action full" type="button" disabled={isBusy || !canSell} onClick={() => { workspace.hold(); setMobileTicketOpen(false); }}><Pause size={18}/> Dejar en espera</button>}
+        </button> : <div className="stack compact-stack checkout-submit"><button className="primary-action full" type="button" onClick={submitSale} disabled={isBusy || !canSell || unavailableMethod || !ticket.length || invalidAmounts || invalidCash || (paymentMethod === "credit" && !selectedCustomerId) || (isExternalPayment && !externalPaymentConfirmed)}><CheckCircle2 size={20}/><span>{isBusy ? "Registrando..." : paymentMethod === "credit" ? "Registrar fiado" : "Confirmar cobro"}</span></button><button className="secondary-action full" type="button" disabled={isBusy} onClick={() => { setIsChoosingPayment(false); setExternalPaymentConfirmed(false); }}><ArrowLeft size={17}/>Volver al ticket</button></div>}
+        {ticket.length > 0 && !isChoosingPayment && <button className="secondary-action full" type="button" disabled={isBusy || !canSell} onClick={() => { workspace.hold(); setMobileTicketOpen(false); }}><Pause size={18}/> Dejar en espera</button>}
         </>}
         {lastReceipt && ticket.length === 0 && (
-          <div className="receipt-card">
+          <div className="checkout-complete" role="status">
             <div>
-              <strong>Comprobante listo</strong>
-              <p>
-                Venta #{lastReceipt.id.slice(0, 8)} - {formatCLP(lastReceipt.total)}
-              </p>
+              <CheckCircle2 size={28}/><h2>{lastReceipt.paymentMethod === "credit" ? "Fiado registrado" : "Venta registrada"}</h2>
+              <p>Venta #{lastReceipt.id.slice(0, 8)}</p>
             </div>
+            <strong className="checkout-receipt-total">{formatCLP(lastReceipt.total)}</strong>
+            <div className="checkout-receipt-lines"><span>Medio</span><strong>{paymentMethodLabel(lastReceipt.paymentMethod)}</strong>
+              {lastReceipt.payments?.map((payment, index) => <div className="checkout-receipt-part" key={index}><span>{paymentMethodLabel(payment.method)}</span><strong>{formatCLP(payment.amount)}</strong></div>)}
+              {lastReceipt.paymentMethod === "cash" && lastReceivedCash !== undefined && <><span>Recibido</span><strong>{formatCLP(lastReceivedCash)}</strong><span>Vuelto</span><strong>{formatCLP(Math.max(0, lastReceivedCash - lastReceipt.total))}</strong></>}
+              {lastReceipt.customerId && <><span>Cliente</span><strong>{customers.find(customer => customer.id === lastReceipt.customerId)?.name ?? "Cliente"}</strong></>}
+            </div>
+            <div className="checkout-receipt-actions">
             <button className="secondary-action small" type="button" onClick={onPrintReceipt}>
               <Printer size={16} />
               <span>Imprimir</span>
@@ -2298,9 +2341,10 @@ function SaleView({
               <Share2 size={16} />
               <span>Compartir</span>
             </button>
+            </div>
           </div>
         )}
-        {lastReceipt && ticket.length === 0 && <button className="primary-action full" type="button" onClick={() => { setMobileTicketOpen(false); document.querySelector<HTMLInputElement>(".sale-products-panel .search-box input")?.focus(); }}><Plus size={19}/> Nueva venta</button>}
+        {lastReceipt && ticket.length === 0 && <button className="primary-action full" type="button" onClick={() => { onNewSale(); setMobileTicketOpen(false); document.querySelector<HTMLInputElement>(".sale-products-panel .search-box input")?.focus(); }}><Plus size={19}/> Nueva venta</button>}
       </SaleTicketSurface>
     </div>
   );
@@ -2459,6 +2503,8 @@ function ProductsView({
             <span>{editingProductId ? "Actualización" : "Catálogo del local"}</span>
           </div>
           <div className="progressive-form-heading"><span>Datos principales</span></div>
+          <ProductPhoto value={productForm.imageUrl} disabled={isBusy} onChange={value => onForm({ ...productForm, imageUrl: value })}/>
+          {editingProductId && <FormField label="Motivo del cambio (opcional)" value={productForm.changeReason} maxLength={300} onChange={value => onForm({ ...productForm, changeReason: value })}/>}
           <div className="form-grid product-form-primary-grid">
             <FormField label="Nombre del producto" value={productForm.name} onChange={value => onForm({ ...productForm, name: value })} required pattern=".*\S.*" placeholder="Ej. Bebida cola 1,5 L" />
             <FormField label="Categoría" value={productForm.category} onChange={value => onForm({ ...productForm, category: value })} required pattern=".*\S.*" list="product-category-options" placeholder="Ej. Bebidas" />
@@ -2673,6 +2719,7 @@ function CustomersView({
       </FormSurface>}
 
       {customerTab === "clients" && <CustomerOverview customers={customers} />}
+      <CustomerStatement customers={customers}/>
 
       {lastDebtCharge && (
         <section className="panel payment-share-panel">

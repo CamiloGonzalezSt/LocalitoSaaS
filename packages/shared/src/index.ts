@@ -2,6 +2,16 @@ export type UserRole = "system_admin" | "owner" | "seller";
 export * from "./subscriptions.js";
 
 export type PaymentMethod = "cash" | "card" | "transfer" | "webpay" | "mercadopago" | "credit" | "mixed";
+export interface BusinessPreferences {
+  paymentMethods: PaymentMethod[];
+  bank: { name: string; holder: string; taxId: string; accountType: string; accountNumber: string; email: string };
+  leadDays: number;
+  coverageDays: number;
+}
+export const defaultBusinessPreferences: BusinessPreferences = {
+  paymentMethods: ["cash", "card", "transfer", "webpay", "mercadopago", "mixed", "credit"],
+  bank: { name: "", holder: "", taxId: "", accountType: "", accountNumber: "", email: "" }, leadDays: 3, coverageDays: 14
+};
 
 export type PaymentStatus = "pending" | "approved" | "rejected" | "cancelled" | "expired";
 
@@ -13,6 +23,7 @@ export type PurchaseStatus = "draft" | "ordered" | "partially_received" | "recei
 export type DebtStatus = "pending" | "overdue" | "paid" | "cancelled";
 
 export interface Tenant {
+  preferences?: BusinessPreferences;
   id: string;
   name: string;
   businessType: string;
@@ -224,6 +235,16 @@ export interface StockMovement {
   createdByUserId?: string;
   createdAt: string;
 }
+
+export interface AuditQuery {
+  search?: string;
+  action?: string;
+  from?: string;
+  to?: string;
+  cursor?: string;
+  limit?: number;
+}
+export interface AuditPage { events: AuditEvent[]; nextCursor?: string }
 
 export interface AuditEvent {
   id: string;

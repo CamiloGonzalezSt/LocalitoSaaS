@@ -87,7 +87,7 @@ async function audit(page, name, theme) {
   await page.locator('.desktop-sidebar').getByRole('button',{name:'Vender',exact:true}).click();
   await page.locator('.sale-product-entry .product-button').first().click();
   await page.getByRole('button',{name:/^Cobrar \$/}).click();
-  await page.getByRole('button',{name:'Tarjeta · terminal externo',exact:true}).click();
+  await page.getByRole('button',{name:'Tarjeta',exact:true}).click();
   await capture('checkout');
   for(const width of [390,320,820]) {
     await page.setViewportSize({width,height:844});

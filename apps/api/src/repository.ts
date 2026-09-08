@@ -3,6 +3,8 @@ import { createHash, randomUUID } from "node:crypto";
 import pg from "pg";
 import type {
   AuditEvent,
+  AuditPage,
+  AuditQuery,
   BootstrapData,
   CashMovement,
   CashRegisterClosure,
@@ -52,6 +54,8 @@ import {
   systemTenantId
 } from "./store.js";
 import { hashPassword, verifyPassword } from "./auth.js";
+import { assertSalePayload, settleSale } from "./saleValidation.js";
+import { auditPage, auditSql, filterAudit } from "./auditQuery.js";
 
 const { Pool } = pg;
 
@@ -142,6 +146,7 @@ export interface DataRepository {
   createPurchaseOrder(tenantId: string, purchase: PurchaseCreationPayload): Promise<PurchaseOrder>;
   receivePurchaseOrder(tenantId: string, purchaseId: string, quantities?: Record<string, number>, userId?: string): Promise<PurchaseOrder | null>;
   getDebts(tenantId: string): Promise<DebtAccount[]>;
+  getPayments(tenantId: string): Promise<PaymentRecord[]>;
   getOpenCashSession(tenantId: string): Promise<CashSession | undefined>;
   openCashSession(tenantId: string, amount: number, userId: string): Promise<CashSession>;
   addCashMovement(tenantId: string, movement: { type: CashMovement["type"]; amount: number; reason: string; category?: string; userId: string }): Promise<CashMovement>;
@@ -150,6 +155,7 @@ export interface DataRepository {
   getStockMovements(tenantId: string, productId?: string): Promise<StockMovement[]>;
   recordAudit(event: Omit<AuditEvent, "id" | "createdAt">): Promise<AuditEvent>;
   getAuditEvents(tenantId: string): Promise<AuditEvent[]>;
+  getAuditPage(tenantId: string, query: AuditQuery): Promise<AuditPage>;
 }
 
 export type SaleCreationPayload = {
@@ -380,7 +386,7 @@ function cashPeriodStart(openedAt?: string, closedAt?: string) {
 
 function buildCashRegisterFromSales(sales: Sale[], date = new Date(), returnedTotals = new Map<string, number>(), openedAt?: string): CashRegisterSummary {
   const dayKey = date.toISOString().slice(0, 10);
-  const salesForDay = sales.filter((sale) => sale.createdAt.slice(0, 10) === dayKey && (!openedAt || sale.createdAt >= openedAt));
+  const salesForDay = sales.filter((sale) => openedAt ? sale.createdAt >= openedAt : sale.createdAt.slice(0, 10) === dayKey);
   const activeSales = salesForDay
     .filter((sale) => sale.status !== "cancelled")
     .map((sale) => ({ sale, total: Math.max(0, sale.total - (returnedTotals.get(sale.id) ?? 0)) }))
@@ -481,6 +487,7 @@ export class MemoryRepository implements DataRepository {
     if (body.address != null) tenant.address = toOptional(body.address);
     if (body.phone != null) tenant.phone = toOptional(body.phone);
     if (body.active != null) tenant.active = body.active;
+    if (body.preferences) tenant.preferences = structuredClone(body.preferences);
     return tenant;
   }
 
@@ -680,6 +687,7 @@ export class MemoryRepository implements DataRepository {
 
     if (body.name != null && body.name.trim().length > 0) product.name = body.name.trim();
     if (body.brand != null) product.brand = toOptional(body.brand);
+    if (body.imageUrl != null) product.imageUrl = toOptional(body.imageUrl);
     if (body.category != null && body.category.trim().length > 0) product.category = body.category.trim();
     if (body.barcode != null) product.barcode = toOptional(body.barcode);
     if (body.costPrice != null) product.costPrice = readPositiveNumber(body.costPrice, product.costPrice);
@@ -758,6 +766,7 @@ export class MemoryRepository implements DataRepository {
   }
 
   async createSale(tenantId: string, body: SaleCreationPayload) {
+    assertSalePayload(body);
     if (body.idempotencyKey) {
       const existingId = store.idempotencyKeys[`${tenantId}:${body.idempotencyKey}`];
       const existing = store.sales.find((sale) => sale.id === existingId && sale.tenantId === tenantId);
@@ -768,6 +777,7 @@ export class MemoryRepository implements DataRepository {
     for (const item of body.items) {
       const product = store.products.find((candidate) => candidate.id === item.productId && candidate.tenantId === tenantId);
       if (!product) throw new Error(`Producto no encontrado: ${item.productId}`);
+      if (!product.active) throw new Error(`El producto ${product.name} no permite ventas porque esta desactivado.`);
       if (product.trackStock !== false && product.stock < item.quantity) throw new Error(`Stock insuficiente para ${product.name}. Disponible: ${product.stock}`);
 
       saleItems.push({
@@ -780,14 +790,10 @@ export class MemoryRepository implements DataRepository {
     }
 
     const subtotal = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
-    const discount = Math.min(readPositiveNumber(body.discount), subtotal);
-    const total = subtotal - discount;
-    const payments = body.payments?.filter((payment) => payment.amount > 0);
-    if (payments?.length && payments.reduce((sum, payment) => sum + payment.amount, 0) !== total) {
-      throw new Error("La suma de los medios de pago debe coincidir con el total de la venta.");
-    }
-    const creditAmount = payments?.find((payment) => payment.method === "credit")?.amount ?? (body.paymentMethod === "credit" ? total : 0);
+    const { discount, total, payments, creditAmount } = settleSale(body, subtotal);
     const isCredit = creditAmount > 0;
+
+    if (body.customerId && !store.customers.some(customer => customer.id === body.customerId && customer.tenantId === tenantId && customer.active)) throw new Error("Cliente no encontrado o inactivo.");
 
     if (isCredit && !body.customerId) {
       throw new Error("Una venta fiada debe estar asociada a un cliente.");
@@ -937,7 +943,8 @@ export class MemoryRepository implements DataRepository {
     const deposits = movements.filter((movement) => movement.type === "deposit").reduce((sum, movement) => sum + movement.amount, 0);
     const withdrawals = movements.filter((movement) => movement.type !== "deposit").reduce((sum, movement) => sum + movement.amount, 0);
     const openingAmount = session && (!latestResetAt || session.openedAt > latestResetAt) ? session.openingAmount : 0;
-    return { ...summary, openingAmount, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: openingAmount + summary.totalsByMethod.cash + deposits - withdrawals };
+    const debtCash = session ? (await this.getPayments(tenantId)).filter(payment => !payment.saleId && payment.method === "cash" && payment.status === "approved" && payment.createdAt >= session.openedAt).reduce((sum, payment) => sum + payment.amount, 0) : 0;
+    return { ...summary, openingAmount, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: openingAmount + summary.totalsByMethod.cash + debtCash + deposits - withdrawals };
   }
 
   async getCashClosures(tenantId: string) {
@@ -1147,6 +1154,10 @@ export class MemoryRepository implements DataRepository {
     return store.debts.filter((debt) => debt.tenantId === tenantId).map((debt) => ({ ...debt, status: debt.balance === 0 ? "paid" as const : debt.dueDate && debt.dueDate < today ? "overdue" as const : "pending" as const }));
   }
 
+  async getPayments(tenantId: string) {
+    return store.payments.filter(payment => payment.tenantId === tenantId);
+  }
+
   async getOpenCashSession(tenantId: string) {
     return store.cashSessions.find((session) => session.tenantId === tenantId && session.status === "open");
   }
@@ -1175,7 +1186,9 @@ export class MemoryRepository implements DataRepository {
     const movements = store.cashMovements.filter((movement) => movement.sessionId === session.id);
     const deposits = movements.filter((movement) => movement.type === "deposit").reduce((sum, movement) => sum + movement.amount, 0);
     const withdrawals = movements.filter((movement) => movement.type !== "deposit").reduce((sum, movement) => sum + movement.amount, 0);
-    const expected = session.openingAmount + summary.totalsByMethod.cash + deposits - withdrawals;
+    const debtCash = (await this.getPayments(tenantId)).filter(payment => !payment.saleId && payment.method === "cash" && payment.status === "approved" && payment.createdAt >= session.openedAt).reduce((sum, payment) => sum + payment.amount, 0);
+    const expected = session.openingAmount + summary.totalsByMethod.cash + debtCash + deposits - withdrawals;
+    if (countedAmount !== expected && !note?.trim()) throw new Error("El motivo de la diferencia de caja es obligatorio.");
     Object.assign(session, { status: "closed", closedAt: new Date().toISOString(), closedByUserId: userId, countedAmount, expectedCash: expected, difference: countedAmount - expected, note: toOptional(note) });
     return session;
   }
@@ -1196,6 +1209,10 @@ export class MemoryRepository implements DataRepository {
 
   async getAuditEvents(tenantId: string) {
     return store.auditEvents.filter((event) => event.tenantId === tenantId).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 100);
+  }
+
+  async getAuditPage(tenantId: string, query: AuditQuery) {
+    return filterAudit(store.auditEvents, tenantId, query);
   }
 }
 
@@ -1419,8 +1436,8 @@ class PostgresRepository implements DataRepository {
     if (!current) return null;
     const updated = { ...current, name: body.name?.trim() || current.name, businessType: body.businessType?.trim() || current.businessType, address: body.address != null ? toOptional(body.address) : current.address, phone: body.phone != null ? toOptional(body.phone) : current.phone, active: body.active ?? current.active ?? true };
     const result = await this.pool.query(
-      `update negocios set nombre=$1,rubro=$2,direccion=$3,telefono=$4,estado=$5 where id=$6 returning *`,
-      [updated.name, updated.businessType, updated.address, updated.phone, updated.active ? "activo" : "inactivo", tenantId]
+      `update negocios set nombre=$1,rubro=$2,direccion=$3,telefono=$4,estado=$5,preferencias=$7::jsonb where id=$6 returning *`,
+      [updated.name, updated.businessType, updated.address, updated.phone, updated.active ? "activo" : "inactivo", tenantId, JSON.stringify(body.preferences ?? current.preferences ?? {})]
     );
     return result.rows[0] ? mapTenant(result.rows[0]) : null;
   }
@@ -1704,6 +1721,7 @@ class PostgresRepository implements DataRepository {
     const updated = {
       ...product,
       name: body.name?.trim() || product.name,
+      imageUrl: body.imageUrl != null ? toOptional(body.imageUrl) : product.imageUrl,
       brand: body.brand != null ? toOptional(body.brand) : product.brand,
       category: body.category?.trim() || product.category,
       barcode: body.barcode != null ? toOptional(body.barcode) : product.barcode,
@@ -1726,7 +1744,7 @@ class PostgresRepository implements DataRepository {
        set nombre = $1, marca = $2, descripcion = $3, codigo_barras = $4,
            precio_costo = $5, precio_venta = $6, stock_actual = $7, stock_minimo = $8, activo = $9,
            sku = $10, variante = $11, unidad = $12, unidades_por_pack = $13, proveedor_id = $14,
-           fecha_vencimiento = $15, controla_stock = $16
+           fecha_vencimiento = $15, controla_stock = $16, imagen_url = $19
        where id = $17 and negocio_id = $18`,
       [
         updated.name,
@@ -1746,7 +1764,8 @@ class PostgresRepository implements DataRepository {
         updated.expiryDate,
         updated.trackStock,
         productId,
-        tenantId
+        tenantId,
+        updated.imageUrl
       ]
     );
 
@@ -2037,7 +2056,8 @@ class PostgresRepository implements DataRepository {
     const deposits = active.filter((movement) => movement.type === "deposit").reduce((sum, movement) => sum + movement.amount, 0);
     const withdrawals = active.filter((movement) => movement.type !== "deposit").reduce((sum, movement) => sum + movement.amount, 0);
     const openingAmount = session && (!latestResetAt || session.openedAt > latestResetAt) ? session.openingAmount : 0;
-    return { ...summary, openingAmount, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: openingAmount + summary.totalsByMethod.cash + deposits - withdrawals };
+    const debtCash = session ? (await this.getPayments(tenantId)).filter(payment => !payment.saleId && payment.method === "cash" && payment.status === "approved" && payment.createdAt >= session.openedAt).reduce((sum, payment) => sum + payment.amount, 0) : 0;
+    return { ...summary, openingAmount, cashDeposits: deposits, cashWithdrawals: withdrawals, expectedCash: openingAmount + summary.totalsByMethod.cash + debtCash + deposits - withdrawals };
   }
 
   async getCashClosures(tenantId: string) {
@@ -2419,6 +2439,11 @@ class PostgresRepository implements DataRepository {
     return result.rows[0]?mapCashSession(result.rows[0]):undefined;
   }
 
+  async getPayments(tenantId: string) {
+    const result = await this.pool.query(`select * from pagos where negocio_id=$1 order by fecha_creacion desc`, [tenantId]);
+    return result.rows.map(mapPayment);
+  }
+
   async openCashSession(tenantId: string, amount: number, userId: string) {
     if(await this.getOpenCashSession(tenantId)) throw new Error("Ya existe una caja abierta.");
     const result=await this.pool.query(`insert into sesiones_caja (id,negocio_id,usuario_apertura_id,monto_inicial) values ($1,$2,$3,$4) returning *`,[randomUUID(),tenantId,userId,amount]);
@@ -2437,13 +2462,15 @@ class PostgresRepository implements DataRepository {
     const session=await this.getOpenCashSession(tenantId); if(!session) return null;
     const summary=await this.getCashRegister(tenantId); const movements=await this.getCashMovements(tenantId);
     const active=movements.filter((movement)=>movement.sessionId===session.id); const deposits=active.filter((m)=>m.type==="deposit").reduce((s,m)=>s+m.amount,0); const withdrawals=active.filter((m)=>m.type!=="deposit").reduce((s,m)=>s+m.amount,0);
-    const expected=session.openingAmount+summary.totalsByMethod.cash+deposits-withdrawals;
+    const debtCash=(await this.getPayments(tenantId)).filter(payment=>!payment.saleId && payment.method==="cash" && payment.status==="approved" && payment.createdAt>=session.openedAt).reduce((sum,payment)=>sum+payment.amount,0);
+    const expected=session.openingAmount+summary.totalsByMethod.cash+debtCash+deposits-withdrawals;
+    if(countedAmount!==expected && !note?.trim()) throw new Error("El motivo de la diferencia de caja es obligatorio.");
     const result=await this.pool.query(`update sesiones_caja set estado='closed',usuario_cierre_id=$1,fecha_cierre=CURRENT_TIMESTAMP,efectivo_contado=$2,efectivo_esperado=$3,diferencia=$4,observacion=$5 where id=$6 and negocio_id=$7 returning *`,[userId,countedAmount,expected,countedAmount-expected,toOptional(note),session.id,tenantId]);
     return result.rows[0]?mapCashSession(result.rows[0]):null;
   }
 
   async getCashMovements(tenantId: string) {
-    const result=await this.pool.query(`select m.*,u.nombre as created_by_name from movimientos_caja m left join usuarios u on u.id=m.usuario_id where m.negocio_id=$1 order by m.fecha_creacion desc limit 100`,[tenantId]); return result.rows.map(mapCashMovement);
+    const result=await this.pool.query(`select m.*,u.nombre as created_by_name from movimientos_caja m left join usuarios u on u.id=m.usuario_id where m.negocio_id=$1 order by m.fecha_creacion desc`,[tenantId]); return result.rows.map(mapCashMovement);
   }
 
   async getStockMovements(tenantId: string, productId?: string) {
@@ -2458,12 +2485,19 @@ class PostgresRepository implements DataRepository {
     const result=await this.pool.query(`select a.*,u.nombre as user_name from auditoria a left join usuarios u on u.id=a.usuario_id where a.negocio_id=$1 order by a.fecha_creacion desc limit 100`,[tenantId]); return result.rows.map(mapAuditEvent);
   }
 
+  async getAuditPage(tenantId: string, query: AuditQuery) {
+    const result = await this.pool.query(auditSql(tenantId, query));
+    return auditPage(result.rows.map(mapAuditEvent), query.limit);
+  }
+
   private async createSaleWithClient(
     client: pg.PoolClient,
     tenantId: string,
     body: SaleCreationPayload
   ) {
+    assertSalePayload(body);
     if (body.idempotencyKey) {
+      await client.query(`select pg_advisory_xact_lock(hashtextextended($1, 0))`, [`${tenantId}:${body.idempotencyKey}`]);
       const existing = await client.query(`select id from ventas where negocio_id=$1 and idempotency_key=$2`, [tenantId, body.idempotencyKey]);
       if (existing.rows[0]) return (await this.getSales(tenantId)).find((sale) => sale.id === existing.rows[0].id)!;
     }
@@ -2476,6 +2510,7 @@ class PostgresRepository implements DataRepository {
       ]);
       const product = productResult.rows[0] ? mapProduct(productResult.rows[0]) : null;
       if (!product) throw new Error(`Producto no encontrado: ${item.productId}`);
+      if (!product.active) throw new Error(`El producto ${product.name} no permite ventas porque esta desactivado.`);
       if (product.trackStock !== false && product.stock < item.quantity) throw new Error(`Stock insuficiente para ${product.name}. Disponible: ${product.stock}`);
 
       saleItems.push({
@@ -2488,21 +2523,17 @@ class PostgresRepository implements DataRepository {
     }
 
     const subtotal = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
-    const discount = Math.min(readPositiveNumber(body.discount), subtotal);
-    const total = subtotal - discount;
-    const payments = body.payments?.filter((payment) => payment.amount > 0);
-    if (payments?.length && payments.reduce((sum, payment) => sum + payment.amount, 0) !== total) throw new Error("La suma de los medios de pago debe coincidir con el total de la venta.");
-    const creditAmount = payments?.find((payment) => payment.method === "credit")?.amount ?? (body.paymentMethod === "credit" ? total : 0);
+    const { discount, total, payments, creditAmount } = settleSale(body, subtotal);
     const isCredit = creditAmount > 0;
     if (isCredit && !body.customerId) throw new Error("Una venta fiada debe estar asociada a un cliente.");
 
-    if (isCredit && body.customerId) {
+    if (body.customerId) {
       const customerResult = await client.query(`select * from clientes where id=$1 and negocio_id=$2 for update`, [body.customerId, tenantId]);
       const balanceResult = await client.query(`select coalesce(sum(saldo_pendiente),0) as debt_balance from cuentas_fiado where cliente_id=$1 and negocio_id=$2 and estado='pendiente'`, [body.customerId, tenantId]);
       const customer = customerResult.rows[0] ? mapCustomer({ ...customerResult.rows[0], debt_balance: balanceResult.rows[0]?.debt_balance }) : null;
-      if (!customer) throw new Error("Cliente no encontrado.");
-      if (customer.creditBlocked) throw new Error("El fiado de este cliente está bloqueado.");
-      if ((customer.creditLimit ?? 0) > 0 && customer.debtBalance + creditAmount > (customer.creditLimit ?? 0)) throw new Error("La venta supera el límite de crédito del cliente.");
+      if (!customer || !customer.active) throw new Error("Cliente no encontrado o inactivo.");
+      if (isCredit && customer.creditBlocked) throw new Error("El fiado de este cliente está bloqueado.");
+      if (isCredit && (customer.creditLimit ?? 0) > 0 && customer.debtBalance + creditAmount > (customer.creditLimit ?? 0)) throw new Error("La venta supera el límite de crédito del cliente.");
     }
 
     const sale: Sale = {
@@ -2744,6 +2775,7 @@ class PostgresRepository implements DataRepository {
 
 function mapTenant(row: Record<string, unknown>): Tenant {
   return {
+    preferences: row.preferencias && Object.keys(row.preferencias as object).length ? row.preferencias as Tenant["preferences"] : undefined,
     id: String(row.id),
     name: String(row.nombre),
     businessType: String(row.rubro),
