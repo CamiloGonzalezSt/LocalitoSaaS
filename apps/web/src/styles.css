@@ -540,7 +540,7 @@ button:active:not(:disabled) {
 
 .plan-card .primary-action.full,
 .plan-card .secondary-action.full {
-  align-self: start;
+  align-self: end;
   height: 42px;
   min-height: 42px;
   padding: 9px 15px;
@@ -3638,6 +3638,7 @@ button,
 
 .plan-card {
   display: grid;
+  grid-template-rows: auto auto 1fr auto;
   gap: 18px;
 }
 
@@ -3698,7 +3699,7 @@ button,
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 15px;
-}
+  align-self: end;
 
 .section-tabs button {
   display: flex;
@@ -3707,6 +3708,7 @@ button,
   justify-content: center;
   gap: 7px;
   min-height: 44px;
+  grid-template-rows: auto auto 1fr auto;
   color: var(--muted);
   background: transparent;
   border: 0;
