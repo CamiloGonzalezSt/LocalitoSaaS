@@ -1,9 +1,27 @@
 /* Theme contract. Imported after layout styles so legacy colors cannot leak
    into surfaces, interaction states or content rendered in portals. */
 :root {
-  --surface-hover: #edf1f0;
-  --primary: #0e7563;
-  --primary-hover: #095c4d;
+  --background: #f4f6f5;
+  --surface: #ffffff;
+  --surface-secondary: #eef2ef;
+  --surface-soft: var(--surface-secondary);
+  --surface-hover: #e5ebe7;
+  --text-primary: #18221d;
+  --text-secondary: #5f6c64;
+  --border: #d9e1db;
+  --sidebar: #18221d;
+  --sidebar-dark: #18221d;
+  --sidebar-card: #24332b;
+  --sidebar-border: #3b4c41;
+  --primary: #087f6b;
+  --primary-hover: #066554;
+  --primary-soft: #def2e9;
+  --green: var(--primary);
+  --green-soft: var(--primary-soft);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --line: var(--border);
+  --shadow: 0 4px 16px #18221d0a;
   --on-primary: #ffffff;
   --blue: #2458b8;
   --blue-soft: #eaf0fc;
@@ -24,9 +42,21 @@
 }
 
 :root[data-theme="dark"] {
-  --surface-hover: #232323;
-  --primary: #36cbb0;
+  --background: #141615;
+  --surface: #1d211f;
+  --surface-secondary: #252a27;
+  --surface-hover: #2b312d;
+  --text-primary: #edf2ef;
+  --text-secondary: #a9b5ae;
+  --border: #374139;
+  --sidebar: #171c19;
+  --sidebar-dark: #171c19;
+  --sidebar-card: #252e28;
+  --sidebar-border: #374139;
+  --primary: #36c9a5;
   --primary-hover: #62dec6;
+  --primary-soft: #193a30;
+  --shadow: none;
   --on-primary: #06251f;
   --blue: #a4c2ff;
   --blue-soft: #182840;
@@ -83,7 +113,7 @@
   .invoice-capture, .invoice-ai-message, .invoice-total-card,
   .invoice-confirm-bar, .bulk-import-message, .setup-choice.recommended,
   .setup-category-chips span, .setup-choice-tag, .stock-actions .stock-edit-action,
-  .product-thumb, .trial-offer, .quick-action, .selected-row
+  .trial-offer, .selected-row
 ) {
   color: var(--success);
   background: var(--success-soft);
@@ -100,7 +130,7 @@
 :root :is(
   .invoice-ai-message.warning, .invoice-warning-list, .invoice-match-badge.new,
   .bulk-import-message.warning, .bulk-server-issues, .bulk-preview-table tr.invalid td,
-  .status-badge.warning, .external-payment-confirm, .quick-action.scan,
+  .status-badge.warning, .external-payment-confirm,
   .dashboard-priority-panel.warning .dashboard-priority-icon, .setup-choice-icon.amber
 ) {
   color: var(--amber);
@@ -112,7 +142,7 @@
 :root :is(
   .danger-soft, .secondary-action.danger-soft, .icon-button.danger,
   .stock-status.low, .stock-pill.low, .stock-warning, .mobile-menu-item.danger,
-  .report-comparison.negative, .quick-action.stock,
+  .report-comparison.negative,
   .dashboard-priority-panel.urgent .dashboard-priority-icon
 ) {
   color: var(--red);
@@ -125,7 +155,14 @@
   background: var(--success-soft);
   border-color: var(--success-border);
 }
-:root :is(.product-price, .setup-choice-icon.blue) { color: var(--blue); background: var(--blue-soft); }
+:root .setup-choice-icon.blue { color: var(--blue); background: var(--blue-soft); }
+:root .product-price { color: var(--text-primary); background: transparent; }
+:root :is(.product-thumb, .quick-action) { color: var(--text-primary); background: var(--surface-secondary); border-color: var(--border); }
+:root .quick-action:hover { background: var(--surface-hover); border-color: var(--primary); }
+:root .desktop-sidebar { background: var(--sidebar); }
+:root .login-shell { background: var(--background); }
+:root :is(.app-topbar, .topbar) { background: var(--surface); border-color: var(--border); box-shadow: none; }
+:root .sale-workspace .product-thumb { background: transparent; }
 :root .bulk-preview-table :is(th, td) { border-color: var(--border); }
 :root .bar-track { background: var(--surface-hover); }
 

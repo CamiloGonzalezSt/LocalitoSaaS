@@ -1,6 +1,6 @@
 # Localito
 
-**Actualización técnica: 08-09-2026.** El [estado actual](docs/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. El resumen de la entrega está en [MEJORAS.md](MEJORAS.md).
+**Actualización técnica: 09-09-2026.** El [estado actual](docs/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](docs/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](MEJORAS.md).
 
 Localito es una PWA académica multi-negocio para almacenes y comercios de barrio. Reúne punto de venta, inventario, caja, compras, proveedores, fiado y reconocimiento de productos desde el celular.
 
@@ -25,6 +25,7 @@ Localito es una PWA académica multi-negocio para almacenes y comercios de barri
 - Anulación de venta y devoluciones parciales con reposición de stock y ajuste de deuda.
 - Proveedores, órdenes de compra, recepción de mercadería y actualización del costo promedio ponderado.
 - Caja por turno: apertura, ingresos, gastos operativos categorizados, retiros, cierre, efectivo esperado, contado y diferencia.
+- Caja organizada en Turno, Movimientos, Compras e Historial según permisos; conserva formularios al alternar pestañas. Gastos agrupados del turno abierto.
 - Reportes por período, vendedor y categoría; comparación con el período anterior, ventas por hora/categoría/vendedor, alertas operativas, filtros guardados por local y exportación CSV. El reporte financiero muestra ventas netas, margen bruto estimado, gastos operativos y resultado estimado; los cálculos de utilidad se presentan como estimaciones porque usan el costo vigente del catálogo.
 - Historial completo de auditoría con búsqueda, acción, fechas y paginación por cursor; antes/después de precio y stock con autor y motivo.
 - Asistente automático de carga inicial para locales nuevos, con categorías sugeridas por rubro, progreso reanudable y acceso posterior desde el menú.
@@ -172,9 +173,9 @@ Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mer
 npm run check
 ```
 
-`check` reúne tipos, `npm test` (56 pruebas en la última ejecución local) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado y las pruebas previas de autenticación, inventario e IA. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
+`check` reúne tipos, `npm test` (61 pruebas en la última ejecución local) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de cinco pruebas CSS de contraste, tipografía y pestañas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
 
-Las suites de navegador verificaron cobro, mejoras integradas y recuperación con 62 capturas entre ambos temas y tamaños móviles/escritorio. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance exacto y limitaciones en [Estado actual](docs/Estado-Actual.md); casos en [Matriz de pruebas](docs/Matriz-Pruebas-Localito.md) y [Matriz de regresión](docs/Matriz-Regresion-Rediseno.md).
+Las suites de navegador del 08-09-2026 verificaron cobro, mejoras integradas y recuperación con 62 capturas. No se repitieron completas después del nuevo rediseño; la revisión visual actual es parcial. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance y limitaciones en [Estado actual](docs/Estado-Actual.md) y [Diseño de interfaz](docs/Diseno-Interfaz.md); casos en [Matriz de pruebas](docs/Matriz-Pruebas-Localito.md) y [Matriz de regresión](docs/Matriz-Regresion-Rediseno.md).
 
 ## Planes y permisos
 

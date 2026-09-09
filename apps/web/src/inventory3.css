@@ -6,7 +6,7 @@
 }
 .product-row.inventory-compact-row { display: grid; grid-template-columns: 34px minmax(230px, 2.2fr) 92px 108px 116px 170px; align-items: center; gap: 14px; min-height: 66px; padding: 13px 14px; background: var(--surface); border: 0; border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; }
 .product-row.inventory-compact-row::before { top: 10px; bottom: 10px; }
-.inventory-table-header { padding: 11px 14px; color: var(--text-secondary); font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.inventory-table-header { padding: 11px 14px; color: var(--text-secondary); font-size: .72rem; font-weight: 700; letter-spacing: 0; text-transform: uppercase; border-bottom: 1px solid var(--border); }
 .inventory-compact-row { padding: 13px 14px; border-bottom: 1px solid var(--border); }
 .inventory-compact-row:last-child { border-bottom: 0; }
 .inventory-compact-row:hover { background: var(--surface-hover); }

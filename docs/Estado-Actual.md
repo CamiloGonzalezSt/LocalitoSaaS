@@ -1,6 +1,6 @@
 # Estado actual de Localito
 
-Fecha de verificación local: **8 de septiembre de 2026**. Este índice reúne lo implementado, la evidencia disponible y las limitaciones. No equivale a una certificación de producción ni a validación con comerciantes reales.
+Última comprobación de código: **9 de septiembre de 2026**. Este índice reúne lo implementado, la evidencia disponible y las limitaciones. La revisión visual del nuevo diseño es parcial y se detalla en [Diseño de interfaz](Diseno-Interfaz.md). No equivale a una certificación de producción ni a validación con comerciantes reales.
 
 ## Qué está implementado
 
@@ -12,9 +12,10 @@ Fecha de verificación local: **8 de septiembre de 2026**. Este índice reúne l
 | Continuidad | Ticket, espera y favoritos por cuenta; catálogo guardado en IndexedDB y cola de ventas por negocio/usuario. | Vender e indicador de sincronización |
 | Reintentos | Exclusión entre pestañas, clave idempotente y detalle por venta. Los rechazos de datos quedan pendientes de revisión; otras ventas pueden seguir. | Sincronización |
 | Respaldo local | Descarga JSON de la cola de la cuenta activa, sin token de sesión. No borra ni importa operaciones automáticamente. | Sincronización → icono de descarga |
-| Caja | Desglose de fondo, ventas en efectivo, abonos, ingresos, gastos y retiros; contado, diferencia y nota. Incluye turnos que cruzan medianoche. | Caja → Conciliar turno |
-| Reposición | Demanda de 30 días, mínimos, stock y unidades aún por recibir; cobertura editable y propuesta de compra revisable. | Caja → Reposición por ventas |
-| Auditoría | Consulta completa paginada, búsqueda, acción y fechas. Antes/después de precio y stock, autor y motivo. | Caja → Historial de cambios |
+| Caja | Cuatro pestañas según permisos. Apertura, conciliación, contado/diferencia y turnos que cruzan medianoche. | Caja → Turno |
+| Movimientos | Ingresos, retiros y gastos; historial y resumen por categoría limitados al turno abierto. | Caja → Movimientos |
+| Reposición | Demanda de 30 días, mínimos, stock y unidades aún por recibir; cobertura editable y propuesta de compra revisable. | Caja → Compras → Reposición por ventas |
+| Auditoría | Consulta completa paginada, búsqueda, acción y fechas. Antes/después de precio y stock, autor y motivo. | Caja → Historial → Historial de cambios |
 | Fiado | Deudas, vencimientos, abonos, saldo y recordatorio editable antes de abrir WhatsApp. | Clientes → Estado de cuenta |
 | Integridad | La API rechaza cantidades no positivas/no finitas, productos duplicados o inactivos, clientes ajenos, descuentos inválidos y pagos incompatibles. | API y repositorios |
 
@@ -46,14 +47,14 @@ No se borran rechazos ni se editan los cuerpos de tickets desde este panel. Las 
 
 | Comprobación | Evidencia y resultado |
 | --- | --- |
-| Lógica | 56 pruebas aprobadas con `localito.test.ts`, `improvements.test.ts` y `hardening.test.ts`. |
+| Lógica y diseño | 61 pruebas aprobadas el 09-09-2026: `localito.test.ts`, `improvements.test.ts`, `hardening.test.ts` y cinco comprobaciones CSS en `design.test.ts`. |
 | Tipos | TypeScript de web, API y contratos compartidos aprobado. |
 | Compilación | API/shared y build Vite de producción aprobados. |
 | Mejoras integradas | `test-improvements.cjs`: siete áreas, permisos, recarga offline, separación de cuentas y concurrencia; 20 capturas. |
 | Confiabilidad | `test-hardening.cjs`: rechazos HTTP sin mutaciones, valores reales antes/después, más de 100 eventos sin duplicados, respaldo sin token y reintento individual; 12 capturas. |
 | Cobro | `test-checkout.cjs`: efectivo/vuelto, montos inválidos, errores/reintento, confirmación externa, mixto y fiado; 30 capturas. Todas las ventas de esta suite son interceptadas. |
 
-Las 62 capturas corresponden a Chromium/Chrome de escritorio con viewports móviles y ambos temas. No prueban un teléfono físico, Safari, una pasarela real ni la migración PostgreSQL. Las dos suites integradas crean negocios sintéticos en una API local en memoria; no usan datos de un negocio real.
+Las tres suites de navegador y sus 62 capturas corresponden a la ejecución del **08-09-2026**, anterior al último rediseño. Sus recorridos de Caja fueron actualizados, pero la revisión completa posterior sigue pendiente. La inspección visual parcial y sus límites están en [Diseño de interfaz](Diseno-Interfaz.md). Las capturas históricas son de Chromium/Chrome con viewports móviles y ambos temas; no prueban un teléfono físico, Safari, una pasarela real ni la migración PostgreSQL. Las dos suites integradas crean negocios sintéticos en una API local en memoria; no usan datos de un negocio real.
 
 ### Reproducir
 
@@ -80,6 +81,7 @@ node scripts/test-checkout.cjs
 
 ## Pendientes reales
 
+- Completar la regresión visual del incremento del 09-09-2026, incluyendo teclado, conservación de formularios y todos los tamaños/temas. El acceso a la cuenta demo quedó pendiente de autorización durante esta continuación.
 - Probar migración, consultas, concurrencia e idempotencia contra PostgreSQL en un ambiente separado; restaurar un respaldo antes de habilitar datos reales.
 - Cierre de turno concurrente con varias cajas: la UI reconsulta el esperado, pero falta verificar su atomicidad frente a ventas simultáneas. El bloqueo por cola pendiente revisa solo la cuenta y origen actuales, no todos los dispositivos.
 - Resolver comercialmente diferencias de precio entre una venta offline y el catálogo al sincronizar: actualmente el servidor usa el precio vigente, no una cotización congelada.
@@ -92,6 +94,7 @@ node scripts/test-checkout.cjs
 
 ## Mapa documental
 
+- [Diseño de interfaz](Diseno-Interfaz.md): paleta, pestañas, catálogo, cobro y alcance de la verificación visual.
 - [README](../README.md): instalación y visión general.
 - [Mejoras](../MEJORAS.md): resumen de esta entrega.
 - [Alcance de tesis](Alcance-Tesis.md): incluido, simulado y excluido.

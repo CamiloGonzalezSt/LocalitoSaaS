@@ -50,6 +50,7 @@ fs.mkdirSync(out, { recursive: true });
     await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click();
     await page.locator('.desktop-sidebar').waitFor();
     await page.locator('.desktop-sidebar').getByRole('button', { name: 'Caja', exact: true }).click();
+    await page.getByRole('tab', { name: 'Historial', exact: true }).click();
     const history = page.getByRole('region', { name: 'Historial de cambios', exact: true });
     await history.getByRole('button', { name: 'Mostrar más eventos', exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll('.audit-event').length === 50);

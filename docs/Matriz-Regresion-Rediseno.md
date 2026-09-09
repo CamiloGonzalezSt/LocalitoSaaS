@@ -1,5 +1,7 @@
 # Matriz de regresión del rediseño Localito
 
+> Rediseño del 09-09-2026: inspección parcial de catálogo claro/oscuro a 1440 px y cobro oscuro a 320 px durante el desarrollo. Pendiente repetir el último ajuste y completar 320/390/768/1440 px, ambos temas, pestañas, formularios, avisos e inventario. Las 62 capturas de abajo no son evidencia de este incremento. Cinco pruebas CSS nuevas aprobadas, sin equivaler a una auditoría visual completa. [Diseño y verificación](Diseno-Interfaz.md).
+
 Fecha de revisión: 2026-09-08
 Alcance: rediseño académico, navegación por rol y demostración multi-negocio.
 

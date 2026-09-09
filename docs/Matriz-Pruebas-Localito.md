@@ -1,5 +1,7 @@
 # Matriz de pruebas funcionales - Localito
 
+> Incremento del 09-09-2026: 61 pruebas de código aprobadas, tipos y build aprobados. Los cinco casos CSS nuevos comprueban contraste, tipografía y reglas de pestañas. Pendientes de verificación integrada: teclado, conservación de formularios al alternar pestañas, propuesta hacia Compras y matriz visual completa. No actualizar los casos históricos a aprobado sin repetirlos. [Diseño y verificación](Diseno-Interfaz.md).
+
 **Proyecto:** Localito  
 **Tipo:** PWA académica mobile-first para pequeños negocios
 **Objetivo del documento:** Servir como evidencia de validacion funcional para memoria, presentacion y defensa de tesis.

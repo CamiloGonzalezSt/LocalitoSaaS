@@ -1,5 +1,7 @@
 # Alcance verificable de la tesis — Localito
 
+> El incremento visual del 09-09-2026 incorpora paleta compartida, catálogo fotográfico, cobro y pestañas de Caja. No añade pasarelas reales ni eliminación de fondos. Las 61 pruebas y el build pasan; la verificación visual completa sigue pendiente. [Diseño y verificación](Diseno-Interfaz.md).
+
 Este documento es la fuente de verdad para presentar Localito. Distingue el núcleo que se puede demostrar de las simulaciones académicas y de lo que queda fuera del alcance.
 
 Revisión técnica: **08-09-2026**. Evidencia, contratos y pendientes de esta versión en [Estado actual](Estado-Actual.md).

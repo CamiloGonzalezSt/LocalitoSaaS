@@ -1,5 +1,7 @@
 # Backlog Scrum y guía Jira - Localito (tesis)
 
+> Incremento de interfaz del 09-09-2026: paleta/tipografía, Caja con cuatro pestañas, catálogo y cobro implementados. Cinco pruebas CSS nuevas integradas en `npm test` (61 aprobadas en total). Mantener abierta la tarea de regresión visual completa y conservación de formularios hasta comprobarla; no marcarla como terminada por la compilación. [Diseño y verificación](Diseno-Interfaz.md).
+
 Documento operativo para registrar en Jira el alcance construido de Localito, planificar sprints y conservar trazabilidad entre requerimientos, historias, pruebas y entregables.
 
 Actualización técnica: **08-09-2026**. Las épicas y sprints 0-13 son una reconstrucción histórica, no evidencia de despliegue ni de ejecución actual de Jira. El incremento operativo siguiente tiene pruebas locales y pendientes explícitos en [Estado actual](Estado-Actual.md).

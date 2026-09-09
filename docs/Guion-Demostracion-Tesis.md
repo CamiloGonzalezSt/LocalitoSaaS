@@ -1,5 +1,7 @@
 # Guion de demostración de tesis — Localito
 
+> Recorrido actualizado el 09-09-2026: apertura y conciliación en Caja → Turno; gastos/retiros en Movimientos; reposición, proveedores y facturas en Compras; auditoría/CSV en Historial. Verificar antes de la demostración los formularios y ambos temas: la nueva regresión visual completa está pendiente. [Diseño y verificación](Diseno-Interfaz.md).
+
 Revisión: **08-09-2026**. Este guion usa una cuenta o negocio reservado para demostración. Nunca realizar pruebas que alteren stock, caja o deuda en el local de un usuario real. El [estado actual](Estado-Actual.md) identifica qué fue comprobado y qué sigue pendiente.
 
 ## Antes de comenzar

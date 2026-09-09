@@ -1,5 +1,7 @@
 # Contrato de entrega - Formativa Fase 1
 
+> Referencia de interfaz actualizada el 09-09-2026. Este contrato de documento sigue siendo histórico: no se regeneraron ni revisaron de nuevo sus archivos DOCX/PDF. El incremento visual tiene 61 pruebas de código aprobadas, pero su revisión visual completa sigue pendiente. [Diseño y verificación](../../docs/Diseno-Interfaz.md).
+
 ## Vigencia documental: 08-09-2026
 
 Se conserva el contrato académico original; no se modificó ni renderizó de nuevo el informe asociado. Las mejoras de cobro, fotos, continuidad offline, caja e historial deben contrastarse con [Estado actual](../../docs/Estado-Actual.md) y [Matriz de pruebas](../../docs/Matriz-Pruebas-Localito.md) antes de una nueva entrega.

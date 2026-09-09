@@ -1,5 +1,7 @@
 # Contrato visual y de contenido
 
+> Referencia de interfaz actualizada el 09-09-2026. Este contrato de documento sigue siendo histórico: no se regeneraron ni revisaron de nuevo sus archivos DOCX/PDF. El incremento visual tiene 61 pruebas de código aprobadas, pero su revisión visual completa sigue pendiente. [Diseño y verificación](../../docs/Diseno-Interfaz.md).
+
 ## Vigencia documental: 08-09-2026
 
 Este contrato conserva las decisiones de formato del entregable original. Su actualización no regenera ni vuelve a validar los DOCX/PDF asociados. Para el contenido técnico vigente usar [Estado actual](../../docs/Estado-Actual.md), [Mejoras](../../MEJORAS.md) y [Matriz de pruebas](../../docs/Matriz-Pruebas-Localito.md): cobros configurables, fotos, sincronización, caja e historial completo.

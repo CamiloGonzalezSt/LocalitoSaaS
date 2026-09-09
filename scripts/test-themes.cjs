@@ -47,7 +47,9 @@ async function audit(page, name, theme) {
  try {
   const context=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'});
   const page=await context.newPage(); page.setDefaultTimeout(10000);
-  await page.goto('http://127.0.0.1:5173');
+  const base = process.env.LOCALITO_TEST_URL || 'http://127.0.0.1:5173';
+  assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname));
+  await page.goto(base);
   const report=[];
   for(const theme of ['light','dark']) report.push(await audit(page,'login',theme));
   await page.getByLabel('Correo',{exact:true}).fill('juanita@localito.demo');
@@ -59,6 +61,11 @@ async function audit(page, name, theme) {
    for(const theme of ['light','dark']) report.push(await audit(page,name,theme));
   }
   const capture = async name => {for(const theme of ['light','dark']) report.push(await audit(page,name,theme));};
+  await page.locator('.desktop-sidebar').getByRole('button',{name:'Caja',exact:true}).click();
+  for(const name of ['Turno','Movimientos','Compras','Historial']) {
+    await page.getByRole('tab',{name,exact:true}).click();
+    await capture(`cash-${name}`);
+  }
   await page.locator('.desktop-sidebar').getByRole('button',{name:'Configuración',exact:true}).click();
   await capture('settings');
   await page.locator('.more-links').getByRole('button',{name:/^Mi plan/}).click();

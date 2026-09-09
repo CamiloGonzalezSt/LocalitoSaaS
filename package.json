@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "tsx --test apps/api/src/localito.test.ts scripts/improvements.test.ts scripts/hardening.test.ts",
+    "test": "tsx --test apps/api/src/localito.test.ts scripts/improvements.test.ts scripts/hardening.test.ts scripts/design.test.ts",
     "check": "npm run typecheck && npm test && npm run build",
     "dev:web": "npm run dev -w apps/web",
     "dev:api": "npm run dev -w apps/api",

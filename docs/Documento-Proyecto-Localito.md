@@ -1,5 +1,7 @@
 # Documento de Proyecto - Localito
 
+> Incremento del 09-09-2026: sistema visual compartido, Caja organizada por tareas, catálogo fotográfico y selección de pagos con check. Se aprobaron 61 pruebas y tipos/build; la revisión visual es parcial. Los resultados de 56 pruebas/62 capturas citados más abajo pertenecen a la entrega anterior. [Diseño y verificación](Diseno-Interfaz.md).
+
 **Proyecto:** Localito  
 **Tipo de solucion:** PWA académica multi-tenant para gestión de pequeños negocios
 **Version del documento:** 2.2

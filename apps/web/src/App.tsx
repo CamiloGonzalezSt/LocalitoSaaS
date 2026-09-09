@@ -267,6 +267,14 @@ function productImageUrl(product: Product) {
   return "/products/snack.png";
 }
 
+function CatalogProductImage({ product }: { product: Product }) {
+  const source = productImageUrl(product);
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  return failedSource === source
+    ? <span className="product-image-fallback" aria-hidden="true"><Package size={28}/></span>
+    : <img src={source} alt="" aria-hidden="true" loading="lazy" decoding="async" width={512} height={512} onError={() => setFailedSource(source)}/>;
+}
+
 function paymentMethodLabel(method: PaymentMethod) {
   const labels: Record<PaymentMethod, string> = {
     cash: "Efectivo",
@@ -2172,15 +2180,15 @@ function SaleView({
           <div className="flow-title"><span>1</span><h2>Elige productos</h2></div>
           <span>{categoryProducts.length} disponibles</span>
         </div>
-        <div className="search-box">
+        <div className="sale-catalog-tools"><div className="search-box">
           <Search size={18} />
-          <input value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
-        </div>
+          <input aria-label="Buscar producto, marca o código" value={searchTerm} onChange={(event) => onSearch(event.target.value)} placeholder="Buscar producto, marca o código" />
+        </div><button className="icon-button" type="button" aria-label="Venta Rápida con foto" title="Venta Rápida con foto" onClick={onScan} disabled={!canSell}><Camera size={20}/></button></div>
         {!searchTerm.trim() && <section className="sale-featured-products" aria-label="Productos frecuentes">
           <div className="sale-featured-heading"><strong>Accesos rápidos</strong><div role="group" aria-label="Tipo de productos frecuentes"><button className={featuredMode === "favorites" ? "active" : ""} type="button" aria-pressed={featuredMode === "favorites"} onClick={() => setFeaturedMode("favorites")}><Star size={14}/> Favoritos</button><button className={featuredMode === "popular" ? "active" : ""} type="button" aria-pressed={featuredMode === "popular"} onClick={() => setFeaturedMode("popular")}><TrendingUp size={14}/> Más vendidos</button><button className={featuredMode === "recent" ? "active" : ""} type="button" aria-pressed={featuredMode === "recent"} onClick={() => setFeaturedMode("recent")}>Recientes</button></div></div>
           {!featuredProducts.length && <p className="empty-state">{featuredMode === "favorites" ? "Aún no hay favoritos." : "Aún no hay ventas registradas."}</p>}
           <div className="sale-featured-list">
-            {featuredProducts.map((product) => <button className="sale-featured-product" type="button" key={product.id} onClick={() => onAdd(product)} disabled={!canSell}><img src={productImageUrl(product)} alt="" aria-hidden="true"/><span><strong>{product.name}</strong><small>{formatCLP(product.salePrice)}</small></span></button>)}
+            {featuredProducts.map((product) => <button className="sale-featured-product" type="button" key={product.id} title={product.name} onClick={() => onAdd(product)} disabled={!canSell}><CatalogProductImage product={product}/><span><strong>{product.name}</strong><small>{formatCLP(product.salePrice)}</small></span></button>)}
           </div>
         </section>}
         <div className="sale-category-area">
@@ -2199,21 +2207,16 @@ function SaleView({
             ))}
           </div>
         </div>
-        <button className="inline-command" type="button" onClick={onScan} disabled={!canSell}>
-          <Camera size={18} />
-          <span>Venta Rápida con foto</span>
-        </button>
         <div className="list product-list">
           {visibleProducts.map((product) => (
             <div className="sale-product-entry" key={product.id}><button className="product-button" type="button" onClick={() => onAdd(product)} disabled={!canSell || isBusy || (product.trackStock !== false && product.stock <= 0)}>
               <span className="product-thumb">
-                <img src={productImageUrl(product)} alt="" aria-hidden="true" />
+                <CatalogProductImage product={product}/>
               </span>
               <div className="product-button-copy">
-                <strong>{product.name}</strong>
-                <p>
-                  {product.category} - Stock {product.stock}
-                </p>
+                <strong title={product.name}>{product.name}</strong>
+                <p className="product-category" title={product.category}>{product.category}</p>
+                <p className="product-availability" data-low={product.trackStock !== false && product.stock <= product.minimumStock}>{product.trackStock === false ? "Disponible" : product.stock <= 0 ? "Agotado" : `Stock ${product.stock}`}</p>
               </div>
               <span className="product-price">{formatCLP(product.salePrice)}</span>
             </button><button className="icon-button sale-favorite" type="button" aria-label={`${workspace.favorites.includes(product.id) ? "Quitar de" : "Agregar a"} favoritos: ${product.name}`} title={workspace.favorites.includes(product.id) ? "Quitar de favoritos" : "Agregar a favoritos"} aria-pressed={workspace.favorites.includes(product.id)} onClick={() => workspace.toggleFavorite(product.id)}><Star size={19} fill={workspace.favorites.includes(product.id) ? "currentColor" : "none"}/></button></div>
@@ -2286,7 +2289,7 @@ function SaleView({
             {[discountedTotal, ...[1000, 2000, 5000, 10000, 20000].filter(amount => amount > discountedTotal).slice(0, 2)].map((amount, index) =>
               <button className="secondary-action small" type="button" key={amount} disabled={isBusy} onClick={() => setReceivedCash(String(amount))}>{index === 0 ? "Monto exacto" : formatCLP(amount)}</button>)}
           </div>
-          <div className="checkout-change" id="checkout-cash-status" aria-live="polite"><span>{receivedCash !== "" && Number(receivedCash) < discountedTotal ? "Faltan" : "Vuelto"}</span>
+          <div className="checkout-change" id="checkout-cash-status" data-insufficient={receivedCash !== "" && Number(receivedCash) < discountedTotal} aria-live="polite"><span>{receivedCash !== "" && Number(receivedCash) < discountedTotal ? "Faltan" : "Vuelto"}</span>
             <strong>{receivedCash === "" || !Number.isFinite(Number(receivedCash)) ? "—" : formatCLP(Math.abs(Number(receivedCash) - discountedTotal))}</strong></div>
           {receivedCash !== "" && invalidCash && <p className="sale-storage-error" role="alert">Ingresa pesos enteros que cubran el total.</p>}
         </div>}

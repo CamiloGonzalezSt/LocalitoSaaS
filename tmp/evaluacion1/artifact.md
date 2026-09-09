@@ -1,5 +1,7 @@
 # Contrato de plantilla — Evaluación 1, Definición Proyecto APT
 
+> Referencia de interfaz actualizada el 09-09-2026. Este contrato de documento sigue siendo histórico: no se regeneraron ni revisaron de nuevo sus archivos DOCX/PDF. El incremento visual tiene 61 pruebas de código aprobadas, pero su revisión visual completa sigue pendiente. [Diseño y verificación](../../docs/Diseno-Interfaz.md).
+
 ## Vigencia documental: 08-09-2026
 
 Este archivo es un registro histórico de fidelidad de la plantilla, no el estado operativo actual. Se preservan hashes, referencias, decisiones y geometría; esta actualización no regeneró ni verificó nuevamente el DOCX.

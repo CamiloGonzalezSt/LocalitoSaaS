@@ -1,5 +1,7 @@
 # Operación de Localito en producción
 
+> Incremento visual del 09-09-2026 sin migración de base de datos. Tipos/build y 61 pruebas locales aprobados. Antes de desplegar, completar la regresión visual pendiente y revisar el resultado de CI; no se verificó un nuevo despliegue de producción en esta continuación. [Diseño y verificación](Diseno-Interfaz.md).
+
 Actualización: **08-09-2026**. Las mejoras recientes se verificaron localmente con memoria, no contra producción. Antes de desplegar, completar las comprobaciones de persistencia siguientes. Consulte [Estado actual](Estado-Actual.md) para contratos y límites.
 
 ## Verificación diaria
