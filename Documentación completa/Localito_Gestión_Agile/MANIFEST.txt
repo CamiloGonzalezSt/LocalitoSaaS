@@ -1,0 +1,25 @@
+LOCALITO - GESTIÓN ÁGIL / SCRUM
+Paquete documental - corte 15-09-2026
+Calendario real: 8 Sprints quincenales entre 10-08-2026 y 29-11-2026
+Semana final de entrega y defensa: 30-11-2026 al 06-12-2026 (sin Sprint adicional)
+
+01_Documentos/
+  - 00_Indice_Gestion_Agil_Localito.docx
+  - 01_Metodologia_Agil_y_Justificacion_Localito.docx
+  - 02_Product_Vision_y_Product_Goal_Localito.docx
+  - 03_Roles_y_Working_Agreements_Localito.docx
+  - 04_Definition_of_Ready_y_Definition_of_Done_Localito.docx
+  - 05_Backlog_Refinement_y_Priorizacion_Localito.docx
+  - 06_Eventos_Scrum_Localito.docx
+  - 07_Sprints_Localito_Reconstruccion_Documental.docx
+  - 08_Gestion_de_Riesgos_en_Scrum_Localito.docx
+  - 09_Estado_Agil_y_Retrospectiva_Global_Localito.docx
+
+02_Planillas/
+  - 10_Product_Backlog_Localito.xlsx
+  - 11_Planificacion_Sprints_Localito.xlsx
+  - 12_Metricas_Agiles_Localito.xlsx
+  - 13_Registro_Impedimentos_Localito.xlsx
+  - 14_Registro_Feedback_Stakeholders_Localito.xlsx
+  - 15_Matriz_Trazabilidad_Agil_Localito.xlsx
+  - 16_Product_Roadmap_y_Release_Plan_Localito.xlsx

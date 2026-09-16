@@ -1,0 +1,13 @@
+
+digraph G{
+graph[rankdir=TB,bgcolor="white",pad=.3,label="LOCALITO · GESTIÓN DE PERSONAS EN SCRUM",labelloc=t,fontsize=22,fontname="Arial"];
+node[shape=box,style="rounded,filled",fontname="Arial",fontsize=11.2,margin=".18,.1"];
+edge[color="#64748B",arrowsize=.72];
+team[label="Scrum Team\nPO · Scrum Master · Developers",fillcolor="#E8F3F0",color="#1F6F5F"];
+skills[label="Competencias y disponibilidad\n¿qué sabemos y cuánto tiempo real hay?"];
+gaps[label="Brechas\nconocimiento · capacidad · bus factor",fillcolor="#FFF7ED",color="#C2410C"];
+dev[label="Desarrollo\npairing · mentoring · práctica · documentación"];
+eval[label="Feedback de desempeño\nresultados + colaboración + calidad"];
+cont[label="Continuidad\ntransferencia de conocimiento + apoyo externo",fillcolor="#EFF6FF",color="#1D4ED8"];
+team->skills->gaps->dev->eval->cont->skills;
+}

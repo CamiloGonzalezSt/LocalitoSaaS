@@ -1,0 +1,14 @@
+
+digraph G{
+graph[rankdir=TB,bgcolor="white",pad=.3,label="LOCALITO · CICLO DE DECISIÓN ÉTICA",labelloc=t,fontsize=22,fontname="Arial"];
+node[shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",fontname="Arial",fontsize=11.5,margin=".18,.1",width=4.9];
+edge[color="#64748B",arrowsize=.75];
+a[label="Detectar dilema\nprivacidad · licencia · seguridad · transparencia"];
+b[label="Identificar afectados y daño posible"];
+c[label="Contrastar con integridad, responsabilidad,\nlaboriosidad y bien hacer",fillcolor="#E8F3F0",color="#1F6F5F"];
+d[label="Buscar alternativa constructiva\nque preserve calidad y dignidad"];
+e[label="Dialogar y documentar"];
+f[label="Escalar si persiste el riesgo\nsin ocultar ni normalizar la práctica"];
+g[label="Convertir la respuesta en control,\nPBI, criterio o política",fillcolor="#EFF6FF",color="#1D4ED8"];
+a->b->c->d->e->f->g;
+}
