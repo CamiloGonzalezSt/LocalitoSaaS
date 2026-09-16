@@ -1,0 +1,19 @@
+
+digraph G {
+graph [rankdir=TB,bgcolor="white",pad=0.35,nodesep=0.35,ranksep=0.42,fontname="Arial",
+label="LOCALITO · DESARROLLO SEGURO DENTRO DE SCRUM",labelloc=t,fontsize=22];
+node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",penwidth=1.3,fontname="Arial",fontsize=12,margin="0.22,0.13",width=4.2];
+edge [color="#64748B",arrowsize=0.75,penwidth=1.1];
+
+refine [label="1. Refinamiento\nRequisito de seguridad · riesgo · criterio de aceptación"];
+plan [label="2. Sprint Planning\nPriorizar controles y trabajo de seguridad"];
+design [label="3. Diseño\nTrust boundaries · tenant · mínimo privilegio"];
+build [label="4. Construcción\nValidación backend · secretos server-side · revisión de código"];
+test [label="5. Pruebas\nRoles · tenant · inputs · idempotencia · restore",fillcolor="#EFF6FF",color="#1D4ED8"];
+review [label="6. Sprint Review\nEvidencia del control en el incremento"];
+retro [label="7. Retrospectiva\nAprendizaje de fallos, incidentes o deuda"];
+backlog [label="8. Product Backlog\nBug · Task · Spike · nuevo criterio",fillcolor="#E8F3F0",color="#1F6F5F",penwidth=2.0];
+
+refine -> plan -> design -> build -> test -> review -> retro -> backlog;
+backlog -> refine [style=dashed,label="adaptar siguiente iteración"];
+}

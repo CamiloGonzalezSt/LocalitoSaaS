@@ -1,0 +1,7 @@
+Fuentes académicas recuperadas:
+- Documento Final inglés.docx (proyecto Urban previo)
+- Written Project Checklist.pdf
+
+Aplicación:
+- Se conserva la estructura de Abstract, Introduction, Methodological Part, Testing, Limitations, Conclusion y Future Work.
+- El contenido se reescribe para Localito con stack y estado técnico vigente; no se copia el stack ni los resultados del proyecto Urban.

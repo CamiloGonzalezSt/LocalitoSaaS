@@ -1,0 +1,29 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.35, ranksep=0.45,
+         fontname="Arial", label="LOCALITO · DASHBOARD BI PROPUESTO", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        penwidth=1.2, fontname="Arial", fontsize=11, margin="0.20,0.12"];
+  edge [style=invis];
+
+  filters [label="Filtros globales\nFecha · Negocio · Categoría · Usuario · Medio de pago", fillcolor="#F8FAFC"];
+  kpi1 [label="Ventas netas"];
+  kpi2 [label="N° ventas"];
+  kpi3 [label="Ticket promedio"];
+  kpi4 [label="Unidades vendidas"];
+  trend [label="Tendencia temporal\nventas por día/mes"];
+  category [label="Rendimiento por categoría / producto"];
+  seller [label="Ventas por vendedor"];
+  pay [label="Mix de medios de pago"];
+  fiado [label="Panel adicional\nFiado pendiente / vencido\nfuera del mart principal si no se modela snapshot"];
+  dq [label="Calidad del dato\nventas reconciliadas · filas rechazadas", fillcolor="#FEF3C7", color="#A16207"];
+
+  filters -> kpi1;
+  {rank=same; kpi1; kpi2; kpi3; kpi4}
+  kpi1 -> trend;
+  {rank=same; trend; category}
+  trend -> seller;
+  {rank=same; seller; pay}
+  seller -> fiado;
+  fiado -> dq;
+}

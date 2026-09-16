@@ -1,0 +1,18 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.35, ranksep=0.45,
+         fontname="Arial", label="LOCALITO · FLUJO ETL/ELT PROPUESTO", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        penwidth=1.2, fontname="Arial", fontsize=11.5, margin="0.20,0.12", width=4.8];
+  edge [color="#64748B", arrowsize=0.75, penwidth=1.05];
+
+  a [label="1. Extraer desde OLTP\nsolo registros necesarios por tenant/período"];
+  b [label="2. Validar staging\nFK existentes · fechas · montos · duplicados"];
+  c [label="3. Cargar DimFecha\ncalendario analítico"];
+  d [label="4. Upsert dimensiones\nNegocio · Producto · Cliente · Usuario · Pago · Venta"];
+  e [label="5. Resolver surrogate keys\nBusiness Key UUID → BI Key"];
+  f [label="6. Cargar FactVentaDetalle\nasignar descuento proporcional y neto línea", fillcolor="#E8F3F0", color="#1F6F5F"];
+  g [label="7. Ejecutar pruebas de calidad\nreconciliación OLTP ↔ Data Mart"];
+  h [label="8. Refrescar dashboard / medidas\nsin escribir de vuelta al OLTP", fillcolor="#EFF6FF", color="#1D4ED8"];
+  a -> b -> c -> d -> e -> f -> g -> h;
+}

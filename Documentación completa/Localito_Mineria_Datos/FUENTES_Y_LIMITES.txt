@@ -1,0 +1,4 @@
+La carpeta académica visible de Minería de Datos estaba vacía al momento de esta revisión.
+
+Por eso este paquete es una PROPUESTA APLICADA A LOCALITO y no pretende reproducir una rúbrica docente no recuperada.
+No se inventan modelos entrenados, accuracy, clusters, lift ni predicciones.

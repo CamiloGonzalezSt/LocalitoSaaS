@@ -1,0 +1,13 @@
+
+digraph G{
+graph[rankdir=LR,bgcolor="white",pad=.3,label="LOCALITO · LIDERAZGO Y NEGOCIACIÓN EN SCRUM",labelloc=t,fontsize=22,fontname="Arial"];
+node[shape=box,style="rounded,filled",fontname="Arial",fontsize=11,margin=".18,.1"];
+edge[color="#64748B",arrowsize=.72];
+po[label="Product Owner\nliderazgo de producto",fillcolor="#E8F3F0",color="#1F6F5F"];
+sm[label="Scrum Master\nliderazgo servicial",fillcolor="#EFF6FF",color="#1D4ED8"];
+dev[label="Developers\nliderazgo técnico distribuido",fillcolor="#F5F3FF",color="#6D28D9"];
+issue[label="Tensión / conflicto\nalcance · fecha · calidad · arquitectura"];
+neg[label="Negociación integrativa\nintereses · opciones · BATNA",fillcolor="#FFF7ED",color="#C2410C"];
+agreement[label="Acuerdo trazable\ncriterio · responsable · revisión",fillcolor="#DCFCE7",color="#15803D"];
+po->issue; sm->issue; dev->issue; issue->neg->agreement;
+}

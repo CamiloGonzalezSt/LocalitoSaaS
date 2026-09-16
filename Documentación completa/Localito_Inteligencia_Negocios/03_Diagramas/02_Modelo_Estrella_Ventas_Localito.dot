@@ -1,0 +1,32 @@
+
+digraph G {
+  graph [rankdir=TB,bgcolor="white",pad=0.35,nodesep=0.32,ranksep=0.42,
+         fontname="Arial",label="LOCALITO · DATA MART VENTAS · ESQUEMA EN ESTRELLA",labelloc=t,fontsize=22];
+  node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",
+        penwidth=1.2,fontname="Arial",fontsize=11.2,margin="0.18,0.10"];
+  edge [color="#64748B",arrowsize=0.7,penwidth=1.0];
+
+  fact [label="FactVentaDetalle\nGrano: 1 línea de producto por venta\ncantidad · precio_unitario · bruto_linea\ndescuento_asignado · neto_linea",fillcolor="#E8F3F0",color="#1F6F5F",penwidth=2.2,width=4.6];
+
+  time [label="DimFecha\nfecha · mes · trimestre · año\nsemana · día_semana",width=3.2];
+  product [label="DimProducto\nproducto · categoría · marca\nunidad · activo",width=3.2];
+  customer [label="DimCliente\ncliente · activo",width=3.2];
+  user [label="DimUsuario\nusuario · rol · estado",width=3.2];
+  business [label="DimNegocio\nnegocio · rubro · estado",width=3.2];
+  pay [label="DimMetodoPago\ncash · card · transfer\nfiado · mixed",width=3.2];
+  sale [label="DimVenta\ntipo · estado_venta · estado_pago",width=3.2];
+
+  {rank=same; time; product}
+  {rank=same; customer; user}
+  fact
+  {rank=same; business; pay}
+  sale
+
+  time -> fact;
+  product -> fact;
+  customer -> fact;
+  user -> fact;
+  business -> fact;
+  pay -> fact;
+  sale -> fact;
+}

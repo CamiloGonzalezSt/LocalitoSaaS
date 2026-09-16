@@ -1,0 +1,23 @@
+
+digraph G {
+graph [rankdir=TB,bgcolor="white",pad=0.35,nodesep=0.5,ranksep=0.7,fontname="Arial",
+label="LOCALITO · DEFENSA EN PROFUNDIDAD Y LÍMITES DE CONFIANZA",labelloc=t,fontsize=22];
+node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",penwidth=1.3,fontname="Arial",fontsize=11.5,margin="0.2,0.12"];
+edge [color="#64748B",fontname="Arial",fontsize=9.5,arrowsize=0.75];
+
+browser [label="Zona cliente / no confiable\nPWA en navegador\nNo contiene secretos privados",fillcolor="#FFFBEB",color="#D97706"];
+api [label="Frontera de aplicación\nAPI Node/Express\nAuth · rol · plan · tenant · validación",fillcolor="#E8F3F0",color="#1F6F5F",penwidth=2.3];
+db [label="Frontera de datos\nPostgreSQL / Supabase\nRLS habilitado · Data API cerrada",shape=cylinder,fillcolor="#EFF6FF",color="#1D4ED8"];
+secrets [label="Secretos server-side\nDB · sesión · IA · correo",fillcolor="#F5F3FF",color="#6D28D9"];
+external [label="Servicios externos\nIA · correo · hosting",fillcolor="#FEF2F2",color="#B91C1C"];
+audit [label="Auditoría y evidencia\nusuario · negocio · entidad · cambio",fillcolor="#F8FAFC"];
+offline [label="Continuidad local\nIndexedDB / cola de ventas\nNo sustituye la base",fillcolor="#FFF7ED",color="#C2410C"];
+
+browser -> api [label="HTTPS / Bearer"];
+browser -> offline [label="datos locales acotados"];
+api -> db [label="SQL server-side"];
+api -> secrets [style=dashed,label="variables privadas"];
+api -> external [label="HTTPS / SMTP"];
+api -> audit [label="eventos"];
+offline -> api [label="reintento / idempotencia"];
+}

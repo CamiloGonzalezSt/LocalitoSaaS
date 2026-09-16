@@ -1,0 +1,4 @@
+La carpeta académica visible de Portafolio 6 estaba vacía al momento de esta revisión.
+
+Este paquete es un PORTAFOLIO PROFESIONAL PROPUESTO para Localito, orientado a CV, LinkedIn, entrevistas y defensa.
+Toda competencia se vincula a evidencia y se mantienen explícitos los gaps pendientes.

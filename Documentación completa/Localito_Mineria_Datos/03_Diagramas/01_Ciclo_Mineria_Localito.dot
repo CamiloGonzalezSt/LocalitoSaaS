@@ -1,0 +1,14 @@
+
+digraph G{
+graph[rankdir=TB,bgcolor="white",pad=.3,label="LOCALITO · CICLO PROPUESTO DE MINERÍA DE DATOS",labelloc=t,fontsize=22,fontname="Arial"];
+node[shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",fontname="Arial",fontsize=11,margin=".18,.1",width=4.8];
+edge[color="#64748B",arrowsize=.72];
+a[label="Problema de negocio"];
+b[label="Datos y calidad"];
+c[label="EDA + baseline"];
+d[label="Modelo / método candidato",fillcolor="#EFF6FF",color="#1D4ED8"];
+e[label="Validación reproducible"];
+f[label="Interpretación + riesgo"];
+g[label="Desplegar experimento o descartar",fillcolor="#DCFCE7",color="#15803D"];
+a->b->c->d->e->f->g;
+}

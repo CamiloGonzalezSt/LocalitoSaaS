@@ -1,0 +1,20 @@
+
+digraph G {
+  graph [rankdir=TB,bgcolor="white",pad=0.35,nodesep=0.34,ranksep=0.43,
+         fontname="Arial",label="LOCALITO · ARQUITECTURA BI PROPUESTA",labelloc=t,fontsize=22];
+  node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",
+        penwidth=1.25,fontname="Arial",fontsize=12,margin="0.22,0.13",width=4.7];
+  edge [color="#64748B",arrowsize=0.75,penwidth=1.05];
+
+  q [label="1. Preguntas de negocio\nventas · productos · vendedores · medios de pago",fillcolor="#FFFBEB",color="#D97706"];
+  oltp [label="2. Fuente OLTP Localito\nPostgreSQL / Supabase\nventas · detalle · productos · clientes · usuarios",fillcolor="#EFF6FF",color="#1D4ED8"];
+  stg [label="3. Staging BI\ncopias controladas · validación · normalización"];
+  etl [label="4. ETL / ELT\nExtraer · Transformar · Cargar\nreglas Kimball",fillcolor="#E8F3F0",color="#1F6F5F",penwidth=2.0];
+  dm [label="5. Data Mart Ventas\nEsquema en estrella\nFactVentaDetalle + dimensiones",fillcolor="#F0FDFA",color="#0F766E"];
+  views [label="6. Vistas y medidas BI\nKPIs · reconciliación · agregados"];
+  bi [label="7. Power BI\nDashboard ejecutivo\nfiltros cruzados · drill-down",fillcolor="#F5F3FF",color="#6D28D9"];
+  learn [label="8. Feedback y refinamiento\nnuevas preguntas → Product Backlog",fillcolor="#F8FAFC"];
+
+  q -> oltp -> stg -> etl -> dm -> views -> bi -> learn;
+  learn -> q [style=dashed,label="aprendizaje"];
+}

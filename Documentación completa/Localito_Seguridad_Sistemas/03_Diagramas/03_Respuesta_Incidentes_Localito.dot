@@ -1,0 +1,17 @@
+
+digraph G {
+graph [rankdir=TB,bgcolor="white",pad=0.35,nodesep=0.35,ranksep=0.45,fontname="Arial",
+label="LOCALITO · CICLO DE RESPUESTA A INCIDENTES",labelloc=t,fontsize=22];
+node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",penwidth=1.3,fontname="Arial",fontsize=12,margin="0.22,0.13",width=4.3];
+edge [color="#64748B",arrowsize=0.75,penwidth=1.1];
+
+detect [label="1. Detectar\nAlerta · error · reporte · anomalía",fillcolor="#FEF3C7",color="#A16207"];
+triage [label="2. Clasificar\nAlcance · severidad · CIA · tenant afectado"];
+contain [label="3. Contener\nRevocar · aislar · deshabilitar flujo afectado"];
+erad [label="4. Erradicar\nCorregir causa · rotar secreto · parchear control"];
+recover [label="5. Recuperar\nRestaurar · verificar integridad · reactivar",fillcolor="#E8F3F0",color="#1F6F5F"];
+learn [label="6. Aprender\nPost-incidente · prueba de regresión · Product Backlog"];
+
+detect -> triage -> contain -> erad -> recover -> learn;
+learn -> detect [style=dashed,label="mejorar controles"];
+}
