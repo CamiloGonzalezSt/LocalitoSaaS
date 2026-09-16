@@ -1,0 +1,23 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.48, ranksep=0.72, fontname="Arial", label="LOCALITO · VISTA DE CONTENEDORES", labelloc=t, fontsize=22];
+node [shape=box, style="rounded,filled", color="#486581", penwidth=1.4, fontname="Arial", fontsize=11.8, margin="0.18,0.12", fillcolor="#FFFFFF"];
+edge [color="#64748B", fontname="Arial", fontsize=9.6, arrowsize=0.75, penwidth=1.1];
+user [label="Usuario\nmóvil o escritorio", fillcolor="#F8FAFC"];
+subgraph cluster_client { label="Capa cliente"; color="#C8D4E3"; style="rounded,filled"; fillcolor="#F8FAFC";
+pwa [label="PWA Web\nReact 18 · TypeScript · Vite\nInterfaz por rol y plan"];
+local [label="Continuidad local\nIndexedDB + localStorage\ncatálogo · ticket · cola", fillcolor="#EFF6FF", color="#1D4ED8"];
+sw [label="Service Worker\ncaché y navegación instalada", fillcolor="#ECFDF5", color="#047857"];
+}
+subgraph cluster_server { label="Capa servidor"; color="#C8D4E3"; style="rounded,filled"; fillcolor="#F8FAFC";
+api [label="API REST\nNode.js + Express + TypeScript\nAuth · reglas · validación · auditoría", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.4];
+db [label="PostgreSQL 16 / Supabase\npersistencia multi-tenant\nRLS sin políticas públicas", shape=cylinder, fillcolor="#F0FDFA", color="#0F766E"];
+shared [label="@localito/shared\ncontratos y tipos compartidos", fillcolor="#F8FAFC"];
+}
+subgraph cluster_ext { label="Dependencias externas"; color="#C8D4E3"; style="rounded,filled"; fillcolor="#F8FAFC";
+ai [label="Groq / OpenAI", fillcolor="#FFF7ED", color="#C2410C"];
+email [label="Gmail / Resend", fillcolor="#EFF6FF", color="#1D4ED8"];
+}
+user -> pwa [label="interacción"]; pwa -> api [label="HTTPS / JSON"]; pwa -> local [label="lectura/escritura"]; pwa -> sw [label="recursos PWA"];
+api -> db [label="SQL vía pooler"]; api -> ai [label="HTTPS"]; api -> email [label="SMTP/API"];
+pwa -> shared [style=dashed, label="tipos"]; api -> shared [style=dashed, label="tipos"];
+}

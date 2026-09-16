@@ -1,0 +1,22 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.42, ranksep=0.7, fontname="Arial", label="LOCALITO · DIAGRAMA DE CONTEXTO", labelloc=t, fontsize=22];
+node [shape=box, style="rounded,filled", color="#486581", penwidth=1.4, fontname="Arial", fontsize=12, margin="0.22,0.14", fillcolor="#FFFFFF"];
+edge [color="#64748B", fontname="Arial", fontsize=10, arrowsize=0.75, penwidth=1.15];
+subgraph cluster_users { label="Actores"; color="#C8D4E3"; style="rounded,filled"; fillcolor="#F8FAFC";
+customer [label="Cliente final\nCompra y puede quedar con fiado"];
+owner [label="Dueño del negocio\nAdministra operación y reportes"];
+seller [label="Vendedor\nUsa POS, clientes y caja"];
+admin [label="Administrador de plataforma\nGestiona negocios y suscripciones"];
+}
+localito [label="LOCALITO\nPWA SaaS multi-tenant\nVentas · Inventario · Caja · Fiado · Compras · IA", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.4];
+subgraph cluster_ext { label="Servicios externos"; color="#C8D4E3"; style="rounded,filled"; fillcolor="#F8FAFC";
+ai [label="Proveedor de IA visual\nGroq / OpenAI", fillcolor="#FFF7ED", color="#C2410C"];
+mail [label="Proveedor de correo\nGmail / Resend", fillcolor="#EFF6FF", color="#1D4ED8"];
+pay [label="Medios de pago externos\nTerminal · transferencia · Webpay · Mercado Pago\n(uso externo, registro manual o simulación)", fillcolor="#FEFCE8", color="#A16207"];
+}
+{rank=same; customer; owner; seller; admin}
+owner -> localito [label="HTTPS"]; seller -> localito [label="HTTPS"]; admin -> localito [label="HTTPS"];
+customer -> owner [label="compra / pago / fiado"]; customer -> seller [label="compra / pago / fiado"];
+owner -> pay [label="cobra fuera de Localito"]; seller -> pay [label="cobra fuera de Localito"];
+localito -> ai [label="imagen reducida + catálogo"]; ai -> localito [label="propuesta estructurada"]; localito -> mail [label="recuperación de acceso"];
+}

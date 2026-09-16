@@ -1,0 +1,31 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.42, ranksep=0.72, fontname="Arial", label="LOCALITO · VISTA LÓGICA DE COMPONENTES", labelloc=t, fontsize=22];
+node [shape=box, style="rounded,filled", color="#486581", penwidth=1.2, fontname="Arial", fontsize=10.2, margin="0.16,0.10", fillcolor="#FFFFFF"];
+edge [color="#64748B", penwidth=1.05, arrowsize=0.72];
+subgraph cluster_web { label="Aplicación Web / PWA"; color="#C8D4E3"; style="rounded,filled"; fillcolor="#F8FAFC";
+ui [label="UI / navegación\nroles · planes · temas"];
+pos [label="POS\nbúsqueda · ticket · cobro"];
+inv [label="Inventario\ncatálogo · fotos · kardex"];
+clients [label="Clientes / fiado"];
+cash [label="Caja / compras / historial"];
+reports [label="Reportes"];
+sync [label="Continuidad local\nIndexedDB · cola · service worker", fillcolor="#EFF6FF", color="#1D4ED8"];
+camera [label="Cámara / ZXing /\ncompresión", fillcolor="#FFF7ED", color="#C2410C"];
+}
+subgraph cluster_api { label="Backend / API"; color="#C8D4E3"; style="rounded,filled"; fillcolor="#F8FAFC";
+routes [label="Endpoints REST\nserver.ts", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.0];
+auth [label="Autenticación y sesiones"];
+repo [label="Repository / persistencia"];
+saleval [label="Validación de venta\ne idempotencia"];
+audit [label="Auditoría y consultas"];
+vision [label="Vision / Invoice Import"];
+mail [label="Correo / recuperación"];
+prefs [label="Planes / entitlements /\npreferencias"];
+}
+db [label="PostgreSQL / Supabase", shape=cylinder, fillcolor="#F0FDFA", color="#0F766E"];
+ext [label="Servicios externos\nIA · correo", fillcolor="#FEF2F2", color="#B91C1C"];
+ui -> routes; pos -> routes; inv -> routes; clients -> routes; cash -> routes; reports -> routes;
+sync -> routes [label="reintentos"]; camera -> vision [style=dashed, color="#C2410C"];
+routes -> auth; routes -> repo; routes -> saleval; routes -> audit; routes -> vision; routes -> mail; routes -> prefs;
+repo -> db; audit -> db; prefs -> db; saleval -> repo; vision -> ext; mail -> ext;
+}

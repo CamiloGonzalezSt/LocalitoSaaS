@@ -1,0 +1,14 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.46, ranksep=0.74, fontname="Arial", label="LOCALITO · ESCENARIO ARQUITECTÓNICO: CONFIRMAR VENTA", labelloc=t, fontsize=22];
+node [shape=box, style="rounded,filled", color="#486581", penwidth=1.3, fontname="Arial", fontsize=11.9, margin="0.20,0.13", fillcolor="#FFFFFF"];
+edge [color="#64748B", fontname="Arial", fontsize=10, penwidth=1.1, arrowsize=0.75];
+u [label="1. Vendedor\nconfirma el ticket"];
+pwa [label="2. PWA\narma la solicitud"];
+api [label="3. API\nrecibe POST de venta"];
+val [label="4. Validación\nlíneas · pagos · cliente"];
+repo [label="5. Repository\nejecuta la transacción"];
+db [label="6. PostgreSQL\npersistencia de venta\nstock · caja · fiado · auditoría", shape=cylinder, fillcolor="#F0FDFA", color="#0F766E"];
+resp [label="7. Respuesta\nventa persistida"];
+comp [label="8. Comprobante interno\nvisible para el vendedor", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.2];
+u -> pwa; pwa -> api [label="incluye idempotency key"]; api -> val; val -> repo; repo -> db; db -> resp; resp -> comp;
+}

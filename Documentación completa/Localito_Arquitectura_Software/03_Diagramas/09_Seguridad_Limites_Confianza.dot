@@ -1,0 +1,12 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.48, ranksep=0.74, fontname="Arial", label="LOCALITO · LÍMITES DE CONFIANZA Y CONTROLES PRINCIPALES", labelloc=t, fontsize=22];
+node [shape=box, style="rounded,filled", color="#486581", penwidth=1.3, fontname="Arial", fontsize=11.4, margin="0.20,0.12", fillcolor="#FFFFFF"];
+edge [color="#64748B", fontname="Arial", fontsize=9.7, penwidth=1.08, arrowsize=0.74];
+browser [label="Zona no confiable\nPWA en navegador\nNo contiene claves privadas", fillcolor="#FFFBEB", color="#D97706"];
+storage [label="Continuidad local\nIndexedDB / localStorage", fillcolor="#FEF3C7", color="#A16207"];
+api [label="Zona controlada\nAPI backend\nsesión · rol · plan · tenant", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.3];
+secrets [label="Variables privadas\nSESSION · DB · IA · correo", fillcolor="#F0FDFA", color="#0F766E"];
+db [label="Persistencia PostgreSQL\nconsultas filtradas por negocio", shape=cylinder, fillcolor="#EFF6FF", color="#1D4ED8"];
+ext [label="Servicios externos\nIA y correo", fillcolor="#FEF2F2", color="#B91C1C"];
+browser -> storage [label="datos locales"]; browser -> api [label="HTTPS"]; api -> secrets [style=dashed, label="uso server-side"]; api -> db [label="SQL autenticado"]; api -> ext [label="HTTPS / SMTP"];
+}

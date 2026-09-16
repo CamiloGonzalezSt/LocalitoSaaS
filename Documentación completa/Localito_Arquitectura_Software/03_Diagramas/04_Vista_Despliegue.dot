@@ -1,0 +1,15 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.5, ranksep=0.72, fontname="Arial", label="LOCALITO · VISTA DE DESPLIEGUE", labelloc=t, fontsize=22];
+node [shape=box, style="rounded,filled", color="#486581", penwidth=1.3, fontname="Arial", fontsize=11.6, margin="0.20,0.12", fillcolor="#FFFFFF"];
+edge [color="#64748B", fontname="Arial", fontsize=9.8, penwidth=1.1, arrowsize=0.75];
+device [label="Navegador en iPhone / Android / PC\nPWA instalada o uso web", fillcolor="#F8FAFC"];
+web [label="Vercel\nFrontend estático / PWA", fillcolor="#ECFDF5", color="#047857"];
+api [label="Vercel\nServicio o función API\nNode/Express", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.2];
+db [label="Supabase / PostgreSQL 16\nTransaction Pooler", shape=cylinder, fillcolor="#F0FDFA", color="#0F766E"];
+ai [label="Proveedor IA\nGroq / OpenAI", fillcolor="#FFF7ED", color="#C2410C"];
+mail [label="Proveedor de correo\nGmail / Resend", fillcolor="#EFF6FF", color="#1D4ED8"];
+gh [label="GitHub Actions\nTypecheck · tests · build", fillcolor="#F8FAFC"];
+device -> web [label="HTTPS"]; web -> api [label="API"]; device -> api [label="llamadas directas"];
+api -> db [label="PostgreSQL TLS"]; api -> ai [label="HTTPS"]; api -> mail [label="SMTP/API"];
+gh -> web [style=dashed, label="build/deploy"]; gh -> api [style=dashed, label="build/deploy"];
+}

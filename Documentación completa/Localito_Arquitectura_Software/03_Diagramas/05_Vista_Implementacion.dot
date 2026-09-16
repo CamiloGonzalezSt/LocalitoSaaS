@@ -1,0 +1,15 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.45, ranksep=0.72, fontname="Arial", label="LOCALITO · VISTA DE IMPLEMENTACIÓN", labelloc=t, fontsize=22];
+node [shape=folder, style="filled", color="#486581", penwidth=1.2, fontname="Arial", fontsize=11.5, margin="0.18,0.12", fillcolor="#FFFFFF"];
+edge [color="#64748B", penwidth=1.05, arrowsize=0.72, fontname="Arial", fontsize=9.6];
+root [label="Repositorio LocalitoSaaS", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.1];
+web [label="apps/web\nReact · Vite · TypeScript"];
+api [label="apps/api\nExpress · TypeScript"];
+shared [label="packages/shared\ncontratos compartidos", fillcolor="#F8FAFC"];
+db [label="db\nschema PostgreSQL", fillcolor="#F0FDFA", color="#0F766E"];
+scripts [label="scripts\npruebas · hardening · navegador"];
+docs [label="docs\nbacklog · QA · tesis · operación"];
+ci [label=".github/workflows\nintegración continua", fillcolor="#F8FAFC"];
+root -> web; root -> api; root -> shared; root -> db; root -> scripts; root -> docs; root -> ci;
+web -> shared [style=dashed, label="consume tipos"]; api -> shared [style=dashed, label="consume tipos"]; api -> db [style=dashed, label="usa esquema"]; ci -> web [style=dashed, label="verifica"]; ci -> api [style=dashed, label="verifica"];
+}

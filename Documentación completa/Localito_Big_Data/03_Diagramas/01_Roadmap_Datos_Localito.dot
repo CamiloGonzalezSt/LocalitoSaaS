@@ -1,0 +1,11 @@
+
+digraph G{
+graph[rankdir=LR,bgcolor="white",pad=.3,label="LOCALITO · ROADMAP DE MADUREZ DE DATOS",labelloc=t,fontsize=22,fontname="Arial"];
+node[shape=box,style="rounded,filled",fontname="Arial",fontsize=10.8,margin=".16,.1"];
+edge[color="#64748B",arrowsize=.7];
+a[label="1 · OLTP confiable\nPostgreSQL + integridad",fillcolor="#E8F3F0",color="#1F6F5F"];
+b[label="2 · BI\nData Mart + Power BI",fillcolor="#EFF6FF",color="#1D4ED8"];
+c[label="3 · Analítica avanzada\nexperimentos / modelos"];
+d[label="4 · Big Data condicional\nsolo si escala lo exige",fillcolor="#FFF7ED",color="#C2410C"];
+a->b->c->d;
+}

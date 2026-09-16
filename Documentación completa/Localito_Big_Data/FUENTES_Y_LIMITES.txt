@@ -1,0 +1,8 @@
+Fuente académica recuperada:
+- Resumen clase 1 (Big Data)
+
+Conceptos recuperados:
+- Big Data y 5V: Volumen, Velocidad, Variedad, Veracidad y Valor.
+
+Límite:
+- Localito NO se presenta como Big Data actualmente; se documenta un roadmap condicionado a evidencia de escala.
