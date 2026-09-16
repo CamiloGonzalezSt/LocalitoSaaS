@@ -1,0 +1,8 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.45, ranksep=0.4, fontname="Arial", label="LOCALITO · PIRÁMIDE DE PRUEBAS", labelloc=t, fontsize=22];
+node [shape=trapezium, style="filled", color="#486581", penwidth=1.3, fontname="Arial", fontsize=11.6];
+u [label="Pruebas E2E / recorridos críticos\nVenta · fiado · caja · suscripciones", fillcolor="#FEF2F2", color="#B91C1C", width=6];
+i [label="Pruebas de integración\nAPI · persistencia · reglas de negocio · módulos", fillcolor="#FFF7ED", color="#C2410C", width=8];
+b [label="Pruebas unitarias / utilitarias\nvalidaciones · helpers · contratos", fillcolor="#ECFDF5", color="#047857", width=10];
+u -> i [style=invis]; i -> b [style=invis];
+}

@@ -1,0 +1,13 @@
+LOCALITO - BLOQUE BPM / BPMN
+
+Criterio metodológico:
+- BPM/BPMN se utiliza para analizar, modelar, medir y mejorar procesos de negocio.
+- Scrum sigue siendo el marco de gestión del proyecto.
+- El AS-IS se declara referencial porque no existe, en las fuentes revisadas, un levantamiento de campo formal suficiente para afirmar tiempos, porcentajes o tasas reales de almacenes.
+- El TO-BE se construye desde el comportamiento documentado del producto Localito.
+- Los beneficios esperados no se presentan como resultados comprobados mientras no exista una medición con usuarios o datos representativos.
+
+Contenido:
+- 8 documentos DOCX.
+- 4 planillas XLSX.
+- 13 diagramas PNG (mapa general + 6 pares AS-IS/TO-BE).

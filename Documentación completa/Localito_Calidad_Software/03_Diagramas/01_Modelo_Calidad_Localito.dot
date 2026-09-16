@@ -1,0 +1,8 @@
+digraph G {
+graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.48, ranksep=0.7, fontname="Arial", label="LOCALITO · MODELO DE CALIDAD DEL PRODUCTO", labelloc=t, fontsize=22];
+node [shape=box, style="rounded,filled", color="#486581", penwidth=1.3, fontname="Arial", fontsize=11.5, margin="0.20,0.12", fillcolor="#FFFFFF"];
+edge [color="#64748B", penwidth=1.08, arrowsize=0.74];
+goal [label="Objetivo de calidad\nProducto utilizable, consistente y defendible", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.2];
+s1 [label="Adecuación funcional"]; s2 [label="Fiabilidad"]; s3 [label="Usabilidad"]; s4 [label="Seguridad"]; s5 [label="Mantenibilidad"]; s6 [label="Portabilidad"]; s7 [label="Compatibilidad"]; s8 [label="Desempeño"];
+goal -> s1; goal -> s2; goal -> s3; goal -> s4; goal -> s5; goal -> s6; goal -> s7; goal -> s8;
+}
