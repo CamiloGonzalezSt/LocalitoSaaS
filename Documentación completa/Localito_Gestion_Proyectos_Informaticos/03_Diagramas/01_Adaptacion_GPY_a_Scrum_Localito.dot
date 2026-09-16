@@ -1,0 +1,35 @@
+
+digraph G {
+  graph [rankdir=TB,bgcolor="white",pad=0.35,nodesep=0.35,ranksep=0.45,
+         fontname="Arial",label="LOCALITO · ADAPTACIÓN DE GESTIÓN DE PROYECTOS A SCRUM",labelloc=t,fontsize=22];
+  node [shape=box,style="rounded,filled",fontname="Arial",fontsize=11.5,margin="0.20,0.12",penwidth=1.2];
+  edge [color="#64748B",arrowsize=0.72,penwidth=1.0];
+
+  source [label="Contenidos del ramo\nalcance · requerimientos · cronograma · costos · calidad\nrecursos · comunicaciones · riesgos · adquisiciones · interesados",
+          fillcolor="#F8FAFC",color="#64748B",width=5.5];
+  scrum [label="Marco de gestión de Localito\nSCRUM",fillcolor="#E8F3F0",color="#1F6F5F",penwidth=2.2,width=4.2];
+  scope [label="Alcance / requerimientos\nProduct Goal + Product Backlog\nHistorias + criterios de aceptación",fillcolor="#EFF6FF",color="#1D4ED8"];
+  time [label="Tiempo\nProduct Roadmap + Release Plan\n8 Sprints + cierre académico",fillcolor="#EFF6FF",color="#1D4ED8"];
+  cost [label="Costos / recursos\ncapacidad + guardrails económicos\nsin Valor Ganado artificial",fillcolor="#FFF7ED",color="#C2410C"];
+  quality [label="Calidad\npruebas continuas + DoD\nQA dentro del Sprint",fillcolor="#F5F3FF",color="#6D28D9"];
+  change [label="Cambios\nfeedback → refinement → repriorización\nsin comité predictivo de cambios",fillcolor="#FFFBEB",color="#D97706"];
+  risk [label="Riesgos / dependencias\nrisk backlog + impedimentos\ntrabajo de respuesta en backlog",fillcolor="#FEF2F2",color="#B91C1C"];
+  people [label="Stakeholders / comunicación\nReview · feedback · acuerdos de trabajo\nScrum accountabilities",fillcolor="#F0FDFA",color="#0F766E"];
+  incr [label="Incremento verificable\nsoftware + evidencia + documentación\nadaptado cada Sprint",fillcolor="#DCFCE7",color="#15803D",penwidth=2.0];
+
+  source -> scrum;
+  scrum -> scope;
+  scrum -> time;
+  scrum -> cost;
+  scrum -> quality;
+  scrum -> change;
+  scrum -> risk;
+  scrum -> people;
+  scope -> incr;
+  time -> incr;
+  cost -> incr;
+  quality -> incr;
+  change -> incr;
+  risk -> incr;
+  people -> incr;
+}

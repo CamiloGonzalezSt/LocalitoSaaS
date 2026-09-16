@@ -1,0 +1,18 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.3, nodesep=0.35, ranksep=0.45,
+         fontname="Arial", label="LOCALITO · INTEGRACIÓN DE FACTURA ASISTIDA POR IA", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        penwidth=1.2, fontname="Arial", fontsize=12, margin="0.20,0.12", width=4.5];
+  edge [color="#64748B", arrowsize=0.75, penwidth=1.05];
+
+  a [label="1. Dueño adjunta foto de factura"];
+  b [label="2. POST /ai/invoices/analyze"];
+  c [label="3. API envía imagen + catálogo\nal proveedor configurado"];
+  d [label="4. Proveedor devuelve JSON\nproveedor · folio · fecha · líneas · totales"];
+  e [label="5. API normaliza y compara\ncontra productos reales del tenant", fillcolor="#E8F3F0", color="#1F6F5F"];
+  f [label="6. Dueño revisa/corrige\ncantidades · costos · coincidencias"];
+  g [label="7. POST /ai/invoices/import\ncrea/actualiza compra y stock", fillcolor="#EFF6FF", color="#1D4ED8"];
+  h [label="8. Auditoría y persistencia PostgreSQL"];
+  a -> b -> c -> d -> e -> f -> g -> h;
+}

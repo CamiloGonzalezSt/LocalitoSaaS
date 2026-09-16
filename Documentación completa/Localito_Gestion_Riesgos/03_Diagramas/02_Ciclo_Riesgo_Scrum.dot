@@ -1,0 +1,20 @@
+
+digraph G {
+  graph [rankdir=LR, bgcolor="white", pad=0.35, nodesep=0.48, ranksep=0.6, fontname="Arial",
+         label="LOCALITO · GESTIÓN DE RIESGOS DENTRO DE SCRUM", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        fontname="Arial", fontsize=11, margin="0.18,0.11", penwidth=1.2];
+  edge [color="#64748B", arrowsize=0.72, penwidth=1.05];
+
+  id [label="Identificar\nriesgo / señal"];
+  assess [label="Evaluar\nprobabilidad × impacto"];
+  decide [label="Priorizar\nsegún exposición y tolerancia", fillcolor="#FEF3C7", color="#A16207"];
+  backlog [label="Convertir respuesta en\nPBI / Task / Bug / criterio", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.0];
+  sprint [label="Ejecutar mitigación\ndentro del Sprint"];
+  verify [label="Verificar evidencia\ny riesgo residual"];
+  review [label="Revisar en Sprint Review /\nrefinamiento / retrospectiva"];
+  close [label="Cerrar, aceptar o\nreabrir"];
+
+  id -> assess -> decide -> backlog -> sprint -> verify -> review -> close;
+  close -> id [label="nueva señal / recurrencia", style=dashed];
+}

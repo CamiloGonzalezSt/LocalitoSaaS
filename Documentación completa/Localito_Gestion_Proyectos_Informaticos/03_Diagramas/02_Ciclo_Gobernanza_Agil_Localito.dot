@@ -1,0 +1,22 @@
+
+digraph G {
+  graph [rankdir=TB,bgcolor="white",pad=0.35,nodesep=0.35,ranksep=0.45,
+         fontname="Arial",label="LOCALITO · CICLO DE GOBERNANZA ÁGIL",labelloc=t,fontsize=22];
+  node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",
+        penwidth=1.2,fontname="Arial",fontsize=11.5,margin="0.20,0.12",width=4.8];
+  edge [color="#64748B",arrowsize=0.74,penwidth=1.05];
+
+  goal [label="Product Goal\nvalor y resultado esperado",fillcolor="#E8F3F0",color="#1F6F5F"];
+  backlog [label="Product Backlog\nordenado por valor · riesgo · dependencia"];
+  planning [label="Sprint Planning\nSprint Goal + selección de trabajo"];
+  exec [label="Sprint\nconstrucción + pruebas + documentación"];
+  daily [label="Daily Scrum / coordinación\ninspección del progreso al Sprint Goal"];
+  incr [label="Incremento\ncumple Definition of Done",fillcolor="#DCFCE7",color="#15803D"];
+  review [label="Sprint Review\nstakeholders + evidencia + feedback",fillcolor="#EFF6FF",color="#1D4ED8"];
+  retro [label="Retrospectiva\nmejoras de equipo/proceso"];
+  refine [label="Refinement\nrepriorizar · aclarar · dividir · agregar respuestas a riesgo",fillcolor="#FFF7ED",color="#C2410C"];
+
+  goal -> backlog -> planning -> exec -> incr -> review -> refine -> backlog;
+  exec -> daily -> exec [style=dashed];
+  review -> retro -> planning [style=dashed];
+}

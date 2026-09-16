@@ -1,0 +1,25 @@
+
+digraph G {
+  graph [rankdir=LR, bgcolor="white", pad=0.35, nodesep=0.55, ranksep=0.55,
+         fontname="Arial", label="LOCALITO · LIENZO DE PROPUESTA DE VALOR", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=11.5, margin="0.20,0.12", penwidth=1.3];
+  edge [color="#64748B", arrowsize=0.7];
+
+  subgraph cluster_customer {
+    label="PERFIL DEL CLIENTE"; color="#D97706"; penwidth=1.4;
+    jobs [label="Actividades / trabajos\n• vender y cobrar\n• revisar stock\n• controlar caja\n• registrar fiado\n• reponer mercadería", fillcolor="#FFFBEB", color="#D97706"];
+    pains [label="Dolores\n• registros manuales/fragmentados\n• poca visibilidad de stock y caja\n• software complejo o costoso\n• conectividad imperfecta\n• tiempo de carga inicial", fillcolor="#FEF2F2", color="#B91C1C"];
+    gains [label="Motivaciones / ganancias\n• trabajar desde el celular\n• aprender rápido\n• reducir errores y retrabajo\n• saber qué pasa en el negocio\n• mantener prácticas locales como fiado", fillcolor="#F0FDF4", color="#15803D"];
+  }
+
+  subgraph cluster_value {
+    label="MAPA DE VALOR"; color="#1F6F5F"; penwidth=1.4;
+    product [label="Producto / servicio\nPWA SaaS Localito\nPOS + inventario + caja + fiado\ncompras + reportes + apoyo visual", fillcolor="#E8F3F0", color="#1F6F5F"];
+    relievers [label="Aliviadores\n• unificar operación\n• PWA sin hardware dedicado\n• onboarding CSV/factura\n• offline acotado\n• flujo de fiado integrado", fillcolor="#EFF6FF", color="#1D4ED8"];
+    creators [label="Potenciadores\n• Venta Rápida con foto + confirmación\n• información centralizada\n• roles y trazabilidad\n• prueba Pro 30 días\n• experiencia mobile-first", fillcolor="#F5F3FF", color="#6D28D9"];
+  }
+
+  jobs -> product [style=dashed,label="encaje"];
+  pains -> relievers [style=dashed,label="alivia"];
+  gains -> creators [style=dashed,label="potencia"];
+}

@@ -1,0 +1,24 @@
+
+digraph G {
+  graph [bgcolor="white", pad=0.25, rankdir=TB, fontname="Arial",
+         label="LOCALITO · BUSINESS MODEL CANVAS", labelloc=t, fontsize=22];
+  node [shape=plain, fontname="Arial"];
+  canvas [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="9" COLOR="#94A3B8">
+      <TR>
+        <TD BGCOLOR="#F8FAFC" WIDTH="180"><B>Socios / proveedores clave</B><BR/>Cloud y base de datos<BR/>Proveedor IA<BR/>Correo transaccional<BR/>Futuros: DTE/pagos autorizados</TD>
+        <TD BGCOLOR="#F8FAFC" WIDTH="180"><B>Actividades clave</B><BR/>Desarrollo y QA<BR/>Onboarding<BR/>Soporte piloto<BR/>Validación con comercios<BR/>Seguridad y continuidad</TD>
+        <TD BGCOLOR="#E8F3F0" WIDTH="220"><B>Propuesta de valor</B><BR/>Gestionar ventas, stock, caja y fiado desde el celular, con baja fricción de adopción y asistencia visual revisada por la persona.</TD>
+        <TD BGCOLOR="#F8FAFC" WIDTH="180"><B>Relación con clientes</B><BR/>Prueba Pro 30 días<BR/>Onboarding guiado<BR/>Soporte humano en piloto<BR/>Autoservicio progresivo</TD>
+        <TD BGCOLOR="#F8FAFC" WIDTH="180"><B>Segmentos</B><BR/>Principal: almacenes y minimarkets de barrio con uno o pocos puntos de venta<BR/>Secundario: vendedor/a del local</TD>
+      </TR>
+      <TR>
+        <TD BGCOLOR="#F8FAFC"><B>Recursos clave</B><BR/>PWA/API/BD<BR/>Know-how de comercio de barrio<BR/>Datos de validación<BR/>Marca y documentación</TD>
+        <TD BGCOLOR="#F8FAFC"><B>Canales</B><BR/>Pilotos directos<BR/>Referidos<BR/>Redes/contenido demostrativo<BR/>Alianzas potenciales locales</TD>
+        <TD BGCOLOR="#E8F3F0"><B>Beneficio central</B><BR/>Menos dependencia de cuadernos, memoria y herramientas separadas; operación móvil integrada.</TD>
+        <TD BGCOLOR="#F8FAFC"><B>Fuentes de ingreso</B><BR/>Básico: $10.000/mes<BR/>Pro: $20.000/mes<BR/>Precios como hipótesis a validar</TD>
+        <TD BGCOLOR="#F8FAFC"><B>Estructura de costos</B><BR/>Cloud/BD<BR/>IA/correo<BR/>Soporte<BR/>Desarrollo/QA<BR/>Adquisición de clientes</TD>
+      </TR>
+    </TABLE>
+  >];
+}

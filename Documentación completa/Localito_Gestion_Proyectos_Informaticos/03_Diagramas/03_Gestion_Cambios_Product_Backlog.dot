@@ -1,0 +1,21 @@
+
+digraph G {
+  graph [rankdir=TB,bgcolor="white",pad=0.35,nodesep=0.35,ranksep=0.45,
+         fontname="Arial",label="LOCALITO · CAMBIO ADAPTATIVO MEDIANTE PRODUCT BACKLOG",labelloc=t,fontsize=22];
+  node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",
+        penwidth=1.2,fontname="Arial",fontsize=11.5,margin="0.20,0.12",width=4.8];
+  edge [color="#64748B",arrowsize=0.74];
+
+  input [label="Nueva información\nfeedback · riesgo · defecto · dependencia · hallazgo"];
+  check [label="¿Afecta Product Goal / alcance académico?\nPO analiza valor, urgencia, riesgo y evidencia",fillcolor="#FFFBEB",color="#D97706"];
+  pb [label="Crear/actualizar PBI\nHU · Bug · Task · Spike"];
+  refine [label="Refinement\ncriterios · tamaño · dependencias · prioridad"];
+  future [label="Próximo Sprint posible\nsi contribuye al objetivo"];
+  no [label="Roadmap / fuera de alcance\nno comprometer Sprint activo"];
+  sprint [label="Sprint activo\nSprint Goal protegido",fillcolor="#E8F3F0",color="#1F6F5F",penwidth=2.0];
+
+  input -> check -> pb -> refine;
+  refine -> future;
+  refine -> no [style=dashed,label="si no corresponde ahora"];
+  sprint -> future [style=dashed,label="solo renegociar con PO si Sprint Goal sigue viable"];
+}

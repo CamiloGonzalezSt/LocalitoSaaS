@@ -1,0 +1,23 @@
+
+digraph G {
+  graph [rankdir=LR,bgcolor="white",pad=0.35,nodesep=0.45,ranksep=0.55,
+         fontname="Arial",label="LOCALITO · COMUNICACIÓN Y FEEDBACK DE STAKEHOLDERS",labelloc=t,fontsize=22];
+  node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",
+        penwidth=1.2,fontname="Arial",fontsize=11.2,margin="0.18,0.11"];
+  edge [color="#64748B",arrowsize=0.72];
+
+  team [label="Scrum Team\nPO · Scrum Master · Developers",fillcolor="#E8F3F0",color="#1F6F5F",penwidth=2.0];
+  prof [label="Docente / guía\ncriterios académicos"];
+  merchants [label="Comercios objetivo\nvalidación problema/usabilidad"];
+  commission [label="Comisión / evaluación\ntrazabilidad y evidencia"];
+  providers [label="Proveedores técnicos\ncloud · IA · correo"];
+  review [label="Sprint Review / demo\ninspección del incremento",fillcolor="#EFF6FF",color="#1D4ED8"];
+  backlog [label="Product Backlog\nfeedback convertido en trabajo",fillcolor="#FFF7ED",color="#C2410C"];
+
+  team -> review;
+  prof -> review;
+  merchants -> review;
+  commission -> review [style=dashed,label="instancias académicas"];
+  providers -> team [style=dashed,label="dependencias/estado"];
+  review -> backlog -> team;
+}

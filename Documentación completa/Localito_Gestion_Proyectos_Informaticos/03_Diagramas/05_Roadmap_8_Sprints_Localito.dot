@@ -1,0 +1,20 @@
+
+digraph G {
+  graph [rankdir=LR,bgcolor="white",pad=0.3,nodesep=0.25,ranksep=0.45,
+         fontname="Arial",label="LOCALITO · ROADMAP OFICIAL 2026",labelloc=t,fontsize=22];
+  node [shape=box,style="rounded,filled",fillcolor="#FFFFFF",color="#486581",
+        penwidth=1.1,fontname="Arial",fontsize=9.7,margin="0.12,0.08"];
+  edge [color="#64748B",arrowsize=0.65];
+
+  s1 [label="S1\n10–23 ago\nBase SaaS\nidentidad · catálogo"];
+  s2 [label="S2\n24 ago–6 sep\nInventario\ncompras · núcleo"];
+  s3 [label="S3\n7–20 sep\nClientes · fiado\ncaja"];
+  s4 [label="S4\n21 sep–4 oct\nIA asistida\npagos controlados"];
+  s5 [label="S5\n5–18 oct\nPWA · offline\ncalidad operacional"];
+  s6 [label="S6\n19 oct–1 nov\nPlanes · permisos\nexperiencia SaaS"];
+  s7 [label="S7\n2–15 nov\nCerrar brechas\nhardening"];
+  s8 [label="S8\n16–29 nov\nValidación técnica\nevidencia",fillcolor="#E8F3F0",color="#1F6F5F",penwidth=2.0];
+  close [label="Cierre académico\n30 nov–6 dic\nEvidencia · defensa\nsin scope nuevo",fillcolor="#FFFBEB",color="#D97706"];
+
+  s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7 -> s8 -> close;
+}

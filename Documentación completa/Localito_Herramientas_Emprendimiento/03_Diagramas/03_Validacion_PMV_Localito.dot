@@ -1,0 +1,19 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.38, ranksep=0.48,
+         fontname="Arial", label="LOCALITO · VALIDACIÓN DEL PMV / PILOTO", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        fontname="Arial", fontsize=11.5, margin="0.20,0.12", penwidth=1.25, width=4.8];
+  edge [color="#64748B", arrowsize=0.75, penwidth=1.05];
+
+  a [label="1. Problema\nEntrevistar comercios y confirmar tareas/dolores"];
+  b [label="2. Solución\nMostrar demo y observar tareas representativas"];
+  c [label="3. Beneficio\nMedir tiempo, errores, completitud y percepción"];
+  d [label="4. Diferenciación\nComparar Venta Rápida / fiado / UX con alternativas", fillcolor="#E8F3F0", color="#1F6F5F"];
+  e [label="5. Precio\nValidar disposición a pagar Básico / Pro"];
+  f [label="6. Trial\nActivación → uso → conversión a pago"];
+  g [label="7. Retención\nUso repetido y motivo de abandono/continuidad"];
+  h [label="Aprendizaje → Product Backlog\npriorizar, simplificar o descartar hipótesis", fillcolor="#EFF6FF", color="#1D4ED8"];
+
+  a -> b -> c -> d -> e -> f -> g -> h;
+}

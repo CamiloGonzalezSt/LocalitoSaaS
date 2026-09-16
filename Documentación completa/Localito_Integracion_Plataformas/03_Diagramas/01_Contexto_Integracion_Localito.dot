@@ -1,0 +1,28 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.45, ranksep=0.62,
+         fontname="Arial", label="LOCALITO · CONTEXTO DE INTEGRACIÓN", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        penwidth=1.3, fontname="Arial", fontsize=12, margin="0.20,0.12"];
+  edge [color="#64748B", fontname="Arial", fontsize=9.5, arrowsize=0.75];
+
+  user [label="Dueño / vendedor\nPWA Localito", fillcolor="#FFFBEB", color="#D97706"];
+  web [label="Frontend React + Vite\nCliente REST · PWA · IndexedDB", fillcolor="#EFF6FF", color="#1D4ED8"];
+  api [label="API Node + Express\nReglas · auth · tenant · validación", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.2];
+  db [label="PostgreSQL / Supabase\nPersistencia multi-negocio", shape=cylinder, fillcolor="#F0FDFA", color="#0F766E"];
+  ai [label="Proveedor visión\nGroq u OpenAI\nREST + JSON estructurado", fillcolor="#F5F3FF", color="#6D28D9"];
+  mail [label="Correo transaccional\nResend REST o Gmail SMTP", fillcolor="#FFF7ED", color="#C2410C"];
+  wa [label="WhatsApp\nEnlace externo generado\nsin API oficial", fillcolor="#F8FAFC"];
+  pay [label="Pagos externos\nWebpay / Mercado Pago\nmanuales o simulados en tesis", fillcolor="#FEF2F2", color="#B91C1C"];
+  offline [label="Continuidad local\nIndexedDB + cola de ventas\nidempotencia al sincronizar", fillcolor="#F8FAFC"];
+
+  user -> web [label="interacción"];
+  web -> api [label="HTTPS · JSON · Bearer"];
+  web -> offline [label="guardar cola"];
+  offline -> api [label="reintento"];
+  api -> db [label="SQL server-side"];
+  api -> ai [label="HTTPS · imagen + catálogo"];
+  api -> mail [label="REST / SMTP"];
+  web -> wa [label="abre URL"];
+  web -> pay [label="confirmación manual"];
+}

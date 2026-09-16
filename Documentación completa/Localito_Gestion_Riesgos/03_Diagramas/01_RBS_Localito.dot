@@ -1,0 +1,29 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.42, ranksep=0.65, fontname="Arial",
+         label="LOCALITO · RISK BREAKDOWN STRUCTURE (RBS)", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        fontname="Arial", fontsize=11, margin="0.18,0.11", penwidth=1.2];
+  edge [color="#64748B", arrowsize=0.7, penwidth=1.0];
+
+  root [label="Riesgos Localito", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.2];
+
+  tech [label="Técnicos"];
+  sec [label="Seguridad y datos"];
+  oper [label="Operacionales"];
+  ext [label="Dependencias externas"];
+  product [label="Producto / calidad"];
+  market [label="Mercado / negocio"];
+  acad [label="Académicos / proyecto"];
+
+  root -> tech; root -> sec; root -> oper; root -> ext; root -> product; root -> market; root -> acad;
+
+  tech -> t1 [label=""];
+  t1 [label="PostgreSQL / concurrencia\nIdempotencia\nOffline / sincronización"];
+  sec -> s1; s1 [label="Aislamiento multi-tenant\nCredenciales / secretos\nRespaldo / restauración"];
+  oper -> o1; o1 [label="Cierre de caja concurrente\nTickets rechazados\nSoporte inicial"];
+  ext -> e1; e1 [label="IA / cuotas\nVercel / Supabase\nCorreo"];
+  product -> p1; p1 [label="Regresión visual\nPWA física\nErrores de IA"];
+  market -> m1; m1 [label="DTE / SII\nPrecio / disposición a pagar\nCompetencia / adopción"];
+  acad -> a1; a1 [label="Validación con usuarios\nEvidencia incompleta\nScope creep"];
+}

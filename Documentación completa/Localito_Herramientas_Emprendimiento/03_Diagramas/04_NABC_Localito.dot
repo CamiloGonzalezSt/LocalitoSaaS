@@ -1,0 +1,17 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.35, nodesep=0.4, ranksep=0.5,
+         fontname="Arial", label="LOCALITO · PITCH NABC", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        fontname="Arial", fontsize=12, margin="0.20,0.12", penwidth=1.25, width=5.0];
+  edge [color="#64748B", arrowsize=0.75, penwidth=1.05];
+
+  hook [label="Gancho\nEl almacén puede vender todo el día y aun así no saber con certeza\nqué stock queda, cuánto fiado hay o si la caja realmente cuadra.", fillcolor="#FFFBEB", color="#D97706"];
+  n [label="N · Need / Necesidad\nOperación cotidiana fragmentada, manual y con baja adopción digital."];
+  a [label="A · Approach / Acercamiento\nPWA móvil que integra POS, inventario, caja, fiado y asistencia visual.", fillcolor="#E8F3F0", color="#1F6F5F"];
+  b [label="B · Benefits / Beneficios\nMenos fricción, más visibilidad, trabajo desde el celular y adopción progresiva."];
+  c [label="C · Competition / Competencia\nPOS maduros y soluciones de nicho ya cubren funciones base;\nLocalito compite por simplicidad móvil, fiado y flujo visual controlado.", fillcolor="#F5F3FF", color="#6D28D9"];
+  close [label="Cierre\nDigitalizar un negocio de barrio no debería significar cambiar su forma de trabajar de un día para otro;\nLocalito busca acompañar esa transición.", fillcolor="#EFF6FF", color="#1D4ED8"];
+
+  hook -> n -> a -> b -> c -> close;
+}

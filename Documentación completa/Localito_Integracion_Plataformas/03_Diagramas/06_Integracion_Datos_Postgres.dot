@@ -1,0 +1,23 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.3, nodesep=0.40, ranksep=0.50,
+         fontname="Arial", label="LOCALITO · INTEGRACIÓN DE DATOS Y PERSISTENCIA", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#486581",
+        penwidth=1.2, fontname="Arial", fontsize=12, margin="0.20,0.12"];
+  edge [color="#64748B", arrowsize=0.75, penwidth=1.05];
+
+  api [label="API Express\nRepositorio común", fillcolor="#E8F3F0", color="#1F6F5F", penwidth=2.0];
+  mem [label="MemoryRepository\nsolo desarrollo / pruebas", fillcolor="#FFFBEB", color="#D97706"];
+  pg [label="PostgresRepository\npg.Pool", fillcolor="#EFF6FF", color="#1D4ED8"];
+  env [label="DATABASE_URL / POSTGRES_URL /\nSUPABASE_DB_URL"];
+  supa [label="Supabase PostgreSQL\npooler / TLS", shape=cylinder, fillcolor="#F0FDFA", color="#0F766E"];
+  schema [label="db/schema.sql\nmigración idempotente\nRLS habilitado"];
+  rule [label="Producción / Vercel\nPostgreSQL obligatorio", fillcolor="#FEF2F2", color="#B91C1C"];
+
+  api -> mem [label="sin DB solo no-prod"];
+  api -> pg;
+  env -> pg;
+  pg -> supa;
+  schema -> supa;
+  rule -> pg [style=dashed];
+}

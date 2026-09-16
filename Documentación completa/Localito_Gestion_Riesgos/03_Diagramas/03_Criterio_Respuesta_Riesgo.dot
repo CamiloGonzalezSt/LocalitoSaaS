@@ -1,0 +1,12 @@
+
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad=0.3, nodesep=0.35, ranksep=0.45, fontname="Arial",
+         label="LOCALITO · CRITERIO DE RESPUESTA POR EXPOSICIÓN", labelloc=t, fontsize=22];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=11, margin="0.18,0.12", penwidth=1.2];
+  low [label="BAJO · 1–5\nAceptar / monitorear", fillcolor="#DCFCE7", color="#15803D"];
+  med [label="MEDIO · 6–12\nMitigar / observar señales", fillcolor="#FEF3C7", color="#A16207"];
+  high [label="ALTO · 15–25\nEvitar / reducir / escalar", fillcolor="#FEE2E2", color="#B91C1C"];
+  override [label="OVERRIDE DE TOLERANCIA\nSeguridad, pérdida de datos o exposición multi-tenant\npueden escalarse aunque P×I sea menor", fillcolor="#EDE9FE", color="#6D28D9"];
+  low -> med -> high [style=invis];
+  high -> override [style=dashed, label="regla adicional"];
+}
