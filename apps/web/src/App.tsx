@@ -929,7 +929,7 @@ function App() {
   async function cancelSale(sale: Sale, reason: string) {
     if (!isOwner) {
       setNotice({ message: "Solo el dueno/admin puede anular ventas.", tone: "warning" });
-      return;
+      return false;
     }
 
     setIsBusy(true);
@@ -937,8 +937,10 @@ function App() {
       const response = await api.cancelSale(sale.id, reason);
       if (lastReceipt?.id === sale.id) setLastReceipt(response.data);
       await loadWorkspace("Venta anulada y stock restaurado.");
+      return true;
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo anular la venta.", tone: "error" });
+      return false;
     } finally {
       setIsBusy(false);
     }
@@ -1400,10 +1402,10 @@ function App() {
   }
 
   async function returnSale(sale: Sale, items: Array<{ productId: string; quantity: number }>, reason: string) {
-    if (!isOwner || sale.status === "cancelled" || sale.status === "refunded") return;
+    if (!isOwner || sale.status === "cancelled" || sale.status === "refunded") return false;
     setIsBusy(true);
-    try { await api.returnSale(sale.id, items, reason); await loadWorkspace("Devolución registrada y stock restaurado."); }
-    catch (error) { setNotice({ message: error instanceof Error ? error.message : "No se pudo devolver la venta.", tone: "error" }); }
+    try { await api.returnSale(sale.id, items, reason); await loadWorkspace("Devolución registrada y stock restaurado."); return true; }
+    catch (error) { setNotice({ message: error instanceof Error ? error.message : "No se pudo devolver la venta.", tone: "error" }); return false; }
     finally { setIsBusy(false); }
   }
 
@@ -1730,8 +1732,8 @@ function App() {
             canViewFullReports={isOwner}
             onCashClosureNote={setCashClosureNote}
             onCloseCashRegister={requestCloseCashRegister}
-            onCancelSale={(sale, reason) => void cancelSale(sale, reason)}
-            onReturnSale={(sale, items, reason) => void returnSale(sale, items, reason)}
+            onCancelSale={cancelSale}
+            onReturnSale={returnSale}
           />
         )}
 
@@ -2856,8 +2858,8 @@ function ReportsView({
   canViewFullReports: boolean;
   onCashClosureNote: (value: string) => void;
   onCloseCashRegister: () => void;
-  onCancelSale: (sale: Sale, reason: string) => void;
-  onReturnSale: (sale: Sale, items: Array<{ productId: string; quantity: number }>, reason: string) => void;
+  onCancelSale: (sale: Sale, reason: string) => Promise<boolean>;
+  onReturnSale: (sale: Sale, items: Array<{ productId: string; quantity: number }>, reason: string) => Promise<boolean>;
 }) {
   const latestDate = sales[0]?.createdAt.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
   const [startDate, setStartDate] = useState(`${latestDate.slice(0, 8)}01`);
@@ -2973,19 +2975,21 @@ function ReportsView({
   }
 
   function openSaleAction(sale: Sale, type: "cancel" | "return") {
-    setSaleAction({ sale, type }); setActionReason("");
-    setReturnQuantities(Object.fromEntries(sale.items.map((item) => [item.productId, type === "return" ? 1 : 0])));
+    const completeSale = sales.find((entry) => entry.id === sale.id) ?? sale;
+    setSaleAction({ sale: completeSale, type }); setActionReason("");
+    setReturnQuantities(Object.fromEntries(completeSale.items.map((item) => [item.productId, type === "return" ? 1 : 0])));
   }
 
-  function confirmSaleAction() {
-    if (!saleAction || !actionReason.trim()) return;
-    if (saleAction.type === "cancel") onCancelSale(saleAction.sale, actionReason.trim());
+  async function confirmSaleAction() {
+    if (!saleAction || !actionReason.trim() || isBusy) return;
+    let succeeded: boolean;
+    if (saleAction.type === "cancel") succeeded = await onCancelSale(saleAction.sale, actionReason.trim());
     else {
       const items = saleAction.sale.items.map((item) => ({ productId: item.productId, quantity: Math.min(item.quantity, Math.max(0, returnQuantities[item.productId] ?? 0)) })).filter((item) => item.quantity > 0);
       if (!items.length) return;
-      onReturnSale(saleAction.sale, items, actionReason.trim());
+      succeeded = await onReturnSale(saleAction.sale, items, actionReason.trim());
     }
-    setSaleAction(null);
+    if (succeeded) setSaleAction(null);
   }
 
   return (

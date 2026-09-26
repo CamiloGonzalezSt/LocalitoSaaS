@@ -1,9 +1,11 @@
 import { ArrowRight, CalendarDays, Package, ReceiptText, Search, Users, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import type { Customer, Product, Sale, User } from "@localito/shared";
 import { formatCLP, formatDateTime } from "./lib/format";
+import "./sale-search-detail.css";
 
 type SearchKind = "all" | "products" | "customers" | "sales";
 
@@ -153,6 +155,19 @@ function SearchSection({ title, icon: Icon, count, children }: { title: string; 
 }
 
 function SaleSearchDetail({ sale, customer, sellerName, onClose }: { sale: Sale; customer?: Customer; sellerName?: string; onClose: () => void }) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousRootOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.documentElement.style.overflow = previousRootOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose]);
   const paymentLabels: Record<Sale["paymentMethod"], string> = {
     cash: "Efectivo",
     card: "Tarjeta",
@@ -164,7 +179,7 @@ function SaleSearchDetail({ sale, customer, sellerName, onClose }: { sale: Sale;
   };
   const statusLabel = sale.status === "cancelled" ? "Anulada" : sale.status === "refunded" ? "Devuelta" : sale.status === "partially_refunded" ? "Devolución parcial" : "Registrada";
 
-  return <div className="modal-backdrop sale-search-backdrop" role="presentation" onClick={onClose}>
+  return createPortal(<div className="modal-backdrop sale-search-backdrop" role="presentation" onClick={onClose}>
     <section className="panel sale-search-detail" role="dialog" aria-modal="true" aria-labelledby="sale-search-detail-title" onClick={(event) => event.stopPropagation()}>
       <div className="sale-search-detail-head">
         <div><span>Detalle de venta</span><h2 id="sale-search-detail-title">Venta #{sale.id.slice(0, 8)}</h2><p>{formatDateTime(sale.createdAt)}</p></div>
@@ -188,5 +203,5 @@ function SaleSearchDetail({ sale, customer, sellerName, onClose }: { sale: Sale;
       <div className="sale-search-total"><span>Total pagado</span><strong>{formatCLP(sale.total)}</strong></div>
       <button className="primary-action" type="button" onClick={onClose}>Cerrar detalle</button>
     </section>
-  </div>;
+  </div>, document.body);
 }

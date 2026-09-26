@@ -1,5 +1,11 @@
 # Operación de Localito en producción
 
+## Verificación de ventas y visión, 26-09-2026
+
+El modelo `qwen/qwen3.6-27b` dejó de estar disponible para el nivel gratuito de Groq. El código actualizado usa `qwen/qwen3.8-27b` incluso si Vercel conserva el identificador retirado en `GROQ_VISION_MODEL`; actualizar también la variable en Vercel para que refleje el modelo vigente. [Aviso oficial](https://console.groq.com/docs/deprecations). `quickSaleConfigured` e `invoiceAiConfigured` solo confirman la presencia de claves, no el éxito de una solicitud. Probar fotos sin información sensible y no confirmar ventas/importaciones durante la validación.
+
+La anulación y devolución reponen stock solo de unidades efectivamente descontadas al vender. Las nuevas ventas guardan ese dato en `detalle_ventas.stock_descontado`; el esquema se amplía al iniciar la API. En ventas históricas sin ese dato se usa `controla_stock` actual, por lo que un cambio de esa opción posterior a la venta exige conciliación manual. Validar en un local de prueba: registrar una venta de un producto con stock controlado, comprobar el descuento, devolver una parte y después anular el resto; verificar stock, estado e historial de movimientos. No repetir una anulación/devolución si la respuesta es ambigua: primero consultar la venta y el inventario. No se ha ejecutado esta prueba contra la base de producción.
+
 ## Recuperación de API, 26-09-2026
 
 La web publicada respondía HTTP 200, pero `/api/health` devolvía 500 y el adaptador de login revelaba `ENOTFOUND tenant/user ... not found` del pooler PostgreSQL. Supabase estaba pausado. Después de reanudar el proyecto y corregir la URI `DATABASE_URL` en Vercel, `/api/health` respondió 200 con `storage: "postgres"`, `persistentStorage: true`, `quickSaleConfigured: true` e `invoiceAiConfigured: true` el 26-09-2026 a las 13:50 UTC. La conexión de la API está recuperada; login, catálogo y uso real de IA no están verificados. Según [la guía de Supabase sobre este error](https://supabase.com/docs/guides/troubleshooting/tenant-or-user-not-found), el pooler no puede asociar el host y usuario de la conexión a un proyecto; no significa por sí solo que el DNS del host no resuelva o que la contraseña sea incorrecta. El backend conserva el requisito de PostgreSQL persistente y no debe pasar a memoria en producción.

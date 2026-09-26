@@ -250,6 +250,19 @@ export async function createRepository() {
   }
 }
 
+function assertReturnQuantities(sale: Sale, requestedItems: Array<{ productId: string; quantity: number }>, previousItems: Array<{ productId: string; quantity: number }>) {
+  const seen = new Set<string>();
+  if (!requestedItems.length) throw new Error("Cantidad de devolución inválida.");
+  for (const requested of requestedItems) {
+    const original = sale.items.find((item) => item.productId === requested.productId);
+    const alreadyReturned = previousItems.filter((item) => item.productId === requested.productId).reduce((sum, item) => sum + Number(item.quantity), 0);
+    if (!original || seen.has(requested.productId) || !Number.isInteger(requested.quantity) || requested.quantity <= 0 || requested.quantity + alreadyReturned > original.quantity) {
+      throw new Error("Cantidad de devolución inválida.");
+    }
+    seen.add(requested.productId);
+  }
+}
+
 function buildMemoryBootstrap(tenantId: string, currentCashRegister?: CashRegisterSummary): BootstrapData {
   const tenant = store.tenants.find((candidate) => candidate.id === tenantId) ?? store.tenants[0];
   const user =
@@ -883,6 +896,8 @@ export class MemoryRepository implements DataRepository {
   async returnSale(tenantId: string, saleId: string, payload: { items: Array<{ productId: string; quantity: number }>; reason: string; userId?: string }) {
     const sale = store.sales.find((candidate) => candidate.id === saleId && candidate.tenantId === tenantId);
     if (!sale || sale.status === "cancelled" || sale.status === "refunded") return null;
+    const previousItems = store.saleReturns.filter((entry) => entry.saleId === saleId && entry.tenantId === tenantId).flatMap((entry) => entry.items);
+    assertReturnQuantities(sale, payload.items, previousItems);
     const returnedItems = payload.items.map((item) => {
       const original = sale.items.find((candidate) => candidate.productId === item.productId);
       const alreadyReturned = store.saleReturns.filter((entry) => entry.saleId === saleId).flatMap((entry) => entry.items).filter((entry) => entry.productId === item.productId).reduce((sum, entry) => sum + entry.quantity, 0);
@@ -1921,11 +1936,13 @@ class PostgresRepository implements DataRepository {
           .reduce((sum, item) => sum + Number(item.quantity), 0);
         const quantityToRestore = Math.max(0, Number(detail.cantidad) - alreadyReturned);
         if (quantityToRestore <= 0) continue;
-        const stockResult = await client.query(`update productos set stock_actual = stock_actual + $1 where id = $2 and negocio_id = $3 and controla_stock = true returning stock_actual`, [
+        const stockResult = await client.query(`update productos set stock_actual = stock_actual + $1 where id = $2 and negocio_id = $3 and ($4::boolean is true or ($4::boolean is null and controla_stock = true)) returning stock_actual`, [
           quantityToRestore,
           detail.producto_id,
-          tenantId
+          tenantId,
+          detail.stock_descontado
         ]);
+        if (detail.stock_descontado === true && !stockResult.rows[0]) throw new Error("No se pudo restaurar el stock de la venta.");
         if (stockResult.rows[0]) {
           await client.query(
             `insert into movimientos_stock (id, negocio_id, producto_id, tipo, cantidad, stock_resultante, motivo)
@@ -1970,16 +1987,20 @@ class PostgresRepository implements DataRepository {
         return null;
       }
       const returnedItems: SaleReturn["items"] = [];
+      const stockFlags = await client.query(`select producto_id, stock_descontado from detalle_ventas where venta_id = $1`, [saleId]);
+      const stockByProduct = new Map(stockFlags.rows.map((row) => [String(row.producto_id), row.stock_descontado as boolean | null]));
       const previousRows = await client.query(`select detalle from devoluciones_venta where venta_id=$1 and negocio_id=$2`, [saleId, tenantId]);
       const previousItems = previousRows.rows.flatMap((row) => Array.isArray(row.detalle) ? row.detalle as Array<{ productId: string; quantity: number }> : []);
+      assertReturnQuantities(sale, payload.items, previousItems);
       for (const requested of payload.items) {
         const original = sale.items.find((item) => item.productId === requested.productId);
         const alreadyReturned = previousItems.filter((item) => item.productId === requested.productId).reduce((sum, item) => sum + Number(item.quantity), 0);
         if (!original || requested.quantity <= 0 || requested.quantity + alreadyReturned > original.quantity) throw new Error("Cantidad de devolución inválida.");
         const stockResult = await client.query(
-          `update productos set stock_actual = stock_actual + $1 where id = $2 and negocio_id = $3 and controla_stock = true returning stock_actual`,
-          [requested.quantity, requested.productId, tenantId]
+          `update productos set stock_actual = stock_actual + $1 where id = $2 and negocio_id = $3 and ($4::boolean is true or ($4::boolean is null and controla_stock = true)) returning stock_actual`,
+          [requested.quantity, requested.productId, tenantId, stockByProduct.get(requested.productId) ?? null]
         );
+        if (stockByProduct.get(requested.productId) === true && !stockResult.rows[0]) throw new Error("No se pudo restaurar el stock de la devolución.");
         if (stockResult.rows[0]) {
           await client.query(
             `insert into movimientos_stock (id, negocio_id, producto_id, tipo, cantidad, stock_resultante, motivo, usuario_id)
@@ -2577,12 +2598,13 @@ class PostgresRepository implements DataRepository {
     );
 
     for (const item of saleItems) {
-      await client.query(
-        `insert into detalle_ventas (id, venta_id, producto_id, cantidad, precio_unitario, subtotal)
-         values ($1, $2, $3, $4, $5, $6)`,
-        [randomUUID(), sale.id, item.productId, item.quantity, item.unitPrice, item.subtotal]
-      );
       const stockResult = await client.query(`update productos set stock_actual = case when controla_stock then stock_actual - $1 else stock_actual end where id = $2 and negocio_id = $3 returning stock_actual,controla_stock`, [item.quantity,item.productId,tenantId]);
+      if (!stockResult.rows[0]) throw new Error(`Producto no encontrado: ${item.productId}`);
+      await client.query(
+        `insert into detalle_ventas (id, venta_id, producto_id, cantidad, precio_unitario, subtotal, stock_descontado)
+         values ($1, $2, $3, $4, $5, $6, $7)`,
+        [randomUUID(), sale.id, item.productId, item.quantity, item.unitPrice, item.subtotal, Boolean(stockResult.rows[0].controla_stock)]
+      );
       if (stockResult.rows[0]?.controla_stock) await client.query(
         `insert into movimientos_stock (id,negocio_id,producto_id,tipo,cantidad,stock_resultante,motivo,usuario_id) values ($1,$2,$3,'sale',$4,$5,$6,$7)`,
         [randomUUID(),tenantId,item.productId,-item.quantity,Number(stockResult.rows[0].stock_actual),`Venta ${sale.id.slice(0,8)}`,sale.sellerId]

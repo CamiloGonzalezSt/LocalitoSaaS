@@ -36,6 +36,11 @@ function providerRetryMessage(response: Response) {
   return seconds < 60 ? `Intenta nuevamente en unos ${seconds} segundos.` : `Intenta nuevamente en aproximadamente ${Math.ceil(seconds / 60)} minutos.`;
 }
 
+function groqVisionModel(configured?: string) {
+  const model = configured?.trim();
+  return !model || model === "qwen/qwen3.6-27b" ? "qwen/qwen3.8-27b" : model;
+}
+
 async function providerErrorDetail(response: Response) {
   try {
     const payload = await response.json() as { error?: { message?: unknown } };
@@ -56,7 +61,7 @@ export function resolveVisionProvider(environment: Environment = process.env): V
       name: "groq",
       apiKey: groqKey,
       endpoint: "https://api.groq.com/openai/v1/chat/completions",
-      model: environment.GROQ_VISION_MODEL?.trim() || "qwen/qwen3.6-27b"
+      model: groqVisionModel(environment.GROQ_VISION_MODEL)
     } : null;
   }
   if (requested === "openai") {
@@ -72,7 +77,7 @@ export function resolveVisionProvider(environment: Environment = process.env): V
       name: "groq",
       apiKey: groqKey,
       endpoint: "https://api.groq.com/openai/v1/chat/completions",
-      model: environment.GROQ_VISION_MODEL?.trim() || "qwen/qwen3.6-27b"
+      model: groqVisionModel(environment.GROQ_VISION_MODEL)
     };
   }
   return openAiKey ? {

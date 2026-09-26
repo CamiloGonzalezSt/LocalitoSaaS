@@ -51,7 +51,8 @@ test("database URL resolution ignores blank values and supports Vercel aliases",
 
 test("vision provider prefers Groq and supports an explicit OpenAI fallback", () => {
   assert.equal(resolveVisionProvider({ GROQ_API_KEY: "groq-test" })?.name, "groq");
-  assert.equal(resolveVisionProvider({ GROQ_API_KEY: "groq-test" })?.model, "qwen/qwen3.6-27b");
+  assert.equal(resolveVisionProvider({ GROQ_API_KEY: "groq-test" })?.model, "qwen/qwen3.8-27b");
+  assert.equal(resolveVisionProvider({ GROQ_API_KEY: "groq-test", GROQ_VISION_MODEL: "qwen/qwen3.6-27b" })?.model, "qwen/qwen3.8-27b");
   assert.equal(resolveVisionProvider({ VISION_PROVIDER: "openai", OPENAI_API_KEY: "openai-test" })?.name, "openai");
   assert.equal(resolveVisionProvider({ VISION_PROVIDER: "groq", OPENAI_API_KEY: "openai-test" }), null);
 });
@@ -343,6 +344,11 @@ test("critical business flows are consistent and idempotent", async () => {
     repository.returnSale(demoTenantId, firstSale.id, { items: [{ productId: product.id, quantity: 2 }], reason: "Exceso", userId: demoOwnerId }),
     /Cantidad/
   );
+  await assert.rejects(
+    repository.returnSale(demoTenantId, firstSale.id, { items: [{ productId: product.id, quantity: 1 }, { productId: product.id, quantity: 1 }], reason: "Duplicado", userId: demoOwnerId }),
+    /Cantidad/
+  );
+  assert.equal((await repository.getProducts(demoTenantId)).find((candidate) => candidate.id === product.id)?.stock, initialStock - 1);
   await repository.cancelSale(demoTenantId, firstSale.id, "Prueba de anulación posterior");
   assert.equal((await repository.getProducts(demoTenantId)).find((candidate) => candidate.id === product.id)?.stock, initialStock);
 
@@ -615,7 +621,7 @@ test("quick sale uses Groq vision JSON mode without sending prices or stock", as
     assert.equal(result.items[0]?.productId, "groq-cola");
     assert.equal(result.items[0]?.salePrice, 1_500);
     assert.equal(requestUrl, "https://api.groq.com/openai/v1/chat/completions");
-    assert.equal(requestBody?.model, "qwen/qwen3.6-27b");
+    assert.equal(requestBody?.model, "qwen/qwen3.8-27b");
     assert.equal((requestBody?.response_format as { type?: string }).type, "json_object");
     assert.equal(requestBody?.reasoning_effort, "none");
     assert.equal(requestBody?.max_completion_tokens, 1_500);

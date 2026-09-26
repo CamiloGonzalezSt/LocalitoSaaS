@@ -164,6 +164,8 @@ CREATE TABLE IF NOT EXISTS detalle_ventas (
   subtotal INTEGER NOT NULL
 );
 
+ALTER TABLE detalle_ventas ADD COLUMN IF NOT EXISTS stock_descontado BOOLEAN;
+
 CREATE TABLE IF NOT EXISTS movimientos_stock (
   id UUID PRIMARY KEY,
   negocio_id UUID NOT NULL REFERENCES negocios(id),

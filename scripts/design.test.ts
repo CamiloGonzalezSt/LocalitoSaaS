@@ -88,3 +88,14 @@ test("recent sale rows and expanded details have distinct themed surfaces", () =
   assert.ok(detail?.nodes.some(node => node.type === "decl" && node.prop === "background" && node.value === "var(--surface-secondary)"));
   for (const theme of ["light", "dark"] as const) assert.notEqual(palette(theme)("--surface"), palette(theme)("--surface-secondary"));
 });
+
+test("sale search dialog has an opaque theme surface above its backdrop", () => {
+  const sheet = css("sale-search-detail.css");
+  const rules: Rule[] = [];
+  sheet.walkRules(rule => { rules.push(rule); });
+  const backdrop = rules.find(rule => rule.selector === ".sale-search-backdrop");
+  const dialog = rules.find(rule => rule.selector === ".sale-search-backdrop .sale-search-detail");
+  assert.ok(backdrop?.nodes.some(node => node.type === "decl" && node.prop === "position" && node.value === "fixed"));
+  assert.ok(dialog?.nodes.some(node => node.type === "decl" && node.prop === "background" && node.value === "var(--surface)"));
+  for (const theme of ["light", "dark"] as const) assert.notEqual(palette(theme)("--surface"), palette(theme)("--background"));
+});

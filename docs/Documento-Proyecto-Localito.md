@@ -1458,7 +1458,7 @@ SELLER_DEMO_PASSWORD=Duoc2026V
 SESSION_SECRET=change-this-in-production-with-a-long-random-value
 VISION_PROVIDER=groq
 GROQ_API_KEY=
-GROQ_VISION_MODEL=qwen/qwen3.6-27b
+GROQ_VISION_MODEL=qwen/qwen3.8-27b
 # Alternativa opcional:
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
@@ -1650,7 +1650,7 @@ SESSION_SECRET=reemplazar-por-un-secreto-largo
 DATABASE_URL=postgresql://usuario:clave@host:5432/localito
 VISION_PROVIDER=groq
 GROQ_API_KEY=reemplazar-por-la-clave-del-proyecto
-GROQ_VISION_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
+GROQ_VISION_MODEL=qwen/qwen3.8-27b
 ```
 
 El modo memoria se admite únicamente en desarrollo local y pierde sus datos al reiniciar. En Vercel y cualquier entorno productivo, `DATABASE_URL` o `POSTGRES_URL` es obligatorio: la API falla de forma explícita si no dispone de almacenamiento persistente. La integración de Supabase debe usar una URL compatible con funciones serverless.

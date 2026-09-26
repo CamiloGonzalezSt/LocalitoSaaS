@@ -1,6 +1,6 @@
 # Localito
 
-**Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`; las funciones de IA figuran configuradas. Esto confirma la recuperación de la API, no una prueba de login, catálogo ni análisis real de fotos o facturas. La [guía de recuperación](docs/Operacion-Produccion.md) conserva las comprobaciones pendientes. La corrección de código local, aún sin publicar, protege el detalle interno del error y mejora las superficies de ventas y el selector de cámara/archivo. La copia local funciona en `http://127.0.0.1:43200/` con datos temporales en memoria; no representa la base publicada.
+**Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`. La primera reparación de código se publicó como `6e9ae82`. Luego se detectó que Groq retiró el modelo visual configurado y se reportaron problemas en el detalle de ventas y las devoluciones; las correcciones posteriores están descritas en [Estado actual](docs/Estado-Actual.md) y requieren prueba con PostgreSQL y navegador antes de declararse verificadas en producción.
 
 **Actualización técnica: 09-09-2026.** El [estado actual](docs/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](docs/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](MEJORAS.md).
 
@@ -93,12 +93,12 @@ EMAIL_FROM=Localito <tu-correo@gmail.com>
 RESEND_API_KEY=
 VISION_PROVIDER=groq
 GROQ_API_KEY=
-GROQ_VISION_MODEL=qwen/qwen3.6-27b
+GROQ_VISION_MODEL=qwen/qwen3.8-27b
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
 ```
 
-Para la demostración académica configure `VISION_PROVIDER=groq`, `GROQ_API_KEY` y `GROQ_VISION_MODEL=qwen/qwen3.6-27b`. Groq se usa desde el backend y permite ejecutar reconocimiento real sujeto a la cuota de su plan gratuito. `OPENAI_API_KEY` y `OPENAI_VISION_MODEL` se conservan como alternativa opcional; si no se fuerza un proveedor, Localito prefiere Groq cuando ambas claves existen. Las imágenes se reducen en el navegador, se procesan sin guardarlas en Localito y toda respuesta externa vuelve a validarse antes de afectar el flujo. Ninguna clave debe exponerse en el frontend, llevar el prefijo `VITE_` ni subirse al repositorio.
+Para la demostración académica configure `VISION_PROVIDER=groq`, `GROQ_API_KEY` y `GROQ_VISION_MODEL=qwen/qwen3.8-27b`. Groq se usa desde el backend y permite ejecutar reconocimiento real sujeto a la cuota de su plan gratuito. El modelo anterior `qwen/qwen3.6-27b` fue retirado del plan gratuito; Localito lo sustituye automáticamente si aún está configurado en Vercel. `OPENAI_API_KEY` y `OPENAI_VISION_MODEL` se conservan como alternativa opcional; si no se fuerza un proveedor, Localito prefiere Groq cuando ambas claves existen. Las imágenes se reducen en el navegador, se procesan sin guardarlas en Localito y toda respuesta externa vuelve a validarse antes de afectar el flujo. Ninguna clave debe exponerse en el frontend, llevar el prefijo `VITE_` ni subirse al repositorio.
 
 `SESSION_SECRET` firma las sesiones del modo demostración serverless. En Vercel, configure además `DATABASE_URL` (o `POSTGRES_URL` mediante la integración de Supabase) para que registros, ventas y cambios sobrevivan entre invocaciones. Use la URL del **Transaction pooler** de Supabase para funciones serverless.
 
@@ -175,7 +175,7 @@ Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mer
 npm run check
 ```
 
-`check` reúne tipos, `npm test` (62 pruebas en la ejecución local del 26-09-2026) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de pruebas CSS de contraste, tipografía, pestañas y superficies de ventas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
+`check` reúne tipos, `npm test` (63 pruebas en la ejecución local del 26-09-2026) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de pruebas CSS de contraste, tipografía, pestañas y superficies de ventas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
 
 Las suites de navegador del 08-09-2026 verificaron cobro, mejoras integradas y recuperación con 62 capturas. No se repitieron completas después del nuevo rediseño; la revisión visual actual es parcial. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance y limitaciones en [Estado actual](docs/Estado-Actual.md) y [Diseño de interfaz](docs/Diseno-Interfaz.md); casos en [Matriz de pruebas](docs/Matriz-Pruebas-Localito.md) y [Matriz de regresión](docs/Matriz-Regresion-Rediseno.md).
 

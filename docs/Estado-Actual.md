@@ -1,10 +1,18 @@
 # Estado actual de Localito
 
+## Reparaciones posteriores a la recuperación de API
+
+El 26-09-2026 se reprodujo en producción un rechazo del modelo visual `qwen/qwen3.6-27b` al leer facturas y ventas con foto. [Groq documenta su retirada del nivel gratuito](https://console.groq.com/docs/deprecations) y recomienda `qwen/qwen3.8-27b`. La segunda reparación usa el sucesor por defecto y sustituye el identificador retirado si aún está en `GROQ_VISION_MODEL`; las pruebas de solicitud validan el nuevo identificador, pero no se ha hecho una llamada real con la clave de producción.
+
+También se corrigió localmente el detalle de venta de Buscar: fondo propio, portal fuera del layout de búsqueda y bloqueo del scroll de fondo. Las confirmaciones de anulación/devolución esperan la respuesta de la API antes de cerrar, y las cantidades duplicadas o inválidas se rechazan sin alterar stock en memoria. PostgreSQL conserva en cada nueva línea de venta si se descontó stock y usa ese dato para decidir la reposición incluso si luego cambia la opción del producto. Las ventas anteriores a esa columna usan la opción actual como compatibilidad; revisar manualmente los casos históricos donde se haya cambiado. No se ha verificado aún el modal en navegador autenticado ni el flujo de devolución en PostgreSQL de producción.
+
+La comprobación local de esta segunda reparación incluye 63 pruebas, tipos y compilación. No incluye una solicitud real a Groq ni una transacción contra PostgreSQL de producción.
+
 ## Incidente de API del 26-09-2026
 
 La web pública `https://localito-saas.vercel.app/` respondió HTTP 200, mientras `/api/health` devolvió HTTP 500 y `/api/auth/login` reveló `ENOTFOUND tenant/user ... not found` del pooler PostgreSQL. El proyecto Supabase estaba pausado; tras reanudarlo, la API seguía en 500 a las 13:40 UTC. Supabase indica que este error del pooler suele deberse a la combinación de host y usuario de la cadena de conexión. Después de corregir `DATABASE_URL` en Vercel, `/api/health` respondió 200 a las 13:50 UTC con PostgreSQL persistente y ambas funciones de IA marcadas como configuradas. [Procedimiento y comprobaciones pendientes](Operacion-Produccion.md).
 
-En el código local se prepararon respuestas 503 sin detalles internos, tarjetas de ventas recientes con fondo propio en ambos temas y entradas separadas para cámara y archivo en facturas. Estos cambios no están publicados. La salud de la API confirma conexión persistente con la base de producción; aún faltan una prueba autorizada de login y catálogo y solicitudes reales al proveedor de IA con imágenes de prueba.
+La primera reparación se publicó en `main` como `6e9ae82`: respuestas 503 sin detalles internos, tarjetas de ventas recientes con fondo propio y entradas separadas para cámara y archivo en facturas. La salud de la API confirma conexión persistente con la base de producción; aún faltan pruebas autorizadas de flujos con datos reales y solicitudes al proveedor de IA.
 
 Verificación local del incremento: 62 pruebas, typecheck de web y API, compilación completa y typecheck adicional de adaptadores Vercel aprobados. En API local con almacenamiento temporal: salud 200, registro e inicio de sesión sintéticos, producto creado y recuperado en bootstrap. Foto y factura respondieron 503 con mensaje explícito porque no hay claves de IA configuradas en esa copia; no se realizó análisis real ni se confirmó una importación. La revisión visual del nuevo selector y de las tarjetas en un navegador autenticado sigue pendiente.
 
