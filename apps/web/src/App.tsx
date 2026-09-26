@@ -89,6 +89,7 @@ import { defaultBusinessPreferences } from "@localito/shared";
 import { SearchView } from "./SearchView";
 import { PlanView, SettingsView } from "./AccountViews";
 import type { BusinessFormState, ProfileFormState, ThemePreference, UserFormState } from "./AccountViews";
+import "./sale-action-dialog.css";
 
 type View = "dashboard" | "search" | "sale" | "scan" | "product_create" | "setup" | "invoice" | "products" | "customers" | "operations" | "reports" | "settings" | "plan" | "platform";
 
@@ -2881,6 +2882,17 @@ function ReportsView({
   useEffect(() => { localStorage.setItem(presetStorageKey, JSON.stringify(savedPresets)); }, [presetStorageKey, savedPresets]);
   useEffect(() => { localStorage.setItem(reminderStorageKey, weeklyReminderEnabled ? "enabled" : "disabled"); }, [reminderStorageKey, weeklyReminderEnabled]);
   useEffect(() => { setHistoryPage(0); }, [startDate, endDate, selectedSellerId, selectedCategory]);
+  useEffect(() => {
+    if (!saleAction) return;
+    const bodyOverflow = document.body.style.overflow;
+    const rootOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = bodyOverflow;
+      document.documentElement.style.overflow = rootOverflow;
+    };
+  }, [saleAction]);
 
   const formatRangeDate = (value: string) => new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`));
   const selectedPeriodLabel = startDate === endDate ? formatRangeDate(startDate) : `${formatRangeDate(startDate)} — ${formatRangeDate(endDate)}`;
@@ -3138,7 +3150,15 @@ function ReportsView({
           </section>
         </>
       )}
-      {saleAction && <div className="modal-backdrop" role="presentation" onClick={() => setSaleAction(null)}><section className="panel sale-action-dialog" role="dialog" aria-modal="true" aria-labelledby="sale-action-title" onClick={(event) => event.stopPropagation()}><div className="section-heading"><h2 id="sale-action-title">{saleAction.type === "cancel" ? "Anular venta" : "Registrar devolución"}</h2><button className="icon-button" type="button" onClick={() => setSaleAction(null)} aria-label="Cerrar"><X size={17}/></button></div><p className="helper-text">Venta #{saleAction.sale.id.slice(0,8)} · {formatCLP(saleAction.sale.total)}</p>{saleAction.type === "return" && <div className="list return-items">{saleAction.sale.items.map((item) => <label className="form-field" key={item.productId}><span>{item.productName} · máximo {item.quantity}</span><input type="number" min="0" max={item.quantity} value={returnQuantities[item.productId] ?? 0} onChange={(event) => setReturnQuantities((current) => ({ ...current, [item.productId]: Number(event.target.value) }))}/></label>)}</div>}<label className="form-field"><span>Motivo obligatorio</span><textarea value={actionReason} onChange={(event) => setActionReason(event.target.value)} placeholder="Explica brevemente el motivo"/></label><div className="action-grid"><button className="secondary-action" type="button" onClick={() => setSaleAction(null)}>Volver</button><button className="primary-action" type="button" onClick={confirmSaleAction} disabled={!actionReason.trim() || isBusy}>{isBusy ? "Procesando..." : saleAction.type === "cancel" ? "Confirmar anulación" : "Confirmar devolución"}</button></div></section></div>}
+      {saleAction && createPortal(<div className="modal-backdrop sale-action-backdrop" role="presentation" onClick={() => { if (!isBusy) setSaleAction(null); }}>
+        <section className="panel sale-action-dialog" role="dialog" aria-modal="true" aria-labelledby="sale-action-title" onClick={(event) => event.stopPropagation()}>
+          <div className="section-heading"><h2 id="sale-action-title">{saleAction.type === "cancel" ? "Anular venta" : "Registrar devolución"}</h2><button className="icon-button" type="button" onClick={() => setSaleAction(null)} aria-label="Cerrar" disabled={isBusy}><X size={17}/></button></div>
+          <p className="helper-text">Venta #{saleAction.sale.id.slice(0, 8)} · {formatCLP(saleAction.sale.total)}</p>
+          {saleAction.type === "return" && <div className="list return-items">{saleAction.sale.items.map((item) => <label className="form-field" key={item.productId}><span>{item.productName} · máximo {item.quantity}</span><input type="number" min="0" max={item.quantity} value={returnQuantities[item.productId] ?? 0} disabled={isBusy} onChange={(event) => setReturnQuantities((current) => ({ ...current, [item.productId]: Number(event.target.value) }))}/></label>)}</div>}
+          <label className="form-field"><span>Motivo obligatorio</span><textarea value={actionReason} onChange={(event) => setActionReason(event.target.value)} placeholder="Explica brevemente el motivo" disabled={isBusy}/></label>
+          <div className="action-grid"><button className="secondary-action" type="button" onClick={() => setSaleAction(null)} disabled={isBusy}>Volver</button><button className="primary-action" type="button" onClick={() => void confirmSaleAction()} disabled={!actionReason.trim() || isBusy}>{isBusy ? "Procesando..." : saleAction.type === "cancel" ? "Confirmar anulación" : "Confirmar devolución"}</button></div>
+        </section>
+      </div>, document.body)}
     </div>
   );
 }

@@ -99,3 +99,12 @@ test("sale search dialog has an opaque theme surface above its backdrop", () => 
   assert.ok(dialog?.nodes.some(node => node.type === "decl" && node.prop === "background" && node.value === "var(--surface)"));
   for (const theme of ["light", "dark"] as const) assert.notEqual(palette(theme)("--surface"), palette(theme)("--background"));
 });
+
+test("sale action dialog has an opaque themed surface", () => {
+  const sheet = css("sale-action-dialog.css");
+  const rules: Rule[] = [];
+  sheet.walkRules(rule => { rules.push(rule); });
+  const dialog = rules.find(rule => rule.selector === ".sale-action-backdrop .sale-action-dialog");
+  assert.ok(dialog?.nodes.some(node => node.type === "decl" && node.prop === "background" && node.value === "var(--surface)"));
+  assert.ok(dialog?.nodes.some(node => node.type === "decl" && node.prop === "isolation" && node.value === "isolate"));
+});

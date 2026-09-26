@@ -1,0 +1,21 @@
+.sale-action-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sale-action-backdrop .sale-action-dialog {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: 14px;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.sale-action-dialog .section-heading,
+.sale-action-dialog .action-grid { margin: 0; }

@@ -1,5 +1,9 @@
 # Operación de Localito en producción
 
+## Bloqueo de devoluciones en funciones serverless
+
+En Vercel, el pool PostgreSQL usa `max: 1`. Las versiones anteriores de anulación y devolución retenían esa conexión y llamaban a `getSales` mediante `pool.query`, que esperaba una segunda conexión hasta agotar el tiempo. La corrección pasa el cliente transaccional a `getSales` y cubre también los reintentos idempotentes de venta. El diálogo de confirmación tiene ahora una superficie opaca en ambos temas y no se cierra mientras procesa. La prueba local simula un pool de una conexión, pero sigue siendo necesario verificar una devolución y una anulación reales con ventas de prueba en producción; registrar antes y después el stock y consultar los movimientos. No repetir una solicitud que quedó en estado ambiguo sin revisar primero el estado de la venta.
+
 ## Verificación de ventas y visión, 26-09-2026
 
 El modelo `qwen/qwen3.6-27b` dejó de estar disponible para el nivel gratuito de Groq. El código actualizado usa `qwen/qwen3.8-27b` incluso si Vercel conserva el identificador retirado en `GROQ_VISION_MODEL`; actualizar también la variable en Vercel para que refleje el modelo vigente. [Aviso oficial](https://console.groq.com/docs/deprecations). `quickSaleConfigured` e `invoiceAiConfigured` solo confirman la presencia de claves, no el éxito de una solicitud. Probar fotos sin información sensible y no confirmar ventas/importaciones durante la validación.

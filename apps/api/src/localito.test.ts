@@ -8,6 +8,7 @@ import { describeHttpError } from "./httpError.js";
 import { bulkImportProducts, normalizeProductImportRow } from "./productImport.js";
 import {
   MemoryRepository,
+  PostgresRepository,
   persistentDemoId,
   requiresPersistentRepository,
   resolveDatabaseUrl
@@ -47,6 +48,48 @@ test("database URL resolution ignores blank values and supports Vercel aliases",
   );
   assert.equal(resolveDatabaseUrl({ SUPABASE_DB_URL: "postgres://supabase/localito" }), "postgres://supabase/localito");
   assert.equal(resolveDatabaseUrl({}), undefined);
+});
+
+test("PostgreSQL returns and cancellations reuse the held Vercel connection", async () => {
+  const saleId = "00000000-0000-4000-8000-000000000001";
+  const productId = "00000000-0000-4000-8000-000000000002";
+  let stock = 3;
+  let status = "active";
+  let returned: Array<{ productId: string; quantity: number }> = [];
+  let connectionHeld = false;
+  const saleRow = () => ({ id: saleId, negocio_id: demoTenantId, usuario_id: demoOwnerId, total: 1000, metodo_pago: "cash", estado_pago: "approved", tipo_venta: "normal", estado_venta: status, fecha_creacion: new Date().toISOString() });
+  const detail = { venta_id: saleId, producto_id: productId, product_name: "Producto de prueba", cantidad: 2, precio_unitario: 500, subtotal: 1000, stock_descontado: true };
+  const client = {
+    async query(statement: string, params: unknown[] = []) {
+      const sql = statement.trim().toLowerCase();
+      if (sql === "begin" || sql === "commit" || sql === "rollback") return { rows: [] };
+      if (sql.startsWith("select id from ventas") || sql.startsWith("select * from ventas where id")) return { rows: [saleRow()] };
+      if (sql.startsWith("select * from ventas where negocio_id")) return { rows: [saleRow()] };
+      if (sql.startsWith("select dv.*")) return { rows: [detail] };
+      if (sql.startsWith("select * from detalle_ventas")) return { rows: [detail] };
+      if (sql.startsWith("select producto_id, stock_descontado")) return { rows: [{ producto_id: productId, stock_descontado: true }] };
+      if (sql.startsWith("select detalle from devoluciones_venta")) return { rows: returned.length ? [{ detalle: returned }] : [] };
+      if (sql.startsWith("update productos set stock_actual")) { stock += Number(params[0]); return { rows: [{ stock_actual: stock }] }; }
+      if (sql.startsWith("insert into devoluciones_venta")) { returned = JSON.parse(String(params[6])); return { rows: [] }; }
+      if (sql.startsWith("update ventas")) { status = sql.includes("set estado_venta = 'cancelled'") ? "cancelled" : String(params[0]); return { rows: [] }; }
+      if (sql.startsWith("insert into movimientos_stock") || sql.startsWith("update cuentas_fiado")) return { rows: [] };
+      throw new Error(`Unexpected SQL: ${statement}`);
+    },
+    release() { connectionHeld = false; }
+  };
+  const pool = {
+    async connect() { connectionHeld = true; return client; },
+    async query() { throw new Error(connectionHeld ? "Second connection requested while transaction is open" : "Unexpected pool query"); }
+  };
+  const repository = new PostgresRepository(pool as unknown as ConstructorParameters<typeof PostgresRepository>[0]);
+  const result = await repository.returnSale(demoTenantId, saleId, { items: [{ productId, quantity: 1 }], reason: "Prueba", userId: demoOwnerId });
+  assert.equal(result?.total, 500);
+  assert.equal(stock, 4);
+  assert.equal(status, "partially_refunded");
+  await repository.cancelSale(demoTenantId, saleId, "Prueba");
+  assert.equal(stock, 5);
+  assert.equal(status, "cancelled");
+  assert.equal(connectionHeld, false);
 });
 
 test("vision provider prefers Groq and supports an explicit OpenAI fallback", () => {

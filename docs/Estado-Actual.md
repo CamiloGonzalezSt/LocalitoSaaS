@@ -6,7 +6,7 @@ El 26-09-2026 se reprodujo en producción un rechazo del modelo visual `qwen/qwe
 
 También se corrigió localmente el detalle de venta de Buscar: fondo propio, portal fuera del layout de búsqueda y bloqueo del scroll de fondo. Las confirmaciones de anulación/devolución esperan la respuesta de la API antes de cerrar, y las cantidades duplicadas o inválidas se rechazan sin alterar stock en memoria. PostgreSQL conserva en cada nueva línea de venta si se descontó stock y usa ese dato para decidir la reposición incluso si luego cambia la opción del producto. Las ventas anteriores a esa columna usan la opción actual como compatibilidad; revisar manualmente los casos históricos donde se haya cambiado. No se ha verificado aún el modal en navegador autenticado ni el flujo de devolución en PostgreSQL de producción.
 
-La comprobación local de esta segunda reparación incluye 63 pruebas, tipos y compilación. No incluye una solicitud real a Groq ni una transacción contra PostgreSQL de producción.
+La devolución y la anulación quedaron bloqueadas en Vercel porque sus transacciones retenían la única conexión del pool y `getSales` intentaba usar otra. La tercera reparación hace que esas lecturas y el reintento idempotente usen la conexión ya retenida; mueve el diálogo de anulación/devolución a un portal con fondo opaco y bloquea el scroll de fondo. Una prueba con pool simulado de una conexión verifica devolución parcial, anulación posterior y reposición de stock. La comprobación local incluye 65 pruebas, tipos y compilación. Aún falta una transacción real contra PostgreSQL de producción.
 
 ## Incidente de API del 26-09-2026
 

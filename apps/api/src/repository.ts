@@ -1231,7 +1231,7 @@ export class MemoryRepository implements DataRepository {
   }
 }
 
-class PostgresRepository implements DataRepository {
+export class PostgresRepository implements DataRepository {
   mode = "postgres" as const;
 
   constructor(private readonly pool: pg.Pool) {}
@@ -1866,9 +1866,9 @@ class PostgresRepository implements DataRepository {
     return this.updateCustomer(tenantId, customerId, { active: false });
   }
 
-  async getSales(tenantId: string) {
-    const saleResult = await this.pool.query(`select * from ventas where negocio_id = $1 order by fecha_creacion desc`, [tenantId]);
-    const detailResult = await this.pool.query(
+  async getSales(tenantId: string, client: pg.Pool | pg.PoolClient = this.pool) {
+    const saleResult = await client.query(`select * from ventas where negocio_id = $1 order by fecha_creacion desc`, [tenantId]);
+    const detailResult = await client.query(
       `select dv.*, p.nombre as product_name
        from detalle_ventas dv
        join ventas v on v.id = dv.venta_id
@@ -1922,7 +1922,7 @@ class PostgresRepository implements DataRepository {
 
       if (String(saleRow.estado_venta ?? "active") === "cancelled") {
         await client.query("rollback");
-        return (await this.getSales(tenantId)).find((sale) => sale.id === saleId) ?? null;
+        return (await this.getSales(tenantId, client)).find((sale) => sale.id === saleId) ?? null;
       }
 
       const detailResult = await client.query(`select * from detalle_ventas where venta_id = $1`, [saleId]);
@@ -1967,7 +1967,7 @@ class PostgresRepository implements DataRepository {
       );
 
       await client.query("commit");
-      return (await this.getSales(tenantId)).find((sale) => sale.id === saleId) ?? null;
+      return (await this.getSales(tenantId, client)).find((sale) => sale.id === saleId) ?? null;
     } catch (error) {
       await client.query("rollback");
       throw error;
@@ -1981,7 +1981,7 @@ class PostgresRepository implements DataRepository {
     try {
       await client.query("begin");
       await client.query(`select id from ventas where id = $1 and negocio_id = $2 for update`, [saleId, tenantId]);
-      const sale = (await this.getSales(tenantId)).find((candidate) => candidate.id === saleId);
+      const sale = (await this.getSales(tenantId, client)).find((candidate) => candidate.id === saleId);
       if (!sale || sale.status === "cancelled" || sale.status === "refunded") {
         await client.query("rollback");
         return null;
@@ -2520,7 +2520,7 @@ class PostgresRepository implements DataRepository {
     if (body.idempotencyKey) {
       await client.query(`select pg_advisory_xact_lock(hashtextextended($1, 0))`, [`${tenantId}:${body.idempotencyKey}`]);
       const existing = await client.query(`select id from ventas where negocio_id=$1 and idempotency_key=$2`, [tenantId, body.idempotencyKey]);
-      if (existing.rows[0]) return (await this.getSales(tenantId)).find((sale) => sale.id === existing.rows[0].id)!;
+      if (existing.rows[0]) return (await this.getSales(tenantId, client)).find((sale) => sale.id === existing.rows[0].id)!;
     }
     const saleItems: SaleItem[] = [];
 

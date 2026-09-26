@@ -175,7 +175,7 @@ Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mer
 npm run check
 ```
 
-`check` reúne tipos, `npm test` (63 pruebas en la ejecución local del 26-09-2026) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de pruebas CSS de contraste, tipografía, pestañas y superficies de ventas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
+`check` reúne tipos, `npm test` (65 pruebas en la ejecución local del 26-09-2026) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de pruebas CSS de contraste, tipografía, pestañas y superficies de ventas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
 
 Las suites de navegador del 08-09-2026 verificaron cobro, mejoras integradas y recuperación con 62 capturas. No se repitieron completas después del nuevo rediseño; la revisión visual actual es parcial. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance y limitaciones en [Estado actual](docs/Estado-Actual.md) y [Diseño de interfaz](docs/Diseno-Interfaz.md); casos en [Matriz de pruebas](docs/Matriz-Pruebas-Localito.md) y [Matriz de regresión](docs/Matriz-Regresion-Rediseno.md).
 
