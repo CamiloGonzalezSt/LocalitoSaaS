@@ -77,3 +77,14 @@ test("cash tabs keep a single four-column row and inactive panels stay hidden", 
   assert.ok(rules.some(rule => rule.selector === ".operations-tabs:has(> :nth-child(2):last-child)"));
   assert.ok(!rules.some(rule => rule.selector === ".operations-tabs:has(:nth-child(2):last-child)"));
 });
+
+test("recent sale rows and expanded details have distinct themed surfaces", () => {
+  const sheet = css("recent-sales.css");
+  const rules: Rule[] = [];
+  sheet.walkRules(rule => { rules.push(rule); });
+  const row = rules.find(rule => rule.selector === ".home-recent .home-sale");
+  const detail = rules.find(rule => rule.selector === ".home-recent .home-sale-details");
+  assert.ok(row?.nodes.some(node => node.type === "decl" && node.prop === "background" && node.value === "var(--surface)"));
+  assert.ok(detail?.nodes.some(node => node.type === "decl" && node.prop === "background" && node.value === "var(--surface-secondary)"));
+  for (const theme of ["light", "dark"] as const) assert.notEqual(palette(theme)("--surface"), palette(theme)("--surface-secondary"));
+});

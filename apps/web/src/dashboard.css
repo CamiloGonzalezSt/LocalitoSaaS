@@ -31,21 +31,6 @@
 .home-alert strong { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: .9rem; }
 .home-alert b { font-size: 1.25rem; }
 .home-alert small { display: block; color: var(--text-secondary); margin-top: 5px; line-height: 1.4; }
-.home-sale { border-bottom: 1px solid var(--border); }
-.home-sale summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 17px 0; cursor: pointer; list-style: none; }
-.home-sale summary::-webkit-details-marker { display: none; }
-.home-sale summary:hover { background: var(--surface-hover); }
-.home-sale summary > svg { color: var(--text-secondary); }
-.home-sale[open] summary > svg:last-child { transform: rotate(180deg); }
-.home-sale-description { display: grid; gap: 5px; }
-.home-sale-description strong { font-size: .9rem; overflow-wrap: anywhere; }
-.home-sale-description small { font-size: .78rem; color: var(--text-secondary); line-height: 1.5; }
-.home-sale-amount { font-size: .95rem; text-align: right; overflow-wrap: anywhere; }
-.home-sale-details { padding: 0 0 16px 31px; font-size: .85rem; }
-.home-sale-details ul { list-style: none; padding: 0; margin: 0; }
-.home-sale-details li { display: flex; justify-content: space-between; gap: 14px; padding: 7px 0; }
-.home-sale-details li span { overflow-wrap: anywhere; }
-.home-sale-details li strong { flex-shrink: 0; }
 .home-empty, .home-onboarding { display: flex; gap: 14px; align-items: center; padding: 18px 0; }
 .home-onboarding { flex-wrap: wrap; border-bottom: 1px solid var(--border); }
 .home-onboarding > div { flex: 1 1 200px; }
@@ -60,8 +45,5 @@
   .home-payment-summary { gap: 8px; }
   .home-payment-summary > div { padding-left: 8px; }
   .home-payment-summary strong { font-size: .95rem; }
-  .home-sale summary { grid-template-columns: minmax(0, 1fr) minmax(65px, auto) 17px; gap: 8px; }
-  .home-sale summary > svg:first-child { display: none; }
-  .home-sale-details { padding-left: 0; }
   .home-heading h2 { font-size: 1.3rem; }
 }

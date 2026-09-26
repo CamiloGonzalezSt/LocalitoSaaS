@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { InvoiceAnalysis, InvoiceImportPayload, Product, Supplier } from "@localito/shared";
-import { AlertTriangle, Camera, CheckCircle2, LoaderCircle, PackagePlus, RotateCcw, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, Camera, CheckCircle2, ImagePlus, LoaderCircle, PackagePlus, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 import { api } from "./lib/api";
 import { prepareInvoiceImage } from "./imageProcessing";
+import "./invoice-camera.css";
 
 type DraftLine = {
   clientItemId: string;
@@ -49,6 +50,8 @@ function initialDraft(analysis: InvoiceAnalysis, products: Product[]): DraftLine
 }
 
 export function InvoiceImportPanel({ products, suppliers, onImported }: { products: Product[]; suppliers: Supplier[]; onImported: () => Promise<void> }) {
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [analysis, setAnalysis] = useState<InvoiceAnalysis | null>(null);
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [supplierId, setSupplierId] = useState("");
@@ -211,11 +214,15 @@ export function InvoiceImportPanel({ products, suppliers, onImported }: { produc
     </div>
     <p className="helper-text">Fotografía una factura de mercadería. Localito propone productos, categorías, cantidades y costos; tú confirmas el precio de venta.</p>
 
-    {!analysis && <label className={`invoice-capture ${busy ? "disabled" : ""}`}>
-      {busy ? <LoaderCircle className="spin" size={28} /> : <Camera size={28} />}
-      <span><strong>{busy ? "Optimizando y leyendo factura..." : "Tomar foto o elegir imagen"}</strong><small>{fileName || "JPG, PNG o WebP · se reduce automáticamente antes de enviarla"}</small></span>
-      <input className="capture-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={busy} onChange={(event) => void analyzeFile(event)} />
-    </label>}
+    {!analysis && <div className={`invoice-capture ${busy ? "disabled" : ""}`}>
+      <span><strong>{busy ? "Optimizando y leyendo factura..." : "Factura"}</strong><small>{fileName || "JPG, PNG o WebP"}</small></span>
+      <div className="invoice-capture-actions">
+        <button className="primary-action" type="button" disabled={busy} onClick={() => cameraInput.current?.click()}><Camera size={18}/> Tomar foto</button>
+        <button className="secondary-action" type="button" disabled={busy} onClick={() => fileInput.current?.click()}><ImagePlus size={18}/> Elegir imagen</button>
+      </div>
+      <input ref={cameraInput} className="capture-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={busy} onChange={(event) => void analyzeFile(event)} aria-label="Foto de factura desde la cámara" />
+      <input ref={fileInput} className="capture-input" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={(event) => void analyzeFile(event)} aria-label="Imagen de factura desde archivos" />
+    </div>}
 
     <div className={`invoice-ai-message ${analysis?.warnings.length ? "warning" : ""}`} aria-live="polite">
       {analysis?.warnings.length ? <AlertTriangle size={18} /> : busy ? <LoaderCircle className="spin" size={18} /> : <Sparkles size={18} />}

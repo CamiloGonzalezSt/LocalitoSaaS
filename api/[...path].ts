@@ -10,6 +10,11 @@
     return app(req, res);
   } catch (error) {
     console.error("API_FUNCTION_ERROR", error);
-    return res.status(500).json({ message: "La API no pudo procesar la solicitud." });
+    if (res.headersSent) return;
+    const databaseUnavailable = error instanceof Error && error.message.startsWith("[localito-api] PostgreSQL es obligatorio en producción.");
+    return res.status(databaseUnavailable ? 503 : 500).json({
+      code: databaseUnavailable ? "DATABASE_UNAVAILABLE" : "API_UNAVAILABLE",
+      message: databaseUnavailable ? "El servicio de datos no está disponible. Intenta nuevamente más tarde." : "La API no pudo procesar la solicitud."
+    });
   }
 }

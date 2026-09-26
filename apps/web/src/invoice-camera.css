@@ -1,0 +1,19 @@
+.invoice-ai-panel .invoice-capture {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 14px;
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  cursor: default;
+}
+.invoice-ai-panel .invoice-capture:hover { box-shadow: none; }
+.invoice-ai-panel .invoice-capture > span { flex: 1 1 180px; }
+.invoice-ai-panel .invoice-capture small { color: var(--text-secondary); }
+.invoice-capture-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.invoice-capture-actions button { min-height: 44px; border-radius: 6px; }
+@media (max-width: 480px) {
+  .invoice-capture-actions { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .invoice-capture-actions button { min-width: 0; padding-inline: 7px; font-size: 13px; }
+}

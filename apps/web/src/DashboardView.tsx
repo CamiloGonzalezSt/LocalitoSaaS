@@ -1,8 +1,9 @@
-import { AlertTriangle, ArrowRight, Banknote, CheckCircle2, ChevronDown, Clock3, PackagePlus, ReceiptText, ShoppingCart, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Banknote, CheckCircle2, PackagePlus, ShoppingCart, Users } from "lucide-react";
 import type { CashRegisterSummary, CashSession, DebtAccount, Product, ReportSummary, Sale } from "@localito/shared";
 import { contextualGreeting, formatCLP } from "./lib/format";
-import { businessDay, dashboardDateTime, matchesInventoryFilter, overdueDebts, paymentLabels, recentSales } from "./lib/dashboard";
+import { businessDay, dashboardDateTime, matchesInventoryFilter, overdueDebts, recentSales } from "./lib/dashboard";
 import type { CustomerFilter, InventoryFilter } from "./lib/dashboard";
+import { RecentSales } from "./RecentSales";
 import "./dashboard.css";
 
 type Props = {
@@ -69,14 +70,7 @@ export function DashboardView({ businessName, userName, products, summary, sales
       </div>}
     </section>
 
-    <section className="home-recent" aria-labelledby="home-recent-title">
-      <div className="home-section-heading"><h2 id="home-recent-title">Últimas ventas</h2><span>{recent.length ? `${recent.length} más recientes · Hora de Chile` : "Sin registros"}</span></div>
-      {recent.map(sale => <details className="home-sale" key={sale.id}>
-        <summary><ReceiptText size={19}/><span className="home-sale-description"><strong>{sale.items[0]?.productName ?? "Venta"}{sale.items.length > 1 ? ` y ${sale.items.length - 1} más` : ""}</strong><small><time dateTime={sale.createdAt}>{dashboardDateTime(sale.createdAt)}</time> · {paymentLabels[sale.paymentMethod]}</small>{(sale.status === "refunded" || sale.status === "partially_refunded") && <small>{sale.status === "refunded" ? "Devuelta" : "Devolución parcial"} · Importe original</small>}</span><strong className="home-sale-amount">{formatCLP(sale.total)}</strong><ChevronDown size={17}/></summary>
-        <div className="home-sale-details"><ul>{sale.items.map((item, index) => <li key={`${item.productId}-${index}`}><span>{item.quantity} × {item.productName}</span><strong>{formatCLP(item.subtotal)}</strong></li>)}</ul>{Boolean(sale.discount) && <p>Descuento: {formatCLP(sale.discount ?? 0)}</p>}{sale.payments?.map((payment, index) => <p key={index}>{paymentLabels[payment.method]}: {formatCLP(payment.amount)}</p>)}</div>
-      </details>)}
-      {!recent.length && <p className="home-empty"><Clock3 size={20}/> Todavía no hay ventas registradas.</p>}
-    </section>
+    <RecentSales sales={recent}/>
 
     <footer className="home-business-summary"><button type="button" onClick={() => onOpenStock("all")}><PackagePlus size={18}/><span>Catálogo <strong>{products.filter(product => product.active !== false).length} productos</strong></span><ArrowRight size={16}/></button>{canViewCustomers && <button type="button" onClick={() => onOpenCustomers("credit")}><Users size={18}/><span>Fiado total pendiente <strong>{formatCLP(summary.pendingDebt)}</strong></span><ArrowRight size={16}/></button>}</footer>
   </div>;

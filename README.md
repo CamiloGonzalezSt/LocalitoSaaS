@@ -1,5 +1,7 @@
 # Localito
 
+**Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`; las funciones de IA figuran configuradas. Esto confirma la recuperación de la API, no una prueba de login, catálogo ni análisis real de fotos o facturas. La [guía de recuperación](docs/Operacion-Produccion.md) conserva las comprobaciones pendientes. La corrección de código local, aún sin publicar, protege el detalle interno del error y mejora las superficies de ventas y el selector de cámara/archivo. La copia local funciona en `http://127.0.0.1:43200/` con datos temporales en memoria; no representa la base publicada.
+
 **Actualización técnica: 09-09-2026.** El [estado actual](docs/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](docs/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](MEJORAS.md).
 
 Localito es una PWA académica multi-negocio para almacenes y comercios de barrio. Reúne punto de venta, inventario, caja, compras, proveedores, fiado y reconocimiento de productos desde el celular.
@@ -173,7 +175,7 @@ Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mer
 npm run check
 ```
 
-`check` reúne tipos, `npm test` (61 pruebas en la última ejecución local) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de cinco pruebas CSS de contraste, tipografía y pestañas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
+`check` reúne tipos, `npm test` (62 pruebas en la ejecución local del 26-09-2026) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de pruebas CSS de contraste, tipografía, pestañas y superficies de ventas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
 
 Las suites de navegador del 08-09-2026 verificaron cobro, mejoras integradas y recuperación con 62 capturas. No se repitieron completas después del nuevo rediseño; la revisión visual actual es parcial. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance y limitaciones en [Estado actual](docs/Estado-Actual.md) y [Diseño de interfaz](docs/Diseno-Interfaz.md); casos en [Matriz de pruebas](docs/Matriz-Pruebas-Localito.md) y [Matriz de regresión](docs/Matriz-Regresion-Rediseno.md).
 

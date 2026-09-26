@@ -1,5 +1,13 @@
 # Estado actual de Localito
 
+## Incidente de API del 26-09-2026
+
+La web pública `https://localito-saas.vercel.app/` respondió HTTP 200, mientras `/api/health` devolvió HTTP 500 y `/api/auth/login` reveló `ENOTFOUND tenant/user ... not found` del pooler PostgreSQL. El proyecto Supabase estaba pausado; tras reanudarlo, la API seguía en 500 a las 13:40 UTC. Supabase indica que este error del pooler suele deberse a la combinación de host y usuario de la cadena de conexión. Después de corregir `DATABASE_URL` en Vercel, `/api/health` respondió 200 a las 13:50 UTC con PostgreSQL persistente y ambas funciones de IA marcadas como configuradas. [Procedimiento y comprobaciones pendientes](Operacion-Produccion.md).
+
+En el código local se prepararon respuestas 503 sin detalles internos, tarjetas de ventas recientes con fondo propio en ambos temas y entradas separadas para cámara y archivo en facturas. Estos cambios no están publicados. La salud de la API confirma conexión persistente con la base de producción; aún faltan una prueba autorizada de login y catálogo y solicitudes reales al proveedor de IA con imágenes de prueba.
+
+Verificación local del incremento: 62 pruebas, typecheck de web y API, compilación completa y typecheck adicional de adaptadores Vercel aprobados. En API local con almacenamiento temporal: salud 200, registro e inicio de sesión sintéticos, producto creado y recuperado en bootstrap. Foto y factura respondieron 503 con mensaje explícito porque no hay claves de IA configuradas en esa copia; no se realizó análisis real ni se confirmó una importación. La revisión visual del nuevo selector y de las tarjetas en un navegador autenticado sigue pendiente.
+
 Última comprobación de código: **9 de septiembre de 2026**. Este índice reúne lo implementado, la evidencia disponible y las limitaciones. La revisión visual del nuevo diseño es parcial y se detalla en [Diseño de interfaz](Diseno-Interfaz.md). No equivale a una certificación de producción ni a validación con comerciantes reales.
 
 ## Qué está implementado
