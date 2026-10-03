@@ -22,9 +22,9 @@ La web publicada respondía HTTP 200, pero `/api/health` devolvía 500 y el adap
 
 El adaptador de login del código anterior devolvía al navegador el detalle de la excepción. La corrección preparada devuelve 503 y un mensaje genérico cuando falla la base, mientras conserva el diagnóstico en registros del servidor. Publicar ese cambio después de verificar tipos, pruebas y compilación; su publicación no sustituye el paso 2.
 
-> Incremento visual del 09-09-2026 sin migración de base de datos. Tipos/build y 61 pruebas locales aprobados. Antes de desplegar, completar la regresión visual pendiente y revisar el resultado de CI; no se verificó un nuevo despliegue de producción en esta continuación. [Diseño y verificación](Diseno-Interfaz.md).
+> Incremento visual del 09-09-2026 sin migración de base de datos. Tipos/build y 61 pruebas locales aprobados. Antes de desplegar, completar la regresión visual pendiente y revisar el resultado de CI; no se verificó un nuevo despliegue de producción en esta continuación. [Diseño y verificación](../03_requisitos_diseno/Diseno-Interfaz.md).
 
-Actualización: **08-09-2026**. Las mejoras recientes se verificaron localmente con memoria, no contra producción. Antes de desplegar, completar las comprobaciones de persistencia siguientes. Consulte [Estado actual](Estado-Actual.md) para contratos y límites.
+Actualización: **08-09-2026**. Las mejoras recientes se verificaron localmente con memoria, no contra producción. Antes de desplegar, completar las comprobaciones de persistencia siguientes. Consulte [Estado actual](../01_documentacion_maestra/Estado-Actual.md) para contratos y límites.
 
 ## Verificación diaria
 
