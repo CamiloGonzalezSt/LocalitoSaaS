@@ -8,7 +8,8 @@
 2. `../01_documentacion_maestra/Documento-Proyecto-Localito.md`
 3. `../02_gestion_scrum_trello/Backlog-Scrum-Trello.md`
 4. `../02_gestion_scrum_trello/PLANIFICACION_SPRINTS.md`
-5. matrices de pruebas y operación.
+5. `../02_gestion_scrum_trello/TRELLO_BOARDS.md`
+6. matrices de pruebas y operación.
 
 ## Estructura
 - `01_documentacion_maestra/`: visión integral y estado vigente.
