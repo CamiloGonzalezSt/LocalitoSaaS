@@ -7,9 +7,128 @@
 
 **Actualización técnica: 09-09-2026.** El [estado actual](docs/01_documentacion_maestra/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](docs/03_requisitos_diseno/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](MEJORAS.md).
 
-Localito es una PWA académica multi-negocio para almacenes y comercios de barrio. Reúne punto de venta, inventario, caja, compras, proveedores, fiado y reconocimiento de productos desde el celular.
+## Resumen profesional
 
-**Estado del proyecto:** versión para tesis. El núcleo operacional funciona con datos persistentes, pero las pasarelas de pago son simulaciones académicas y el cumplimiento tributario chileno (SII, boleta y factura electrónica) queda fuera de esta iteración. El alcance verificable está centralizado en [docs/03_requisitos_diseno/Alcance-Tesis.md](docs/03_requisitos_diseno/Alcance-Tesis.md).
+**Localito** es una **PWA SaaS multi-negocio** diseñada para almacenes, minimarkets y pequeños comercios. Centraliza en una sola plataforma las operaciones que habitualmente se administran de forma manual o fragmentada: ventas, inventario, caja, clientes y fiado, compras, proveedores, reportes y auditoría.
+
+El proyecto corresponde al **Capstone / Proyecto de Título 2026 de Ingeniería en Informática de Duoc UC** y se desarrolla como un MVP funcional, desplegable y trazable, con foco en una experiencia simple para usuarios que no necesariamente poseen conocimientos técnicos.
+
+**Estado del proyecto:** versión de tesis en desarrollo. El núcleo operacional trabaja con persistencia PostgreSQL. Las pasarelas externas de pago se registran o simulan con fines académicos y la integración tributaria chilena con SII se mantiene fuera del alcance del MVP.
+
+## Problema que resuelve
+
+Muchos comercios de barrio todavía controlan ventas, stock, caja, deudas de clientes y compras mediante cuadernos, planillas o aplicaciones separadas. Esto puede producir:
+
+- diferencias entre stock real y registrado;
+- poca visibilidad sobre ventas y caja;
+- dificultad para controlar fiados y abonos;
+- duplicación de información;
+- pérdida de trazabilidad sobre quién realizó una operación;
+- mayor tiempo destinado a tareas administrativas;
+- barreras para adoptar software tradicional de gestión por costo o complejidad.
+
+Localito busca reducir esa fragmentación mediante una aplicación web instalable y orientada al flujo cotidiano del negocio.
+
+## Por qué se desarrolla Localito
+
+El proyecto nace de la necesidad de demostrar que un pequeño comercio puede digitalizar procesos esenciales sin depender de infraestructura compleja ni de un ERP tradicional. La solución se diseñó considerando tres objetivos principales:
+
+1. **Centralizar la operación diaria** en una sola plataforma.
+2. **Simplificar la experiencia** para dueños y vendedores mediante una interfaz mobile-first.
+3. **Incorporar automatización e IA de manera controlada**, utilizando la tecnología como asistencia y no como sustituto de la validación humana.
+
+Además del objetivo académico, Localito está planteado como un producto SaaS escalable a múltiples negocios.
+
+## Propuesta de valor e innovación
+
+La innovación de Localito no consiste simplemente en agregar IA a un punto de venta. La propuesta combina gestión operacional, PWA, arquitectura multi-negocio y asistencia visual dentro de tareas concretas.
+
+### Venta Rápida con IA
+
+El usuario puede fotografiar varios productos y Localito solicita al proveedor de visión una propuesta de coincidencias y cantidades **utilizando el catálogo real del negocio**. El vendedor revisa y corrige la propuesta antes de agregarla al ticket.
+
+La IA **no genera una venta, no descuenta stock y no modifica el kardex por sí sola**.
+
+### Ingreso de mercadería desde factura
+
+Una fotografía de factura puede utilizarse para proponer proveedor, folio, fecha, productos, cantidades y costos. La información pasa por una etapa obligatoria de revisión antes de crear productos, registrar compras o modificar existencias.
+
+### PWA y continuidad operativa
+
+Localito puede instalarse como aplicación web progresiva. El catálogo puede conservarse localmente y existe soporte offline acotado para ventas pendientes, con mecanismos de idempotencia para reducir el riesgo de operaciones duplicadas al recuperar conectividad.
+
+### SaaS multi-negocio
+
+La arquitectura separa los datos por negocio y aplica roles y permisos tanto en interfaz como en API. Esto permite utilizar una misma plataforma para distintos comercios sin mezclar su información.
+
+## Tecnologías utilizadas
+
+| Capa | Tecnología / servicio | Uso principal |
+|---|---|---|
+| Frontend | React + TypeScript | Interfaz de usuario |
+| PWA | Service Worker + Web App Manifest | Instalación y soporte offline |
+| Almacenamiento local | IndexedDB | Catálogo y cola local acotada |
+| Backend | Node.js + API REST | Reglas de negocio e integraciones |
+| Base de datos | PostgreSQL | Persistencia relacional |
+| BaaS / DB administrada | Supabase | PostgreSQL de producción |
+| Hosting / Serverless | Vercel | Despliegue web y API |
+| IA visual | Groq / OpenAI configurable | Reconocimiento de productos y facturas |
+| Código de barras | ZXing | Lectura de códigos |
+| Control de versiones | Git + GitHub | Código, historial y evidencias |
+| Gestión ágil | Scrum + Trello | Product Backlog, Sprints y seguimiento |
+| Contenedores | Docker Compose | PostgreSQL para desarrollo local |
+
+## Arquitectura resumida
+
+```text
+Usuario
+  │
+  ▼
+React + TypeScript PWA
+  │
+  ├── IndexedDB / soporte local
+  │
+  ▼ HTTPS / REST
+Node.js API
+  ├── autenticación y autorización
+  ├── reglas de negocio
+  ├── auditoría
+  ├── integración de IA
+  └── persistencia
+        │
+        ▼
+PostgreSQL / Supabase
+
+Servicios externos:
+- Vercel: despliegue
+- Groq / OpenAI: visión e IA
+- Gmail / Resend: recuperación de contraseña cuando se configura proveedor
+```
+
+La arquitectura completa se documenta en [Arquitectura](docs/05_operacion_produccion/Arquitectura.md) y el modelo relacional en [Modelo de datos](docs/05_operacion_produccion/Modelo-de-Datos.md) y [db/schema.sql](db/schema.sql).
+
+## Metodología y equipo
+
+Localito se gestiona mediante **Scrum**.
+
+| Integrante | Rol |
+|---|---|
+| Alexander Patiño | Product Owner |
+| Samuel Solís | Scrum Master |
+| Camilo González | Developer |
+
+Trello es la herramienta activa de seguimiento. Jira se mantiene únicamente como antecedente histórico.
+
+Al **03-10-2026**:
+- Sprint 1, 2 y 3: cerrados.
+- Sprint 4: en curso.
+- Sprint 5–8: futuros y sin historias comprometidas antes de su Sprint Planning.
+
+La trazabilidad esperada es:
+
+```text
+Requisito → Historia de Usuario → Sprint/Trello → Commit → Prueba → Evidencia
+```
 
 ## Funcionalidades implementadas
 
