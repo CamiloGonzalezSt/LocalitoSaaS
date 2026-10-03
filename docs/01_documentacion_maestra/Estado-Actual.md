@@ -1,5 +1,8 @@
 # Estado actual de Localito
 
+> **Control documental vigente: 03-10-2026.** La gestión Scrum activa se realiza en **Trello**. Alexander Patiño = Product Owner, Samuel Solís = Scrum Master y Camilo González = Developer. Sprint 4 está en curso; Sprints 5–8 permanecen sin HU comprometidas hasta su Sprint Planning. Jira se conserva solo como histórico.
+
+
 ## Reparaciones posteriores a la recuperación de API
 
 El 26-09-2026 se reprodujo en producción un rechazo del modelo visual `qwen/qwen3.6-27b` al leer facturas y ventas con foto. [Groq documenta su retirada del nivel gratuito](https://console.groq.com/docs/deprecations) y recomienda `qwen/qwen3.8-27b`. La segunda reparación usa el sucesor por defecto y sustituye el identificador retirado si aún está en `GROQ_VISION_MODEL`; las pruebas de solicitud validan el nuevo identificador, pero no se ha hecho una llamada real con la clave de producción.
@@ -10,13 +13,13 @@ La devolución y la anulación quedaron bloqueadas en Vercel porque sus transacc
 
 ## Incidente de API del 26-09-2026
 
-La web pública `https://localito-saas.vercel.app/` respondió HTTP 200, mientras `/api/health` devolvió HTTP 500 y `/api/auth/login` reveló `ENOTFOUND tenant/user ... not found` del pooler PostgreSQL. El proyecto Supabase estaba pausado; tras reanudarlo, la API seguía en 500 a las 13:40 UTC. Supabase indica que este error del pooler suele deberse a la combinación de host y usuario de la cadena de conexión. Después de corregir `DATABASE_URL` en Vercel, `/api/health` respondió 200 a las 13:50 UTC con PostgreSQL persistente y ambas funciones de IA marcadas como configuradas. [Procedimiento y comprobaciones pendientes](Operacion-Produccion.md).
+La web pública `https://localito-saas.vercel.app/` respondió HTTP 200, mientras `/api/health` devolvió HTTP 500 y `/api/auth/login` reveló `ENOTFOUND tenant/user ... not found` del pooler PostgreSQL. El proyecto Supabase estaba pausado; tras reanudarlo, la API seguía en 500 a las 13:40 UTC. Supabase indica que este error del pooler suele deberse a la combinación de host y usuario de la cadena de conexión. Después de corregir `DATABASE_URL` en Vercel, `/api/health` respondió 200 a las 13:50 UTC con PostgreSQL persistente y ambas funciones de IA marcadas como configuradas. [Procedimiento y comprobaciones pendientes](../05_operacion_produccion/Operacion-Produccion.md).
 
 La primera reparación se publicó en `main` como `6e9ae82`: respuestas 503 sin detalles internos, tarjetas de ventas recientes con fondo propio y entradas separadas para cámara y archivo en facturas. La salud de la API confirma conexión persistente con la base de producción; aún faltan pruebas autorizadas de flujos con datos reales y solicitudes al proveedor de IA.
 
 Verificación local del incremento: 62 pruebas, typecheck de web y API, compilación completa y typecheck adicional de adaptadores Vercel aprobados. En API local con almacenamiento temporal: salud 200, registro e inicio de sesión sintéticos, producto creado y recuperado en bootstrap. Foto y factura respondieron 503 con mensaje explícito porque no hay claves de IA configuradas en esa copia; no se realizó análisis real ni se confirmó una importación. La revisión visual del nuevo selector y de las tarjetas en un navegador autenticado sigue pendiente.
 
-Última comprobación de código: **9 de septiembre de 2026**. Este índice reúne lo implementado, la evidencia disponible y las limitaciones. La revisión visual del nuevo diseño es parcial y se detalla en [Diseño de interfaz](Diseno-Interfaz.md). No equivale a una certificación de producción ni a validación con comerciantes reales.
+Última comprobación de código: **9 de septiembre de 2026**. Este índice reúne lo implementado, la evidencia disponible y las limitaciones. La revisión visual del nuevo diseño es parcial y se detalla en [Diseño de interfaz](../03_requisitos_diseno/Diseno-Interfaz.md). No equivale a una certificación de producción ni a validación con comerciantes reales.
 
 ## Qué está implementado
 
@@ -70,7 +73,7 @@ No se borran rechazos ni se editan los cuerpos de tickets desde este panel. Las 
 | Confiabilidad | `test-hardening.cjs`: rechazos HTTP sin mutaciones, valores reales antes/después, más de 100 eventos sin duplicados, respaldo sin token y reintento individual; 12 capturas. |
 | Cobro | `test-checkout.cjs`: efectivo/vuelto, montos inválidos, errores/reintento, confirmación externa, mixto y fiado; 30 capturas. Todas las ventas de esta suite son interceptadas. |
 
-Las tres suites de navegador y sus 62 capturas corresponden a la ejecución del **08-09-2026**, anterior al último rediseño. Sus recorridos de Caja fueron actualizados, pero la revisión completa posterior sigue pendiente. La inspección visual parcial y sus límites están en [Diseño de interfaz](Diseno-Interfaz.md). Las capturas históricas son de Chromium/Chrome con viewports móviles y ambos temas; no prueban un teléfono físico, Safari, una pasarela real ni la migración PostgreSQL. Las dos suites integradas crean negocios sintéticos en una API local en memoria; no usan datos de un negocio real.
+Las tres suites de navegador y sus 62 capturas corresponden a la ejecución del **08-09-2026**, anterior al último rediseño. Sus recorridos de Caja fueron actualizados, pero la revisión completa posterior sigue pendiente. La inspección visual parcial y sus límites están en [Diseño de interfaz](../03_requisitos_diseno/Diseno-Interfaz.md). Las capturas históricas son de Chromium/Chrome con viewports móviles y ambos temas; no prueban un teléfono físico, Safari, una pasarela real ni la migración PostgreSQL. Las dos suites integradas crean negocios sintéticos en una API local en memoria; no usan datos de un negocio real.
 
 ### Reproducir
 
@@ -110,16 +113,29 @@ node scripts/test-checkout.cjs
 
 ## Mapa documental
 
-- [Diseño de interfaz](Diseno-Interfaz.md): paleta, pestañas, catálogo, cobro y alcance de la verificación visual.
-- [README](../README.md): instalación y visión general.
-- [Mejoras](../MEJORAS.md): resumen de esta entrega.
-- [Alcance de tesis](Alcance-Tesis.md): incluido, simulado y excluido.
+- [Índice maestro](../00_indice/INDICE_DOCUMENTACION.md): punto de entrada a la documentación vigente.
+- [Diseño de interfaz](../03_requisitos_diseno/Diseno-Interfaz.md): paleta, pestañas, catálogo, cobro y alcance de la verificación visual.
+- [README](../../README.md): instalación y visión general.
+- [Mejoras](../../MEJORAS.md): resumen de esta entrega.
+- [Alcance de tesis](../03_requisitos_diseno/Alcance-Tesis.md): incluido, simulado y excluido.
 - [Documento del proyecto](Documento-Proyecto-Localito.md): requisitos, arquitectura y evolución.
-- [Backlog](Backlog-Scrum-Jira.md): historias, avances y trabajo pendiente.
-- [Matriz funcional](Matriz-Pruebas-Localito.md) y [regresión visual](Matriz-Regresion-Rediseno.md): casos y evidencias.
-- [Operación](Operacion-Produccion.md): despliegue, respaldo y recuperación.
-- [Guion de demostración](Guion-Demostracion-Tesis.md): recorrido para la defensa.
+- [Backlog Trello](../02_gestion_scrum_trello/Backlog-Scrum-Trello.md): historias, prioridades y trazabilidad vigente.
+- [Planificación de sprints](../02_gestion_scrum_trello/PLANIFICACION_SPRINTS.md): Sprint 0–8 y estado al 03-10-2026.
+- [Matriz funcional](../04_calidad_pruebas/Matriz-Pruebas-Localito.md) y [regresión visual](../04_calidad_pruebas/Matriz-Regresion-Rediseno.md): casos y evidencias.
+- [Operación](../05_operacion_produccion/Operacion-Produccion.md): despliegue, respaldo y recuperación.
+- [Guion de demostración](../03_requisitos_diseno/Guion-Demostracion-Tesis.md): recorrido para la defensa.
 - [Revisión tesis/mercado](Revision-Integral-Tesis-Mercado.md): evaluación histórica y actualización técnica.
-- [Usuarios](../usuarios.md): cuentas exclusivamente demo y manejo de credenciales.
+- [Usuarios](../../usuarios.md): cuentas exclusivamente demo y manejo de credenciales.
 
-Los `artifact.md` de entregables y plantillas son contratos históricos de formato. Se enlazan a este estado, pero sus DOCX/PDF no se regeneraron ni se declararon verificados nuevamente.
+Los `artifact.md` y revisiones intermedias se conservan como evidencia histórica en `entregables/` y `archivo/qa_y_temporales/`. Para afirmar el estado vigente prevalecen este documento, el Documento de Proyecto y la gestión Trello.
+
+
+## Actualización Scrum — 03-10-2026
+- Gestión activa: **Trello**.
+- Alexander Patiño: Product Owner.
+- Samuel Solís: Scrum Master.
+- Camilo González: Developer.
+- Sprint 1–3: cerrados.
+- Sprint 4 (28-09 al 09-10): en curso.
+- Sprints 5–8: estructura preparada, sin HU comprometidas anticipadamente.
+- Jira: histórico documental únicamente.

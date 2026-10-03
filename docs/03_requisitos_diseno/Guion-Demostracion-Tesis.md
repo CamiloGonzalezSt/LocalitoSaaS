@@ -2,7 +2,7 @@
 
 > Recorrido actualizado el 09-09-2026: apertura y conciliación en Caja → Turno; gastos/retiros en Movimientos; reposición, proveedores y facturas en Compras; auditoría/CSV en Historial. Verificar antes de la demostración los formularios y ambos temas: la nueva regresión visual completa está pendiente. [Diseño y verificación](Diseno-Interfaz.md).
 
-Revisión: **08-09-2026**. Este guion usa una cuenta o negocio reservado para demostración. Nunca realizar pruebas que alteren stock, caja o deuda en el local de un usuario real. El [estado actual](Estado-Actual.md) identifica qué fue comprobado y qué sigue pendiente.
+Revisión: **08-09-2026**. Este guion usa una cuenta o negocio reservado para demostración. Nunca realizar pruebas que alteren stock, caja o deuda en el local de un usuario real. El [estado actual](../01_documentacion_maestra/Estado-Actual.md) identifica qué fue comprobado y qué sigue pendiente.
 
 ## Antes de comenzar
 
@@ -50,7 +50,7 @@ Revisión: **08-09-2026**. Este guion usa una cuenta o negocio reservado para de
 - Reporte mensual y detalle de cierre.
 - Foto de producto, configuración de cobro, estado de cuenta, historial antes/después y revisión offline en claro/oscuro.
 
-La ejecución automática está descrita en [Estado actual](Estado-Actual.md). Las capturas de viewports móviles no sustituyen pruebas en un teléfono físico.
+La ejecución automática está descrita en [Estado actual](../01_documentacion_maestra/Estado-Actual.md). Las capturas de viewports móviles no sustituyen pruebas en un teléfono físico.
 
 ## Alcance académico
 

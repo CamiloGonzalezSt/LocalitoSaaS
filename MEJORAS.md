@@ -7,11 +7,11 @@
 - Caja dividida en Turno, Movimientos, Compras e Historial según permisos, conservando los formularios al cambiar de pestaña.
 - Catálogo en cuadrícula con fotografías completas, precios destacados, favorito independiente y cámara junto al buscador. Inventario mantiene filas compactas.
 - Medios seleccionados con check; total, efectivo recibido y vuelto diferenciados. Avisos dentro del flujo, sin cubrir la barra móvil.
-- 61 pruebas, tipos y compilación aprobados. Revisión visual parcial; faltan recorridos y tamaños tras el último ajuste, pendientes de autorización para retomar la cuenta demo. [Detalle y límites](docs/Diseno-Interfaz.md).
+- 61 pruebas, tipos y compilación aprobados. Revisión visual parcial; faltan recorridos y tamaños tras el último ajuste, pendientes de autorización para retomar la cuenta demo. [Detalle y límites](docs/03_requisitos_diseno/Diseno-Interfaz.md).
 
 ## Entrega operativa anterior
 
-Entrega verificada localmente el **08-09-2026**. El detalle de contratos, ejecución y límites está en [Estado actual](docs/Estado-Actual.md).
+Entrega verificada localmente el **08-09-2026**. El detalle de contratos, ejecución y límites está en [Estado actual](docs/01_documentacion_maestra/Estado-Actual.md).
 
 - Sincronización: ventas pendientes separadas por local y usuario; bloqueo entre pestañas, claves idempotentes y reintentos visibles. El catálogo se recupera desde IndexedDB cuando la API no responde, reservando el stock de las ventas pendientes. Las colas antiguas sin propietario se conservan sin enviarse automáticamente.
 - Fotos: carga desde archivo o cámara, encuadre y escala, salida WebP de 512 px y conservación de transparencia. Se guarda en el campo de imagen existente. No incluye eliminación automática del fondo.

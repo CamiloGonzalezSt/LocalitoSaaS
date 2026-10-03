@@ -1,6 +1,6 @@
 # Matriz de regresión del rediseño Localito
 
-> Rediseño del 09-09-2026: inspección parcial de catálogo claro/oscuro a 1440 px y cobro oscuro a 320 px durante el desarrollo. Pendiente repetir el último ajuste y completar 320/390/768/1440 px, ambos temas, pestañas, formularios, avisos e inventario. Las 62 capturas de abajo no son evidencia de este incremento. Cinco pruebas CSS nuevas aprobadas, sin equivaler a una auditoría visual completa. [Diseño y verificación](Diseno-Interfaz.md).
+> Rediseño del 09-09-2026: inspección parcial de catálogo claro/oscuro a 1440 px y cobro oscuro a 320 px durante el desarrollo. Pendiente repetir el último ajuste y completar 320/390/768/1440 px, ambos temas, pestañas, formularios, avisos e inventario. Las 62 capturas de abajo no son evidencia de este incremento. Cinco pruebas CSS nuevas aprobadas, sin equivaler a una auditoría visual completa. [Diseño y verificación](../03_requisitos_diseno/Diseno-Interfaz.md).
 
 Fecha de revisión: 2026-09-08
 Alcance: rediseño académico, navegación por rol y demostración multi-negocio.
@@ -75,4 +75,4 @@ Esta matriz demuestra que el rediseño reorganiza capacidades existentes sin sus
 | Caja/fiado/reposición | Abonos en esperado, nota por diferencia, turnos nocturnos, demanda y compras pendientes, recordatorio editable. | Aprobado: pruebas de lógica e integración. |
 | Temas/tamaños | 62 capturas entre tres suites, en claro/oscuro y escritorio/viewports móviles; sin overflow horizontal en los escenarios medidos. | Aprobado en Chrome de escritorio. No acredita Safari ni teléfonos físicos. |
 
-Tipos y compilación aprobados; 56 pruebas de lógica aprobadas. Los criterios históricos de arriba no deben interpretarse como una nueva ejecución de cada caso anterior. Alcance reproducible y pendientes de PostgreSQL en [Estado actual](Estado-Actual.md).
+Tipos y compilación aprobados; 56 pruebas de lógica aprobadas. Los criterios históricos de arriba no deben interpretarse como una nueva ejecución de cada caso anterior. Alcance reproducible y pendientes de PostgreSQL en [Estado actual](../01_documentacion_maestra/Estado-Actual.md).
