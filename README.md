@@ -229,3 +229,29 @@ La documentación vigente parte en [docs/00_indice/INDICE_DOCUMENTACION.md](docs
 - Múltiples sucursales, e-commerce público, fidelización y facturación de la suscripción SaaS; son expansiones de producto y no forman parte del núcleo operacional entregado aquí.
 
 El ticket generado por Localito es un comprobante interno no tributario.
+
+
+## Artefactos para evaluación académica
+
+Para facilitar la revisión automática y manual del proyecto, los artefactos solicitados por la evaluación están disponibles explícitamente:
+
+| Criterio | Documento / evidencia |
+|---|---|
+| Documento de inicio de proyecto | [Documento-Inicio-Proyecto.md](docs/01_documentacion_maestra/Documento-Inicio-Proyecto.md) |
+| Metodología declarada y justificada | [Metodologia-Scrum.md](docs/02_gestion_scrum_trello/Metodologia-Scrum.md) |
+| Product Vision | [Product-Vision.md](docs/02_gestion_scrum_trello/Product-Vision.md) |
+| Product Backlog | [Product-Backlog.md](docs/02_gestion_scrum_trello/Product-Backlog.md) |
+| Sprint Backlog | [Sprint-Backlog.md](docs/02_gestion_scrum_trello/Sprint-Backlog.md) |
+| Definition of Done | [Definition-of-Done.md](docs/02_gestion_scrum_trello/Definition-of-Done.md) |
+| Retrospectivas | [Retrospectivas.md](docs/02_gestion_scrum_trello/Retrospectivas.md) |
+| SRS | [SRS-No-Aplica.md](docs/03_requisitos_diseno/SRS-No-Aplica.md) — no aplica como artefacto principal porque Localito usa Scrum |
+| Arquitectura | [Arquitectura.md](docs/05_operacion_produccion/Arquitectura.md) |
+| Modelo de datos | [Modelo-de-Datos.md](docs/05_operacion_produccion/Modelo-de-Datos.md) y [db/schema.sql](db/schema.sql) |
+| Diagramas UML | [UML/](docs/03_requisitos_diseno/UML/) |
+| Requisitos no funcionales | [Requisitos-No-Funcionales.md](docs/03_requisitos_diseno/Requisitos-No-Funcionales.md) |
+| Docker | [docker-compose.yml](docker-compose.yml) |
+| Pruebas | [Plan-de-Pruebas.md](docs/04_calidad_pruebas/Plan-de-Pruebas.md) |
+| Manual técnico | [Manual-Tecnico.md](docs/05_operacion_produccion/Manual-Tecnico.md) |
+| Innovación | [Innovacion-y-Valor-Agregado.md](docs/07_innovacion/Innovacion-y-Valor-Agregado.md) |
+
+La metodología vigente es **Scrum** y Trello es la herramienta activa de gestión. Jira se conserva únicamente como evidencia histórica.

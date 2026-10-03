@@ -1,0 +1,28 @@
+@startuml
+class Negocio
+class Usuario
+class Producto
+class Cliente
+class Venta
+class DetalleVenta
+class MovimientoStock
+class CuentaFiado
+class AbonoFiado
+class Proveedor
+class OrdenCompra
+class SesionCaja
+class MovimientoCaja
+
+Negocio "1" -- "*" Usuario
+Negocio "1" -- "*" Producto
+Negocio "1" -- "*" Cliente
+Negocio "1" -- "*" Venta
+Venta "1" -- "*" DetalleVenta
+Producto "1" -- "*" DetalleVenta
+Producto "1" -- "*" MovimientoStock
+Cliente "1" -- "*" CuentaFiado
+CuentaFiado "1" -- "*" AbonoFiado
+Proveedor "1" -- "*" OrdenCompra
+Negocio "1" -- "*" SesionCaja
+SesionCaja "1" -- "*" MovimientoCaja
+@enduml
