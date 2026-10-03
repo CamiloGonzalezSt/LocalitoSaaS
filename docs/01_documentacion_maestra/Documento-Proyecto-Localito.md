@@ -1663,7 +1663,7 @@ Localito propone una solucion concreta para un problema cotidiano de pequenos ne
 
 La incorporacion de IA visual convierte la camara del celular en una herramienta de trabajo, no solo en un accesorio. Esto diferencia al proyecto frente a sistemas tradicionales de punto de venta y permite plantear una tesis con valor practico y tecnologico. La IA propone y el vendedor confirma siempre producto y cantidad.
 
-El MVP se desarrolló por incrementos: plataforma multi-tenant, catálogo, inventario, ventas, caja, fiado, compras, Venta Rápida, gastos, reportes, PWA y producción persistente. Los pagos externos permanecen manuales por decisión de alcance y costos. El backlog ejecutable, la reconstrucción de sprints y la guía de importación a Jira viven en `docs/02_gestion_scrum_trello/Backlog-Scrum-Trello.md` y `docs/90_historico_jira/Jira-Import.csv`.
+El MVP se desarrolló por incrementos: plataforma multi-tenant, catálogo, inventario, ventas, caja, fiado, compras, Venta Rápida, gastos, reportes, PWA y producción persistente. Los pagos externos permanecen manuales por decisión de alcance y costos. El backlog vigente y la planificación de sprints se gestionan en Trello y se documentan en `docs/02_gestion_scrum_trello/`; los artefactos de Jira se conservan únicamente como evidencia histórica en `docs/90_historico_jira/`.
 
 ## 34. Evolución SaaS y rediseño profesional
 
@@ -1681,8 +1681,9 @@ La capa visual utiliza Source Sans 3, verde principal, sidebar azul premium en c
 
 La documentación de gestión se separa de este documento extenso para mantenerla operativa:
 
-- `docs/02_gestion_scrum_trello/Backlog-Scrum-Trello.md`: configuración de Jira, épicas, 63 historias, Story Points, prioridades, sprints, Definition of Ready, Definition of Done y roadmap.
-- `docs/90_historico_jira/Jira-Import.csv`: épicas e historias vigentes para importación mediante CSV.
+- `docs/02_gestion_scrum_trello/Backlog-Scrum-Trello.md`: Product Backlog vigente, épicas, historias, prioridades, reglas de tarjetas, Definition of Done y trazabilidad.
+- `docs/02_gestion_scrum_trello/PLANIFICACION_SPRINTS.md`: calendario Sprint 0–8 y estado de cada iteración al 03-10-2026.
+- `docs/90_historico_jira/Jira-Import.csv`: importación histórica de la etapa Jira; no representa el tablero activo.
 - `docs/04_calidad_pruebas/Matriz-Pruebas-Localito.md`: casos funcionales y no funcionales que sirven como evidencia de aceptación.
 - `docs/05_operacion_produccion/Operacion-Produccion.md`: monitoreo, respaldos, incidentes, costos y seguridad.
 
