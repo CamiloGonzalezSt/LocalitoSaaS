@@ -251,7 +251,11 @@ El proyecto utiliza **npm workspaces** y se divide en:
 
 ## Puesta en marcha
 
+### Instalación desde cero
+
 ```powershell
+git clone https://github.com/CamiloGonzalezSt/LocalitoSaaS.git
+cd LocalitoSaaS
 npm install
 Copy-Item .env.example .env
 npm run db:up
@@ -265,6 +269,29 @@ npm run dev:web
 ```
 
 Abrir `http://localhost:5173`. La API escucha por defecto en `http://localhost:3000` y su estado se consulta en `http://localhost:3000/health`.
+
+### Scripts principales
+
+| Comando | Propósito |
+| --- | --- |
+| `npm run dev:web` | Inicia el frontend Vite en modo desarrollo. |
+| `npm run dev:api` | Inicia la API con `tsx`. |
+| `npm run db:up` | Levanta PostgreSQL 16 con Docker Compose. |
+| `npm run db:down` | Detiene los servicios Docker del proyecto. |
+| `npm run db:logs` | Muestra los logs de PostgreSQL. |
+| `npm run typecheck` | Valida tipos del frontend y backend. |
+| `npm test` | Ejecuta las pruebas automatizadas del proyecto. |
+| `npm run build` | Compila paquete compartido, API y frontend. |
+| `npm run check` | Ejecuta typecheck, pruebas y build como verificación integral. |
+
+### Verificación rápida
+
+Una vez levantado el proyecto:
+
+1. abrir `http://localhost:5173`;
+2. comprobar `http://localhost:3000/health`;
+3. iniciar sesión con una cuenta demo o registrar un nuevo negocio;
+4. ejecutar `npm run check` antes de subir cambios.
 
 El procedimiento de monitoreo, respaldo e incidentes está documentado en [docs/05_operacion_produccion/Operacion-Produccion.md](docs/05_operacion_produccion/Operacion-Produccion.md).
 
@@ -305,6 +332,24 @@ Los datos demo se insertan únicamente cuando PostgreSQL no contiene ningún neg
 `PLATFORM_ADMIN_PASSWORD` es obligatoria para crear inicialmente el administrador en producción. Una vez creada la cuenta, su clave se cambia mediante recuperación por correo; modificar esta variable no sobrescribe la contraseña existente. Nunca publique la clave en el frontend ni en el repositorio.
 
 La recuperación de contraseña admite dos proveedores desde la API. Para el envío temporal con Gmail configure `EMAIL_PROVIDER=gmail`, `GMAIL_USER`, una `GMAIL_APP_PASSWORD` generada por Google, `EMAIL_FROM=Localito <el-mismo-correo@gmail.com>` y `APP_URL=https://localito-saas.vercel.app`. La cuenta de Google debe tener verificación en dos pasos; no use su contraseña normal. Como opción definitiva, configure `EMAIL_PROVIDER=resend`, `RESEND_API_KEY` y un `EMAIL_FROM` perteneciente a un dominio verificado. Todas estas variables son privadas y nunca deben llevar el prefijo `VITE_`.
+
+## Despliegue
+
+### Producción
+
+El frontend y la API se despliegan en **Vercel**. La persistencia de producción utiliza PostgreSQL administrado mediante **Supabase**.
+
+Requisitos mínimos del entorno de producción:
+
+- `NODE_ENV=production`;
+- `DATABASE_URL` o `POSTGRES_URL` mediante el Transaction Pooler de Supabase;
+- `SESSION_SECRET` seguro;
+- credenciales iniciales del administrador de plataforma;
+- origen web autorizado;
+- proveedor visual opcional para las funciones de IA;
+- proveedor de correo si se desea recuperación real de contraseña.
+
+El endpoint `/api/health` permite comprobar el estado operativo sin exponer secretos. En producción, si PostgreSQL no puede inicializarse, la API debe fallar en lugar de continuar con almacenamiento temporal.
 
 ## Migración a Supabase
 
@@ -366,6 +411,37 @@ Este flujo organiza inventario a partir de un documento comercial; no emite, val
 Localito registra efectivo, tarjeta en terminal externa, transferencia, Webpay externo, Mercado Pago externo, fiado y pago mixto. El vendedor cobra fuera de Localito, ingresa manualmente el monto en el terminal o aplicación correspondiente y confirma en la app que recibió el pago. El MVP no envía montos a un POS, no genera QR de Mercado Pago y no almacena datos de tarjeta.
 
 Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mercado Pago activan una prueba sin mover dinero, mientras que la transferencia queda pendiente de aprobación manual. El cobro Webpay mostrado desde fiados también es una simulación académica; no debe utilizarse para cobrar a clientes reales.
+
+## Seguridad y criterios de protección
+
+Localito implementa controles de seguridad acordes al alcance del MVP:
+
+- contraseñas procesadas con `scrypt`;
+- sesiones con tokens aleatorios y almacenamiento de hashes;
+- expiración y revocación de sesiones;
+- autorización por rol en frontend y backend;
+- aislamiento de datos por negocio;
+- `Helmet` y configuración CORS en la API;
+- claves de IA, correo y base de datos disponibles únicamente en backend;
+- RLS habilitado en Supabase sin políticas públicas directas;
+- validación de datos antes de modificar ventas, stock, deuda o caja;
+- idempotencia de ventas para reducir duplicados por reintentos;
+- recuperación de contraseña mediante enlaces de un solo uso con vencimiento;
+- ninguna información de tarjetas se almacena en Localito.
+
+Las variables sensibles deben configurarse en `.env` local o en el gestor de variables de Vercel y **nunca deben versionarse en Git**.
+
+## Gestión del proyecto
+
+El desarrollo se gestiona mediante **Scrum**. Trello es la herramienta vigente para planificación y seguimiento; Jira se conserva únicamente como evidencia histórica.
+
+| Integrante | Rol Scrum | Responsabilidad principal |
+| --- | --- | --- |
+| Alexander Patiño | Product Owner | Priorización, visión de producto y Product Backlog. |
+| Samuel Solís | Scrum Master | Facilitación del proceso Scrum y seguimiento del equipo. |
+| Camilo González | Developer | Desarrollo e integración técnica del producto. |
+
+Los artefactos Scrum, retrospectivas, Definition of Done, Product Vision y backlogs se encuentran en `docs/02_gestion_scrum_trello/`.
 
 ## Calidad y verificación
 
