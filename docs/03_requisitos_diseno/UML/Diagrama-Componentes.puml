@@ -1,0 +1,25 @@
+@startuml
+package "Cliente" {
+  [React PWA]
+  [IndexedDB]
+}
+package "Servidor" {
+  [Node API]
+  [Autenticación]
+  [Reglas de negocio]
+  [Integración IA]
+}
+database "PostgreSQL / Supabase" as DB
+cloud "Groq / OpenAI" as AI
+cloud "Vercel" as Vercel
+
+[React PWA] --> [Node API] : HTTPS REST
+[React PWA] --> [IndexedDB]
+[Node API] --> [Autenticación]
+[Node API] --> [Reglas de negocio]
+[Node API] --> [Integración IA]
+[Reglas de negocio] --> DB
+[Integración IA] --> AI
+Vercel ..> [React PWA]
+Vercel ..> [Node API]
+@enduml

@@ -1,0 +1,16 @@
+@startuml
+actor Vendedor
+participant "PWA React" as Web
+participant "API Node" as API
+database PostgreSQL as DB
+
+Vendedor -> Web: agrega productos y confirma cobro
+Web -> API: POST /ventas
+API -> API: valida sesión, rol, stock e idempotencia
+API -> DB: inicia transacción
+API -> DB: crea venta y detalles
+API -> DB: actualiza stock/kardex/caja
+API -> DB: confirma transacción
+API --> Web: venta confirmada
+Web --> Vendedor: comprobante
+@enduml

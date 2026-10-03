@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+actor "Dueño" as Owner
+actor "Vendedor" as Seller
+actor "Admin plataforma" as Admin
+
+rectangle Localito {
+  usecase "Iniciar sesión" as UC1
+  usecase "Registrar venta" as UC2
+  usecase "Gestionar inventario" as UC3
+  usecase "Gestionar clientes y fiado" as UC4
+  usecase "Abrir/cerrar caja" as UC5
+  usecase "Gestionar compras" as UC6
+  usecase "Consultar reportes" as UC7
+  usecase "Venta Rápida con IA" as UC8
+  usecase "Administrar locales y usuarios" as UC9
+}
+Owner --> UC1
+Owner --> UC2
+Owner --> UC3
+Owner --> UC4
+Owner --> UC5
+Owner --> UC6
+Owner --> UC7
+Owner --> UC8
+Seller --> UC1
+Seller --> UC2
+Seller --> UC3
+Seller --> UC4
+Seller --> UC5
+Seller --> UC8
+Admin --> UC9
+@enduml
