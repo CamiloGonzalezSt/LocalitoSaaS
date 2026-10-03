@@ -61,4 +61,4 @@ Las 62 capturas descritas en documentos anteriores pertenecen a la entrega del *
 4. Confirmar que el vendedor mantiene únicamente Turno y Movimientos. Comprobar cierre y gastos del turno en un negocio sintético, sin afectar datos reales.
 5. Repetir catálogo, inventario, efectivo, mixto, fiado, pagos externos, avisos y diálogos en ambos temas y a 320, 390, 768 y 1440 px. Revisar texto, carga de imágenes, selección y ausencia de superposiciones.
 
-Estado funcional y límites de producción: [Estado actual](Estado-Actual.md).
+Estado funcional y límites de producción: [Estado actual](../01_documentacion_maestra/Estado-Actual.md).
