@@ -1,0 +1,43 @@
+name: Normalizar DOCX DUOC
+
+on:
+  push:
+    branches:
+      - docs/reorganizacion-integral-2026-10-03
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: docs/reorganizacion-integral-2026-10-03
+          fetch-depth: 0
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Dependencias
+        run: pip install python-docx
+
+      - name: Normalizar Word
+        run: python scripts/normalizar_docx_duoc.py .
+
+      - name: Guardar cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '**/*.docx'
+          if git diff --cached --quiet; then
+            echo "Sin cambios DOCX"
+          else
+            git commit -m "docs: normalizar Word a formato DUOC [skip docx-normalize]"
+            git push origin HEAD:docs/reorganizacion-integral-2026-10-03
+          fi
