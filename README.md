@@ -201,16 +201,24 @@ apps/
 db/
   schema.sql  Esquema PostgreSQL multi-negocio
 docs/
-  Backlog-Scrum-Jira.md
-  Documento-Proyecto-Localito.md
-  Jira-Import.csv
-  Alcance-Tesis.md
-  Matriz-Regresion-Rediseno.md
-  Matriz-Pruebas-Localito.md
-  Operacion-Produccion.md
+  00_indice/
+  01_documentacion_maestra/
+  02_gestion_scrum_trello/
+  03_requisitos_diseno/
+  04_calidad_pruebas/
+  05_operacion_produccion/
+  06_documentacion_academica/
+  90_historico_jira/
+archivo/
+  qa_y_temporales/
+entregables/
+  finales/
+  presentaciones/
 packages/
   shared/     Tipos compartidos
 ```
+
+La documentación vigente parte en [docs/00_indice/INDICE_DOCUMENTACION.md](docs/00_indice/INDICE_DOCUMENTACION.md). Jira se conserva únicamente como histórico.
 
 ## Alcance pendiente
 
