@@ -14,7 +14,7 @@
 
 Localito es una PWA académica con arquitectura multi-tenant orientada a pequeños negocios de barrio, tales como almacenes, botillerías, peluquerías, bazares, minimarkets, ferias y comercios familiares. Su objetivo es digitalizar procesos que normalmente se realizan en cuadernos, planillas, memoria o mensajes informales, entregando una herramienta simple para registrar ventas, controlar stock, administrar clientes, manejar fiados, generar alertas y registrar pagos presenciales realizados mediante medios externos.
 
-El alcance actual es el de una tesis: los flujos de Webpay y Mercado Pago son simulaciones controladas, no cobran dinero ni usan credenciales comerciales. La delimitación completa y verificable se mantiene en `docs/Alcance-Tesis.md`.
+El alcance actual es el de una tesis: los flujos de Webpay y Mercado Pago son simulaciones controladas, no cobran dinero ni usan credenciales comerciales. La delimitación completa y verificable se mantiene en `docs/03_requisitos_diseno/Alcance-Tesis.md`.
 
 La propuesta central es entregar una "caja inteligente de bolsillo" que funcione desde el celular, sin exigir infraestructura compleja ni conocimientos tecnicos avanzados. Al ser una PWA, el sistema puede instalarse desde el navegador, funcionar con una experiencia similar a una aplicacion movil y adaptarse a dispositivos de bajo costo.
 
@@ -1407,7 +1407,7 @@ El vendedor cuenta con una experiencia operativa. Puede atender clientes, cerrar
 
 El comprobante generado por Localito debe entenderse como un ticket interno o comprobante no tributario. Para emitir boletas legales en Chile se requiere integracion con SII o con un proveedor autorizado de boleta electronica.
 
-Se agrega una matriz de pruebas funcionales en `docs/Matriz-Pruebas-Localito.md`, orientada a generar evidencia para memoria, presentacion y defensa.
+Se agrega una matriz de pruebas funcionales en `docs/04_calidad_pruebas/Matriz-Pruebas-Localito.md`, orientada a generar evidencia para memoria, presentacion y defensa.
 
 ## 32. Guia para ejecutar el proyecto en un PC personal
 
@@ -1663,7 +1663,7 @@ Localito propone una solucion concreta para un problema cotidiano de pequenos ne
 
 La incorporacion de IA visual convierte la camara del celular en una herramienta de trabajo, no solo en un accesorio. Esto diferencia al proyecto frente a sistemas tradicionales de punto de venta y permite plantear una tesis con valor practico y tecnologico. La IA propone y el vendedor confirma siempre producto y cantidad.
 
-El MVP se desarrolló por incrementos: plataforma multi-tenant, catálogo, inventario, ventas, caja, fiado, compras, Venta Rápida, gastos, reportes, PWA y producción persistente. Los pagos externos permanecen manuales por decisión de alcance y costos. El backlog ejecutable, la reconstrucción de sprints y la guía de importación a Jira viven en `docs/Backlog-Scrum-Jira.md` y `docs/Jira-Import.csv`.
+El MVP se desarrolló por incrementos: plataforma multi-tenant, catálogo, inventario, ventas, caja, fiado, compras, Venta Rápida, gastos, reportes, PWA y producción persistente. Los pagos externos permanecen manuales por decisión de alcance y costos. El backlog ejecutable, la reconstrucción de sprints y la guía de importación a Jira viven en `docs/02_gestion_scrum_trello/Backlog-Scrum-Trello.md` y `docs/90_historico_jira/Jira-Import.csv`.
 
 ## 34. Evolución SaaS y rediseño profesional
 
@@ -1677,16 +1677,16 @@ El cierre del rediseño agrega un Inicio centrado en ventas y atención diaria, 
 
 La capa visual utiliza Source Sans 3, verde principal, sidebar azul premium en claro y grafito en oscuro, switch claro/oscuro persistido, controles táctiles y diseño responsive sin zoom inicial ni desborde horizontal.
 
-## 35. Trazabilidad Scrum y Jira
+## 35. Trazabilidad Scrum y Trello
 
 La documentación de gestión se separa de este documento extenso para mantenerla operativa:
 
-- `docs/Backlog-Scrum-Jira.md`: configuración de Jira, épicas, 63 historias, Story Points, prioridades, sprints, Definition of Ready, Definition of Done y roadmap.
-- `docs/Jira-Import.csv`: épicas e historias vigentes para importación mediante CSV.
-- `docs/Matriz-Pruebas-Localito.md`: casos funcionales y no funcionales que sirven como evidencia de aceptación.
-- `docs/Operacion-Produccion.md`: monitoreo, respaldos, incidentes, costos y seguridad.
+- `docs/02_gestion_scrum_trello/Backlog-Scrum-Trello.md`: configuración de Jira, épicas, 63 historias, Story Points, prioridades, sprints, Definition of Ready, Definition of Done y roadmap.
+- `docs/90_historico_jira/Jira-Import.csv`: épicas e historias vigentes para importación mediante CSV.
+- `docs/04_calidad_pruebas/Matriz-Pruebas-Localito.md`: casos funcionales y no funcionales que sirven como evidencia de aceptación.
+- `docs/05_operacion_produccion/Operacion-Produccion.md`: monitoreo, respaldos, incidentes, costos y seguridad.
 
-Cada historia Jira debe enlazar su requerimiento funcional, caso de prueba, commit y evidencia de Sprint Review. El estado `Terminado` exige cumplir la Definition of Done y no solamente disponer de código implementado.
+Cada historia de usuario gestionada en Trello debe enlazar, cuando corresponda, su requerimiento funcional, caso de prueba, commit y evidencia de Sprint Review. El estado `Terminado` exige cumplir la Definition of Done y no solamente disponer de código implementado.
 
 ## 36. Incremento operativo de septiembre de 2026
 

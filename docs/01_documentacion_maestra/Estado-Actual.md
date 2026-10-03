@@ -1,5 +1,8 @@
 # Estado actual de Localito
 
+> **Control documental vigente: 03-10-2026.** La gestión Scrum activa se realiza en **Trello**. Alexander Patiño = Product Owner, Samuel Solís = Scrum Master y Camilo González = Developer. Sprint 4 está en curso; Sprints 5–8 permanecen sin HU comprometidas hasta su Sprint Planning. Jira se conserva solo como histórico.
+
+
 ## Reparaciones posteriores a la recuperación de API
 
 El 26-09-2026 se reprodujo en producción un rechazo del modelo visual `qwen/qwen3.6-27b` al leer facturas y ventas con foto. [Groq documenta su retirada del nivel gratuito](https://console.groq.com/docs/deprecations) y recomienda `qwen/qwen3.8-27b`. La segunda reparación usa el sucesor por defecto y sustituye el identificador retirado si aún está en `GROQ_VISION_MODEL`; las pruebas de solicitud validan el nuevo identificador, pero no se ha hecho una llamada real con la clave de producción.
@@ -123,3 +126,14 @@ node scripts/test-checkout.cjs
 - [Usuarios](../usuarios.md): cuentas exclusivamente demo y manejo de credenciales.
 
 Los `artifact.md` de entregables y plantillas son contratos históricos de formato. Se enlazan a este estado, pero sus DOCX/PDF no se regeneraron ni se declararon verificados nuevamente.
+
+
+## Actualización Scrum — 03-10-2026
+- Gestión activa: **Trello**.
+- Alexander Patiño: Product Owner.
+- Samuel Solís: Scrum Master.
+- Camilo González: Developer.
+- Sprint 1–3: cerrados.
+- Sprint 4 (28-09 al 09-10): en curso.
+- Sprints 5–8: estructura preparada, sin HU comprometidas anticipadamente.
+- Jira: histórico documental únicamente.

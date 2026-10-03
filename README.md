@@ -1,12 +1,15 @@
 # Localito
 
-**Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`. La primera reparación de código se publicó como `6e9ae82`. Luego se detectó que Groq retiró el modelo visual configurado y se reportaron problemas en el detalle de ventas y las devoluciones; las correcciones posteriores están descritas en [Estado actual](docs/Estado-Actual.md) y requieren prueba con PostgreSQL y navegador antes de declararse verificadas en producción.
+> **Control documental vigente: 03-10-2026.** La gestión Scrum activa se realiza en **Trello**. Alexander Patiño = Product Owner, Samuel Solís = Scrum Master y Camilo González = Developer. Sprint 4 está en curso; Sprints 5–8 permanecen sin HU comprometidas hasta su Sprint Planning. Jira se conserva solo como histórico.
 
-**Actualización técnica: 09-09-2026.** El [estado actual](docs/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](docs/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](MEJORAS.md).
+
+**Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`. La primera reparación de código se publicó como `6e9ae82`. Luego se detectó que Groq retiró el modelo visual configurado y se reportaron problemas en el detalle de ventas y las devoluciones; las correcciones posteriores están descritas en [Estado actual](docs/01_documentacion_maestra/Estado-Actual.md) y requieren prueba con PostgreSQL y navegador antes de declararse verificadas en producción.
+
+**Actualización técnica: 09-09-2026.** El [estado actual](docs/01_documentacion_maestra/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](docs/03_requisitos_diseno/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](MEJORAS.md).
 
 Localito es una PWA académica multi-negocio para almacenes y comercios de barrio. Reúne punto de venta, inventario, caja, compras, proveedores, fiado y reconocimiento de productos desde el celular.
 
-**Estado del proyecto:** versión para tesis. El núcleo operacional funciona con datos persistentes, pero las pasarelas de pago son simulaciones académicas y el cumplimiento tributario chileno (SII, boleta y factura electrónica) queda fuera de esta iteración. El alcance verificable está centralizado en [docs/Alcance-Tesis.md](docs/Alcance-Tesis.md).
+**Estado del proyecto:** versión para tesis. El núcleo operacional funciona con datos persistentes, pero las pasarelas de pago son simulaciones académicas y el cumplimiento tributario chileno (SII, boleta y factura electrónica) queda fuera de esta iteración. El alcance verificable está centralizado en [docs/03_requisitos_diseno/Alcance-Tesis.md](docs/03_requisitos_diseno/Alcance-Tesis.md).
 
 ## Funcionalidades implementadas
 
@@ -68,7 +71,7 @@ npm run dev:web
 
 Abrir `http://localhost:5173`. La API escucha por defecto en `http://localhost:3000` y su estado se consulta en `http://localhost:3000/health`.
 
-El procedimiento de monitoreo, respaldo e incidentes está documentado en [docs/Operacion-Produccion.md](docs/Operacion-Produccion.md).
+El procedimiento de monitoreo, respaldo e incidentes está documentado en [docs/05_operacion_produccion/Operacion-Produccion.md](docs/05_operacion_produccion/Operacion-Produccion.md).
 
 La API ejecuta [db/schema.sql](db/schema.sql) al conectarse a PostgreSQL. El modo `memory` se permite solamente durante desarrollo sin una base configurada. En producción o Vercel, una URL ausente o una inicialización fallida detiene el backend: nunca se aceptan ventas o productos que puedan desaparecer al reiniciar la función.
 
@@ -177,7 +180,7 @@ npm run check
 
 `check` reúne tipos, `npm test` (65 pruebas en la ejecución local del 26-09-2026) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de pruebas CSS de contraste, tipografía, pestañas y superficies de ventas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
 
-Las suites de navegador del 08-09-2026 verificaron cobro, mejoras integradas y recuperación con 62 capturas. No se repitieron completas después del nuevo rediseño; la revisión visual actual es parcial. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance y limitaciones en [Estado actual](docs/Estado-Actual.md) y [Diseño de interfaz](docs/Diseno-Interfaz.md); casos en [Matriz de pruebas](docs/Matriz-Pruebas-Localito.md) y [Matriz de regresión](docs/Matriz-Regresion-Rediseno.md).
+Las suites de navegador del 08-09-2026 verificaron cobro, mejoras integradas y recuperación con 62 capturas. No se repitieron completas después del nuevo rediseño; la revisión visual actual es parcial. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance y limitaciones en [Estado actual](docs/01_documentacion_maestra/Estado-Actual.md) y [Diseño de interfaz](docs/03_requisitos_diseno/Diseno-Interfaz.md); casos en [Matriz de pruebas](docs/04_calidad_pruebas/Matriz-Pruebas-Localito.md) y [Matriz de regresión](docs/04_calidad_pruebas/Matriz-Regresion-Rediseno.md).
 
 ## Planes y permisos
 
