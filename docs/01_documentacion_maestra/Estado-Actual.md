@@ -113,19 +113,21 @@ node scripts/test-checkout.cjs
 
 ## Mapa documental
 
-- [Diseño de interfaz](Diseno-Interfaz.md): paleta, pestañas, catálogo, cobro y alcance de la verificación visual.
-- [README](../README.md): instalación y visión general.
-- [Mejoras](../MEJORAS.md): resumen de esta entrega.
-- [Alcance de tesis](Alcance-Tesis.md): incluido, simulado y excluido.
+- [Índice maestro](../00_indice/INDICE_DOCUMENTACION.md): punto de entrada a la documentación vigente.
+- [Diseño de interfaz](../03_requisitos_diseno/Diseno-Interfaz.md): paleta, pestañas, catálogo, cobro y alcance de la verificación visual.
+- [README](../../README.md): instalación y visión general.
+- [Mejoras](../../MEJORAS.md): resumen de esta entrega.
+- [Alcance de tesis](../03_requisitos_diseno/Alcance-Tesis.md): incluido, simulado y excluido.
 - [Documento del proyecto](Documento-Proyecto-Localito.md): requisitos, arquitectura y evolución.
-- [Backlog](Backlog-Scrum-Jira.md): historias, avances y trabajo pendiente.
-- [Matriz funcional](Matriz-Pruebas-Localito.md) y [regresión visual](Matriz-Regresion-Rediseno.md): casos y evidencias.
-- [Operación](Operacion-Produccion.md): despliegue, respaldo y recuperación.
-- [Guion de demostración](Guion-Demostracion-Tesis.md): recorrido para la defensa.
+- [Backlog Trello](../02_gestion_scrum_trello/Backlog-Scrum-Trello.md): historias, prioridades y trazabilidad vigente.
+- [Planificación de sprints](../02_gestion_scrum_trello/PLANIFICACION_SPRINTS.md): Sprint 0–8 y estado al 03-10-2026.
+- [Matriz funcional](../04_calidad_pruebas/Matriz-Pruebas-Localito.md) y [regresión visual](../04_calidad_pruebas/Matriz-Regresion-Rediseno.md): casos y evidencias.
+- [Operación](../05_operacion_produccion/Operacion-Produccion.md): despliegue, respaldo y recuperación.
+- [Guion de demostración](../03_requisitos_diseno/Guion-Demostracion-Tesis.md): recorrido para la defensa.
 - [Revisión tesis/mercado](Revision-Integral-Tesis-Mercado.md): evaluación histórica y actualización técnica.
-- [Usuarios](../usuarios.md): cuentas exclusivamente demo y manejo de credenciales.
+- [Usuarios](../../usuarios.md): cuentas exclusivamente demo y manejo de credenciales.
 
-Los `artifact.md` de entregables y plantillas son contratos históricos de formato. Se enlazan a este estado, pero sus DOCX/PDF no se regeneraron ni se declararon verificados nuevamente.
+Los `artifact.md` y revisiones intermedias se conservan como evidencia histórica en `entregables/` y `archivo/qa_y_temporales/`. Para afirmar el estado vigente prevalecen este documento, el Documento de Proyecto y la gestión Trello.
 
 
 ## Actualización Scrum — 03-10-2026
