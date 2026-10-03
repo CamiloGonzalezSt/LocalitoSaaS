@@ -1,10 +1,10 @@
 # Usuarios demo
 
-> Diseño del 09-09-2026: Caja muestra Turno/Movimientos; Compras/Historial conservan los permisos existentes de dueño y plan. La regresión con cuentas está pendiente de completar; esta actualización no cambia credenciales ni concede permisos nuevos. [Diseño y verificación](docs/Diseno-Interfaz.md).
+> Diseño del 09-09-2026: Caja muestra Turno/Movimientos; Compras/Historial conservan los permisos existentes de dueño y plan. La regresión con cuentas está pendiente de completar; esta actualización no cambia credenciales ni concede permisos nuevos. [Diseño y verificación](docs/03_requisitos_diseno/Diseno-Interfaz.md).
 
 Este archivo resume las cuentas de prueba para interactuar con Localito en desarrollo local.
 
-Revisión: **08-09-2026**. Solo contiene accesos de demostración. Nunca reutilizar sus claves en producción. El [estado actual](docs/Estado-Actual.md) resume permisos y pruebas.
+Revisión: **08-09-2026**. Solo contiene accesos de demostración. Nunca reutilizar sus claves en producción. El [estado actual](docs/01_documentacion_maestra/Estado-Actual.md) resume permisos y pruebas.
 
 ## Administrador de plataforma
 
