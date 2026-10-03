@@ -1,6 +1,6 @@
 # Revisión integral de Localito: tesis y oportunidad de mercado
 
-> Actualización de interfaz del 09-09-2026: paleta, tipografía, Caja por pestañas, catálogo y cobro. 61 pruebas de código aprobadas y revisión visual parcial. No se repitió investigación de mercado ni se midió una mejora de usabilidad con comerciantes; esas conclusiones requieren evidencia independiente. [Diseño y verificación](Diseno-Interfaz.md).
+> Actualización de interfaz del 09-09-2026: paleta, tipografía, Caja por pestañas, catálogo y cobro. 61 pruebas de código aprobadas y revisión visual parcial. No se repitió investigación de mercado ni se midió una mejora de usabilidad con comerciantes; esas conclusiones requieren evidencia independiente. [Diseño y verificación](../03_requisitos_diseno/Diseno-Interfaz.md).
 
 **Fecha:** 27 de agosto de 2026  
 **Base de revisión:** repositorio Localito, documentación del proyecto y fuentes públicas consultadas hasta esta fecha.
