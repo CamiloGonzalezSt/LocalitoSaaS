@@ -2,6 +2,144 @@
 
 > **Control documental vigente: 03-10-2026.** La gestión Scrum activa se realiza en **Trello**. Alexander Patiño = Product Owner, Samuel Solís = Scrum Master y Camilo González = Developer. Sprint 4 está en curso; Sprints 5–8 permanecen sin HU comprometidas hasta su Sprint Planning. Jira se conserva solo como histórico.
 
+## Descripción general
+
+**Localito** es una PWA SaaS multi-negocio orientada a almacenes, minimarkets y pequeños comercios. Centraliza en una sola plataforma las operaciones que normalmente se administran en cuadernos, planillas o herramientas separadas: ventas, inventario, caja, clientes, fiado, proveedores, compras, reportes y auditoría.
+
+El proyecto se desarrolla como Capstone de Ingeniería en Informática y busca demostrar una solución técnicamente completa, usable y escalable, con arquitectura web moderna, persistencia PostgreSQL, control de acceso por roles, trazabilidad, pruebas e integración de inteligencia artificial aplicada a tareas concretas del comercio.
+
+## Problema que resuelve
+
+Muchos pequeños comercios operan con información fragmentada. Las ventas pueden registrarse por un lado, el stock por otro, el fiado en un cuaderno y la caja de forma manual. Esto genera problemas recurrentes:
+
+- diferencias de inventario;
+- poca visibilidad de cuánto se vende realmente;
+- dificultad para saber cuánto dinero hay pendiente por fiado;
+- errores al cerrar caja;
+- duplicación de registros;
+- baja trazabilidad de quién realizó una operación;
+- pérdida de tiempo al ingresar productos o mercadería;
+- dificultad para obtener información útil para tomar decisiones.
+
+Localito busca reducir esa fragmentación mediante una plataforma única y accesible desde computador o teléfono.
+
+## Por qué se está desarrollando
+
+El proyecto nace de la necesidad de acercar herramientas de gestión modernas a negocios pequeños que normalmente no requieren —o no pueden justificar— un ERP tradicional. La propuesta busca combinar facilidad de uso con buenas prácticas de ingeniería de software.
+
+Desde el punto de vista académico, Localito permite aplicar de forma integrada competencias de análisis, desarrollo full stack, bases de datos, arquitectura, seguridad, integración de servicios, pruebas, despliegue, gestión ágil y documentación técnica.
+
+## Objetivo general
+
+Desarrollar una PWA SaaS que permita a pequeños comercios administrar su operación diaria desde una interfaz centralizada, con persistencia, roles, trazabilidad y asistencia inteligente en tareas repetitivas.
+
+## Objetivos específicos
+
+- Gestionar ventas y medios de pago.
+- Mantener inventario y kardex de movimientos.
+- Controlar clientes, fiado, abonos y vencimientos.
+- Administrar caja, ingresos, gastos y cierres.
+- Gestionar proveedores, compras y recepción de mercadería.
+- Entregar reportes operativos y financieros.
+- Mantener aislamiento multi-negocio y control de acceso por roles.
+- Incorporar IA visual como apoyo, siempre con confirmación humana.
+- Permitir uso móvil mediante PWA.
+- Mantener pruebas, documentación y despliegue reproducibles.
+
+## Propuesta de valor
+
+Localito busca entregar una solución simple de adoptar pero suficientemente completa para cubrir el ciclo operacional principal de un comercio de barrio. Su valor no está solamente en registrar ventas: conecta venta, stock, caja, fiado, compras y reportes dentro de un mismo modelo de datos.
+
+## Innovación
+
+La innovación principal está en integrar inteligencia artificial visual dentro de flujos reales del negocio sin entregar decisiones críticas a la IA.
+
+### Venta Rápida con IA
+Una fotografía puede proponer productos y cantidades utilizando exclusivamente el catálogo del negocio. El vendedor revisa y corrige la propuesta antes de agregarla al ticket.
+
+### Ingreso de factura con IA
+Una fotografía de una factura puede proponer proveedor, productos, cantidades y costos. La información se revisa antes de registrar la compra y actualizar inventario.
+
+### Principio de control humano
+La IA **no crea ventas, no descuenta stock y no modifica inventario por sí sola**. Propone información; el usuario confirma.
+
+## Tecnologías utilizadas
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | React + TypeScript |
+| Aplicación instalable | PWA |
+| Backend | Node.js + API REST |
+| Base de datos | PostgreSQL |
+| Backend administrado / DB cloud | Supabase |
+| Despliegue | Vercel |
+| Persistencia local | IndexedDB |
+| IA visual | Groq; OpenAI como alternativa opcional |
+| Lectura de códigos | ZXing |
+| Versionado | Git + GitHub |
+| Contenedores locales | Docker / Docker Compose |
+| Gestión ágil | Scrum + Trello |
+| Pruebas | scripts automatizados + matrices de prueba + build/type checks |
+
+## Arquitectura resumida
+
+```text
+Usuario
+   │
+   ▼
+React + TypeScript PWA
+   │ HTTPS / REST
+   ▼
+Node.js API
+   ├── autenticación y autorización
+   ├── reglas de negocio
+   ├── integraciones externas
+   └── validaciones
+          │
+          ▼
+PostgreSQL / Supabase
+          │
+          └── persistencia multi-negocio
+
+Servicios externos:
+- Groq / OpenAI para visión
+- proveedor de correo
+- Vercel para despliegue
+```
+
+La documentación de arquitectura está en [docs/05_operacion_produccion/Arquitectura.md](docs/05_operacion_produccion/Arquitectura.md).
+
+## Alcance del MVP
+
+El MVP contempla:
+
+- plataforma SaaS multi-negocio;
+- autenticación y roles;
+- POS y ventas;
+- inventario y kardex;
+- clientes y fiado;
+- caja;
+- proveedores y compras;
+- reportes;
+- auditoría;
+- PWA;
+- importación/exportación de catálogo;
+- Venta Rápida con IA;
+- ingreso de mercadería desde factura;
+- configuración de planes académicos.
+
+Quedan fuera del MVP académico:
+
+- emisión tributaria real ante SII;
+- boleta/factura electrónica;
+- integración comercial real con terminales de pago;
+- cobro recurrente real de la suscripción;
+- e-commerce público;
+- múltiples sucursales por negocio.
+
+## Estado actual
+
+El núcleo operacional se encuentra implementado y documentado. Las capacidades de producción, pruebas pendientes y limitaciones se registran en [Estado actual](docs/01_documentacion_maestra/Estado-Actual.md).
 
 **Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`. La primera reparación de código se publicó como `6e9ae82`. Luego se detectó que Groq retiró el modelo visual configurado y se reportaron problemas en el detalle de ventas y las devoluciones; las correcciones posteriores están descritas en [Estado actual](docs/01_documentacion_maestra/Estado-Actual.md) y requieren prueba con PostgreSQL y navegador antes de declararse verificadas en producción.
 
