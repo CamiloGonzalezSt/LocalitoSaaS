@@ -4,7 +4,7 @@
 
 Este documento es la fuente de verdad para presentar Localito. Distingue el núcleo que se puede demostrar de las simulaciones académicas y de lo que queda fuera del alcance.
 
-Revisión técnica: **08-09-2026**. Evidencia, contratos y pendientes de esta versión en [Estado actual](Estado-Actual.md).
+Revisión técnica: **08-09-2026**. Evidencia, contratos y pendientes de esta versión en [Estado actual](../01_documentacion_maestra/Estado-Actual.md).
 
 ## Propósito
 
@@ -65,4 +65,4 @@ Las simulaciones son intencionales. Sirven para evaluar el flujo, estados y traz
 
 La verificación del 08-09-2026 comprende 56 pruebas de lógica, tipos, compilación y tres suites de navegador con 62 capturas. Las pruebas integradas usaron memoria y datos sintéticos. No presentar esto como validación de PostgreSQL, restauración, teléfonos físicos, usuarios finales ni pagos comerciales.
 
-En la defensa se debe describir el ticket como **comprobante interno no tributario** y cada pago de prueba como **simulación académica**. Para las evidencias funcionales, utilizar [Matriz-Pruebas-Localito.md](Matriz-Pruebas-Localito.md); los casos sin evidencia continúan siendo pendientes, no aprobados por inferencia.
+En la defensa se debe describir el ticket como **comprobante interno no tributario** y cada pago de prueba como **simulación académica**. Para las evidencias funcionales, utilizar [Matriz-Pruebas-Localito.md](../04_calidad_pruebas/Matriz-Pruebas-Localito.md); los casos sin evidencia continúan siendo pendientes, no aprobados por inferencia.
