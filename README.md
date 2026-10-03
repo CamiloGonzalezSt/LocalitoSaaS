@@ -1,13 +1,208 @@
 # Localito
 
+> **PWA SaaS para la gestión integral de almacenes, minimarkets y pequeños comercios de barrio.**
+> Proyecto Capstone/Tesis 2026 orientado a centralizar ventas, inventario, caja, clientes, fiado, compras y reportes, incorporando asistencia visual con IA en tareas donde realmente reduce trabajo manual.
+
+## Índice
+
+- [Descripción general](#descripción-general)
+- [Problema que resuelve](#problema-que-resuelve)
+- [Por qué se desarrolla Localito](#por-qué-se-desarrolla-localito)
+- [Objetivos](#objetivos)
+- [Usuarios objetivo](#usuarios-objetivo)
+- [Propuesta de valor e innovación](#propuesta-de-valor-e-innovación)
+- [Arquitectura](#arquitectura)
+- [Tecnologías utilizadas](#tecnologías-utilizadas)
+- [Funcionalidades implementadas](#funcionalidades-implementadas)
+- [Requisitos](#requisitos)
+- [Puesta en marcha](#puesta-en-marcha)
+- [Variables de entorno](#variables-de-entorno)
+- [Migración a Supabase](#migración-a-supabase)
+- [Acceso demo](#acceso-demo)
+- [Flujo sugerido de demostración](#flujo-sugerido-de-demostración)
+- [Calidad y verificación](#calidad-y-verificación)
+- [Planes y permisos](#planes-y-permisos)
+- [Estructura](#estructura)
+- [Alcance pendiente](#alcance-pendiente)
+- [Artefactos para evaluación académica](#artefactos-para-evaluación-académica)
+
+## Descripción general
+
+**Localito** es una plataforma SaaS multi-negocio, instalable como PWA y diseñada con enfoque mobile-first para apoyar la operación diaria de pequeños comercios. Su objetivo es reemplazar la fragmentación entre cuadernos, planillas, aplicaciones aisladas y procesos manuales por una sola herramienta accesible desde computador o teléfono.
+
+El sistema cubre el ciclo operacional principal de un comercio: autenticación, roles, ventas, inventario, caja, clientes, fiado, proveedores, compras, reportes, auditoría, importación/exportación y apoyo visual mediante IA. La plataforma mantiene separación de datos por negocio y aplica validaciones tanto en la interfaz como en la API.
+
+Localito no pretende reemplazar sistemas tributarios, bancos ni terminales de pago. En esta versión académica, las operaciones financieras externas se registran o simulan de forma controlada y transparente.
+
+## Problema que resuelve
+
+Muchos almacenes, minimarkets y comercios de barrio todavía administran partes críticas de su operación con herramientas desconectadas:
+
+- ventas registradas manualmente o sin trazabilidad completa;
+- inventario controlado en cuadernos o planillas;
+- fiados difíciles de seguir y cobrar;
+- caja sin conciliación clara por turno;
+- compras y proveedores separados del stock real;
+- poca visibilidad de márgenes, gastos y comportamiento de ventas;
+- doble digitación de información;
+- errores al ingresar mercadería o actualizar existencias;
+- sistemas tradicionales demasiado complejos, costosos o poco cómodos desde el teléfono.
+
+Esta fragmentación genera pérdida de tiempo, errores de stock, diferencias de caja y poca información para tomar decisiones.
+
+Localito aborda ese problema concentrando la operación en una única plataforma simple, trazable, multiusuario y accesible desde dispositivos comunes.
+
+## Por qué se desarrolla Localito
+
+El proyecto nace de una necesidad concreta: **hacer que herramientas de gestión que normalmente están disponibles para negocios más grandes sean accesibles para pequeños comercios**, sin obligarlos a adoptar software complejo ni una infraestructura costosa.
+
+Además de resolver el problema funcional, Localito se desarrolla como proyecto Capstone/Tesis de Ingeniería en Informática, por lo que el MVP busca demostrar de manera verificable:
+
+- análisis de un problema real;
+- diseño de una solución de software completa;
+- arquitectura frontend, backend y base de datos;
+- seguridad, autenticación y autorización;
+- persistencia y aislamiento multi-negocio;
+- integración con servicios externos;
+- aplicación de inteligencia artificial con validación humana;
+- funcionamiento PWA y soporte parcial offline;
+- calidad mediante pruebas reproducibles;
+- gestión ágil con Scrum;
+- documentación técnica, funcional y académica trazable.
+
+## Objetivos
+
+### Objetivo general
+
+Desarrollar una PWA SaaS que permita a pequeños comercios gestionar su operación diaria desde una sola plataforma, reduciendo tareas manuales y mejorando el control sobre ventas, inventario, caja, clientes, fiado, compras y reportes.
+
+### Objetivos específicos
+
+1. Centralizar los principales procesos operativos del comercio.
+2. Mantener persistencia y aislamiento de datos por negocio.
+3. Permitir el uso desde computador y dispositivos móviles sin requerir una aplicación nativa.
+4. Incorporar roles y permisos para separar responsabilidades.
+5. Entregar trazabilidad mediante kardex, auditoría, movimientos y estados de cuenta.
+6. Reducir digitación manual mediante importaciones, cámara, código de barras e IA visual.
+7. Mantener confirmación humana antes de que una sugerencia de IA afecte ventas, stock o compras.
+8. Soportar ventas ante conectividad inestable mediante una cola local controlada.
+9. Proporcionar pruebas, documentación y procedimientos reproducibles para operar y evaluar el proyecto.
+
+## Usuarios objetivo
+
+Localito está pensado principalmente para:
+
+- almacenes de barrio;
+- minimarkets;
+- botillerías;
+- pequeños comercios con inventario y venta presencial;
+- negocios que trabajan con fiado;
+- dueños que necesitan controlar caja, stock y reportes;
+- vendedores que requieren una interfaz rápida y simple para atender.
+
+El modelo de roles actual contempla:
+
+| Rol | Responsabilidad principal |
+| --- | --- |
+| `system_admin` | Administración de la plataforma, locales, usuarios y estado de suscripciones. |
+| `owner` | Gestión integral del negocio: inventario, caja, clientes, compras, reportes y configuración. |
+| `seller` | Operación diaria de ventas, inventario consultable, clientes y caja según permisos. |
+
+## Propuesta de valor e innovación
+
+Localito no se limita a digitalizar un POS. La propuesta combina gestión operativa tradicional con capacidades orientadas a reducir fricción en tareas repetitivas.
+
+### Elementos innovadores del MVP
+
+- **Venta Rápida con IA:** una fotografía puede proponer varios productos y cantidades utilizando exclusivamente el catálogo del negocio.
+- **Ingreso de mercadería desde factura:** la IA propone proveedor, productos, cantidades y costos para que el usuario revise antes de confirmar.
+- **Human-in-the-loop:** la IA nunca vende, descuenta stock ni crea recepciones por sí sola; solamente propone información.
+- **PWA instalable:** experiencia similar a una aplicación sin exigir distribución por App Store o Play Store.
+- **Soporte parcial offline:** cola local exclusiva para ventas y catálogo en IndexedDB para escenarios de conectividad inestable.
+- **Modelo SaaS multi-negocio:** separación lógica de datos, usuarios, planes y permisos por comercio.
+- **Trazabilidad completa:** auditoría, kardex, movimientos de caja, cuentas por cobrar y estados de operación.
+- **Arquitectura orientada a bajo costo:** frontend web, backend Node.js, PostgreSQL administrado y despliegue serverless.
+
+El valor agregado no está en reemplazar la decisión del usuario, sino en **reducir pasos manuales manteniendo control y trazabilidad**.
+
+## Arquitectura
+
+```text
+Usuario
+  │
+  ▼
+React + TypeScript PWA
+  │  HTTPS / REST
+  ▼
+Node.js + Express API
+  ├── Autenticación y autorización
+  ├── Reglas de negocio
+  ├── Validaciones
+  ├── Integraciones de IA
+  ├── Correo
+  └── Persistencia
+        │
+        ▼
+PostgreSQL 16 / Supabase
+
+Servicios complementarios:
+- Vercel → despliegue web y API
+- Groq / OpenAI → análisis visual desde backend
+- Gmail / Resend → recuperación de contraseña
+- IndexedDB → catálogo y soporte local
+- ZXing → lectura de códigos de barras
+```
+
+### Principios de arquitectura
+
+- El frontend nunca recibe claves privadas de proveedores.
+- La lógica crítica y las autorizaciones se validan nuevamente en la API.
+- PostgreSQL es obligatorio en producción.
+- Los datos se aíslan por negocio.
+- Las operaciones que modifican stock, deuda o caja se ejecutan mediante reglas de negocio del backend.
+- La IA produce propuestas estructuradas que Localito vuelve a validar antes de utilizarlas.
+- En producción no existe fallback silencioso a memoria.
+
+## Tecnologías utilizadas
+
+| Capa | Tecnología | Uso en Localito |
+| --- | --- | --- |
+| Frontend | React 18.3 | Interfaz de usuario y componentes de la PWA. |
+| Lenguaje | TypeScript 5.6 | Tipado compartido en frontend, backend y paquete común. |
+| Build frontend | Vite 5 | Desarrollo, compilación y empaquetado web. |
+| Backend | Node.js 20+ | Runtime de la API. |
+| Framework API | Express 4.19 | API REST, rutas y middleware. |
+| Base de datos | PostgreSQL 16 | Persistencia transaccional del sistema. |
+| Base administrada | Supabase | PostgreSQL de producción y conectividad administrada. |
+| Despliegue | Vercel | Hosting del frontend y ejecución serverless de la API. |
+| PWA | Service Worker + Web App Manifest | Instalación y caché de aplicación. |
+| Datos locales | IndexedDB | Catálogo local y soporte frente a conectividad inestable. |
+| Código de barras | ZXing Browser | Lectura de códigos desde cámara. |
+| IA visual | Groq / OpenAI | Venta Rápida y lectura asistida de facturas. |
+| Seguridad HTTP | Helmet + CORS | Encabezados y control de orígenes. |
+| Base de datos Node | `pg` | Acceso PostgreSQL desde la API. |
+| Correo | Nodemailer / Gmail / Resend | Recuperación de contraseña. |
+| Contenedores | Docker Compose | PostgreSQL local reproducible. |
+| Iconografía | Lucide React | Iconos de interfaz. |
+| CI / calidad | GitHub Actions + scripts npm | Typecheck, pruebas y build. |
+
+### Monorepo
+
+El proyecto utiliza **npm workspaces** y se divide en:
+
+- `apps/web`: frontend React/PWA;
+- `apps/api`: API REST y reglas de negocio;
+- `packages/shared`: contratos y tipos compartidos;
+- `db`: esquema PostgreSQL;
+- `docs`: documentación funcional, técnica, Scrum, calidad y operación.
+
+---
 > **Control documental vigente: 03-10-2026.** La gestión Scrum activa se realiza en **Trello**. Alexander Patiño = Product Owner, Samuel Solís = Scrum Master y Camilo González = Developer. Sprint 4 está en curso; Sprints 5–8 permanecen sin HU comprometidas hasta su Sprint Planning. Jira se conserva solo como histórico.
 
 
 **Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`. La primera reparación de código se publicó como `6e9ae82`. Luego se detectó que Groq retiró el modelo visual configurado y se reportaron problemas en el detalle de ventas y las devoluciones; las correcciones posteriores están descritas en [Estado actual](docs/01_documentacion_maestra/Estado-Actual.md) y requieren prueba con PostgreSQL y navegador antes de declararse verificadas en producción.
 
 **Actualización técnica: 09-09-2026.** El [estado actual](docs/01_documentacion_maestra/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](docs/03_requisitos_diseno/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](MEJORAS.md).
-
-Localito es una PWA académica multi-negocio para almacenes y comercios de barrio. Reúne punto de venta, inventario, caja, compras, proveedores, fiado y reconocimiento de productos desde el celular.
 
 **Estado del proyecto:** versión para tesis. El núcleo operacional funciona con datos persistentes, pero las pasarelas de pago son simulaciones académicas y el cumplimiento tributario chileno (SII, boleta y factura electrónica) queda fuera de esta iteración. El alcance verificable está centralizado en [docs/03_requisitos_diseno/Alcance-Tesis.md](docs/03_requisitos_diseno/Alcance-Tesis.md).
 
@@ -85,7 +280,7 @@ WEB_ORIGIN=http://localhost:5173
 DATABASE_URL=postgresql://localito:localito@localhost:5432/localito
 OWNER_DEMO_PASSWORD=Duoc2026
 SELLER_DEMO_PASSWORD=Duoc2026V
-PLATFORM_ADMIN_EMAIL=caj.gonzalez.st@gmail.com
+PLATFORM_ADMIN_EMAIL=admin@ejemplo.cl
 PLATFORM_ADMIN_PASSWORD=change-this-before-production
 SESSION_SECRET=change-this-in-production-with-a-long-random-value
 APP_URL=http://localhost:5173
