@@ -12,7 +12,7 @@ No se obtuvo evidencia de PostgreSQL real, restauración, navegador automatizado
 
 Se verificaron reglas de negocio, validaciones, separación de negocios, permisos y comportamiento HTTP. Se utilizó Node.js 24.19.0 como entorno de ejecución y npm 11.9.0 como gestor de paquetes. La instalación utilizó el archivo de versiones de dependencias con `npm ci --include=dev --ignore-scripts --no-audit --no-fund`. Se instalaron 147 paquetes. Omitir las secuencias de instalación fue una decisión del ambiente; debe declararse al repetir la campaña. No se ejecutó una auditoría de dependencias con ese comando.
 
-La API de integración escuchó únicamente en `127.0.0.1:43201`, con la implementación de almacenamiento en memoria MemoryRepository y negocios sintéticos. Se eliminó el proceso al finalizar. El conjunto de pruebas combina repositorio en memoria, respuestas controladas de servicios externos, un grupo simulado de conexiones a PostgreSQL y verificaciones de estilos y almacenamiento local. Ninguno de esos dobles sustituye una base PostgreSQL ni una medición de IA con imágenes reales.
+La API de integración escuchó únicamente en `127.0.0.1:43201`, con la implementación de almacenamiento en memoria y negocios sintéticos. Se eliminó el proceso al finalizar. El conjunto de pruebas combina repositorio en memoria, respuestas controladas de servicios externos, un grupo simulado de conexiones a PostgreSQL y verificaciones de estilos y almacenamiento local. Ninguno de esos dobles sustituye una base PostgreSQL ni una medición de IA con imágenes reales.
 
 El flujo automatizado del repositorio utiliza Node 22. La ejecución local con Node 24 no reemplaza ese control de integración continua. Se debe conservar el resultado de integración continua sobre la revisión que se entregue.
 
@@ -20,19 +20,19 @@ El flujo automatizado del repositorio utiliza Node 22. La ejecución local con N
 
 Una prueba se considera aprobada cuando el ejecutor termina con código cero y sus aserciones se satisfacen. Los casos HTTP comprueban tanto respuesta como estado posterior cuando corresponde. La inexistencia de una herramienta o un permiso del entorno se registra como bloqueo de ejecución, no como aprobación ni como defecto confirmado del producto.
 
-Los identificadores AUT corresponden al orden de los casos superiores del TAP. El archivo informa 57 casos superiores y 21 subcasos del escenario de entradas inválidas: 78 pruebas, 78 aprobadas, cero fallidas, canceladas u omitidas. El contador incluye unidades de distinto alcance y no expresa cobertura porcentual de código ni de requisitos. El resultado HTTP se presenta por separado para evitar equiparar magnitudes.
+Los identificadores AUT corresponden al orden de los casos superiores del formato TAP. El archivo informa 57 casos superiores y 21 subcasos del escenario de entradas inválidas: 78 pruebas, 78 aprobadas, cero fallidas, canceladas u omitidas. El contador incluye unidades de distinto alcance y no expresa cobertura porcentual de código ni de requisitos. El resultado HTTP se presenta por separado para evitar equiparar magnitudes.
 
 # Resultados consolidados
 
 | Actividad | Resultado | Evidencia |
 | --- | --- | --- |
-| Instalación reproducible | Completada; secuencias de instalación omitidas | npm_ci.log |
-| Análisis de tipos web y API | Aprobado | check.log, antes del bloqueo |
-| npm run check | Bloqueado en lanzador tsx; salida 1 | check.log, check.exit |
-| Ejecutor alternativo | 78 de 78 aprobadas; salida 0 | pruebas_verificadas.tap y .exit |
-| Compilación | Componentes compartidos, API y aplicación web aprobados; salida 0 | build.log, build.exit |
-| API HTTP local | 12 de 12 casos aprobados | api_resultados.json |
-| Navegador automatizado | No ejecutado; binario no disponible | browser.log, browser_install.log |
+| Instalación reproducible | Completada; secuencias de instalación omitidas | registro de instalación (registro de instalación (registro de instalación (registro de instalación (npm_ci.log)))) |
+| Análisis de tipos web y API | Aprobado | registro del análisis de tipos, antes del bloqueo (check.log) |
+| npm run check | Bloqueado en lanzador tsx; salida 1 | registro y código de salida de la comprobación (registro y código de salida de la comprobación (registro y código de salida de la comprobación (registro y código de salida de la comprobación (check.log, check.exit)))) |
+| Ejecutor alternativo | 78 de 78 aprobadas; salida 0 | registro de pruebas en formato TAP y código de salida (pruebas_verificadas.tap, .exit) |
+| Compilación | Componentes compartidos, API y aplicación web aprobados; salida 0 | registro de compilación y código de salida (registro de compilación y código de salida (registro de compilación y código de salida (registro de compilación y código de salida (build.log, build.exit)))) |
+| API HTTP local | 12 de 12 casos aprobados | resultados de la integración HTTP (resultados de la integración HTTP (resultados de la integración HTTP (resultados de la integración HTTP (api_resultados.json)))) |
+| Navegador automatizado | No ejecutado; binario no disponible | registro del navegador y de su instalación (registro del navegador y de su instalación (registro del navegador y de su instalación (registro del navegador y de su instalación (browser.log, browser_install.log)))) |
 | PostgreSQL y restauración | No ejecutados; sin servicio de base disponible | Casos CP114–118 pendientes |
 | Usuarios y dispositivos físicos | No ejecutados | Protocolo de validación preparado |
 
@@ -112,9 +112,9 @@ Los casos se ejecutaron de forma secuencial. El negocio A comenzó con diez unid
 | HTTP04 Aislamiento de escritura | 404 y ningún cambio sobre producto B | código HTTP: 404; producto B sin cambios: sí |
 | HTTP05 Permiso vendedor | 403 al crear productos | mensaje: Tu rol no tiene permisos para realizar esta acción. |
 | HTTP06 Venta inválida sin efectos | Rechazo de cantidad negativa y conservación de existencias | código HTTP: 400; existencias: 10; ventas nuevas: 0 |
-| HTTP07 Venta y descuento de existencias | Venta por 2000 CLP y existencias de 10 a 8 | total CLP: 2000; existencias finales: 8 |
+| HTTP07 Venta y descuento de existencias | Venta por 2000 CLP y existencias de 10 a 8 | total CLP: 2000; existencias finaleseseseses: 8 |
 | HTTP08 Reintento idempotente | Una venta y ocho unidades disponibles tras repetir la misma clave | misma venta: sí; ventas: 1; existencias: 8 |
-| HTTP09 Venta fiada | Deuda de 1000 CLP vinculada al cliente | deuda CLP: 1000; existencias finales: 7 |
+| HTTP09 Venta fiada | Deuda de 1000 CLP vinculada al cliente | deuda CLP: 1000; existencias finaleseseseses: 7 |
 | HTTP10 Abono de deuda | Saldo de 1000 a 600 CLP | abono CLP: 400; saldo CLP: 600 |
 | HTTP11 Consulta de auditoría por rol | Dueño obtiene eventos y vendedor recibe 403 | eventos visibles para el propietario: 6; código HTTP del vendedor: 403 |
 | HTTP12 Revocación de sesión | 401 después de cerrar sesión | sesión revocada: sí; código HTTP: 401 |
@@ -129,7 +129,7 @@ El lanzamiento de navegador falló por ausencia del binario esperado. La descarg
 
 # Reproducción de la campaña
 
-Usar un clon limpio de la revisión indicada, Node y npm compatibles y un ambiente de prueba sin credenciales de producción. Conservar las versiones exactas del entorno. Ejecutar instalación y tipos, y luego el siguiente ejecutor de pruebas desde la raíz. La opción de importación sigue el uso documentado de tsx con Node (Node.js, s. f.; tsx, s. f.).
+Usar una copia limpia de la revisión indicada, Node y npm compatibles y un ambiente de prueba sin credenciales de producción. Conservar las versiones exactas del entorno. Ejecutar instalación y tipos, y luego el siguiente ejecutor de pruebas desde la raíz. La opción de importación sigue el uso documentado de tsx con Node (Node.js, s. f.; tsx, s. f.).
 
 ```bash
 npm ci --include=dev --ignore-scripts --no-audit --no-fund
