@@ -38,9 +38,9 @@ Los identificadores AUT corresponden al orden de los casos superiores del format
 
 # Catálogo de pruebas automatizadas
 
-Las descripciones se presentan en español. Los identificadores AUT mantienen el orden de los casos del registro de pruebas y permiten relacionar cada descripción con su evidencia. Todos los casos de esta tabla figuran aprobados. AUT45 incluye además los 21 subcasos contabilizados por Node.
+Los nombres de las pruebas se presentan en español. Los identificadores AUT mantienen el orden de los casos del registro de pruebas y permiten relacionar cada nombre con su evidencia. Todos los casos de esta tabla figuran aprobados. AUT45 incluye además los 21 subcasos contabilizados por Node.
 
-| Identificador | Descripción de la prueba |
+| Identificador | Nombre de la prueba en español |
 | --- | --- |
 | AUT01 | Los errores de dominio previstos no se presentan como fallos internos del servidor |
 | AUT02 | El entorno de producción y Vercel requieren almacenamiento persistente |
