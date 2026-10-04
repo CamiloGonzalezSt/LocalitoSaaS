@@ -1,0 +1,182 @@
+# Documento de inicio del proyecto Localito
+
+# Resumen ejecutivo
+
+Localito es una PWA SaaS para centralizar ventas, existencias, caja, compras y cuentas por cobrar de pequeños comercios. La solución se desarrolla como proyecto Capstone de Ingeniería en Informática en Duoc UC Plaza Norte, por Camilo González, Alexander Patiño y Samuel Solís. El periodo documental comprende el 10 de agosto al 04 de diciembre de 2026; el corte de esta revisión es el 03 de octubre y el Sprint 4 continúa en curso.
+
+El proyecto aborda la separación de información entre cuadernos, planillas y herramientas aisladas. Su propuesta combina un núcleo transaccional con asistencia de imágenes para preparar ventas y recepciones. La validación humana precede a los cambios persistentes. El stack observado es React y TypeScript, Node.js con Express y PostgreSQL administrado mediante Supabase. Vercel es el destino de despliegue documentado. El alcance excluye emisión tributaria y cobro bancario real integrado.
+
+Este documento formaliza propósito, objetivos, interesados, alcance, restricciones y criterios de éxito. La presencia de funcionalidades en el código no se equipara a aceptación de usuario ni cierre de sus historias: ambas requieren evidencia. El documento debe leerse junto con Product Backlog, Plan de Pruebas y Arquitectura.
+
+# Introducción
+
+Una herramienta de gestión de comercio debe conservar una relación consistente entre lo vendido, el dinero registrado y las existencias. Si esas tres partes se administran por separado, el dueño tiene que reconciliarlas manualmente. Localito organiza esa relación en una aplicación web accesible desde dispositivos comunes y con roles que delimitan las acciones del dueño y del vendedor.
+
+La formulación del problema procede de la documentación y experiencia planteadas por el equipo. Esta entrega no añade entrevistas, encuestas ni cifras de mercado que no consten en una evidencia verificable. Antes de afirmar impacto comercial deben ejecutarse tareas con usuarios y comparar tiempos, errores y comprensión del flujo.
+
+La estructura académica utiliza resumen, introducción, desarrollo y conclusiones como elementos de navegación, tomando la guía de la Universidad de Chile como referencia de escritura y no como reglamento de Duoc [R20]. Las condiciones efectivamente exigidas se conservan desde la pauta del profesor y la definición del proyecto [P].
+
+# Definición del problema y justificación
+
+El problema no consiste únicamente en guardar una lista de productos. La venta debe actualizar existencias; una venta fiada debe vincularse con un cliente y saldo; un abono debe disminuir deuda; una recepción de compra debe afectar inventario. Sin una relación explícita entre operaciones, la digitalización puede reproducir errores que antes estaban en papel.
+
+Localito se justifica por concentrar esos procesos y ofrecer trazabilidad por usuario, negocio y fecha. Su condición de PWA reduce la necesidad de distribuir aplicaciones nativas distintas. La utilidad del reconocimiento visual se concentra en evitar búsquedas o digitación repetitiva, manteniendo revisión humana y una alternativa manual cuando no hay conectividad o confianza suficiente.
+
+La relevancia académica proviene de integrar análisis de requisitos, modelado, frontend, backend, persistencia, pruebas y gestión del trabajo. Ninguno de esos elementos se acredita solamente con una declaración: el repositorio, las historias, el esquema y las evidencias de prueba deben permitir que otro evaluador siga la misma operación.
+
+# Objetivos y resultados verificables
+
+El objetivo general es desarrollar una PWA SaaS que centralice operaciones de pequeños comercios y permita verificar la relación entre ventas, stock, caja y deuda. Los objetivos específicos se expresan con resultados observables para facilitar su evaluación.
+
+| Objetivo | Resultado verificable | Evidencia |
+| --- | --- | --- |
+| Centralizar la venta | Ticket, total calculado y operación persistida | Caso de venta e inspección de registros |
+| Controlar existencias | Descuento, recepción y kardex consistente | Stock antes y después |
+| Separar negocios | Acceso restringido al negocio autenticado | Casos de acceso cruzado |
+| Delimitar responsabilidades | Roles owner, seller y system_admin | Casos de permisos por endpoint |
+| Asistir tareas con IA | Propuesta editable antes de confirmar | Fotos de prueba y correcciones |
+| Conservar pendientes | Cola de ventas recuperable por cuenta | Corte de red y sincronización |
+| Reproducir el entorno | Instalación, salud, pruebas y build | Registro de comandos y ambiente |
+
+La reducción de tiempo y errores constituye una hipótesis de valor, no un resultado medido en esta revisión. Para validarla se necesita un protocolo comparativo con las mismas tareas, productos y condiciones. La aceptación de la tesis puede acreditar diseño e implementación aunque todavía no exista un estudio de adopción comercial; las conclusiones deben precisar esa diferencia.
+
+# Interesados y responsabilidades
+
+Alexander Patiño actúa como Product Owner y mantiene el orden del trabajo y sus criterios de aceptación. Samuel Solís facilita Scrum y registra seguimiento e impedimentos. Camilo González desarrolla e integra capacidades y evidencia técnica. Estos roles de trabajo son distintos de los permisos del producto; ser Product Owner no equivale a tener una cuenta owner en todos los negocios.
+
+El docente Álvaro Andrés Mellado Pimentel evalúa la evidencia académica. El dueño del comercio define reglas operativas; el vendedor participa en la usabilidad diaria; clientes y proveedores originan información comercial. Vercel, Supabase y proveedores de IA son dependencias técnicas. Se deben identificar fallas externas sin responsabilizar al usuario de repetir un pago que ya ocurrió.
+
+# Alcance y restricciones
+
+El MVP contiene catálogo, ventas, fiado, compras, caja, reportes, auditoría y administración de negocios, junto con importación y ayuda visual. El alcance se interpreta desde código y requisitos; el cierre Scrum se determina mediante su Definition of Done. Al 03 de octubre existen capacidades técnicas cuya tarjeta aún no está cerrada. Los Sprints 5 a 8 conservan estructura de eventos, sin historias comprometidas.
+
+Las restricciones incluyen tiempo del semestre, recursos del equipo, conectividad, cuotas de IA y disponibilidad de servicios administrados. La cola offline cubre ventas, no todas las escrituras. Los pagos externos se verifican manualmente. El comprobante es interno y no se declara boleta tributaria. La expansión a sucursales y facturación legal requiere alcance y evaluación separados.
+
+# Riesgos y tratamiento
+
+| Riesgo | Efecto | Tratamiento propuesto |
+| --- | --- | --- |
+| Respuesta perdida al vender | Duplicación por reintento | Mantener idempotencyKey y consultar estado |
+| Propuesta IA errónea | Producto o cantidad incorrecta | Revisión, normalización y búsqueda manual |
+| Falla de base | Operación no confirmada | Error visible y bloqueo de memoria en producción |
+| Evidencia insuficiente | Cierre académico sin respaldo | Matriz requisito prueba y estado explícito |
+| Cambio de catálogo offline | Diferencias de monto | Conciliar precio vigente y pago externo |
+| Dependencia de proveedor | Función temporalmente indisponible | Configuración y procedimiento alternativo |
+
+# Criterios de éxito y gobernanza
+
+Se considerará exitoso el incremento cuando los casos de aceptación seleccionados puedan repetirse y sus resultados coincidan con el estado de datos. Se requiere demostrar permisos, venta, stock y deuda con datos controlados. La prueba de restauración y la evaluación con usuarios deben registrarse como pendientes hasta ejecutarse. La existencia de un workflow no acredita una ejecución aprobada.
+
+Los cambios de alcance se llevan al Product Backlog con justificación y prioridad. El equipo evita comprometer trabajo futuro antes del Planning. El corte documental conserva los estados anteriores para que una actualización no reescriba retrospectivamente qué se había probado.
+
+# Descripción funcional del alcance
+## Descripción general
+
+**Localito** es una plataforma SaaS multi-negocio, instalable como PWA y diseñada con enfoque mobile-first para apoyar la operación diaria de pequeños comercios. Su objetivo es reemplazar la fragmentación entre cuadernos, planillas, aplicaciones aisladas y procesos manuales por una sola herramienta accesible desde computador o teléfono.
+
+El sistema cubre el ciclo operacional principal de un comercio: autenticación, roles, ventas, inventario, caja, clientes, fiado, proveedores, compras, reportes, auditoría, importación/exportación y apoyo visual mediante IA. La plataforma mantiene separación de datos por negocio y aplica validaciones tanto en la interfaz como en la API.
+
+Localito no pretende reemplazar sistemas tributarios, bancos ni terminales de pago. En esta versión académica, las operaciones financieras externas se registran o simulan de forma controlada y transparente.
+
+
+## Problema que resuelve
+
+Muchos almacenes, minimarkets y comercios de barrio todavía administran partes críticas de su operación con herramientas desconectadas:
+
+- ventas registradas manualmente o sin trazabilidad completa;
+- inventario controlado en cuadernos o planillas;
+- fiados difíciles de seguir y cobrar;
+- caja sin conciliación clara por turno;
+- compras y proveedores separados del stock real;
+- poca visibilidad de márgenes, gastos y comportamiento de ventas;
+- doble digitación de información;
+- errores al ingresar mercadería o actualizar existencias;
+- sistemas tradicionales demasiado complejos, costosos o poco cómodos desde el teléfono.
+
+Esta fragmentación genera pérdida de tiempo, errores de stock, diferencias de caja y poca información para tomar decisiones.
+
+Localito aborda ese problema concentrando la operación en una única plataforma simple, trazable, multiusuario y accesible desde dispositivos comunes.
+
+
+## Usuarios objetivo
+
+Localito está pensado principalmente para:
+
+- almacenes de barrio;
+- minimarkets;
+- botillerías;
+- pequeños comercios con inventario y venta presencial;
+- negocios que trabajan con fiado;
+- dueños que necesitan controlar caja, stock y reportes;
+- vendedores que requieren una interfaz rápida y simple para atender.
+
+El modelo de roles actual contempla:
+
+| Rol | Responsabilidad principal |
+| --- | --- |
+| `system_admin` | Administración de la plataforma, locales, usuarios y estado de suscripciones. |
+| `owner` | Gestión integral del negocio: inventario, caja, clientes, compras, reportes y configuración. |
+| `seller` | Operación diaria de ventas, inventario consultable, clientes y caja según permisos. |
+
+
+## Funcionalidades implementadas
+
+- Administrador de plataforma separado del negocio: crea locales, crea su primer dueño, agrega vendedores y puede suspender o reactivar locales y usuarios.
+- Suscripciones SaaS por negocio con prueba Pro de 30 días, planes Básico/Pro, permisos centralizados, modo de solo lectura al vencer y métricas de MRR/pruebas en plataforma.
+- Registro público de un negocio y su primer dueño con prueba Pro de 30 días; el administrador de plataforma también puede crear y administrar locales para la demostración.
+- Recuperación de contraseña por correo con enlace de un solo uso, vencimiento de 30 minutos y revocación de sesiones anteriores.
+- Inicio y cierre de sesión con contraseñas `scrypt`, tokens aleatorios almacenados como hash, expiración y aislamiento por negocio.
+- Roles `system_admin`, `owner` y `seller` protegidos tanto en la interfaz como en la API.
+- Punto de venta con búsqueda, código de barras, descuento, notas y pagos simples o divididos.
+- Ticket recuperable al recargar, ventas en espera y favoritos guardados en el navegador por negocio y usuario. Retomar una venta guarda el ticket abierto y revisa precios y stock actuales.
+- Catálogo de venta con carga incremental y cobro móvil en un diálogo dedicado, con navegación por teclado y comprobante al finalizar.
+- Idempotencia de ventas para evitar cobros duplicados al reintentar desde una red inestable.
+- Navegación simplificada por rol: dueño (`Inicio`, `Vender`, `Inventario`, `Clientes`, `Caja`, `Reportes`) y vendedor (`Vender`, `Inventario`, `Clientes`, `Caja`). Configuración vive en el engranaje; crear/importar productos y Venta Rápida se abren dentro de su flujo natural.
+- Inventario con SKU, variante, unidad, packs, vencimiento, stock mínimo, productos sin control de stock y kardex de movimientos.
+- Alertas de reposición y vencimiento a 30 días.
+- Clientes con cupo, plazo, bloqueo de crédito, cuentas por cobrar, vencimientos, abonos y recordatorios por WhatsApp.
+- Anulación de venta y devoluciones parciales con reposición de stock y ajuste de deuda.
+- Proveedores, órdenes de compra, recepción de mercadería y actualización del costo promedio ponderado.
+- Caja por turno: apertura, ingresos, gastos operativos categorizados, retiros, cierre, efectivo esperado, contado y diferencia.
+- Caja organizada en Turno, Movimientos, Compras e Historial según permisos; conserva formularios al alternar pestañas. Gastos agrupados del turno abierto.
+- Reportes por período, vendedor y categoría; comparación con el período anterior, ventas por hora/categoría/vendedor, alertas operativas, filtros guardados por local y exportación CSV. El reporte financiero muestra ventas netas, margen bruto estimado, gastos operativos y resultado estimado; los cálculos de utilidad se presentan como estimaciones porque usan el costo vigente del catálogo.
+- Historial completo de auditoría con búsqueda, acción, fechas y paginación por cursor; antes/después de precio y stock con autor y motivo.
+- Asistente automático de carga inicial para locales nuevos, con categorías sugeridas por rubro, progreso reanudable y acceso posterior desde el menú.
+- Importación masiva y exportación de productos en CSV: plantilla compatible con Excel, vista previa, validación por fila y prevención de duplicados, hasta 500 productos por carga.
+- Cola local exclusivamente para ventas, separada por negocio y usuario, con bloqueo entre pestañas, errores visibles, reintento individual y respaldo JSON sin token. Los ajustes de stock requieren conexión.
+- Catálogo guardado en IndexedDB para recuperar el espacio de trabajo sin API, reservando el stock de ventas pendientes.
+- Fotos reales de productos desde cámara o archivo, encuadre y escala; salida WebP de 512 px con transparencia si el original la incluye. No elimina fondos automáticamente.
+- Medios de pago habilitados y ordenados por negocio, datos bancarios para transferencias y efectivo recibido/vuelto.
+- Estado de cuenta de clientes, recordatorio editable y conciliación de caja con abonos en efectivo y turnos que cruzan medianoche.
+- Reposición orientativa por ventas de 30 días, stock, mínimos y compras aún no recibidas.
+- PWA instalable con caché de aplicación y navegación sin conexión.
+- Lectura de códigos con ZXing cargado bajo demanda.
+- **Venta Rápida**: una fotografía puede proponer varios productos y cantidades usando exclusivamente el catálogo del negocio; el vendedor corrige la propuesta y la agrega al ticket POS existente. La lectura de códigos de barras continúa disponible como alternativa.
+- Ingreso de mercadería desde una foto de factura: extracción estructurada, coincidencia con catálogo, revisión obligatoria de cantidades/costos/precios, creación de productos y recepción de stock sin duplicar la factura.
+- Cobros presenciales en tres pasos: armar ticket, presionar **Cobrar** y elegir el medio. Tarjeta, transferencia, Webpay y Mercado Pago se registran como medios externos: el vendedor confirma manualmente el pago antes de crear la venta o descontar stock.
+- Tema claro, oscuro o según el sistema, persistido por usuario, con tipografía Source Sans 3 y controles táctiles mobile-first.
+
+
+## Alcance pendiente
+
+- Cumplimiento tributario chileno, excluido por decisión de esta iteración.
+- Integración real con terminales, Webpay o Mercado Pago, excluida del MVP de tesis: los pagos externos se registran manualmente y las simulaciones no cobran dinero.
+- Configuración de un proveedor real de correo en Vercel; el flujo de recuperación está implementado, pero requiere credenciales de Gmail o Resend para enviar correos.
+- Avisos automáticos por correo distintos de la recuperación de contraseña.
+- Múltiples sucursales, e-commerce público, fidelización y facturación de la suscripción SaaS; son expansiones de producto y no forman parte del núcleo operacional entregado aquí.
+
+El ticket generado por Localito es un comprobante interno no tributario.
+
+# Conclusiones
+
+Localito presenta un alcance coherente para demostrar competencias de ingeniería de software: un núcleo operacional, separación de datos y asistencia visual con reglas deterministas. El éxito debe juzgarse por operaciones reproducibles y evidencia de calidad. Esta definición establece qué se desarrolla, por qué se desarrolla y cuáles son sus límites.
+
+# Referencias y evidencia de la versión
+
+Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+
+[R20] Universidad de Chile. Cómo escribir un informe con formato de Memoria de Título. https://aprendizaje.uchile.cl/recursos-especificos-por-areas-disciplinares/ciencias-silvoagropecuarias/facultad-de-ciencias-agronomicas/ingenieria-agronomica/como-escribir-un-informe-con-formato-de-memoria-de-titulo/
+
+[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+
+Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.
