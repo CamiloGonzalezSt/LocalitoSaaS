@@ -1,0 +1,41 @@
+npm warn config production Use `--omit=dev` instead.
+Calentamiento 30s con 10 usuarios...
+Ronda 1/3 (120s)...
+Ronda 2/3 (120s)...
+Ronda 3/3 (120s)...
+{
+ "integridad": {
+  "ventas_registradas": 6220,
+  "unidades_descontadas": 11789,
+  "unidades_en_detalle": 11789,
+  "unidades_en_movimientos": 11789,
+  "stock_negativo": 0,
+  "consistente": true
+ },
+ "rondas": [
+  {
+   "ronda": 1,
+   "rps": 78,
+   "p50": 90.7,
+   "p95": 358.3,
+   "p99": 566.4,
+   "errores": 0
+  },
+  {
+   "ronda": 2,
+   "rps": 50.8,
+   "p50": 148.1,
+   "p95": 554.5,
+   "p99": 810.1,
+   "errores": 0
+  },
+  {
+   "ronda": 3,
+   "rps": 41.5,
+   "p50": 178.2,
+   "p95": 696,
+   "p99": 1058.2,
+   "errores": 0
+  }
+ ]
+}

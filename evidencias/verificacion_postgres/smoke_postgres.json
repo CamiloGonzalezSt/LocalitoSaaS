@@ -1,0 +1,477 @@
+{
+ "base": "http://127.0.0.1:43201",
+ "pasos": [
+  {
+   "paso": "registro de negocio",
+   "metodo": "POST",
+   "ruta": "/auth/register",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "bootstrap",
+   "metodo": "GET",
+   "ruta": "/bootstrap",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /users",
+   "metodo": "GET",
+   "ruta": "/users",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /products",
+   "metodo": "GET",
+   "ruta": "/products",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /customers",
+   "metodo": "GET",
+   "ruta": "/customers",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /sales",
+   "metodo": "GET",
+   "ruta": "/sales",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /suppliers",
+   "metodo": "GET",
+   "ruta": "/suppliers",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /purchases",
+   "metodo": "GET",
+   "ruta": "/purchases",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /debts",
+   "metodo": "GET",
+   "ruta": "/debts",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /debts/reminders",
+   "metodo": "GET",
+   "ruta": "/debts/reminders",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /cash/session",
+   "metodo": "GET",
+   "ruta": "/cash/session",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /cash/movements",
+   "metodo": "GET",
+   "ruta": "/cash/movements",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /cash/reconciliation",
+   "metodo": "GET",
+   "ruta": "/cash/reconciliation",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /stock-movements",
+   "metodo": "GET",
+   "ruta": "/stock-movements",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /audit",
+   "metodo": "GET",
+   "ruta": "/audit",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /audit/history",
+   "metodo": "GET",
+   "ruta": "/audit/history",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /alerts",
+   "metodo": "GET",
+   "ruta": "/alerts",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /reports/summary",
+   "metodo": "GET",
+   "ruta": "/reports/summary",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /reports/cash-register",
+   "metodo": "GET",
+   "ruta": "/reports/cash-register",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /cash-closures",
+   "metodo": "GET",
+   "ruta": "/cash-closures",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /ai/history",
+   "metodo": "GET",
+   "ruta": "/ai/history",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "listar /subscription",
+   "metodo": "GET",
+   "ruta": "/subscription",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "crear producto 1",
+   "metodo": "POST",
+   "ruta": "/products",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "crear producto 2",
+   "metodo": "POST",
+   "ruta": "/products",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "editar producto",
+   "metodo": "PATCH",
+   "ruta": "/products/e7a33f2b-cf0c-4594-bcf2-c935114080b6",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "ajustar stock",
+   "metodo": "PATCH",
+   "ruta": "/products/505a55e9-4225-48fd-9159-25717b742426/stock",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "importar productos CSV",
+   "metodo": "POST",
+   "ruta": "/products/import",
+   "status": 400,
+   "ok": true,
+   "mensaje": "El identificador de la importación es obligatorio."
+  },
+  {
+   "paso": "crear cliente",
+   "metodo": "POST",
+   "ruta": "/customers",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "editar cliente",
+   "metodo": "PATCH",
+   "ruta": "/customers/25cb321f-e020-47a0-ab73-866339187dbc",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "crear proveedor",
+   "metodo": "POST",
+   "ruta": "/suppliers",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "editar proveedor",
+   "metodo": "PATCH",
+   "ruta": "/suppliers/ac8bef59-6a64-4a05-ac95-550cd05bc5a1",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "crear orden de compra",
+   "metodo": "POST",
+   "ruta": "/purchases",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "recibir compra parcial",
+   "metodo": "POST",
+   "ruta": "/purchases/846394a3-adb1-4497-817e-2b651b3ce9ed/receive",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "recibir compra total",
+   "metodo": "POST",
+   "ruta": "/purchases/846394a3-adb1-4497-817e-2b651b3ce9ed/receive",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "abrir caja",
+   "metodo": "POST",
+   "ruta": "/cash/session/open",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "segunda apertura de caja",
+   "metodo": "POST",
+   "ruta": "/cash/session/open",
+   "status": 409,
+   "ok": true,
+   "mensaje": "Ya existe una caja abierta."
+  },
+  {
+   "paso": "venta contado",
+   "metodo": "POST",
+   "ruta": "/sales",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "venta mixta",
+   "metodo": "POST",
+   "ruta": "/sales",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "venta fiada",
+   "metodo": "POST",
+   "ruta": "/sales",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "abono de deuda",
+   "metodo": "POST",
+   "ruta": "/customers/25cb321f-e020-47a0-ab73-866339187dbc/payments",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "estado de cuenta",
+   "metodo": "GET",
+   "ruta": "/customers/25cb321f-e020-47a0-ab73-866339187dbc/statement",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "devolución parcial",
+   "metodo": "POST",
+   "ruta": "/sales/87cc84fd-d9c0-4c03-8571-33ce7bbec598/returns",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "anular venta",
+   "metodo": "POST",
+   "ruta": "/sales/7e1582a9-cfbd-4654-a0a7-68810d7d7e03/cancel",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "movimiento de caja",
+   "metodo": "POST",
+   "ruta": "/cash/movements",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "cerrar caja con diferencia sin motivo",
+   "metodo": "POST",
+   "ruta": "/cash/session/close",
+   "status": 400,
+   "ok": true,
+   "mensaje": "El motivo de la diferencia de caja es obligatorio."
+  },
+  {
+   "paso": "cerrar caja",
+   "metodo": "POST",
+   "ruta": "/cash/session/close",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "cierre diario",
+   "metodo": "POST",
+   "ruta": "/cash-closures",
+   "status": 201,
+   "ok": true,
+   "mensaje": "Cierre de caja registrado."
+  },
+  {
+   "paso": "listar cierres",
+   "metodo": "GET",
+   "ruta": "/cash-closures",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "pago webpay (sandbox)",
+   "metodo": "POST",
+   "ruta": "/payments/webpay/create",
+   "status": 201,
+   "ok": true,
+   "mensaje": "Pago demo creado por $1.000."
+  },
+  {
+   "paso": "cambiar plan",
+   "metodo": "POST",
+   "ruta": "/subscription/change-plan",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "preferencias del negocio",
+   "metodo": "PATCH",
+   "ruta": "/tenant/preferences",
+   "status": 400,
+   "ok": true,
+   "mensaje": "Selecciona medios de pago válidos sin repetir."
+  },
+  {
+   "paso": "editar negocio",
+   "metodo": "PATCH",
+   "ruta": "/tenant",
+   "status": 400,
+   "ok": true,
+   "mensaje": "Nombre y rubro son obligatorios para guardar el negocio."
+  },
+  {
+   "paso": "crear vendedor",
+   "metodo": "POST",
+   "ruta": "/users",
+   "status": 201,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "editar usuario",
+   "metodo": "PATCH",
+   "ruta": "/users/e74d56e1-f0db-46d7-a2b6-f0a309cb27ed",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "clave de usuario",
+   "metodo": "POST",
+   "ruta": "/users/e74d56e1-f0db-46d7-a2b6-f0a309cb27ed/password",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "eliminar usuario",
+   "metodo": "DELETE",
+   "ruta": "/users/e74d56e1-f0db-46d7-a2b6-f0a309cb27ed",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "desactivar producto",
+   "metodo": "DELETE",
+   "ruta": "/products/505a55e9-4225-48fd-9159-25717b742426",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "desactivar cliente",
+   "metodo": "DELETE",
+   "ruta": "/customers/25cb321f-e020-47a0-ab73-866339187dbc",
+   "status": 200,
+   "ok": true,
+   "mensaje": null
+  },
+  {
+   "paso": "logout",
+   "metodo": "POST",
+   "ruta": "/auth/logout",
+   "status": 204,
+   "ok": true,
+   "mensaje": null
+  }
+ ]
+}

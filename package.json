@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "pretest": "npm run build -w packages/shared",
-    "test": "tsx --test apps/api/src/localito.test.ts scripts/improvements.test.ts scripts/hardening.test.ts scripts/design.test.ts",
+    "test": "tsx --test apps/api/src/localito.test.ts scripts/improvements.test.ts scripts/hardening.test.ts scripts/design.test.ts scripts/dashboard.test.ts scripts/inventory.test.ts scripts/sale-workspace.test.ts scripts/postgres.integration.test.ts",
+    "test:postgres": "tsx --test scripts/postgres.integration.test.ts",
     "check": "npm run typecheck && npm test && npm run build",
     "dev:web": "npm run dev -w apps/web",
     "dev:api": "npm run dev -w apps/api",

@@ -1,0 +1,133 @@
+{
+  "fecha_utc": "2026-10-04T21:05:47.563Z",
+  "configuracion": {
+    "usuarios_concurrentes": 10,
+    "calentamiento_s": 30,
+    "medicion_s": 120,
+    "rondas": 3,
+    "productos": 1000,
+    "mezcla": "55% GET /products, 15% GET /sales, 5% GET /reports/summary, 25% POST /sales",
+    "nota": "Generador de carga, API y PostgreSQL comparten el mismo equipo; los tiempos no representan un despliegue real."
+  },
+  "rondas": [
+    {
+      "ronda": 1,
+      "solicitudes": 9354,
+      "rps": 78,
+      "errores": 0,
+      "tasa_error": 0,
+      "estados_error": [],
+      "p50": 90.7,
+      "p95": 358.3,
+      "p99": 566.4,
+      "por_tipo": {
+        "GET /products": {
+          "n": 5118,
+          "p50": 59.9,
+          "p95": 132.4,
+          "p99": 178.5
+        },
+        "GET /sales": {
+          "n": 1373,
+          "p50": 105.5,
+          "p95": 210.3,
+          "p99": 264.9
+        },
+        "POST /sales": {
+          "n": 2376,
+          "p50": 192.8,
+          "p95": 357.1,
+          "p99": 452.4
+        },
+        "GET /reports/summary": {
+          "n": 487,
+          "p50": 432.9,
+          "p95": 683.5,
+          "p99": 787.6
+        }
+      }
+    },
+    {
+      "ronda": 2,
+      "solicitudes": 6093,
+      "rps": 50.8,
+      "errores": 0,
+      "tasa_error": 0,
+      "estados_error": [],
+      "p50": 148.1,
+      "p95": 554.5,
+      "p99": 810.1,
+      "por_tipo": {
+        "GET /products": {
+          "n": 3331,
+          "p50": 88.2,
+          "p95": 212,
+          "p99": 265.4
+        },
+        "GET /sales": {
+          "n": 900,
+          "p50": 194.7,
+          "p95": 330.1,
+          "p99": 383.7
+        },
+        "POST /sales": {
+          "n": 1564,
+          "p50": 298.5,
+          "p95": 549.3,
+          "p99": 668.3
+        },
+        "GET /reports/summary": {
+          "n": 298,
+          "p50": 669.3,
+          "p95": 1009.1,
+          "p99": 1172.7
+        }
+      }
+    },
+    {
+      "ronda": 3,
+      "solicitudes": 4975,
+      "rps": 41.5,
+      "errores": 0,
+      "tasa_error": 0,
+      "estados_error": [],
+      "p50": 178.2,
+      "p95": 696,
+      "p99": 1058.2,
+      "por_tipo": {
+        "GET /products": {
+          "n": 2768,
+          "p50": 102,
+          "p95": 265.7,
+          "p99": 356.7
+        },
+        "GET /sales": {
+          "n": 711,
+          "p50": 249.2,
+          "p95": 421.4,
+          "p99": 502.4
+        },
+        "POST /sales": {
+          "n": 1247,
+          "p50": 363.1,
+          "p95": 659.1,
+          "p99": 777.9
+        },
+        "GET /reports/summary": {
+          "n": 249,
+          "p50": 876.4,
+          "p95": 1253.6,
+          "p99": 1439.3
+        }
+      }
+    }
+  ],
+  "integridad": {
+    "ventas_registradas": 6220,
+    "unidades_descontadas": 11789,
+    "unidades_en_detalle": 11789,
+    "unidades_en_movimientos": 11789,
+    "stock_negativo": 0,
+    "consistente": true
+  }
+}

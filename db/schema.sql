@@ -438,3 +438,18 @@ BEGIN
     EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE %s FROM authenticated', app_tables);
   END IF;
 END $$;
+
+-- Restricciones de integridad adicionales. NOT VALID: se exigen en filas nuevas o modificadas
+-- sin rechazar el arranque si existieran datos históricos previos que no las cumplan.
+DO $$ BEGIN
+  ALTER TABLE productos ADD CONSTRAINT chk_productos_stock_no_negativo CHECK (stock_actual >= 0) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE productos ADD CONSTRAINT chk_productos_precio_no_negativo CHECK (precio_venta >= 0) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cuentas_fiado ADD CONSTRAINT chk_cuentas_fiado_saldo_no_negativo CHECK (saldo_pendiente >= 0) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

@@ -1,0 +1,7 @@
+hora_respaldo_utc=2026-10-04T20:58:32Z
+sha256=73cbf89603eb8e9e09ee07a25b696addb68546bbd4c2dfafc01e1c824099b079
+tamano_bytes=120412
+duracion_respaldo_s=.106924231
+duracion_restauracion_s=.184203278
+tablas_con_diferencia_esperada=0 lineas_distintas=2
+estructura_identica=si

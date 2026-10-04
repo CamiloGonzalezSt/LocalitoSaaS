@@ -1,0 +1,15 @@
+npm warn config production Use `--omit=dev` instead.
+
+> localito@0.1.0 typecheck
+> npm run typecheck -w apps/web && npm run typecheck -w apps/api
+
+npm warn config production Use `--omit=dev` instead.
+
+> @localito/web@0.1.0 typecheck
+> tsc -b --noEmit
+
+npm warn config production Use `--omit=dev` instead.
+
+> @localito/api@0.1.0 typecheck
+> tsc -p tsconfig.json --noEmit
+

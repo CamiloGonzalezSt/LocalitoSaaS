@@ -219,9 +219,15 @@ export async function createRepository() {
   }
 
   const isSupabase = /supabase\.(co|com)|pooler\.supabase\.com/i.test(databaseUrl);
+  // Con DATABASE_SSL_CA (certificado PEM de la autoridad del proveedor) se valida la cadena completa.
+  // Sin ella se mantiene el comportamiento anterior (cifrado sin validar el certificado) y se advierte.
+  const sslCa = process.env.DATABASE_SSL_CA?.replace(/\\n/g, "\n");
+  if (isSupabase && !sslCa) {
+    console.warn("[localito-api] Conexión a Supabase sin validar el certificado del servidor. Defina DATABASE_SSL_CA con el certificado raíz del proveedor.");
+  }
   const pool = new Pool({
     connectionString: databaseUrl,
-    ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
+    ssl: isSupabase ? (sslCa ? { ca: sslCa, rejectUnauthorized: true } : { rejectUnauthorized: false }) : undefined,
     max: process.env.VERCEL === "1" ? 1 : 10,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
@@ -1435,8 +1441,8 @@ export class PostgresRepository implements DataRepository {
       endsAt: new Date(now.getTime() + 30 * 86_400_000).toISOString()
     } : { startedAt: current.currentPeriodStartedAt, endsAt: current.currentPeriodEndsAt };
     const result = await this.pool.query(
-      `update suscripciones set plan=$1, estado=$2, inicio_periodo=$3, fin_periodo=$4, proveedor_pago=$5,
-       fecha_cancelacion=case when $2='cancelled' then CURRENT_TIMESTAMP when $2 in ('active','trialing') then null else fecha_cancelacion end,
+      `update suscripciones set plan=$1, estado=$2::varchar, inicio_periodo=$3, fin_periodo=$4, proveedor_pago=$5,
+       fecha_cancelacion=case when $2::varchar='cancelled' then CURRENT_TIMESTAMP when $2::varchar in ('active','trialing') then null else fecha_cancelacion end,
        plan_solicitado=case when $6::text is null then null else $6 end,
        fecha_solicitud_cambio=case when $6::text is null then null when $6::text <> coalesce(plan_solicitado, '') then CURRENT_TIMESTAMP else fecha_solicitud_cambio end,
        fecha_actualizacion=CURRENT_TIMESTAMP where negocio_id=$7 returning *`,
@@ -2425,7 +2431,7 @@ export class PostgresRepository implements DataRepository {
       await client.query("begin");
       const orderResult = await client.query(`select * from ordenes_compra where id=$1 and negocio_id=$2 for update`, [purchaseId,tenantId]);
       if (!orderResult.rows[0]) { await client.query("rollback"); return null; }
-      const details = await client.query(`select * from detalle_ordenes_compra where orden_id=$1 for update`, [purchaseId]);
+      const details = await client.query(`select * from detalle_ordenes_compra where orden_id=$1 order by producto_id for update`, [purchaseId]);
       for (const item of details.rows) {
         const remaining = Number(item.cantidad)-Number(item.cantidad_recibida);
         const received = Math.min(remaining, Math.max(0, quantities?.[item.producto_id] ?? remaining));
@@ -2439,7 +2445,7 @@ export class PostgresRepository implements DataRepository {
       }
       const pending = await client.query(`select count(*)::int as count from detalle_ordenes_compra where orden_id=$1 and cantidad_recibida<cantidad`, [purchaseId]);
       const status = Number(pending.rows[0].count)===0?"received":"partially_received";
-      await client.query(`update ordenes_compra set estado=$1,fecha_recepcion=case when $1='received' then CURRENT_TIMESTAMP else fecha_recepcion end where id=$2`, [status,purchaseId]);
+      await client.query(`update ordenes_compra set estado=$1::varchar,fecha_recepcion=case when $1::varchar='received' then CURRENT_TIMESTAMP else fecha_recepcion end where id=$2`, [status,purchaseId]);
       await client.query("commit");
       return (await this.getPurchaseOrders(tenantId)).find((purchase)=>purchase.id===purchaseId)??null;
     } catch(error){await client.query("rollback");throw error;} finally{client.release();}
@@ -2467,7 +2473,14 @@ export class PostgresRepository implements DataRepository {
 
   async openCashSession(tenantId: string, amount: number, userId: string) {
     if(await this.getOpenCashSession(tenantId)) throw new Error("Ya existe una caja abierta.");
-    const result=await this.pool.query(`insert into sesiones_caja (id,negocio_id,usuario_apertura_id,monto_inicial) values ($1,$2,$3,$4) returning *`,[randomUUID(),tenantId,userId,amount]);
+    let result: pg.QueryResult;
+    try {
+      result=await this.pool.query(`insert into sesiones_caja (id,negocio_id,usuario_apertura_id,monto_inicial) values ($1,$2,$3,$4) returning *`,[randomUUID(),tenantId,userId,amount]);
+    } catch (error) {
+      // Dos aperturas simultáneas: el índice único parcial rechaza la segunda; se informa igual que el chequeo previo.
+      if ((error as { code?: string }).code === "23505") throw new Error("Ya existe una caja abierta.");
+      throw error;
+    }
     const user=(await this.getUsers(tenantId)).find((candidate)=>candidate.id===userId);
     return mapCashSession({...result.rows[0],opened_by_name:user?.name});
   }
@@ -2524,7 +2537,10 @@ export class PostgresRepository implements DataRepository {
     }
     const saleItems: SaleItem[] = [];
 
-    for (const item of body.items) {
+    // Los productos se bloquean siempre en el mismo orden (por id). Si dos ventas incluyen los mismos
+    // productos en orden distinto, bloquear en el orden recibido provoca "deadlock detected".
+    const lockOrder = [...body.items].sort((left, right) => (left.productId < right.productId ? -1 : left.productId > right.productId ? 1 : 0));
+    for (const item of lockOrder) {
       const productResult = await client.query(`select * from productos where id = $1 and negocio_id = $2 for update`, [
         item.productId,
         tenantId
@@ -2542,6 +2558,8 @@ export class PostgresRepository implements DataRepository {
         subtotal: product.salePrice * item.quantity
       });
     }
+    // El ticket conserva el orden en que llegaron los productos.
+    saleItems.sort((left, right) => body.items.findIndex((item) => item.productId === left.productId) - body.items.findIndex((item) => item.productId === right.productId));
 
     const subtotal = saleItems.reduce((sum, item) => sum + item.subtotal, 0);
     const { discount, total, payments, creditAmount } = settleSale(body, subtotal);

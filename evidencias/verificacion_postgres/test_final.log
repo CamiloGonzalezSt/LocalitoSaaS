@@ -1,0 +1,583 @@
+npm warn config production Use `--omit=dev` instead.
+
+> localito@0.1.0 pretest
+> npm run build -w packages/shared
+
+npm warn config production Use `--omit=dev` instead.
+
+> @localito/shared@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> localito@0.1.0 test
+> tsx --test apps/api/src/localito.test.ts scripts/improvements.test.ts scripts/hardening.test.ts scripts/design.test.ts scripts/dashboard.test.ts scripts/inventory.test.ts scripts/sale-workspace.test.ts scripts/postgres.integration.test.ts
+
+TAP version 13
+# Subtest: expected domain errors do not leak as internal server failures
+ok 1 - expected domain errors do not leak as internal server failures
+  ---
+  duration_ms: 3.875805
+  type: 'test'
+  ...
+# Subtest: production and Vercel require persistent storage
+ok 2 - production and Vercel require persistent storage
+  ---
+  duration_ms: 0.236728
+  type: 'test'
+  ...
+# Subtest: database URL resolution ignores blank values and supports Vercel aliases
+ok 3 - database URL resolution ignores blank values and supports Vercel aliases
+  ---
+  duration_ms: 0.197146
+  type: 'test'
+  ...
+# Subtest: PostgreSQL returns and cancellations reuse the held Vercel connection
+ok 4 - PostgreSQL returns and cancellations reuse the held Vercel connection
+  ---
+  duration_ms: 1.48691
+  type: 'test'
+  ...
+# Subtest: vision provider prefers Groq and supports an explicit OpenAI fallback
+ok 5 - vision provider prefers Groq and supports an explicit OpenAI fallback
+  ---
+  duration_ms: 0.234964
+  type: 'test'
+  ...
+# Subtest: vision provider explains the free quota retry time
+ok 6 - vision provider explains the free quota retry time
+  ---
+  duration_ms: 28.922332
+  type: 'test'
+  ...
+# Subtest: vision provider distinguishes its payload limit from a browser upload limit
+ok 7 - vision provider distinguishes its payload limit from a browser upload limit
+  ---
+  duration_ms: 0.639952
+  type: 'test'
+  ...
+# Subtest: PostgreSQL demo seeds use stable UUIDs
+ok 8 - PostgreSQL demo seeds use stable UUIDs
+  ---
+  duration_ms: 0.819143
+  type: 'test'
+  ...
+# Subtest: passwords and sessions use non-predictable hashes
+ok 9 - passwords and sessions use non-predictable hashes
+  ---
+  duration_ms: 112.849046
+  type: 'test'
+  ...
+# Subtest: transactional email selects only a fully configured provider
+ok 10 - transactional email selects only a fully configured provider
+  ---
+  duration_ms: 0.58133
+  type: 'test'
+  ...
+# Subtest: tenant registration is isolated and rejects duplicate emails
+ok 11 - tenant registration is isolated and rejects duplicate emails
+  ---
+  duration_ms: 38.218095
+  type: 'test'
+  ...
+# Subtest: new tenants receive a 30-day Pro trial with centralized entitlements
+ok 12 - new tenants receive a 30-day Pro trial with centralized entitlements
+  ---
+  duration_ms: 39.27031
+  type: 'test'
+  ...
+# Subtest: plan changes gate Pro features and expired subscriptions become read-only
+ok 13 - plan changes gate Pro features and expired subscriptions become read-only
+  ---
+  duration_ms: 37.394833
+  type: 'test'
+  ...
+# Subtest: manual subscription requests never activate themselves and preserve data access
+ok 14 - manual subscription requests never activate themselves and preserve data access
+  ---
+  duration_ms: 37.699177
+  type: 'test'
+  ...
+# Subtest: owners can update business identity without changing tenant activation
+ok 15 - owners can update business identity without changing tenant activation
+  ---
+  duration_ms: 37.40651
+  type: 'test'
+  ...
+# Subtest: initial inventory bulk import validates rows, avoids duplicates and is safe to retry
+ok 16 - initial inventory bulk import validates rows, avoids duplicates and is safe to retry
+  ---
+  duration_ms: 45.959681
+  type: 'test'
+  ...
+# Subtest: password recovery is single-use, changes the password and revokes sessions
+ok 17 - password recovery is single-use, changes the password and revokes sessions
+  ---
+  duration_ms: 151.576197
+  type: 'test'
+  ...
+# Subtest: system admin manages tenants and their users without entering store operations
+ok 18 - system admin manages tenants and their users without entering store operations
+  ---
+  duration_ms: 118.084748
+  type: 'test'
+  ...
+# Subtest: critical business flows are consistent and idempotent
+ok 19 - critical business flows are consistent and idempotent
+  ---
+  duration_ms: 40.483306
+  type: 'test'
+  ...
+# Subtest: closing the cash register resets the dashboard period without losing its history
+ok 20 - closing the cash register resets the dashboard period without losing its history
+  ---
+  duration_ms: 50.148377
+  type: 'test'
+  ...
+# Subtest: invoice vision output is normalized and only matches products from the tenant catalog
+ok 21 - invoice vision output is normalized and only matches products from the tenant catalog
+  ---
+  duration_ms: 0.666033
+  type: 'test'
+  ...
+# Subtest: invoice vision request uses a strict schema and disables provider storage
+ok 22 - invoice vision request uses a strict schema and disables provider storage
+  ---
+  duration_ms: 1.484272
+  type: 'test'
+  ...
+# Subtest: quick sale normalizes multiple products, groups quantities and never trusts unknown catalog ids
+ok 23 - quick sale normalizes multiple products, groups quantities and never trusts unknown catalog ids
+  ---
+  duration_ms: 0.761186
+  type: 'test'
+  ...
+# Subtest: quick sale vision uses strict structured output, catalog context and provider privacy controls
+ok 24 - quick sale vision uses strict structured output, catalog context and provider privacy controls
+  ---
+  duration_ms: 1.053847
+  type: 'test'
+  ...
+# Subtest: quick sale uses Groq vision JSON mode without sending prices or stock
+ok 25 - quick sale uses Groq vision JSON mode without sending prices or stock
+  ---
+  duration_ms: 0.889165
+  type: 'test'
+  ...
+# Subtest: quick sale reads a product created immediately before the analysis from the current tenant catalog
+ok 26 - quick sale reads a product created immediately before the analysis from the current tenant catalog
+  ---
+  duration_ms: 38.530253
+  type: 'test'
+  ...
+# Subtest: quick sale adds reviewed quantities to the existing POS ticket without changing inventory
+ok 27 - quick sale adds reviewed quantities to the existing POS ticket without changing inventory
+  ---
+  duration_ms: 0.486743
+  type: 'test'
+  ...
+# Subtest: invoice import validates review fields, receives stock once and blocks duplicate invoices
+ok 28 - invoice import validates review fields, receives stock once and blocks duplicate invoices
+  ---
+  duration_ms: 39.694342
+  type: 'test'
+  ...
+# Subtest: invoice import rejects unsafe quantities and unconfirmed sale prices before writing
+ok 29 - invoice import rejects unsafe quantities and unconfirmed sale prices before writing
+  ---
+  duration_ms: 0.327551
+  type: 'test'
+  ...
+# Subtest: administration can reset credentials and permanently delete users without deleting sale history
+ok 30 - administration can reset credentials and permanently delete users without deleting sale history
+  ---
+  duration_ms: 186.394067
+  type: 'test'
+  ...
+# Subtest: platform deletion removes a tenant and all its operational data
+ok 31 - platform deletion removes a tenant and all its operational data
+  ---
+  duration_ms: 38.458779
+  type: 'test'
+  ...
+# Subtest: inventory alerts and destination filters share stock rules
+ok 32 - inventory alerts and destination filters share stock rules
+  ---
+  duration_ms: 15.096237
+  type: 'test'
+  ...
+# Subtest: expiry uses inclusive 30 calendar days and excludes empty stock
+ok 33 - expiry uses inclusive 30 calendar days and excludes empty stock
+  ---
+  duration_ms: 0.373436
+  type: 'test'
+  ...
+# Subtest: business day stays in Chile across UTC midnight
+ok 34 - business day stays in Chile across UTC midnight
+  ---
+  duration_ms: 0.302082
+  type: 'test'
+  ...
+# Subtest: overdue excludes paid, cancelled, zero balances and debts due today
+ok 35 - overdue excludes paid, cancelled, zero balances and debts due today
+  ---
+  duration_ms: 1.273183
+  type: 'test'
+  ...
+# Subtest: recent sales are sorted without mutation and omit cancelled sales
+ok 36 - recent sales are sorted without mutation and omit cancelled sales
+  ---
+  duration_ms: 0.323627
+  type: 'test'
+  ...
+# Subtest: light theme keeps body, action and selected-payment text at 4.5:1 contrast
+ok 37 - light theme keeps body, action and selected-payment text at 4.5:1 contrast
+  ---
+  duration_ms: 1.743118
+  type: 'test'
+  ...
+# Subtest: dark theme keeps body, action and selected-payment text at 4.5:1 contrast
+ok 38 - dark theme keeps body, action and selected-payment text at 4.5:1 contrast
+  ---
+  duration_ms: 0.412254
+  type: 'test'
+  ...
+# Subtest: selected payment uses the tested foreground and a visible check
+ok 39 - selected payment uses the tested foreground and a visible check
+  ---
+  duration_ms: 4.46294
+  type: 'test'
+  ...
+# Subtest: shared typography has no viewport font scaling or heavy display weights
+ok 40 - shared typography has no viewport font scaling or heavy display weights
+  ---
+  duration_ms: 73.340423
+  type: 'test'
+  ...
+# Subtest: cash tabs keep a single four-column row and inactive panels stay hidden
+ok 41 - cash tabs keep a single four-column row and inactive panels stay hidden
+  ---
+  duration_ms: 1.538852
+  type: 'test'
+  ...
+# Subtest: recent sale rows and expanded details have distinct themed surfaces
+ok 42 - recent sale rows and expanded details have distinct themed surfaces
+  ---
+  duration_ms: 5.195675
+  type: 'test'
+  ...
+# Subtest: sale search dialog has an opaque theme surface above its backdrop
+ok 43 - sale search dialog has an opaque theme surface above its backdrop
+  ---
+  duration_ms: 0.518293
+  type: 'test'
+  ...
+# Subtest: sale action dialog has an opaque themed surface
+ok 44 - sale action dialog has an opaque themed surface
+  ---
+  duration_ms: 0.383134
+  type: 'test'
+  ...
+# Subtest: invalid sale payloads never alter stock, debt or sales
+    # Subtest: invalid case 1
+    ok 1 - invalid case 1
+      ---
+      duration_ms: 1.291744
+      type: 'test'
+      ...
+    # Subtest: invalid case 2
+    ok 2 - invalid case 2
+      ---
+      duration_ms: 0.176228
+      type: 'test'
+      ...
+    # Subtest: invalid case 3
+    ok 3 - invalid case 3
+      ---
+      duration_ms: 0.122126
+      type: 'test'
+      ...
+    # Subtest: invalid case 4
+    ok 4 - invalid case 4
+      ---
+      duration_ms: 0.168069
+      type: 'test'
+      ...
+    # Subtest: invalid case 5
+    ok 5 - invalid case 5
+      ---
+      duration_ms: 0.111068
+      type: 'test'
+      ...
+    # Subtest: invalid case 6
+    ok 6 - invalid case 6
+      ---
+      duration_ms: 0.101492
+      type: 'test'
+      ...
+    # Subtest: invalid case 7
+    ok 7 - invalid case 7
+      ---
+      duration_ms: 0.134191
+      type: 'test'
+      ...
+    # Subtest: invalid case 8
+    ok 8 - invalid case 8
+      ---
+      duration_ms: 0.160614
+      type: 'test'
+      ...
+    # Subtest: invalid case 9
+    ok 9 - invalid case 9
+      ---
+      duration_ms: 0.3292
+      type: 'test'
+      ...
+    # Subtest: invalid case 10
+    ok 10 - invalid case 10
+      ---
+      duration_ms: 0.199654
+      type: 'test'
+      ...
+    # Subtest: invalid case 11
+    ok 11 - invalid case 11
+      ---
+      duration_ms: 0.105557
+      type: 'test'
+      ...
+    # Subtest: invalid case 12
+    ok 12 - invalid case 12
+      ---
+      duration_ms: 0.142362
+      type: 'test'
+      ...
+    # Subtest: invalid case 13
+    ok 13 - invalid case 13
+      ---
+      duration_ms: 0.327077
+      type: 'test'
+      ...
+    # Subtest: invalid case 14
+    ok 14 - invalid case 14
+      ---
+      duration_ms: 0.095345
+      type: 'test'
+      ...
+    # Subtest: invalid case 15
+    ok 15 - invalid case 15
+      ---
+      duration_ms: 0.085218
+      type: 'test'
+      ...
+    # Subtest: invalid case 16
+    ok 16 - invalid case 16
+      ---
+      duration_ms: 0.218263
+      type: 'test'
+      ...
+    # Subtest: invalid case 17
+    ok 17 - invalid case 17
+      ---
+      duration_ms: 0.113786
+      type: 'test'
+      ...
+    # Subtest: invalid case 18
+    ok 18 - invalid case 18
+      ---
+      duration_ms: 0.086568
+      type: 'test'
+      ...
+    # Subtest: invalid case 19
+    ok 19 - invalid case 19
+      ---
+      duration_ms: 0.192418
+      type: 'test'
+      ...
+    # Subtest: invalid case 20
+    ok 20 - invalid case 20
+      ---
+      duration_ms: 0.110654
+      type: 'test'
+      ...
+    # Subtest: invalid case 21
+    ok 21 - invalid case 21
+      ---
+      duration_ms: 0.154278
+      type: 'test'
+      ...
+    1..21
+ok 45 - invalid sale payloads never alter stock, debt or sales
+  ---
+  duration_ms: 45.510187
+  type: 'test'
+  ...
+# Subtest: audit pagination spans more than 100 entries without duplicates; cursor and search are tenant scoped
+ok 46 - audit pagination spans more than 100 entries without duplicates; cursor and search are tenant scoped
+  ---
+  duration_ms: 11.414016
+  type: 'test'
+  ...
+# Subtest: offline rejection isolation, transient stops, account isolation, locks and corrupt data preservation
+ok 47 - offline rejection isolation, transient stops, account isolation, locks and corrupt data preservation
+  ---
+  duration_ms: 2.686566
+  type: 'test'
+  ...
+# Subtest: business settings reject invalid combinations and image payloads
+ok 48 - business settings reject invalid combinations and image payloads
+  ---
+  duration_ms: 2.396692
+  type: 'test'
+  ...
+# Subtest: tenant isolation, photo replacement/removal, idempotent sales, debt cash and overnight closing
+ok 49 - tenant isolation, photo replacement/removal, idempotent sales, debt cash and overnight closing
+  ---
+  duration_ms: 41.603445
+  type: 'test'
+  ...
+# Subtest: replenishment suggestion targets twice the minimum stock
+ok 50 - replenishment suggestion targets twice the minimum stock
+  ---
+  duration_ms: 0.741496
+  type: 'test'
+  ...
+# Subtest: proposal source keeps the product cost as a reference
+ok 51 - proposal source keeps the product cost as a reference
+  ---
+  duration_ms: 1.272787
+  type: 'test'
+  ...
+# Subtest: CP-114 última unidad: dos ventas simultáneas, 25 repeticiones
+ok 52 - CP-114 última unidad: dos ventas simultáneas, 25 repeticiones # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.784836
+  type: 'test'
+  ...
+# Subtest: CP-114b stock 10 con 30 ventas simultáneas de una unidad
+ok 53 - CP-114b stock 10 con 30 ventas simultáneas de una unidad # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.212265
+  type: 'test'
+  ...
+# Subtest: CP-114c orden de bloqueo: ventas [A,B] y [B,A] simultáneas sin deadlock (40 repeticiones)
+ok 54 - CP-114c orden de bloqueo: ventas [A,B] y [B,A] simultáneas sin deadlock (40 repeticiones) # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.075698
+  type: 'test'
+  ...
+# Subtest: CP-115 idempotencia: diez solicitudes simultáneas con la misma clave
+ok 55 - CP-115 idempotencia: diez solicitudes simultáneas con la misma clave # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.068892
+  type: 'test'
+  ...
+# Subtest: CP-119 respuesta perdida: reintento con la misma clave tras confirmar (nivel repositorio)
+ok 56 - CP-119 respuesta perdida: reintento con la misma clave tras confirmar (nivel repositorio) # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.083429
+  type: 'test'
+  ...
+# Subtest: CP-116 rollback: ticket con producto sin stock no deja efectos parciales
+ok 57 - CP-116 rollback: ticket con producto sin stock no deja efectos parciales # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.077404
+  type: 'test'
+  ...
+# Subtest: CP-117 aislamiento entre negocios en PostgreSQL
+ok 58 - CP-117 aislamiento entre negocios en PostgreSQL # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.117294
+  type: 'test'
+  ...
+# Subtest: Fiado: límite de crédito con ventas fiadas simultáneas
+ok 59 - Fiado: límite de crédito con ventas fiadas simultáneas # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.14744
+  type: 'test'
+  ...
+# Subtest: Abonos simultáneos: 10 abonos de 100 sobre una deuda de 1000
+ok 60 - Abonos simultáneos: 10 abonos de 100 sobre una deuda de 1000 # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.210109
+  type: 'test'
+  ...
+# Subtest: Abonos simultáneos que exceden la deuda: 5 abonos de 300 sobre 1000
+ok 61 - Abonos simultáneos que exceden la deuda: 5 abonos de 300 sobre 1000 # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.146482
+  type: 'test'
+  ...
+# Subtest: Caja: cinco aperturas simultáneas dejan una sola caja abierta
+ok 62 - Caja: cinco aperturas simultáneas dejan una sola caja abierta # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.084936
+  type: 'test'
+  ...
+# Subtest: Compras: recepción parcial y total de una orden en PostgreSQL
+ok 63 - Compras: recepción parcial y total de una orden en PostgreSQL # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.046877
+  type: 'test'
+  ...
+# Subtest: Compras: dos recepciones simultáneas de la misma orden no duplican el stock
+ok 64 - Compras: dos recepciones simultáneas de la misma orden no duplican el stock # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.038113
+  type: 'test'
+  ...
+# Subtest: Suscripción: cambio de plan, activación y cancelación en PostgreSQL
+ok 65 - Suscripción: cambio de plan, activación y cancelación en PostgreSQL # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.03756
+  type: 'test'
+  ...
+# Subtest: Integridad en base: stock y saldo de fiado negativos son rechazados por restricciones
+ok 66 - Integridad en base: stock y saldo de fiado negativos son rechazados por restricciones # SKIP TEST_DATABASE_URL no está definida
+  ---
+  duration_ms: 0.034838
+  type: 'test'
+  ...
+# Subtest: recovered tickets use current prices and available stock
+ok 67 - recovered tickets use current prices and available stock
+  ---
+  duration_ms: 1.481757
+  type: 'test'
+  ...
+# Subtest: unavailable products are removed and discount cannot exceed remaining total
+ok 68 - unavailable products are removed and discount cannot exceed remaining total
+  ---
+  duration_ms: 1.247644
+  type: 'test'
+  ...
+# Subtest: untracked stock does not reduce quantities
+ok 69 - untracked stock does not reduce quantities
+  ---
+  duration_ms: 0.168069
+  type: 'test'
+  ...
+# Subtest: storage roundtrip preserves distinct active and held tickets
+ok 70 - storage roundtrip preserves distinct active and held tickets
+  ---
+  duration_ms: 0.512558
+  type: 'test'
+  ...
+# Subtest: corrupt storage is rejected instead of loading invalid quantities
+ok 71 - corrupt storage is rejected instead of loading invalid quantities
+  ---
+  duration_ms: 0.473974
+  type: 'test'
+  ...
+# Subtest: storage scopes cannot collide across businesses, users or delimiters
+ok 72 - storage scopes cannot collide across businesses, users or delimiters
+  ---
+  duration_ms: 0.125035
+  type: 'test'
+  ...
+1..72
+# tests 93
+# suites 0
+# pass 78
+# fail 0
+# cancelled 0
+# skipped 15
+# todo 0
+# duration_ms 4787.549098

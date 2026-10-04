@@ -1,0 +1,138 @@
+{
+  "executed_at_utc": "2026-10-04T21:09:40.388120+00:00",
+  "environment": "API HTTP local con PostgresRepository (PostgreSQL de prueba) y datos sintéticos",
+  "commit": "e1523d4ba93c8f36724f11edcfd0b91e6d4d9246",
+  "cases": [
+    {
+      "id": "HTTP01",
+      "name": "Acceso sin sesión",
+      "expected": "401 al consultar productos",
+      "obtained": {
+        "status": 401
+      },
+      "status": "Aprobado",
+      "duration_ms": 3.76
+    },
+    {
+      "id": "HTTP02",
+      "name": "Clave incorrecta",
+      "expected": "401 al iniciar sesión",
+      "obtained": {
+        "message": "Credenciales invalidas."
+      },
+      "status": "Aprobado",
+      "duration_ms": 40.71
+    },
+    {
+      "id": "HTTP03",
+      "name": "Aislamiento de lectura",
+      "expected": "Solo producto A al alterar cabecera de negocio",
+      "obtained": {
+        "productos_A": 1,
+        "productos_B_visibles": 0
+      },
+      "status": "Aprobado",
+      "duration_ms": 3.44
+    },
+    {
+      "id": "HTTP04",
+      "name": "Aislamiento de escritura",
+      "expected": "404 y ningún cambio sobre producto B",
+      "obtained": {
+        "status": 404,
+        "producto_B_sin_cambios": true
+      },
+      "status": "Aprobado",
+      "duration_ms": 5.86
+    },
+    {
+      "id": "HTTP05",
+      "name": "Permiso vendedor",
+      "expected": "403 al crear productos",
+      "obtained": {
+        "message": "Tu rol no tiene permisos para realizar esta accion."
+      },
+      "status": "Aprobado",
+      "duration_ms": 2.54
+    },
+    {
+      "id": "HTTP06",
+      "name": "Venta inválida sin efectos",
+      "expected": "Rechazo de cantidad negativa y conservación de stock",
+      "obtained": {
+        "status": 400,
+        "stock": 10,
+        "ventas_nuevas": 0
+      },
+      "status": "Aprobado",
+      "duration_ms": 49.63
+    },
+    {
+      "id": "HTTP07",
+      "name": "Venta y descuento de stock",
+      "expected": "Venta por 2000 CLP y stock de 10 a 8",
+      "obtained": {
+        "total_CLP": 2000,
+        "stock_final": 8
+      },
+      "status": "Aprobado",
+      "duration_ms": 11.29
+    },
+    {
+      "id": "HTTP08",
+      "name": "Reintento idempotente",
+      "expected": "Una venta y stock 8 tras repetir la misma clave",
+      "obtained": {
+        "misma_venta": true,
+        "ventas": 1,
+        "stock": 8
+      },
+      "status": "Aprobado",
+      "duration_ms": 14.36
+    },
+    {
+      "id": "HTTP09",
+      "name": "Venta fiada",
+      "expected": "Deuda de 1000 CLP vinculada al cliente",
+      "obtained": {
+        "deuda_CLP": 1000,
+        "stock_final": 7
+      },
+      "status": "Aprobado",
+      "duration_ms": 10.88
+    },
+    {
+      "id": "HTTP10",
+      "name": "Abono de deuda",
+      "expected": "Saldo de 1000 a 600 CLP",
+      "obtained": {
+        "abono_CLP": 400,
+        "saldo_CLP": 600
+      },
+      "status": "Aprobado",
+      "duration_ms": 26.24
+    },
+    {
+      "id": "HTTP11",
+      "name": "Consulta de auditoría por rol",
+      "expected": "Dueño obtiene eventos y vendedor recibe 403",
+      "obtained": {
+        "eventos_visibles_owner": 6,
+        "seller_status": 403
+      },
+      "status": "Aprobado",
+      "duration_ms": 11.36
+    },
+    {
+      "id": "HTTP12",
+      "name": "Revocación de sesión",
+      "expected": "401 después de cerrar sesión",
+      "obtained": {
+        "sesion_revocada": true,
+        "status": 401
+      },
+      "status": "Aprobado",
+      "duration_ms": 13.76
+    }
+  ]
+}

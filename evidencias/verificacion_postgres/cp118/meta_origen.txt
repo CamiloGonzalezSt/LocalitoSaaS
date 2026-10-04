@@ -1,0 +1,3 @@
+constraints|77
+indexes|77
+tables|24

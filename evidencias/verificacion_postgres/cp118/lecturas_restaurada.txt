@@ -1,0 +1,3 @@
+ventas|122
+stock_negativo|0
+saldo_negativo|0

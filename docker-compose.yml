@@ -8,7 +8,8 @@ services:
       POSTGRES_USER: localito
       POSTGRES_PASSWORD: localito
     ports:
-      - "5432:5432"
+      # Solo accesible desde este equipo. Cambie la contraseña si usa una red compartida.
+      - "127.0.0.1:5432:5432"
     volumes:
       - localito_pg_data:/var/lib/postgresql/data
 

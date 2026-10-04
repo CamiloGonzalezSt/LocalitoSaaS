@@ -338,7 +338,7 @@ Las tablas tienen RLS activado y sin políticas públicas: Localito accede exclu
 
 Los negocios nuevos pueden crearse desde **Crear cuenta** en la pantalla de acceso o por el administrador de plataforma durante la demostración. Cada usuario puede solicitar por correo el restablecimiento de su contraseña; la nueva clave debe tener al menos 10 caracteres, una letra y un número. El envío real depende de configurar un proveedor de correo en las variables de entorno.
 
-En desarrollo local, si no se define otra clave, el administrador usa `caj.gonzalez.st@gmail.com` / `AdminLocalito2026`. Ese valor de desarrollo se deshabilita automáticamente con `NODE_ENV=production`.
+En desarrollo local, si no se define otra clave, el administrador usa una cuenta de desarrollo cuyo correo y clave se definen en el archivo `.env` local (`PLATFORM_ADMIN_EMAIL` y `PLATFORM_ADMIN_PASSWORD`) y no se publican en este documento. Ese valor de desarrollo se deshabilita automáticamente con `NODE_ENV=production`.
 
 ## Flujo sugerido de demostración
 

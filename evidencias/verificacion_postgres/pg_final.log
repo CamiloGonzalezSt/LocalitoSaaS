@@ -1,0 +1,105 @@
+npm warn config production Use `--omit=dev` instead.
+
+> localito@0.1.0 test:postgres
+> tsx --test scripts/postgres.integration.test.ts
+
+TAP version 13
+# Subtest: CP-114 última unidad: dos ventas simultáneas, 25 repeticiones
+ok 1 - CP-114 última unidad: dos ventas simultáneas, 25 repeticiones
+  ---
+  duration_ms: 701.821301
+  type: 'test'
+  ...
+# Subtest: CP-114b stock 10 con 30 ventas simultáneas de una unidad
+ok 2 - CP-114b stock 10 con 30 ventas simultáneas de una unidad
+  ---
+  duration_ms: 180.548182
+  type: 'test'
+  ...
+# Subtest: CP-114c orden de bloqueo: ventas [A,B] y [B,A] simultáneas sin deadlock (40 repeticiones)
+ok 3 - CP-114c orden de bloqueo: ventas [A,B] y [B,A] simultáneas sin deadlock (40 repeticiones)
+  ---
+  duration_ms: 270.613352
+  type: 'test'
+  ...
+# Subtest: CP-115 idempotencia: diez solicitudes simultáneas con la misma clave
+ok 4 - CP-115 idempotencia: diez solicitudes simultáneas con la misma clave
+  ---
+  duration_ms: 67.621024
+  type: 'test'
+  ...
+# Subtest: CP-119 respuesta perdida: reintento con la misma clave tras confirmar (nivel repositorio)
+ok 5 - CP-119 respuesta perdida: reintento con la misma clave tras confirmar (nivel repositorio)
+  ---
+  duration_ms: 48.573492
+  type: 'test'
+  ...
+# Subtest: CP-116 rollback: ticket con producto sin stock no deja efectos parciales
+ok 6 - CP-116 rollback: ticket con producto sin stock no deja efectos parciales
+  ---
+  duration_ms: 45.372096
+  type: 'test'
+  ...
+# Subtest: CP-117 aislamiento entre negocios en PostgreSQL
+ok 7 - CP-117 aislamiento entre negocios en PostgreSQL
+  ---
+  duration_ms: 87.668347
+  type: 'test'
+  ...
+# Subtest: Fiado: límite de crédito con ventas fiadas simultáneas
+ok 8 - Fiado: límite de crédito con ventas fiadas simultáneas
+  ---
+  duration_ms: 58.273723
+  type: 'test'
+  ...
+# Subtest: Abonos simultáneos: 10 abonos de 100 sobre una deuda de 1000
+ok 9 - Abonos simultáneos: 10 abonos de 100 sobre una deuda de 1000
+  ---
+  duration_ms: 79.340299
+  type: 'test'
+  ...
+# Subtest: Abonos simultáneos que exceden la deuda: 5 abonos de 300 sobre 1000
+ok 10 - Abonos simultáneos que exceden la deuda: 5 abonos de 300 sobre 1000
+  ---
+  duration_ms: 52.631115
+  type: 'test'
+  ...
+# Subtest: Caja: cinco aperturas simultáneas dejan una sola caja abierta
+ok 11 - Caja: cinco aperturas simultáneas dejan una sola caja abierta
+  ---
+  duration_ms: 45.744963
+  type: 'test'
+  ...
+# Subtest: Compras: recepción parcial y total de una orden en PostgreSQL
+ok 12 - Compras: recepción parcial y total de una orden en PostgreSQL
+  ---
+  duration_ms: 55.869101
+  type: 'test'
+  ...
+# Subtest: Compras: dos recepciones simultáneas de la misma orden no duplican el stock
+ok 13 - Compras: dos recepciones simultáneas de la misma orden no duplican el stock
+  ---
+  duration_ms: 51.760646
+  type: 'test'
+  ...
+# Subtest: Suscripción: cambio de plan, activación y cancelación en PostgreSQL
+ok 14 - Suscripción: cambio de plan, activación y cancelación en PostgreSQL
+  ---
+  duration_ms: 43.786101
+  type: 'test'
+  ...
+# Subtest: Integridad en base: stock y saldo de fiado negativos son rechazados por restricciones
+ok 15 - Integridad en base: stock y saldo de fiado negativos son rechazados por restricciones
+  ---
+  duration_ms: 42.555257
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2439.766644
