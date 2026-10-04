@@ -8,7 +8,7 @@ Este documento conserva las síntesis disponibles y desarrolla acciones propuest
 
 # Introducción y criterios de evidencia
 
-La retrospectiva inspecciona la forma de trabajar y busca mejoras para la siguiente iteración [R6]. El registro de Localito es breve. Su calidad puede mejorarse explicando el problema observado, su efecto y una acción verificable. La evidencia disponible no permite reconstruir duración, asistencia o citas textuales de participantes, por lo que esos datos no se inventan.
+La retrospectiva inspecciona la forma de trabajar y busca mejoras para la siguiente iteración (Schwaber y Sutherland, 2020). El registro de Localito es breve. Su calidad puede mejorarse explicando el problema observado, su efecto y una acción verificable. La evidencia disponible no permite reconstruir duración, asistencia o citas textuales de participantes, por lo que esos datos no se inventan.
 
 La Review evalúa el incremento y necesidades del producto; la retrospectiva evalúa personas, interacciones, procesos y herramientas de trabajo. Una decisión de agregar un módulo al producto pertenece al backlog; una acción para registrar evidencia al cerrar historias mejora el proceso del equipo.
 
@@ -31,7 +31,6 @@ La Review evalúa el incremento y necesidades del producto; la retrospectiva eva
 
 ## Sprint 4
 En curso al 03-10-2026. La retrospectiva se completa al cierre del Sprint y no se anticipa como resultado cerrado.
-
 
 # Análisis del Sprint 1
 
@@ -76,16 +75,35 @@ Una mejora es útil cuando cambia una práctica observable. Agregar un criterio 
 
 El cierre de una acción puede acreditarse con una historia que tenga criterios completos, una matriz actualizada o un caso repetible. Si el resultado no aparece, se conserva pendiente y se analiza su impedimento. La retrospectiva debe ayudar al equipo a aprender, no producir conclusiones favorables por defecto.
 
+# Ficha de registro para el siguiente cierre
+
+Este instrumento se completa en la retrospectiva efectivamente realizada. Las síntesis anteriores se conservan con su procedencia documental; no se les agregan asistentes, horarios ni aprobaciones sin confirmación.
+
+Fecha real y Sprint: ______________________________________
+
+Participantes confirmados: ______________________________________
+
+Hecho observado y evidencia concreta: ______________________________________
+
+Efecto sobre trabajo o calidad: ______________________________________
+
+Acción acordada y responsable confirmado: ______________________________________
+
+Fecha de seguimiento y criterio para comprobar la mejora: ______________________________________
+
+Resultado del seguimiento: ______________________________________
+
+El registro de una reunión futura no modifica retrospectivamente los Sprints cerrados. Una aclaración de un registro anterior se fecha como aclaración y conserva su fuente.
+
 # Conclusiones
 
 Los registros existentes identifican problemas concretos de claridad y evidencia. Su ampliación conserva esas observaciones y propone verificaciones que el equipo puede aplicar. El documento mantiene abierto el Sprint 4 y reserva sus conclusiones para resultados reales de cierre.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R6] Schwaber K y Sutherland J 2020. The Scrum Guide. https://scrumguides.org/scrum-guide.html
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+Schwaber, K., y Sutherland, J. (2020). *The Scrum Guide*. https://scrumguides.org/scrum-guide.html
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

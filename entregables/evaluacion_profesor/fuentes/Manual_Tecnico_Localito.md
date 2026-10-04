@@ -76,11 +76,11 @@ Se inicia sesión con cuentas de prueba permitidas, se revisa catálogo y se reg
 npm run check
 ```
 
-El comando ejecuta tipos, pruebas y build. Se conserva la salida y se revisan fallos antes de declarar instalación validada. Esta revisión documental comprobó la definición del script y no lo ejecutó. Los casos integrales PostgreSQL, móviles y UAT se registran por separado.
+El comando ejecuta tipos, pruebas y build. Se conserva la salida y se revisan fallos antes de declarar instalación validada. La campaña del 04 de octubre completó tipos, pruebas y build por separado tras el bloqueo de tsx en check. Los casos integrales PostgreSQL, móviles y UAT se registran por separado.
 
 # Configuración del despliegue
 
-Vercel sirve web y API mediante las rutas descritas en vercel.json y el adaptador api/index.ts. Supabase proporciona conexión PostgreSQL [R12, R25]. Se copia la URI desde el proyecto correcto y el pooler recomendado para ese ambiente; no se construye una conexión inventando host o usuario.
+Vercel sirve web y API mediante las rutas descritas en vercel.json y el adaptador api/index.ts. Supabase proporciona conexión PostgreSQL (Supabase, s. f.a; Vercel, s. f.). Se copia la URI desde el proyecto correcto y el pooler recomendado para ese ambiente; no se construye una conexión inventando host o usuario.
 
 El cambio de variables requiere un despliegue que las incorpore. La URL documentada localito-saas.vercel.app es un antecedente del proyecto; esta tarea no comprobó su estado actual. La comprobación debe usar /api/health, login y una operación de prueba. Configuración visual verdadera en health indica claves disponibles, no respuesta satisfactoria del proveedor.
 
@@ -104,7 +104,7 @@ Se conserva la idempotencyKey original al reintentar. Un rechazo de stock requie
 
 # Respaldo y restauración
 
-Un respaldo debe restaurarse en una base separada y comprobar sus relaciones [R23]. Se registra fecha y ambiente y se protege el archivo. No se aplican semillas sobre datos reales para resolver una conexión. Cambios de esquema se prueban antes de depender de campos nuevos.
+Un respaldo debe restaurarse en una base separada y comprobar sus relaciones (PostgreSQL Global Development Group, s. f.c). Se registra fecha y ambiente y se protege el archivo. No se aplican semillas sobre datos reales para resolver una conexión. Cambios de esquema se prueban antes de depender de campos nuevos.
 
 # Seguridad y mantenimiento
 
@@ -139,9 +139,9 @@ La web publicada respondía HTTP 200, pero `/api/health` devolvía 500 y el adap
 
 El adaptador de login del código anterior devolvía al navegador el detalle de la excepción. La corrección preparada devuelve 503 y un mensaje genérico cuando falla la base, mientras conserva el diagnóstico en registros del servidor. Publicar ese cambio después de verificar tipos, pruebas y compilación; su publicación no sustituye el paso 2.
 
-> Incremento visual del 09-09-2026 sin migración de base de datos. Tipos/build y 61 pruebas locales aprobados. Antes de desplegar, completar la regresión visual pendiente y revisar el resultado de CI; no se verificó un nuevo despliegue de producción en esta continuación. [Diseño y verificación](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/03_requisitos_diseno/Diseno-Interfaz.md).
+> Incremento visual del 09-09-2026 sin migración de base de datos. Tipos/build y 61 pruebas locales aprobados. Antes de desplegar, completar la regresión visual pendiente y revisar el resultado de CI; no se verificó un nuevo despliegue de producción en esta continuación. [Diseño y verificación](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/03_requisitos_diseno/Diseno-Interfaz.md).
 
-Actualización: **08-09-2026**. Las mejoras recientes se verificaron localmente con memoria, no contra producción. Antes de desplegar, completar las comprobaciones de persistencia siguientes. Consulte [Estado actual](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/01_documentacion_maestra/Estado-Actual.md) para contratos y límites.
+Actualización: **08-09-2026**. Las mejoras recientes se verificaron localmente con memoria, no contra producción. Antes de desplegar, completar las comprobaciones de persistencia siguientes. Consulte [Estado actual](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/01_documentacion_maestra/Estado-Actual.md) para contratos y límites.
 
 ## Verificación diaria
 
@@ -205,20 +205,23 @@ Actualización: **08-09-2026**. Las mejoras recientes se verificaron localmente 
 
 Quedan pendientes la prueba integral PostgreSQL, restauración, cierre concurrente de varios puestos, dispositivos físicos y validación con usuarios. Esta guía no declara un despliegue productivo aprobado.
 
+# Evidencias relacionadas con esta versión
+
+El Informe Académico conecta objetivos, método, antecedentes y resultados. La Matriz de Trazabilidad identifica requisitos e historias asociados a la implementación. El Informe de Verificación conserva las ejecuciones del 04 de octubre de 2026 y distingue su alcance local de la aceptación en PostgreSQL y con usuarios. Control de Entrega reúne la cobertura de los 17 artefactos y los pendientes de cierre.
+
 # Conclusiones
 
 El manual permite instalar, reconocer el ambiente y resolver incidentes preservando datos. La operación responsable se basa en confirmar persistencia, conservar pendientes y distinguir configuración de resultado. Su aplicación debe registrar evidencia del ambiente donde se ejecuta.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R12] Supabase. Connecting to Postgres. https://supabase.com/docs/guides/database/connecting-to-postgres
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[R23] PostgreSQL Global Development Group. PostgreSQL 16 SQL Dump. https://www.postgresql.org/docs/16/backup-dump.html
+PostgreSQL Global Development Group (s. f.c). *PostgreSQL 16 SQL Dump*. https://www.postgresql.org/docs/16/backup-dump.html
 
-[R25] Vercel. Vercel Functions. https://vercel.com/docs/functions
+Supabase (s. f.a). *Connecting to Postgres*. https://supabase.com/docs/guides/database/connecting-to-postgres
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+Vercel (s. f.). *Vercel Functions*. https://vercel.com/docs/functions
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

@@ -8,7 +8,7 @@ El documento explica configuración, puesta en marcha, persistencia, diagnóstic
 
 # Introducción y alcance
 
-Compose describe servicios, redes y volúmenes de una aplicación [R11]. Localito utiliza una parte de ese modelo para reproducir la base local sin exigir una instalación manual de PostgreSQL. El valor reside en una versión declarada y comandos consistentes entre computadores del equipo.
+Compose describe servicios, redes y volúmenes de una aplicación (Docker, s. f.a). Localito utiliza una parte de ese modelo para reproducir la base local sin exigir una instalación manual de PostgreSQL. El valor reside en una versión declarada y comandos consistentes entre computadores del equipo.
 
 El volumen local no es por sí solo un respaldo. Detener un contenedor tampoco elimina necesariamente sus datos. La revisión del archivo distingue datos durables en un volumen, copia de seguridad y restauración probada. Las credenciales de desarrollo del manifiesto no son una recomendación para producción.
 
@@ -31,7 +31,6 @@ services:
 
 volumes:
   localito_pg_data:
-
 
 ```
 
@@ -72,7 +71,7 @@ db:down ejecuta docker compose down. El script no incluye borrado de volúmenes.
 
 La conexión de desarrollo esperada es postgresql://localito:localito@localhost:5432/localito. Si la API corre en el host, localhost identifica el computador y el puerto publicado. Si en el futuro la API se mueve a un contenedor del mismo proyecto, deberá utilizar la red de Compose y el nombre del servicio. No se cambia esa topología en esta entrega.
 
-El archivo .env de la aplicación es leído por dotenv; las variables POSTGRES del servicio están declaradas en Compose. No se debe asumir que cambiar una contraseña en .env reconfigura automáticamente un volumen PostgreSQL ya inicializado. La documentación de variables de Compose ayuda a distinguir interpolación y ambiente del contenedor [R24].
+El archivo .env de la aplicación es leído por dotenv; las variables POSTGRES del servicio están declaradas en Compose. No se debe asumir que cambiar una contraseña en .env reconfigura automáticamente un volumen PostgreSQL ya inicializado. La documentación de variables de Compose ayuda a distinguir interpolación y ambiente del contenedor (Docker, s. f.b).
 
 # Diagnóstico de problemas
 
@@ -88,7 +87,7 @@ Si el backend usa memoria en desarrollo, puede demostrar interfaces sin conserva
 
 # Respaldo y restauración de prueba
 
-Un respaldo PostgreSQL debe poder restaurarse en una base separada [R23]. Para Localito se recomienda exportar antes de modificar esquema y comprobar negocios, ventas y relaciones después de restaurar. El archivo contiene datos privados y debe permanecer fuera del repositorio público.
+Un respaldo PostgreSQL debe poder restaurarse en una base separada (PostgreSQL Global Development Group, s. f.c). Para Localito se recomienda exportar antes de modificar esquema y comprobar negocios, ventas y relaciones después de restaurar. El archivo contiene datos privados y debe permanecer fuera del repositorio público.
 
 La revisión no ejecutó un respaldo ni una restauración. El registro futuro debe conservar fecha, versión del servidor, comando, tamaño, resultado y comprobaciones. Un archivo descargado sin probar su restauración no acredita recuperación.
 
@@ -98,20 +97,23 @@ La base productiva documentada está en Supabase y la API se despliega en Vercel
 
 Una futura contenerización completa requiere servicios API y web, imágenes reproducibles, healthchecks, secretos y redes. Esa alternativa debe evaluarse frente al hosting serverless existente. No se representa como implementada ni se agregan servicios al manifiesto durante esta tarea documental.
 
+# Evidencias relacionadas con esta versión
+
+El Informe Académico conecta objetivos, método, antecedentes y resultados. La Matriz de Trazabilidad identifica requisitos e historias asociados a la implementación. El Informe de Verificación conserva las ejecuciones del 04 de octubre de 2026 y distingue su alcance local de la aceptación en PostgreSQL y con usuarios. Control de Entrega reúne la cobertura de los 17 artefactos y los pendientes de cierre.
+
 # Conclusiones
 
 Compose aporta un entorno PostgreSQL reproducible para el desarrollo de Localito. La documentación distingue servicio, volumen, conexión y respaldo y explica por qué API y web se ejecutan aparte. La evidencia Docker se limita al manifiesto y sus scripts, conservando pendientes las pruebas operativas que no se ejecutaron.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R11] Docker. Compose application model. https://docs.docker.com/compose/intro/compose-application-model/
+Docker (s. f.a). *Compose application model*. https://docs.docker.com/compose/intro/compose-application-model/
 
-[R23] PostgreSQL Global Development Group. PostgreSQL 16 SQL Dump. https://www.postgresql.org/docs/16/backup-dump.html
+Docker (s. f.b). *Environment variables in Compose*. https://docs.docker.com/compose/how-tos/environment-variables/
 
-[R24] Docker. Environment variables in Compose. https://docs.docker.com/compose/how-tos/environment-variables/
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+PostgreSQL Global Development Group (s. f.c). *PostgreSQL 16 SQL Dump*. https://www.postgresql.org/docs/16/backup-dump.html
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

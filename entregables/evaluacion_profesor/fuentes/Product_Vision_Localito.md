@@ -10,7 +10,7 @@ La visión establece dirección y criterios de valor, sin prometer adopción com
 
 Una visión ayuda a decidir qué funciones aportan al objetivo del comercio y cuáles pueden quedar fuera del MVP. Localito busca un flujo comprensible para atender y una base consistente para que el dueño revise su negocio. Agregar una capacidad aislada no es suficiente si introduce doble digitación o dificulta conciliar operaciones.
 
-El documento toma Product Goal de la documentación Scrum y lo relaciona con necesidades y objetivos específicos [P]. La Guía Scrum permite fundamentar la función de ese objetivo dentro del Product Backlog [R6]. La visión aquí expresada es una formulación del equipo, no una cita de una empresa o producto externo.
+El documento toma Product Goal de la documentación Scrum y lo relaciona con necesidades y objetivos específicos (Equipo Localito, 2026). La Guía Scrum permite fundamentar la función de ese objetivo dentro del Product Backlog (Schwaber y Sutherland, 2020). La visión aquí expresada es una formulación del equipo, no una cita de una empresa o producto externo.
 
 # Formulación de la visión
 
@@ -74,77 +74,19 @@ Se prioriza el núcleo que evita pérdida de datos y permite atender: identidad,
 
 La priorización utiliza valor, riesgo y dependencia. Los Sprints futuros pueden orientarse por esa dirección, pero sus historias no se comprometen antes de Planning. La visión orienta el producto sin fijar un calendario ficticio de capacidades ya aceptadas.
 
-# Capacidades y usuarios definidos en el repositorio
-## Usuarios objetivo
+# Evidencias relacionadas con esta versión
 
-Localito está pensado principalmente para:
-
-- almacenes de barrio;
-- minimarkets;
-- botillerías;
-- pequeños comercios con inventario y venta presencial;
-- negocios que trabajan con fiado;
-- dueños que necesitan controlar caja, stock y reportes;
-- vendedores que requieren una interfaz rápida y simple para atender.
-
-El modelo de roles actual contempla:
-
-| Rol | Responsabilidad principal |
-| --- | --- |
-| `system_admin` | Administración de la plataforma, locales, usuarios y estado de suscripciones. |
-| `owner` | Gestión integral del negocio: inventario, caja, clientes, compras, reportes y configuración. |
-| `seller` | Operación diaria de ventas, inventario consultable, clientes y caja según permisos. |
-
-
-## Propuesta de valor e innovación
-
-Localito no se limita a digitalizar un POS. La propuesta combina gestión operativa tradicional con capacidades orientadas a reducir fricción en tareas repetitivas.
-
-### Elementos innovadores del MVP
-
-- **Venta Rápida con IA:** una fotografía puede proponer varios productos y cantidades utilizando exclusivamente el catálogo del negocio.
-- **Ingreso de mercadería desde factura:** la IA propone proveedor, productos, cantidades y costos para que el usuario revise antes de confirmar.
-- **Human-in-the-loop:** la IA nunca vende, descuenta stock ni crea recepciones por sí sola; solamente propone información.
-- **PWA instalable:** experiencia similar a una aplicación sin exigir distribución por App Store o Play Store.
-- **Soporte parcial offline:** cola local exclusiva para ventas y catálogo en IndexedDB para escenarios de conectividad inestable.
-- **Modelo SaaS multi-negocio:** separación lógica de datos, usuarios, planes y permisos por comercio.
-- **Trazabilidad completa:** auditoría, kardex, movimientos de caja, cuentas por cobrar y estados de operación.
-- **Arquitectura orientada a bajo costo:** frontend web, backend Node.js, PostgreSQL administrado y despliegue serverless.
-
-El valor agregado no está en reemplazar la decisión del usuario, sino en **reducir pasos manuales manteniendo control y trazabilidad**.
-
-
-## Planes y permisos
-
-Todo negocio nuevo recibe una prueba de **Localito Pro por 30 días**. `suscripciones` es la fuente de verdad para plan, estado, periodos y referencia futura del proveedor de cobro. La API valida los permisos en cada operación y la interfaz oculta o deriva a **Mi plan** cuando una función no corresponde.
-
-- **Básico ($9.990/mes):** ventas, catálogo, inventario, caja e importación masiva.
-- **Pro ($19.990/mes):** agrega clientes, fiado, proveedores, compras, reportes avanzados, auditoría, alertas y Venta Rápida con foto.
-- Al vencer, los datos no se borran: quedan disponibles en modo lectura y las mutaciones responden `403` hasta reactivar.
-
-La selección por transferencia registra un `pendingPlan`: no activa funciones sin confirmación ni interrumpe una prueba vigente. Las opciones Webpay y Mercado Pago de esta pantalla son únicamente una aprobación sandbox para demostrar el flujo. El cobro recurrente automático con un proveedor externo continúa fuera del MVP académico.
-
-
-## Alcance pendiente
-
-- Cumplimiento tributario chileno, excluido por decisión de esta iteración.
-- Integración real con terminales, Webpay o Mercado Pago, excluida del MVP de tesis: los pagos externos se registran manualmente y las simulaciones no cobran dinero.
-- Configuración de un proveedor real de correo en Vercel; el flujo de recuperación está implementado, pero requiere credenciales de Gmail o Resend para enviar correos.
-- Avisos automáticos por correo distintos de la recuperación de contraseña.
-- Múltiples sucursales, e-commerce público, fidelización y facturación de la suscripción SaaS; son expansiones de producto y no forman parte del núcleo operacional entregado aquí.
-
-El ticket generado por Localito es un comprobante interno no tributario.
+El Informe Académico conecta objetivos, método, antecedentes y resultados. La Matriz de Trazabilidad identifica requisitos e historias asociados a la implementación. El Informe de Verificación conserva las ejecuciones del 04 de octubre de 2026 y distingue su alcance local de la aceptación en PostgreSQL y con usuarios. Control de Entrega reúne la cobertura de los 17 artefactos y los pendientes de cierre.
 
 # Conclusiones
 
 La visión propone una herramienta concreta para relacionar la operación del comercio y mejorar el control del dueño. Su evaluación debe centrarse en tareas y datos, no en promesas. El siguiente aprendizaje relevante consiste en comprobar comprensión, consistencia y utilidad de la ayuda visual con usuarios y ambientes controlados.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R6] Schwaber K y Sutherland J 2020. The Scrum Guide. https://scrumguides.org/scrum-guide.html
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+Schwaber, K., y Sutherland, J. (2020). *The Scrum Guide*. https://scrumguides.org/scrum-guide.html
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

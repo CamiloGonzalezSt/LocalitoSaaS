@@ -1,59 +1,75 @@
-# Fuentes consultadas para la revisión documental
+# Fuentes consultadas
 
-Consulta: 03 de octubre de 2026. Cada documento cita las fuentes que utiliza. Las fichas ISO son resúmenes públicos; no se declara acceso al texto completo ni certificación. Los textos y diagramas de Localito son elaboraciones propias contrastadas con el código.
+Consulta documental: 03 y 04 de octubre de 2026. Las fuentes técnicas son documentación primaria; las fichas ISO son resúmenes públicos. De las dos tesis se consultaron fichas y resúmenes, no se acredita lectura de los textos completos. Bsale, Loyverse y Odoo se comparan documentalmente, sin pruebas de sus productos.
 
-[R1] Kruchten P 1995. [Architectural Blueprints The 4 plus 1 View Model of Software Architecture](https://arxiv.org/abs/2006.04975).
+arc42 (s. f.a). [Architecture decisions](https://docs.arc42.org/section-9/).
 
-[R2] Microsoft. [N tier architecture style](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/n-tier).
+arc42 (s. f.b). [Quality requirements](https://docs.arc42.org/section-10/).
 
-[R3] arc42. [Template overview](https://arc42.org/overview/).
+arc42 (s. f.c). [Template overview](https://arc42.org/overview/).
 
-[R4] ISO IEC IEEE 2022. [42010 Architecture description resumen público](https://www.iso.org/standard/74393.html).
+Bsale (s. f.). [Sistema de control de inventario](https://www.bsale.cl/sheet/sistemadeinventario).
 
-[R5] arc42. [Architecture decisions](https://docs.arc42.org/section-9/).
+Docker (s. f.a). [Compose application model](https://docs.docker.com/compose/intro/compose-application-model/).
 
-[R6] Schwaber K y Sutherland J 2020. [The Scrum Guide](https://scrumguides.org/scrum-guide.html).
+Docker (s. f.b). [Environment variables in Compose](https://docs.docker.com/compose/how-tos/environment-variables/).
 
-[R7] ISO IEC IEEE 2018. [29148 Requirements engineering resumen público](https://www.iso.org/standard/72089.html).
+Equipo Localito (2026). [LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]](https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c).
 
-[R8] PostgreSQL Global Development Group. [PostgreSQL 16 Transactions](https://www.postgresql.org/docs/16/tutorial-transactions.html).
+Express (s. f.). [Production best practices Security](https://expressjs.com/en/advanced/best-practice-security/).
 
-[R9] PostgreSQL Global Development Group. [PostgreSQL 16 Explicit locking](https://www.postgresql.org/docs/16/explicit-locking.html).
+GitHub (s. f.). [About READMEs](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes).
 
-[R10] PostgreSQL Global Development Group. [PostgreSQL 16 Constraints](https://www.postgresql.org/docs/16/ddl-constraints.html).
+ISO e IEC (2023). [25010 Product quality model resumen público](https://www.iso.org/standard/78176.html).
 
-[R11] Docker. [Compose application model](https://docs.docker.com/compose/intro/compose-application-model/).
+ISO, IEC e IEEE (2018). [29148 Requirements engineering resumen público](https://www.iso.org/standard/72089.html).
 
-[R12] Supabase. [Connecting to Postgres](https://supabase.com/docs/guides/database/connecting-to-postgres).
+ISO, IEC e IEEE (2022). [42010 Architecture description resumen público](https://www.iso.org/standard/74393.html).
 
-[R13] Supabase. [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
+Kruchten, P. (1995). [Architectural Blueprints The 4 plus 1 View Model of Software Architecture](https://arxiv.org/abs/2006.04975).
 
-[R14] Express. [Production best practices Security](https://expressjs.com/en/advanced/best-practice-security/).
+Loyverse (s. f.). [Modo offline de Loyverse TPV](https://help.loyverse.com/es/help/offline-work-of-pos).
 
-[R15] OWASP. [Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/).
+MDN Web Docs (s. f.). [Offline and background operation for PWAs](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation).
 
-[R16] ISO IEC 2023. [25010 Product quality model resumen público](https://www.iso.org/standard/78176.html).
+Microsoft (s. f.). [N tier architecture style](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/n-tier).
 
-[R17] W3C 2023. [Web Content Accessibility Guidelines 2.2](https://www.w3.org/TR/WCAG22/).
+Monardes Silva, J. B. (2025). [Implementación de gestión de un sistema de inventario [Ficha y resumen de memoria, Universidad Técnica Federico Santa María]](https://repositorio.usm.cl/entities/tesis/c42ddfb1-d845-46ef-837d-cd0b11d55a10/full).
 
-[R18] MDN Web Docs. [Offline and background operation for PWAs](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation).
+Node.js (s. f.). [Test runner](https://nodejs.org/api/test.html).
 
-[R19] GitHub. [About READMEs](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes).
+Object Management Group (2017). [Unified Modeling Language 2.5.1](https://www.omg.org/spec/UML/2.5.1/About-UML).
 
-[R20] Universidad de Chile. [Cómo escribir un informe con formato de Memoria de Título](https://aprendizaje.uchile.cl/recursos-especificos-por-areas-disciplinares/ciencias-silvoagropecuarias/facultad-de-ciencias-agronomicas/ingenieria-agronomica/como-escribir-un-informe-con-formato-de-memoria-de-titulo/).
+Odoo (s. f.). [Point of Sale Shop Features](https://www.odoo.com/app/point-of-sale-features).
 
-[R21] OWASP Gen AI Security Project 2025. [Top 10 risks for LLMs and Gen AI](https://genai.owasp.org/llm-top-10/).
+OECD y Eurostat (2018). [Oslo Manual 2018](https://www.oecd.org/en/publications/oslo-manual-2018_9789264304604-en.html).
 
-[R22] Node.js. [Test runner](https://nodejs.org/api/test.html).
+OWASP (s. f.). [Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/).
 
-[R23] PostgreSQL Global Development Group. [PostgreSQL 16 SQL Dump](https://www.postgresql.org/docs/16/backup-dump.html).
+OWASP Gen AI Security Project (2025). [Top 10 risks for LLMs and Gen AI](https://genai.owasp.org/llm-top-10/).
 
-[R24] Docker. [Environment variables in Compose](https://docs.docker.com/compose/how-tos/environment-variables/).
+PostgreSQL Global Development Group (s. f.a). [PostgreSQL 16 Constraints](https://www.postgresql.org/docs/16/ddl-constraints.html).
 
-[R25] Vercel. [Vercel Functions](https://vercel.com/docs/functions).
+PostgreSQL Global Development Group (s. f.b). [PostgreSQL 16 Explicit locking](https://www.postgresql.org/docs/16/explicit-locking.html).
 
-[R26] Object Management Group 2017. [Unified Modeling Language 2.5.1](https://www.omg.org/spec/UML/2.5.1/About-UML).
+PostgreSQL Global Development Group (s. f.c). [PostgreSQL 16 SQL Dump](https://www.postgresql.org/docs/16/backup-dump.html).
 
-[R27] OECD y Eurostat 2018. [Oslo Manual 2018](https://www.oecd.org/en/publications/oslo-manual-2018_9789264304604-en.html).
+PostgreSQL Global Development Group (s. f.d). [PostgreSQL 16 Transactions](https://www.postgresql.org/docs/16/tutorial-transactions.html).
 
-[R28] arc42. [Quality requirements](https://docs.arc42.org/section-10/).
+Schwaber, K., y Sutherland, J. (2020). [The Scrum Guide](https://scrumguides.org/scrum-guide.html).
+
+Supabase (s. f.a). [Connecting to Postgres](https://supabase.com/docs/guides/database/connecting-to-postgres).
+
+Supabase (s. f.b). [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+tsx (s. f.). [Node.js CLI](https://github.com/privatenumber/tsx/blob/master/docs/dev-api/node-cli.md).
+
+Universidad Central de Chile (s. f.). [Normas APA 7a edición](https://biblioguias.ucentral.cl/subjects/guide.php?subject=apa).
+
+Universidad de Chile (s. f.). [Cómo escribir un informe con formato de Memoria de Título](https://aprendizaje.uchile.cl/recursos-especificos-por-areas-disciplinares/ciencias-silvoagropecuarias/facultad-de-ciencias-agronomicas/ingenieria-agronomica/como-escribir-un-informe-con-formato-de-memoria-de-titulo/).
+
+Universidad Técnica Federico Santa María (s. f.). [Sistema de inventario, precios, generación de boletas y almacén de facturas para negocio de barrio Provisiones Lucy [Ficha y resumen de tesis]](https://repositorio.usm.cl/entities/tesis/1598823c-8db6-445f-8633-6a64aebec17d).
+
+Vercel (s. f.). [Vercel Functions](https://vercel.com/docs/functions).
+
+World Wide Web Consortium (2023). [Web Content Accessibility Guidelines 2.2](https://www.w3.org/TR/WCAG22/).

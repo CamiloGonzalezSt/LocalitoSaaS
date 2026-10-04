@@ -1,0 +1,20 @@
+{
+  "README.md": "7a8d98ca67b578c385a3ed88570494bf50e6920b7bfe3b722c89dc0e6b73c473",
+  "api_campaign.log": "4a2220a2d3c6f12d5a4fd80de007790a5ad5eb13bdf3ca9dbbbd0b1972f4cb24",
+  "api_intento_inicial.json": "d7f70b76dcffd7fe3a01fa7dae7be116dff49b4e87e69950d45e67464fb189ae",
+  "api_intento_segundo.json": "04f2e1fb5c9643efab5aa30d647291095229d47dcebe417089131ef74e513cf8",
+  "api_resultados.json": "40df16c261326ff3d171638ba41ed2595db4577d7b79b95d3c12fcc89ddae3f8",
+  "api_runtime.log": "9ff7f34e075d1bb05fad002313ab3d1733cf4c0043307e5808c92a6498c0fc52",
+  "browser.exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+  "browser.log": "bc5b63fdb8dc41a4425d2545bb732ed429a4cc7eca1bb1f7069d155d7193f98a",
+  "browser_install.log": "fbd8fde94d68841c2def25e9e93d69b51396023e73daaa467d171da57ccca497",
+  "build.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+  "build.log": "b31a0c2eb7f6955f5f007156b3595690c12e7c412c280003ef88e993c16a867f",
+  "check.exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+  "check.log": "35fb15748da72967cf42ed5d05f1765ebec62ab29141878f3eb7584f9fe8843e",
+  "code_manifest.json": "13dbaf7678cc8a4eb507decdb312321b6ba388e48e91b3b32a48d99c00ae8273",
+  "npm_ci.log": "c55c2cde1db15b936ca562c16e4084ffd0733cc33b46b8326c5ec797d90f1f3c",
+  "pruebas_verificadas.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+  "pruebas_verificadas.tap": "9272c53853bda2e07a0dabd2ed09d12f44ee26e1aea03cdc5869367cbe975017",
+  "validar_api.py": "981eaa18a64dd508ac679bf8410b6a5d7a5f7678742dcdd18ecd29a71a6685a9"
+}

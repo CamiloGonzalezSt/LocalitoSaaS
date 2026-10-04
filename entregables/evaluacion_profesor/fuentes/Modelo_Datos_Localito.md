@@ -6,7 +6,7 @@ El modelo de Localito utiliza PostgreSQL y organiza datos por negocio. El diccio
 
 # Introducción y fuentes
 
-Un modelo de datos permite revisar qué conserva la aplicación y qué reglas impiden estados inconsistentes. La descripción se apoya en SQL y repository.ts [P]. La documentación PostgreSQL fundamenta claves y restricciones [R10]. El diagrama conceptual se utiliza para explicar el dominio; el diccionario conserva los nombres reales de tablas y campos.
+Un modelo de datos permite revisar qué conserva la aplicación y qué reglas impiden estados inconsistentes. La descripción se apoya en SQL y repository.ts (Equipo Localito, 2026). La documentación PostgreSQL fundamenta claves y restricciones (PostgreSQL Global Development Group, s. f.a). El diagrama conceptual se utiliza para explicar el dominio; el diccionario conserva los nombres reales de tablas y campos.
 
 # Organización por dominios
 
@@ -441,28 +441,31 @@ El esquema mantiene índices por negocio, fechas, producto y relaciones. El índ
 
 # Seguridad por negocio y acceso a datos
 
-RLS se activa sobre las tablas auditadas. La fuente no contiene políticas CREATE POLICY de identidad por fila. La API usa pg y consultas filtradas; una conexión privilegiada puede tener un alcance diferente a los roles de Data API. Por eso se deben revisar privilegios y exposición reales del proyecto Supabase [R13]. No se atribuye aislamiento completo a la sola línea ENABLE ROW LEVEL SECURITY.
+RLS se activa sobre las tablas auditadas. La fuente no contiene políticas CREATE POLICY de identidad por fila. La API usa pg y consultas filtradas; una conexión privilegiada puede tener un alcance diferente a los roles de Data API. Por eso se deben revisar privilegios y exposición reales del proyecto Supabase (Supabase, s. f.b). No se atribuye aislamiento completo a la sola línea ENABLE ROW LEVEL SECURITY.
 
 # Cambios de esquema y conservación
 
 El init de la API ejecuta el esquema y añade campos con IF NOT EXISTS. Este enfoque facilita compatibilidad en el MVP, pero una operación comercial necesita historial de migraciones, revisión de impacto y respaldo. Semillas demo y actualizaciones de suscripción deben revisarse antes de aplicarlas sobre registros reales.
 
-Una copia de base debe verificarse restaurando en otro ambiente y comprobando relaciones [R23]. Este documento describe campos y procedimientos; no confirma que la restauración o migración productiva se haya ejecutado en esta revisión.
+Una copia de base debe verificarse restaurando en otro ambiente y comprobando relaciones (PostgreSQL Global Development Group, s. f.c). Este documento describe campos y procedimientos; no confirma que la restauración o migración productiva se haya ejecutado en esta revisión.
+
+# Evidencias relacionadas con esta versión
+
+El Informe Académico conecta objetivos, método, antecedentes y resultados. La Matriz de Trazabilidad identifica requisitos e historias asociados a la implementación. El Informe de Verificación conserva las ejecuciones del 04 de octubre de 2026 y distingue su alcance local de la aceptación en PostgreSQL y con usuarios. Control de Entrega reúne la cobertura de los 17 artefactos y los pendientes de cierre.
 
 # Conclusiones
 
 El modelo relaciona los dominios principales del comercio y conserva mecanismos útiles de integridad e idempotencia. El diccionario permite revisar el esquema real sin reducirlo a un diagrama. Las prioridades de validación incluyen pertenencia entre tablas, concurrencia y correspondencia entre esquema versionado y base desplegada.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+Consulta de fuentes: 03 y 04 de octubre de 2026. Las fichas ISO son resúmenes públicos; no se declara certificación.
 
-[R10] PostgreSQL Global Development Group. PostgreSQL 16 Constraints. https://www.postgresql.org/docs/16/ddl-constraints.html
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[R13] Supabase. Row Level Security. https://supabase.com/docs/guides/database/postgres/row-level-security
+PostgreSQL Global Development Group (s. f.a). *PostgreSQL 16 Constraints*. https://www.postgresql.org/docs/16/ddl-constraints.html
 
-[R23] PostgreSQL Global Development Group. PostgreSQL 16 SQL Dump. https://www.postgresql.org/docs/16/backup-dump.html
+PostgreSQL Global Development Group (s. f.c). *PostgreSQL 16 SQL Dump*. https://www.postgresql.org/docs/16/backup-dump.html
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+Supabase (s. f.b). *Row Level Security*. https://supabase.com/docs/guides/database/postgres/row-level-security
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

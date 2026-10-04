@@ -2,9 +2,9 @@
 
 # Resumen ejecutivo
 
-Este documento presenta el contenido completo del README del repositorio junto con precisiones de la revisión técnica. Permite conocer problema, propósito, capacidades, stack, instalación, configuración, operación y alcance. Su contenido base corresponde al commit 05a6f34b749cdc97dd560d91bb9be057a1197fbf del 03 de octubre de 2026.
+Este documento presenta el contenido completo del README del repositorio junto con precisiones de la revisión técnica. Permite conocer problema, propósito, capacidades, stack, instalación, configuración, operación y alcance. Su contenido base corresponde al commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c del 03 de octubre de 2026.
 
-El README constituye la entrada al proyecto y los manuales especializados amplían operación, arquitectura, pruebas y datos. GitHub describe ese papel de orientación para los lectores del repositorio [R19]. La versión Word conserva comandos y tablas, reemplaza diagramas de texto por figuras y agrega índice navegable.
+El README constituye la entrada al proyecto y los manuales especializados amplían operación, arquitectura, pruebas y datos. GitHub describe ese papel de orientación para los lectores del repositorio (GitHub, s. f.). La versión Word conserva comandos y tablas, reemplaza diagramas de texto por figuras y agrega índice navegable.
 
 # Introducción y precisiones de la revisión
 
@@ -27,19 +27,19 @@ Localito no pretende reemplazar sistemas tributarios, bancos ni terminales de pa
 
 ## Problema que resuelve
 
-Muchos almacenes, minimarkets y comercios de barrio todavía administran partes críticas de su operación con herramientas desconectadas:
+El proyecto se dirige a comercios que administran partes de su operación con herramientas desconectadas. La frecuencia y magnitud de estos problemas en el segmento objetivo requieren levantamiento de campo:
 
-- ventas registradas manualmente o sin trazabilidad completa;
-- inventario controlado en cuadernos o planillas;
-- fiados difíciles de seguir y cobrar;
-- caja sin conciliación clara por turno;
-- compras y proveedores separados del stock real;
-- poca visibilidad de márgenes, gastos y comportamiento de ventas;
-- doble digitación de información;
-- errores al ingresar mercadería o actualizar existencias;
-- sistemas tradicionales demasiado complejos, costosos o poco cómodos desde el teléfono.
+- Ventas registradas manualmente o sin trazabilidad completa;
+- Inventario controlado en cuadernos o planillas;
+- Fiados difíciles de seguir y cobrar;
+- Caja sin conciliación clara por turno;
+- Compras y proveedores separados del stock real;
+- Poca visibilidad de márgenes, gastos y comportamiento de ventas;
+- Doble digitación de información;
+- Errores al ingresar mercadería o actualizar existencias;
+- Sistemas tradicionales demasiado complejos, costosos o poco cómodos desde el teléfono.
 
-Esta fragmentación genera pérdida de tiempo, errores de stock, diferencias de caja y poca información para tomar decisiones.
+La hipótesis del proyecto es que esa fragmentación dificulta el control de tiempo, stock y caja; su efecto se medirá mediante el protocolo de validación.
 
 Localito aborda ese problema concentrando la operación en una única plataforma simple, trazable, multiusuario y accesible desde dispositivos comunes.
 
@@ -49,17 +49,17 @@ El proyecto nace de una necesidad concreta: **hacer que herramientas de gestión
 
 Además de resolver el problema funcional, Localito se desarrolla como proyecto Capstone/Tesis de Ingeniería en Informática, por lo que el MVP busca demostrar de manera verificable:
 
-- análisis de un problema real;
-- diseño de una solución de software completa;
-- arquitectura frontend, backend y base de datos;
-- seguridad, autenticación y autorización;
-- persistencia y aislamiento multi-negocio;
-- integración con servicios externos;
-- aplicación de inteligencia artificial con validación humana;
-- funcionamiento PWA y soporte parcial offline;
-- calidad mediante pruebas reproducibles;
-- gestión ágil con Scrum;
-- documentación técnica, funcional y académica trazable.
+- Análisis de un problema real;
+- Diseño de una solución de software completa;
+- Arquitectura frontend, backend y base de datos;
+- Seguridad, autenticación y autorización;
+- Persistencia y aislamiento multi-negocio;
+- Integración con servicios externos;
+- Aplicación de inteligencia artificial con validación humana;
+- Funcionamiento PWA y soporte parcial offline;
+- Calidad mediante pruebas reproducibles;
+- Gestión ágil con Scrum;
+- Documentación técnica, funcional y académica trazable.
 
 ## Objetivos
 
@@ -83,13 +83,13 @@ Desarrollar una PWA SaaS que permita a pequeños comercios gestionar su operaci�
 
 Localito está pensado principalmente para:
 
-- almacenes de barrio;
-- minimarkets;
-- botillerías;
-- pequeños comercios con inventario y venta presencial;
-- negocios que trabajan con fiado;
-- dueños que necesitan controlar caja, stock y reportes;
-- vendedores que requieren una interfaz rápida y simple para atender.
+- Almacenes de barrio;
+- Minimarkets;
+- Botillerías;
+- Pequeños comercios con inventario y venta presencial;
+- Negocios que trabajan con fiado;
+- Dueños que necesitan controlar caja, stock y reportes;
+- Vendedores que requieren una interfaz rápida y simple para atender.
 
 El modelo de roles actual contempla:
 
@@ -166,12 +166,11 @@ El proyecto utiliza **npm workspaces** y se divide en:
 ---
 > **Control documental vigente: 03-10-2026.** La gestión Scrum activa se realiza en **Trello**. Alexander Patiño = Product Owner, Samuel Solís = Scrum Master y Camilo González = Developer. Sprint 4 está en curso; Sprints 5–8 permanecen sin HU comprometidas hasta su Sprint Planning. Jira se conserva solo como histórico.
 
+**Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`. La primera reparación de código se publicó como `6e9ae82`. Luego se detectó que Groq retiró el modelo visual configurado y se reportaron problemas en el detalle de ventas y las devoluciones; las correcciones posteriores están descritas en [Estado actual](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/01_documentacion_maestra/Estado-Actual.md) y requieren prueba con PostgreSQL y navegador antes de declararse verificadas en producción.
 
-**Incidente de producción, 26-09-2026:** Supabase estaba pausado y el pooler rechazaba la conexión de Vercel. Tras reanudar el proyecto y corregir la URI de producción, `/api/health` respondió 200 con `storage: "postgres"` y `persistentStorage: true`. La primera reparación de código se publicó como `6e9ae82`. Luego se detectó que Groq retiró el modelo visual configurado y se reportaron problemas en el detalle de ventas y las devoluciones; las correcciones posteriores están descritas en [Estado actual](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/01_documentacion_maestra/Estado-Actual.md) y requieren prueba con PostgreSQL y navegador antes de declararse verificadas en producción.
+**Actualización técnica: 09-09-2026.** El [estado actual](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/01_documentacion_maestra/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/03_requisitos_diseno/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/MEJORAS.md).
 
-**Actualización técnica: 09-09-2026.** El [estado actual](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/01_documentacion_maestra/Estado-Actual.md) centraliza funciones, contratos, pruebas reproducibles y pendientes. La nueva paleta, pestañas de Caja, catálogo y cobro están en [Diseño de interfaz](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/03_requisitos_diseno/Diseno-Interfaz.md), con la revisión visual pendiente identificada. El resumen está en [MEJORAS.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/MEJORAS.md).
-
-**Estado del proyecto:** versión para tesis. El núcleo operacional funciona con datos persistentes, pero las pasarelas de pago son simulaciones académicas y el cumplimiento tributario chileno (SII, boleta y factura electrónica) queda fuera de esta iteración. El alcance verificable está centralizado en [docs/03_requisitos_diseno/Alcance-Tesis.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/03_requisitos_diseno/Alcance-Tesis.md).
+**Estado del proyecto:** versión para tesis. El núcleo operacional funciona con datos persistentes, pero las pasarelas de pago son simulaciones académicas y el cumplimiento tributario chileno (SII, boleta y factura electrónica) queda fuera de esta iteración. El alcance verificable está centralizado en [docs/03_requisitos_diseno/Alcance-Tesis.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/03_requisitos_diseno/Alcance-Tesis.md).
 
 ## Funcionalidades implementadas
 
@@ -213,7 +212,7 @@ El proyecto utiliza **npm workspaces** y se divide en:
 ## Requisitos
 
 - Node.js 20 o superior.
-- npm 10 o pnpm.
+- Npm 10 o pnpm.
 - PostgreSQL 16 o Docker Desktop para persistencia. Memoria solo para desarrollo sin base configurada; en producción no hay fallback a memoria.
 
 ## Puesta en marcha
@@ -260,9 +259,9 @@ Una vez levantado el proyecto:
 3. iniciar sesión con una cuenta demo o registrar un nuevo negocio;
 4. ejecutar `npm run check` antes de subir cambios.
 
-El procedimiento de monitoreo, respaldo e incidentes está documentado en [docs/05_operacion_produccion/Operacion-Produccion.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/05_operacion_produccion/Operacion-Produccion.md).
+El procedimiento de monitoreo, respaldo e incidentes está documentado en [docs/05_operacion_produccion/Operacion-Produccion.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/05_operacion_produccion/Operacion-Produccion.md).
 
-La API ejecuta [db/schema.sql](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/db/schema.sql) al conectarse a PostgreSQL. El modo `memory` se permite solamente durante desarrollo sin una base configurada. En producción o Vercel, una URL ausente o una inicialización fallida detiene el backend: nunca se aceptan ventas o productos que puedan desaparecer al reiniciar la función.
+La API ejecuta [db/schema.sql](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/db/schema.sql) al conectarse a PostgreSQL. El modo `memory` se permite solamente durante desarrollo sin una base configurada. En producción o Vercel, una URL ausente o una inicialización fallida detiene el backend: nunca se aceptan ventas o productos que puedan desaparecer al reiniciar la función.
 
 ## Variables de entorno
 
@@ -311,10 +310,10 @@ Requisitos mínimos del entorno de producción:
 - `NODE_ENV=production`;
 - `DATABASE_URL` o `POSTGRES_URL` mediante el Transaction Pooler de Supabase;
 - `SESSION_SECRET` seguro;
-- credenciales iniciales del administrador de plataforma;
-- origen web autorizado;
-- proveedor visual opcional para las funciones de IA;
-- proveedor de correo si se desea recuperación real de contraseña.
+- Credenciales iniciales del administrador de plataforma;
+- Origen web autorizado;
+- Proveedor visual opcional para las funciones de IA;
+- Proveedor de correo si se desea recuperación real de contraseña.
 
 El endpoint `/api/health` permite comprobar el estado operativo sin exponer secretos. En producción, si PostgreSQL no puede inicializarse, la API debe fallar en lugar de continuar con almacenamiento temporal.
 
@@ -383,18 +382,18 @@ Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mer
 
 Localito implementa controles de seguridad acordes al alcance del MVP:
 
-- contraseñas procesadas con `scrypt`;
-- sesiones con tokens aleatorios y almacenamiento de hashes;
-- expiración y revocación de sesiones;
-- autorización por rol en frontend y backend;
-- aislamiento de datos por negocio;
+- Contraseñas procesadas con `scrypt`;
+- Sesiones con tokens aleatorios y almacenamiento de hashes;
+- Expiración y revocación de sesiones;
+- Autorización por rol en frontend y backend;
+- Aislamiento de datos por negocio;
 - `Helmet` y configuración CORS en la API;
-- claves de IA, correo y base de datos disponibles únicamente en backend;
+- Claves de IA, correo y base de datos disponibles únicamente en backend;
 - RLS habilitado en Supabase sin políticas públicas directas;
-- validación de datos antes de modificar ventas, stock, deuda o caja;
-- idempotencia de ventas para reducir duplicados por reintentos;
-- recuperación de contraseña mediante enlaces de un solo uso con vencimiento;
-- ninguna información de tarjetas se almacena en Localito.
+- Validación de datos antes de modificar ventas, stock, deuda o caja;
+- Idempotencia de ventas para reducir duplicados por reintentos;
+- Recuperación de contraseña mediante enlaces de un solo uso con vencimiento;
+- Ninguna información de tarjetas se almacena en Localito.
 
 Las variables sensibles deben configurarse en `.env` local o en el gestor de variables de Vercel y **nunca deben versionarse en Git**.
 
@@ -418,7 +417,7 @@ npm run check
 
 `check` reúne tipos, `npm test` (65 pruebas en la ejecución local del 26-09-2026) y build. Incluye validaciones de venta, rechazo sin cambios de stock/deuda, auditoría de más de 100 eventos, sincronización, idempotencia, caja, fiado, autenticación, inventario e IA, además de pruebas CSS de contraste, tipografía, pestañas y superficies de ventas. El workflow de GitHub ejecuta esta comprobación en pushes a `main` y pull requests.
 
-Las suites de navegador del 08-09-2026 verificaron cobro, mejoras integradas y recuperación con 62 capturas. No se repitieron completas después del nuevo rediseño; la revisión visual actual es parcial. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance y limitaciones en [Estado actual](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/01_documentacion_maestra/Estado-Actual.md) y [Diseño de interfaz](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/03_requisitos_diseno/Diseno-Interfaz.md); casos en [Matriz de pruebas](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/04_calidad_pruebas/Matriz-Pruebas-Localito.md) y [Matriz de regresión](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/04_calidad_pruebas/Matriz-Regresion-Rediseno.md).
+Las suites de navegador del 08-09-2026 verificaron cobro, mejoras integradas y recuperación con 62 capturas. No se repitieron completas después del nuevo rediseño; la revisión visual actual es parcial. La instalación limpia, PostgreSQL y dispositivos físicos requieren pruebas separadas. Instrucciones, alcance y limitaciones en [Estado actual](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/01_documentacion_maestra/Estado-Actual.md) y [Diseño de interfaz](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/03_requisitos_diseno/Diseno-Interfaz.md); casos en [Matriz de pruebas](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/04_calidad_pruebas/Matriz-Pruebas-Localito.md) y [Matriz de regresión](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/04_calidad_pruebas/Matriz-Regresion-Rediseno.md).
 
 ## Planes y permisos
 
@@ -456,7 +455,7 @@ packages/
   shared/     Tipos compartidos
 ```
 
-La documentación vigente parte en [docs/00_indice/INDICE_DOCUMENTACION.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/00_indice/INDICE_DOCUMENTACION.md). Jira se conserva únicamente como histórico.
+La documentación vigente parte en [docs/00_indice/INDICE_DOCUMENTACION.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/00_indice/INDICE_DOCUMENTACION.md). Jira se conserva únicamente como histórico.
 
 ## Alcance pendiente
 
@@ -468,32 +467,30 @@ La documentación vigente parte en [docs/00_indice/INDICE_DOCUMENTACION.md](http
 
 El ticket generado por Localito es un comprobante interno no tributario.
 
-
 ## Artefactos para evaluación académica
 
 Para facilitar la revisión automática y manual del proyecto, los artefactos solicitados por la evaluación están disponibles explícitamente:
 
 | Criterio | Documento / evidencia |
 |---|---|
-| Documento de inicio de proyecto | [Documento-Inicio-Proyecto.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/01_documentacion_maestra/Documento-Inicio-Proyecto.md) |
-| Metodología declarada y justificada | [Metodologia-Scrum.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/02_gestion_scrum_trello/Metodologia-Scrum.md) |
-| Product Vision | [Product-Vision.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/02_gestion_scrum_trello/Product-Vision.md) |
-| Product Backlog | [Product-Backlog.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/02_gestion_scrum_trello/Product-Backlog.md) |
-| Sprint Backlog | [Sprint-Backlog.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/02_gestion_scrum_trello/Sprint-Backlog.md) |
-| Definition of Done | [Definition-of-Done.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/02_gestion_scrum_trello/Definition-of-Done.md) |
-| Retrospectivas | [Retrospectivas.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/02_gestion_scrum_trello/Retrospectivas.md) |
-| SRS | [SRS-No-Aplica.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/03_requisitos_diseno/SRS-No-Aplica.md) — no aplica como artefacto principal porque Localito usa Scrum |
-| Arquitectura | [Arquitectura.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/05_operacion_produccion/Arquitectura.md) |
-| Modelo de datos | [Modelo-de-Datos.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/05_operacion_produccion/Modelo-de-Datos.md) y [db/schema.sql](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/db/schema.sql) |
-| Diagramas UML | [UML/](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/03_requisitos_diseno/UML/) |
-| Requisitos no funcionales | [Requisitos-No-Funcionales.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/03_requisitos_diseno/Requisitos-No-Funcionales.md) |
-| Docker | [docker-compose.yml](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docker-compose.yml) |
-| Pruebas | [Plan-de-Pruebas.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/04_calidad_pruebas/Plan-de-Pruebas.md) |
-| Manual técnico | [Manual-Tecnico.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/05_operacion_produccion/Manual-Tecnico.md) |
-| Innovación | [Innovacion-y-Valor-Agregado.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/05a6f34b749cdc97dd560d91bb9be057a1197fbf/docs/07_innovacion/Innovacion-y-Valor-Agregado.md) |
+| Documento de inicio de proyecto | [Documento-Inicio-Proyecto.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/01_documentacion_maestra/Documento-Inicio-Proyecto.md) |
+| Metodología declarada y justificada | [Metodologia-Scrum.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/02_gestion_scrum_trello/Metodologia-Scrum.md) |
+| Product Vision | [Product-Vision.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/02_gestion_scrum_trello/Product-Vision.md) |
+| Product Backlog | [Product-Backlog.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/02_gestion_scrum_trello/Product-Backlog.md) |
+| Sprint Backlog | [Sprint-Backlog.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/02_gestion_scrum_trello/Sprint-Backlog.md) |
+| Definition of Done | [Definition-of-Done.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/02_gestion_scrum_trello/Definition-of-Done.md) |
+| Retrospectivas | [Retrospectivas.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/02_gestion_scrum_trello/Retrospectivas.md) |
+| SRS | [SRS-No-Aplica.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/03_requisitos_diseno/SRS-No-Aplica.md) — no aplica como artefacto principal porque Localito usa Scrum |
+| Arquitectura | [Arquitectura.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/05_operacion_produccion/Arquitectura.md) |
+| Modelo de datos | [Modelo-de-Datos.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/05_operacion_produccion/Modelo-de-Datos.md) y [db/schema.sql](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/db/schema.sql) |
+| Diagramas UML | [UML/](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/03_requisitos_diseno/UML/) |
+| Requisitos no funcionales | [Requisitos-No-Funcionales.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/03_requisitos_diseno/Requisitos-No-Funcionales.md) |
+| Docker | [docker-compose.yml](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docker-compose.yml) |
+| Pruebas | [Plan-de-Pruebas.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/04_calidad_pruebas/Plan-de-Pruebas.md) |
+| Manual técnico | [Manual-Tecnico.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/05_operacion_produccion/Manual-Tecnico.md) |
+| Innovación | [Innovacion-y-Valor-Agregado.md](https://github.com/CamiloGonzalezSt/LocalitoSaaS/blob/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c/docs/07_innovacion/Innovacion-y-Valor-Agregado.md) |
 
 La metodología vigente es **Scrum** y Trello es la herramienta activa de gestión. Jira se conserva únicamente como evidencia histórica.
-
 
 # Notas de uso de la versión Word
 
@@ -501,16 +498,19 @@ Los enlaces a rutas del repositorio deben consultarse en el commit base o en mai
 
 El documento de Arquitectura desarrolla tres capas y vistas 4+1. Modelo de Datos incluye diccionario extraído del SQL. Plan de Pruebas conserva estados y casos pendientes. Manual Técnico describe instalación y recuperación. Esa separación permite que el README explique el conjunto sin sustituir la profundidad de cada entregable.
 
+# Evidencias relacionadas con esta versión
+
+El Informe Académico conecta objetivos, método, antecedentes y resultados. La Matriz de Trazabilidad identifica requisitos e historias asociados a la implementación. El Informe de Verificación conserva las ejecuciones del 04 de octubre de 2026 y distingue su alcance local de la aceptación en PostgreSQL y con usuarios. Control de Entrega reúne la cobertura de los 17 artefactos y los pendientes de cierre.
+
 # Conclusiones
 
 El README permite comprender y comenzar a ejecutar Localito. La versión Word conserva su cobertura completa y aclara las diferencias identificadas por la auditoría documental. La operación debe verificarse con los comandos y casos del ambiente correspondiente, sin interpretar un indicador de configuración como una prueba integral aprobada.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R19] GitHub. About READMEs. https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+GitHub (s. f.). *About READMEs*. https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

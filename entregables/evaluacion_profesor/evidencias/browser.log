@@ -1,0 +1,7 @@
+browserType.launch: Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome
+Run "npx playwright install chrome"
+    at /workspace/scratch/978fb7316983/validation_repo/scripts/test-hardening.cjs:11:34
+    at Object.<anonymous> (/workspace/scratch/978fb7316983/validation_repo/scripts/test-hardening.cjs:103:3) {
+  log: [],
+  name: 'Error'
+}

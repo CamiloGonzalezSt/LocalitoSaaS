@@ -6,7 +6,7 @@ Este documento contiene diagramas de casos de uso, clases conceptuales, componen
 
 # Introducción y criterios de modelado
 
-UML ofrece notación para representar estructura y comportamiento de sistemas [R26]. La selección de estos diagramas responde a preguntas concretas: quién usa la solución, qué entidades relaciona, qué componentes colaboran y qué secuencia registra una venta. No se afirma que todos los tipos TypeScript sean clases instanciadas ni que un diagrama conceptual sustituya el SQL.
+UML ofrece notación para representar estructura y comportamiento de sistemas (Object Management Group, 2017). La selección de estos diagramas responde a preguntas concretas: quién usa la solución, qué entidades relaciona, qué componentes colaboran y qué secuencia registra una venta. No se afirma que todos los tipos TypeScript sean clases instanciadas ni que un diagrama conceptual sustituya el SQL.
 
 Los modelos deben ser consistentes con Arquitectura y Modelo de Datos. La venta utiliza POST /sales según server.ts, aunque una fuente PlantUML anterior empleaba /ventas. Esta revisión corrige la representación y conserva la autenticación previa a la operación. La auditoría del endpoint se muestra después de persistir la venta.
 
@@ -164,16 +164,19 @@ Resultado a comprobar. Sesión cerrada con valores auditables. La existencia del
 
 Se revisó que los actores correspondan a los roles, que los componentes correspondan a carpetas y servicios y que la secuencia use el endpoint y las reglas reales. Las figuras son elaboración propia. La validación operacional necesita ejecutar los casos y observar datos; la revisión del diagrama no sustituye esas pruebas.
 
+# Evidencias relacionadas con esta versión
+
+El Informe Académico conecta objetivos, método, antecedentes y resultados. La Matriz de Trazabilidad identifica requisitos e historias asociados a la implementación. El Informe de Verificación conserva las ejecuciones del 04 de octubre de 2026 y distingue su alcance local de la aceptación en PostgreSQL y con usuarios. Control de Entrega reúne la cobertura de los 17 artefactos y los pendientes de cierre.
+
 # Conclusiones
 
 Los diagramas complementan las explicaciones de arquitectura y requisitos con representaciones legibles. Su aporte se sostiene en el vínculo con entidades, módulos y operaciones reales, manteniendo explícito el alcance conceptual y el estado de verificación.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R26] Object Management Group 2017. Unified Modeling Language 2.5.1. https://www.omg.org/spec/UML/2.5.1/About-UML
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+Object Management Group (2017). *Unified Modeling Language 2.5.1*. https://www.omg.org/spec/UML/2.5.1/About-UML
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

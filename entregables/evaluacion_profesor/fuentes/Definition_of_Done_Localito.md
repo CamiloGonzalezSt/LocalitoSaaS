@@ -8,7 +8,7 @@ El documento amplía los criterios existentes con mecanismos verificables y ejem
 
 # Introducción y fundamento
 
-La Guía Scrum asocia la DoD con la calidad del incremento [R6]. En Localito, una venta afecta varias partes y puede ejecutarse con reintentos. Su término exige confirmar comportamiento y datos, además de compilar. Los criterios de aceptación de la historia describen el resultado específico; la DoD define condiciones de calidad que se aplican a distintos elementos.
+La Guía Scrum asocia la DoD con la calidad del incremento (Schwaber y Sutherland, 2020). En Localito, una venta afecta varias partes y puede ejecutarse con reintentos. Su término exige confirmar comportamiento y datos, además de compilar. Los criterios de aceptación de la historia describen el resultado específico; la DoD define condiciones de calidad que se aplican a distintos elementos.
 
 Una HU puede satisfacer el flujo visible y fallar aislamiento por negocio. En ese caso el resultado no está terminado. También puede tener pruebas en memoria y carecer de comprobación PostgreSQL cuando modifica transacciones. La evidencia debe indicar su alcance; el estado no se decide por el número de pruebas ni por una captura aislada.
 
@@ -65,33 +65,21 @@ Un build exitoso con un caso de acceso cruzado fallando no cumple DoD. Tampoco c
 
 La versión 3.0 de esta documentación integra criterios detallados al 03 de octubre. Cambiar la DoD requiere dejar qué condición se añadió y cómo afecta trabajo pendiente. Las historias cerradas bajo un criterio anterior conservan su evidencia; las nuevas comprobaciones se incorporan como trabajo explícito si aún faltan.
 
-# Definition of Done — Localito
+# Registro de decisión por incremento
 
-Una Historia de Usuario puede considerarse **Terminada** cuando, según corresponda:
+Para cada historia se registra identificador, criterio comprobado, versión, evidencia, defecto abierto y decisión del responsable de aceptación. Un resultado automatizado aprobado se acompaña de su alcance. Si exige PostgreSQL o un dispositivo real, la prueba con memoria o un doble de navegador se conserva como evidencia parcial.
 
-1. Cumple los criterios de aceptación acordados.
-2. El código está integrado en la rama objetivo.
-3. No presenta errores críticos conocidos que invaliden el flujo.
-4. Se ejecutaron las pruebas aplicables y se registró su entorno.
-5. El comportamiento respeta roles y aislamiento por negocio.
-6. Si afecta datos, las operaciones mantienen consistencia e integridad.
-7. La interfaz es usable en el viewport objetivo.
-8. La documentación fue actualizada cuando el cambio modifica comportamiento, instalación, arquitectura o alcance.
-9. Existe trazabilidad hacia commit, prueba o evidencia cuando aplica.
-10. Product Owner puede validar el resultado demostrable.
-
-Un cambio no se considera terminado solo porque “el código existe”.
+La revisión del 04 de octubre aporta 78 pruebas automatizadas y 12 comprobaciones HTTP en memoria, además de compilación. Estos resultados se consultan en Informe de Verificación. La aplicación de DoD a cada historia requiere seleccionar sus criterios y completar las evidencias faltantes; las cifras globales no sustituyen esa decisión.
 
 # Conclusiones
 
 La DoD traduce calidad en verificaciones concretas del producto. En Localito su utilidad principal es conectar resultado funcional, integridad de datos y evidencia. Mantenerla visible permite explicar con precisión por qué offline sigue en curso y qué debe comprobarse antes de cerrar pagos o caja.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R6] Schwaber K y Sutherland J 2020. The Scrum Guide. https://scrumguides.org/scrum-guide.html
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+Schwaber, K., y Sutherland, J. (2020). *The Scrum Guide*. https://scrumguides.org/scrum-guide.html
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

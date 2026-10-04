@@ -1,0 +1,845 @@
+{
+  "sha": "ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c",
+  "files": [
+    {
+      "path": ".env.example",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fc7370c38e6b846841ee85c6439681f215b07aa9",
+      "size": 753,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/fc7370c38e6b846841ee85c6439681f215b07aa9"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "02376903574997cdfee8ca1b39b54fc0f5454560",
+      "size": 333,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/02376903574997cdfee8ca1b39b54fc0f5454560"
+    },
+    {
+      "path": ".npmrc",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0d6b9cb592124c4ee43a2092269aee221d2fa1e4",
+      "size": 17,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/0d6b9cb592124c4ee43a2092269aee221d2fa1e4"
+    },
+    {
+      "path": "api/[...path].ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c9fb749714ad8c40e360539626596c5dc587a544",
+      "size": 834,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/c9fb749714ad8c40e360539626596c5dc587a544"
+    },
+    {
+      "path": "api/auth/login.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e53727ed583ae122c757f3d40b5324fc25bf988d",
+      "size": 781,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/e53727ed583ae122c757f3d40b5324fc25bf988d"
+    },
+    {
+      "path": "api/auth/password-reset/confirm.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9c576a0849e79964c42b8ed59d45fe7a22748f2f",
+      "size": 421,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/9c576a0849e79964c42b8ed59d45fe7a22748f2f"
+    },
+    {
+      "path": "api/auth/password-reset/request.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5e759dab34d7f2da1831f372ce3f10d2f2d2c2e9",
+      "size": 430,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/5e759dab34d7f2da1831f372ce3f10d2f2d2c2e9"
+    },
+    {
+      "path": "api/index.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6d8f5008e063b09fd697638d96bf6d751e8eb24d",
+      "size": 1247,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/6d8f5008e063b09fd697638d96bf6d751e8eb24d"
+    },
+    {
+      "path": "apps/api/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ef4c95b2778e321f9849ac309c46993492538a2a",
+      "size": 849,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/ef4c95b2778e321f9849ac309c46993492538a2a"
+    },
+    {
+      "path": "apps/api/src/auditQuery.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "032a11cb2c59b78d2d29da86061f40b11bb9f29c",
+      "size": 3544,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/032a11cb2c59b78d2d29da86061f40b11bb9f29c"
+    },
+    {
+      "path": "apps/api/src/auth.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ff06f2cce0bb8bacdfeff2c86087b884d7f092ba",
+      "size": 3023,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/ff06f2cce0bb8bacdfeff2c86087b884d7f092ba"
+    },
+    {
+      "path": "apps/api/src/businessPreferences.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8f382e5d52bf043c6e907281f796a4959b54b9c2",
+      "size": 1816,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/8f382e5d52bf043c6e907281f796a4959b54b9c2"
+    },
+    {
+      "path": "apps/api/src/demoData.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bec8514ff1db7a4170587419f9601c0f8f8b5a7b",
+      "size": 36289,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/bec8514ff1db7a4170587419f9601c0f8f8b5a7b"
+    },
+    {
+      "path": "apps/api/src/email.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ecc174c9fbf10ca7a17679c49e7f7ac18183c250",
+      "size": 4939,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/ecc174c9fbf10ca7a17679c49e7f7ac18183c250"
+    },
+    {
+      "path": "apps/api/src/httpError.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dc0b0a55a384ebcad28c3be204431c9ef5830b71",
+      "size": 2827,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/dc0b0a55a384ebcad28c3be204431c9ef5830b71"
+    },
+    {
+      "path": "apps/api/src/invoiceImport.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "92fe0321ce6e0eb160c29428ede3c51732f59520",
+      "size": 11026,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/92fe0321ce6e0eb160c29428ede3c51732f59520"
+    },
+    {
+      "path": "apps/api/src/localito.test.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d9e18d5dfbdc2fdd1aeb2d0d2b2834d4c9a0b6a8",
+      "size": 46103,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/d9e18d5dfbdc2fdd1aeb2d0d2b2834d4c9a0b6a8"
+    },
+    {
+      "path": "apps/api/src/productImport.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "789ce438ec7e52056382ad94ce75e00ffac68878",
+      "size": 6186,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/789ce438ec7e52056382ad94ce75e00ffac68878"
+    },
+    {
+      "path": "apps/api/src/repository.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a83857e64956cf553e79829b1f49269c800fb1bc",
+      "size": 150327,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/a83857e64956cf553e79829b1f49269c800fb1bc"
+    },
+    {
+      "path": "apps/api/src/saleValidation.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8f289ff2ef5f108c4e8daed66913bf75e1c84cb0",
+      "size": 3661,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/8f289ff2ef5f108c4e8daed66913bf75e1c84cb0"
+    },
+    {
+      "path": "apps/api/src/server.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fbe3b53ba4b8a835019becce3394aab7efc57c89",
+      "size": 59804,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/fbe3b53ba4b8a835019becce3394aab7efc57c89"
+    },
+    {
+      "path": "apps/api/src/store.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "34372c0232793653f5e97d807b79755719a94805",
+      "size": 10185,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/34372c0232793653f5e97d807b79755719a94805"
+    },
+    {
+      "path": "apps/api/src/vision.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8f552988a02fccafb4019f2b87416013db81f0d6",
+      "size": 19484,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/8f552988a02fccafb4019f2b87416013db81f0d6"
+    },
+    {
+      "path": "apps/api/src/visionProvider.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6d4884725affd8063107f0632fc0b8f3fb4daf39",
+      "size": 6266,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/6d4884725affd8063107f0632fc0b8f3fb4daf39"
+    },
+    {
+      "path": "apps/api/tsconfig.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6c516bcddccfc55f028fb02703b754dba035be37",
+      "size": 258,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/6c516bcddccfc55f028fb02703b754dba035be37"
+    },
+    {
+      "path": "apps/web/index.html",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62ed15c3ece16da117bc4260532668ef5aa561c3",
+      "size": 939,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/62ed15c3ece16da117bc4260532668ef5aa561c3"
+    },
+    {
+      "path": "apps/web/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8dcb3dc5ea532c2048345f2ad8c6d5fd432f6226",
+      "size": 621,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/8dcb3dc5ea532c2048345f2ad8c6d5fd432f6226"
+    },
+    {
+      "path": "apps/web/public/icons/icon.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b76c39aea67a688b196b866f04332834f19020c5",
+      "size": 435,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/b76c39aea67a688b196b866f04332834f19020c5"
+    },
+    {
+      "path": "apps/web/public/manifest.webmanifest",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b8f3bfe0871d7d91e7c04990b19a4b9fefe7f321",
+      "size": 399,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/b8f3bfe0871d7d91e7c04990b19a4b9fefe7f321"
+    },
+    {
+      "path": "apps/web/public/sw.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2754c05eb7d28651f494db092c1390381ea7a4d9",
+      "size": 1484,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/2754c05eb7d28651f494db092c1390381ea7a4d9"
+    },
+    {
+      "path": "apps/web/src/AccountViews.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f9ca923fc4a916bcf3381df820dfa425a507eef4",
+      "size": 13452,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/f9ca923fc4a916bcf3381df820dfa425a507eef4"
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "075ef91ed829b040714527083ee48356c425fe4d",
+      "size": 178952,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/075ef91ed829b040714527083ee48356c425fe4d"
+    },
+    {
+      "path": "apps/web/src/AuditBrowser.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6ab5eeb341665e45d17d2c620fb38e34c2923e2d",
+      "size": 5318,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/6ab5eeb341665e45d17d2c620fb38e34c2923e2d"
+    },
+    {
+      "path": "apps/web/src/BusinessSettings.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c05709332c5ebb16a12c6543913799a7c67da395",
+      "size": 3583,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/c05709332c5ebb16a12c6543913799a7c67da395"
+    },
+    {
+      "path": "apps/web/src/CashReconciliation.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6285c625320a17ec0be4625c25a06d6556cee02c",
+      "size": 3421,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/6285c625320a17ec0be4625c25a06d6556cee02c"
+    },
+    {
+      "path": "apps/web/src/CheckoutPayment.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "805fc8b3713f60ef691cdbe4e2ec8449891e0eac",
+      "size": 2590,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/805fc8b3713f60ef691cdbe4e2ec8449891e0eac"
+    },
+    {
+      "path": "apps/web/src/DashboardView.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fd6454e4a690e530c786da5ca011b8e7ca047d55",
+      "size": 6749,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/fd6454e4a690e530c786da5ca011b8e7ca047d55"
+    },
+    {
+      "path": "apps/web/src/FormControls.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "632eb1956f8f74f60b03f4f424143dcdacf5dd8d",
+      "size": 2603,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/632eb1956f8f74f60b03f4f424143dcdacf5dd8d"
+    },
+    {
+      "path": "apps/web/src/InventoryRow.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "40824fdcbaa709840c1ad04fb7ca82c9c7cf14ff",
+      "size": 5323,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/40824fdcbaa709840c1ad04fb7ca82c9c7cf14ff"
+    },
+    {
+      "path": "apps/web/src/InventorySetupView.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "55f6e7e42ce2b33a9ba24ccc664c3a0bd7d7f911",
+      "size": 8503,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/55f6e7e42ce2b33a9ba24ccc664c3a0bd7d7f911"
+    },
+    {
+      "path": "apps/web/src/InvoiceImportPanel.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b7ea8dd32c15f605c28d280b8a33510a19fc61c3",
+      "size": 17158,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/b7ea8dd32c15f605c28d280b8a33510a19fc61c3"
+    },
+    {
+      "path": "apps/web/src/ManagementPanels.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ddbb0422285516c5b9c4f949f01bafd68a7fb4fb",
+      "size": 6562,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/ddbb0422285516c5b9c4f949f01bafd68a7fb4fb"
+    },
+    {
+      "path": "apps/web/src/OperationsView.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "26fc52f32952046b625e7990d3d1660c11fe9046",
+      "size": 25583,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/26fc52f32952046b625e7990d3d1660c11fe9046"
+    },
+    {
+      "path": "apps/web/src/PlatformAdminView.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e27ea33d25e4df05cd77860485d907b00389fea3",
+      "size": 17083,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/e27ea33d25e4df05cd77860485d907b00389fea3"
+    },
+    {
+      "path": "apps/web/src/ProductBulkImportPanel.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "29f0012b272bee8b363284c66fabe73c667cfc1c",
+      "size": 5816,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/29f0012b272bee8b363284c66fabe73c667cfc1c"
+    },
+    {
+      "path": "apps/web/src/ProductPhoto.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "64e9fee5f9c4fee7898b15f3cfa11e53882455ba",
+      "size": 4005,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/64e9fee5f9c4fee7898b15f3cfa11e53882455ba"
+    },
+    {
+      "path": "apps/web/src/QuickSaleView.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7623642250369d716198de8993354796bb616763",
+      "size": 20497,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/7623642250369d716198de8993354796bb616763"
+    },
+    {
+      "path": "apps/web/src/RecentSales.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "13d7863fc9bbd5c6a883ff393028c5bc13b7e16d",
+      "size": 1834,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/13d7863fc9bbd5c6a883ff393028c5bc13b7e16d"
+    },
+    {
+      "path": "apps/web/src/SearchView.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f1bbbb63edb1a41750b1ac49ad914364f5109f85",
+      "size": 12452,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/f1bbbb63edb1a41750b1ac49ad914364f5109f85"
+    },
+    {
+      "path": "apps/web/src/SyncStatus.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c17770d3745b6b30ce715bd342105ec13d26af61",
+      "size": 5463,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/c17770d3745b6b30ce715bd342105ec13d26af61"
+    },
+    {
+      "path": "apps/web/src/checkout.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ac8ab446ac44622edd446289d0a2e2f38ead7099",
+      "size": 5585,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/ac8ab446ac44622edd446289d0a2e2f38ead7099"
+    },
+    {
+      "path": "apps/web/src/dashboard.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8b94526670d7cf1470923c2e90d0a6557807d5fa",
+      "size": 3705,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/8b94526670d7cf1470923c2e90d0a6557807d5fa"
+    },
+    {
+      "path": "apps/web/src/data/mockData.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2dcceec8336d9c9e5599ea8436df1fe4312efb2b",
+      "size": 2821,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/2dcceec8336d9c9e5599ea8436df1fe4312efb2b"
+    },
+    {
+      "path": "apps/web/src/imageProcessing.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "016d369317b650c5b808935850e0d2571be77606",
+      "size": 3463,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/016d369317b650c5b808935850e0d2571be77606"
+    },
+    {
+      "path": "apps/web/src/inventory3.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9dc38e767dfe0658c333caee744ec928ce77b17d",
+      "size": 6474,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/9dc38e767dfe0658c333caee744ec928ce77b17d"
+    },
+    {
+      "path": "apps/web/src/invoice-camera.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "591503f0de2834f815e6219ed0bec6176f122d86",
+      "size": 821,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/591503f0de2834f815e6219ed0bec6176f122d86"
+    },
+    {
+      "path": "apps/web/src/lib/api.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6d4726c2d22c484c4367a33e31f3fba49a34fc1c",
+      "size": 16331,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/6d4726c2d22c484c4367a33e31f3fba49a34fc1c"
+    },
+    {
+      "path": "apps/web/src/lib/dashboard.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f28b72337028a90ba746d9fb10d512eacf4eb567",
+      "size": 2094,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/f28b72337028a90ba746d9fb10d512eacf4eb567"
+    },
+    {
+      "path": "apps/web/src/lib/format.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0c08f1022d96d057e5cc2835f492ac0f716752e6",
+      "size": 550,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/0c08f1022d96d057e5cc2835f492ac0f716752e6"
+    },
+    {
+      "path": "apps/web/src/lib/inventory.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "69d5a4918571093a7e85246ac0d53b3068411de3",
+      "size": 300,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/69d5a4918571093a7e85246ac0d53b3068411de3"
+    },
+    {
+      "path": "apps/web/src/lib/offline.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b2d755b9de877e8b3bf8654afc64522b1f7b0475",
+      "size": 4594,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/b2d755b9de877e8b3bf8654afc64522b1f7b0475"
+    },
+    {
+      "path": "apps/web/src/lib/replenishment.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7173416918bb2542a2f7a40be07b7a1a1668244f",
+      "size": 1486,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/7173416918bb2542a2f7a40be07b7a1a1668244f"
+    },
+    {
+      "path": "apps/web/src/lib/workspaceCache.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e16697a0dd4dd693af7683579249faadf329a508",
+      "size": 1088,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/e16697a0dd4dd693af7683579249faadf329a508"
+    },
+    {
+      "path": "apps/web/src/main.tsx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "023bf6bc452507bd8a89305bc3f74a4a0c788ad5",
+      "size": 946,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/023bf6bc452507bd8a89305bc3f74a4a0c788ad5"
+    },
+    {
+      "path": "apps/web/src/management.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "181c6ec000f37878d6d5f92295f4ec5085701425",
+      "size": 6359,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/181c6ec000f37878d6d5f92295f4ec5085701425"
+    },
+    {
+      "path": "apps/web/src/productImport.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e5976a30d87f034bb3c3b3b8f3259f17ddd8bb82",
+      "size": 6499,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/e5976a30d87f034bb3c3b3b8f3259f17ddd8bb82"
+    },
+    {
+      "path": "apps/web/src/recent-sales.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e857076f9044d350c8efab071cc69184e02eb1c2",
+      "size": 1857,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/e857076f9044d350c8efab071cc69184e02eb1c2"
+    },
+    {
+      "path": "apps/web/src/sale-action-dialog.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fd4c5b61245926bbb8425c36b0beaa2e4a578b10",
+      "size": 463,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/fd4c5b61245926bbb8425c36b0beaa2e4a578b10"
+    },
+    {
+      "path": "apps/web/src/sale-search-detail.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4195bc55e253579171f5ff7c136bbf355233936f",
+      "size": 346,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/4195bc55e253579171f5ff7c136bbf355233936f"
+    },
+    {
+      "path": "apps/web/src/styles.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "19f7684f937e422c58431c05a8f30329190991ac",
+      "size": 163784,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/19f7684f937e422c58431c05a8f30329190991ac"
+    },
+    {
+      "path": "apps/web/src/themes.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b9bc8668e0f81510137e77907144850e010c16eb",
+      "size": 8497,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/b9bc8668e0f81510137e77907144850e010c16eb"
+    },
+    {
+      "path": "apps/web/src/ui.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "162a5194445d225db3e9a976fe873374baeb7382",
+      "size": 9557,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/162a5194445d225db3e9a976fe873374baeb7382"
+    },
+    {
+      "path": "apps/web/src/useSaleWorkspace.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cfd92165f95941f3ca7c396cac02dbb911061f55",
+      "size": 6266,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/cfd92165f95941f3ca7c396cac02dbb911061f55"
+    },
+    {
+      "path": "apps/web/src/vite-env.d.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ed77210660e3e0571845a2e5d18ab7d9905bf334",
+      "size": 39,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/ed77210660e3e0571845a2e5d18ab7d9905bf334"
+    },
+    {
+      "path": "apps/web/tsconfig.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9d0df68a59b935265a7ca41e2312ec44f8e251f1",
+      "size": 528,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/9d0df68a59b935265a7ca41e2312ec44f8e251f1"
+    },
+    {
+      "path": "apps/web/tsconfig.node.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c88b91b41d3bd896eb7bc1b9aca4a2dbb5e84d2c",
+      "size": 214,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/c88b91b41d3bd896eb7bc1b9aca4a2dbb5e84d2c"
+    },
+    {
+      "path": "db/schema.sql",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "160644e7859b79ef6586f1f532eeac6be1681273",
+      "size": 19250,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/160644e7859b79ef6586f1f532eeac6be1681273"
+    },
+    {
+      "path": "docker-compose.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c4c11c073df1dd85f263b594056cf8d1dbec1db5",
+      "size": 352,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/c4c11c073df1dd85f263b594056cf8d1dbec1db5"
+    },
+    {
+      "path": "docs/00_indice/CHECKLIST_EVALUACION_PROFESOR.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d46c417f912b6e2048b01ff4cb12d745c36ca585",
+      "size": 2272,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/d46c417f912b6e2048b01ff4cb12d745c36ca585"
+    },
+    {
+      "path": "package-lock.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "26e749cf5db18446fa617019a89f29437f530ef6",
+      "size": 100145,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/26e749cf5db18446fa617019a89f29437f530ef6"
+    },
+    {
+      "path": "package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c4fd7df180c7699912a02c9c084989a4b86a4e3a",
+      "size": 1066,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/c4fd7df180c7699912a02c9c084989a4b86a4e3a"
+    },
+    {
+      "path": "packages/shared/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "543f44318801cdfad3d853f766cab406f82aedb9",
+      "size": 305,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/543f44318801cdfad3d853f766cab406f82aedb9"
+    },
+    {
+      "path": "packages/shared/src/index.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c921b33339fdd01e987991b1a1aa42116b43ed56",
+      "size": 12049,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/c921b33339fdd01e987991b1a1aa42116b43ed56"
+    },
+    {
+      "path": "packages/shared/src/subscriptions.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cd82e983597b07c88c62f0472c84090693d7ab12",
+      "size": 3483,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/cd82e983597b07c88c62f0472c84090693d7ab12"
+    },
+    {
+      "path": "packages/shared/tsconfig.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "46770b9e8fbfaec425e91f5771219de0223c2947",
+      "size": 285,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/46770b9e8fbfaec425e91f5771219de0223c2947"
+    },
+    {
+      "path": "scripts/dashboard.test.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "811fee3bfd42ca86cc429bc32b35f33dcf10be64",
+      "size": 2416,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/811fee3bfd42ca86cc429bc32b35f33dcf10be64"
+    },
+    {
+      "path": "scripts/db-down.cmd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "014fa60ad0b34a6850967d373b2cab5b13d6285f",
+      "size": 74,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/014fa60ad0b34a6850967d373b2cab5b13d6285f"
+    },
+    {
+      "path": "scripts/db-up.cmd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1c39097a109e1b5f7d5a41934219ac81a50ee932",
+      "size": 84,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/1c39097a109e1b5f7d5a41934219ac81a50ee932"
+    },
+    {
+      "path": "scripts/design.test.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ecd88e280e6020b471c40dba18be35e93c44dd06",
+      "size": 6369,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/ecd88e280e6020b471c40dba18be35e93c44dd06"
+    },
+    {
+      "path": "scripts/dev-api.cmd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "44c7949e675180538665288db33fbdb321e4e327",
+      "size": 182,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/44c7949e675180538665288db33fbdb321e4e327"
+    },
+    {
+      "path": "scripts/dev-web.cmd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f411c1a3f80b105562c34c0f81283d5097207fae",
+      "size": 182,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/f411c1a3f80b105562c34c0f81283d5097207fae"
+    },
+    {
+      "path": "scripts/enable-iphone-access.ps1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0c9fcfbcecd8c7eaad7f2b724aa1861bf3045503",
+      "size": 1157,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/0c9fcfbcecd8c7eaad7f2b724aa1861bf3045503"
+    },
+    {
+      "path": "scripts/hardening.test.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3736523c21f80c153ee548bc61412c66940534b3",
+      "size": 8433,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/3736523c21f80c153ee548bc61412c66940534b3"
+    },
+    {
+      "path": "scripts/improvements.test.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b0f29cb7392d8e6e63e544e9e51f19de979649dc",
+      "size": 5158,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/b0f29cb7392d8e6e63e544e9e51f19de979649dc"
+    },
+    {
+      "path": "scripts/inventory.test.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4e4679f2a04f2fb0219e0d0d635817585b1ce3dd",
+      "size": 855,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/4e4679f2a04f2fb0219e0d0d635817585b1ce3dd"
+    },
+    {
+      "path": "scripts/sale-workspace.test.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a7e6a2f8a0d78ae73281450c12cddb7beb59a48d",
+      "size": 2404,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/a7e6a2f8a0d78ae73281450c12cddb7beb59a48d"
+    },
+    {
+      "path": "scripts/test-checkout.cjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "50c45bb1c8c96d912d1434309c33d6f6198edeb0",
+      "size": 9778,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/50c45bb1c8c96d912d1434309c33d6f6198edeb0"
+    },
+    {
+      "path": "scripts/test-dashboard.cjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "20a47685cae4691ad653b2490f376305b397f082",
+      "size": 7684,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/20a47685cae4691ad653b2490f376305b397f082"
+    },
+    {
+      "path": "scripts/test-design.cjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "086888091d828f4f3f885e8a6791f01db80d66a6",
+      "size": 10296,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/086888091d828f4f3f885e8a6791f01db80d66a6"
+    },
+    {
+      "path": "scripts/test-hardening.cjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f3658399efcf27a91551623c108cc4ed42c2fafd",
+      "size": 7765,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/f3658399efcf27a91551623c108cc4ed42c2fafd"
+    },
+    {
+      "path": "scripts/test-improvements.cjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "af308fb91c202ca848c5c30881c62e074fdecf91",
+      "size": 12850,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/af308fb91c202ca848c5c30881c62e074fdecf91"
+    },
+    {
+      "path": "scripts/test-inventory.cjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0f2e4a59c650454cdd6ceaa445d0e295bc58d9bd",
+      "size": 5827,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/0f2e4a59c650454cdd6ceaa445d0e295bc58d9bd"
+    },
+    {
+      "path": "scripts/test-sale-workspace.cjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a18b940caba510df255afd9731feaa15c6e14bb0",
+      "size": 12709,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/a18b940caba510df255afd9731feaa15c6e14bb0"
+    },
+    {
+      "path": "scripts/test-themes.cjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c634843ea205c57d928e89e0624307946b0edc13",
+      "size": 10082,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/c634843ea205c57d928e89e0624307946b0edc13"
+    },
+    {
+      "path": "vercel.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8052c37fe47fb8d4eba5c1fa3f56f2e00d8e130b",
+      "size": 367,
+      "url": "https://api.github.com/repos/CamiloGonzalezSt/LocalitoSaaS/git/blobs/8052c37fe47fb8d4eba5c1fa3f56f2e00d8e130b"
+    }
+  ]
+}

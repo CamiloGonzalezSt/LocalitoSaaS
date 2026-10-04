@@ -2,15 +2,15 @@
 
 # Resumen ejecutivo
 
-La pauta recibida establece que la SRS formal aplica a equipos que declaran metodología Cascada. Localito declara Scrum, por lo que este documento registra la no aplicabilidad de ese criterio específico y explica dónde se documentan los requisitos. Esa resolución académica no elimina la ingeniería de requisitos ni implica que Scrum prohíba una SRS.
+La documentación del repositorio interpreta que el criterio SRS de la pauta aplica a equipos que declaran metodología Cascada. Localito declara Scrum, por lo que este documento registra la no aplicabilidad de ese criterio específico y explica dónde se documentan los requisitos. Esa resolución académica no elimina la ingeniería de requisitos ni implica que Scrum prohíba una SRS.
 
 El proyecto utiliza visión y objetivo, historias y criterios de aceptación, requisitos no funcionales, modelos y pruebas. Este documento consolida una guía para encontrar y revisar esa información, conservando trazabilidad y alcance. No se presenta como una SRS completa conforme a ISO/IEC/IEEE 29148.
 
 # Introducción y alcance de la decisión
 
-La captura de la pauta enumera documentos detectables y condiciona Product Vision, backlogs, DoD, retrospectivas y SRS a la metodología. Para Localito, la justificación consiste en responder a ese criterio sin inventar una obligación adicional. La captura no establece que todos los equipos deban entregar una SRS extensa independientemente de su enfoque.
+El checklist del repositorio enumera documentos y relaciona su aplicabilidad con la metodología declarada. Para Localito, la justificación consiste en responder a ese criterio sin inventar una obligación adicional. La versión oficial íntegra de la pauta debe confirmar esta interpretación antes de la entrega definitiva.
 
-ISO/IEC/IEEE 29148 trata procesos e información de requisitos y se declara aplicable con independencia de metodología [R7]. Por eso es incorrecto afirmar que una especificación sería incompatible con Scrum. Si el profesor solicita posteriormente una SRS, puede construirse a partir de los mismos requisitos, sin reemplazar la gestión incremental.
+ISO/IEC/IEEE 29148 trata procesos e información de requisitos y se declara aplicable con independencia de metodología (ISO et al., 2018). Por eso es incorrecto afirmar que una especificación sería incompatible con Scrum. Si el profesor solicita posteriormente una SRS, puede construirse a partir de los mismos requisitos, sin reemplazar la gestión incremental.
 
 # Organización de los requisitos
 
@@ -46,20 +46,23 @@ Las versiones registran fecha y commit para evitar comparar un resultado antiguo
 
 # Condiciones para una futura SRS formal
 
-Si se exige ese formato, una especificación debería consolidar propósito, contexto, actores, interfaces, requisitos identificados, reglas, atributos de calidad y verificación. Es posible estructurarla usando referencias de ingeniería de requisitos [R7], pero el cumplimiento completo requeriría revisar el texto normativo y la pauta aplicable. No basta con poner el nombre de una norma en la portada.
+Si se exige ese formato, una especificación debería consolidar propósito, contexto, actores, interfaces, requisitos identificados, reglas, atributos de calidad y verificación. Es posible estructurarla usando referencias de ingeniería de requisitos (ISO et al., 2018), pero el cumplimiento completo requeriría revisar el texto normativo y la pauta aplicable. No basta con poner el nombre de una norma en la portada.
 
 La consolidación tendría que resolver ambigüedades de permisos, prestaciones por plan, comportamiento offline y pagos externos. También conservaría exclusiones tributarias y diferencias entre implementación y evidencia. Los documentos actuales aportan insumos para esa tarea, sin afirmar que ya exista una SRS certificada.
 
+# Evidencias relacionadas con esta versión
+
+El Informe Académico conecta objetivos, método, antecedentes y resultados. La Matriz de Trazabilidad identifica requisitos e historias asociados a la implementación. El Informe de Verificación conserva las ejecuciones del 04 de octubre de 2026 y distingue su alcance local de la aceptación en PostgreSQL y con usuarios. Control de Entrega reúne la cobertura de los 17 artefactos y los pendientes de cierre.
+
 # Conclusiones
 
-El criterio SRS no aplica según la metodología y la pauta recibida. Localito sí documenta y verifica requisitos a través de sus artefactos. La justificación se limita a la evaluación académica y mantiene abierta la posibilidad de consolidarlos en una especificación formal si se solicita.
+El repositorio registra la no aplicabilidad del criterio SRS según su interpretación de la pauta. Localito sí documenta y verifica requisitos a través de sus artefactos. La justificación se limita a la evaluación académica y mantiene abierta la posibilidad de consolidarlos en una especificación formal si se solicita.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R7] ISO IEC IEEE 2018. 29148 Requirements engineering resumen público. https://www.iso.org/standard/72089.html
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+ISO, IEC e IEEE (2018). *29148 Requirements engineering resumen público*. https://www.iso.org/standard/72089.html
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

@@ -10,7 +10,7 @@ La aplicación del marco debe distinguir estado de tarjeta, presencia de código
 
 Localito combina módulos que se relacionan entre sí y decisiones sujetas a aprendizaje: operación offline, pagos mixtos, catálogo y reconocimiento visual. Un enfoque incremental permite demostrar una venta básica antes de ampliar funciones, revisar errores y reordenar trabajo según su valor. La elección no se justifica solamente por usar un tablero o asignar fechas; debe existir inspección del incremento y adaptación del plan.
 
-La Guía Scrum define responsabilidades, eventos y artefactos; Localito toma esa guía como referencia principal [R6]. Las prácticas de historias de usuario, colores y plantillas de tarjetas se utilizan como herramientas del equipo. No se presentan como elementos obligatorios de Scrum.
+La Guía Scrum define responsabilidades, eventos y artefactos; Localito toma esa guía como referencia principal (Schwaber y Sutherland, 2020). Las prácticas de historias de usuario, colores y plantillas de tarjetas se utilizan como herramientas del equipo. No se presentan como elementos obligatorios de Scrum.
 
 # Justificación de la elección
 
@@ -52,7 +52,7 @@ La retrospectiva analiza la forma de trabajar y genera acciones realizables. El 
 
 # Artefactos y compromisos
 
-Product Goal orienta el producto; Product Backlog representa trabajo ordenado; Sprint Backlog conserva el objetivo y plan de una iteración; el incremento debe cumplir Definition of Done. Estas relaciones se toman de la Guía Scrum [R6]. Los documentos Word acompañan esos artefactos y ayudan a la evaluación; no reemplazan automáticamente el tablero vivo.
+Product Goal orienta el producto; Product Backlog representa trabajo ordenado; Sprint Backlog conserva el objetivo y plan de una iteración; el incremento debe cumplir Definition of Done. Estas relaciones se toman de la Guía Scrum (Schwaber y Sutherland, 2020). Los documentos Word acompañan esos artefactos y ayudan a la evaluación; no reemplazan automáticamente el tablero vivo.
 
 La DoD es común al producto, mientras los criterios de aceptación son específicos de cada elemento. Por ejemplo, HU-14 necesita registrar una venta; la DoD exige además integración, pruebas pertinentes y documentación de cambios. Si la venta existe pero falla persistencia o permisos, el resultado no debe declararse terminado.
 
@@ -95,7 +95,6 @@ Las versiones de estos Word registran el commit base. Las siguientes entregas de
 
 La existencia de un tablero futuro **no implica compromiso de alcance**. Sprint 5–8 contienen únicamente eventos/actividades Scrum y no tienen HU asignadas. El Sprint Backlog se define únicamente durante el Planning de la iteración.
 
-
 # Tableros Trello oficiales — Localito
 
 **Workspace:** Localito Saas  
@@ -125,16 +124,19 @@ Existe además un tablero anterior denominado **Localito SaaS · Capstone 2026**
 
 Sprint 5–8 solo contienen Planning, Daily, Refinamiento, Review y Retrospective. Las Historias de Usuario se moverán desde Product Backlog únicamente en el Sprint Planning real.
 
+# Evidencias relacionadas con esta versión
+
+El Informe Académico conecta objetivos, método, antecedentes y resultados. La Matriz de Trazabilidad identifica requisitos e historias asociados a la implementación. El Informe de Verificación conserva las ejecuciones del 04 de octubre de 2026 y distingue su alcance local de la aceptación en PostgreSQL y con usuarios. Control de Entrega reúne la cobertura de los 17 artefactos y los pendientes de cierre.
+
 # Conclusiones
 
 La elección de Scrum responde a la necesidad de aprender y entregar incrementos evaluables durante el semestre. Su calidad de aplicación depende de objetivos, inspección y evidencia, y no del número de tableros. El corte actual debe mostrar avances y excepciones con la misma precisión.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R6] Schwaber K y Sutherland J 2020. The Scrum Guide. https://scrumguides.org/scrum-guide.html
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+Schwaber, K., y Sutherland, J. (2020). *The Scrum Guide*. https://scrumguides.org/scrum-guide.html
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

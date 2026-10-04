@@ -2,7 +2,7 @@
 
 # Resumen ejecutivo
 
-Localito utiliza una arquitectura lógica de tres capas para una PWA SaaS que reúne ventas, inventario, clientes, fiado, compras, caja y reportes. La presentación se implementa en React y TypeScript; la API Express concentra autenticación, permisos y reglas; PostgreSQL conserva los registros operacionales. Supabase administra la base y Vercel es el destino de despliegue descrito por el repositorio. Este documento analiza el código del commit 05a6f34b749cdc97dd560d91bb9be057a1197fbf, con corte al 03 de octubre de 2026. No acredita una prueba de carga ni una auditoría de producción.
+Localito utiliza una arquitectura lógica de tres capas para una PWA SaaS que reúne ventas, inventario, clientes, fiado, compras, caja y reportes. La presentación se implementa en React y TypeScript; la API Express concentra autenticación, permisos y reglas; PostgreSQL conserva los registros operacionales. Supabase administra la base y Vercel es el destino de despliegue descrito por el repositorio. Este documento analiza el código del commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c, con corte al 03 de octubre de 2026. No acredita una prueba de carga ni una auditoría de producción.
 
 La descripción incorpora las vistas lógica, de desarrollo, de procesos y física, además de escenarios que permiten comprobar su coherencia. Las tres capas explican la separación de responsabilidades; las vistas 4+1 explican el mismo sistema desde preguntas distintas. Se documentan la transacción de venta, la idempotencia, el aislamiento por negocio, la operación offline acotada y la integración de visión. Las decisiones incluyen sus consecuencias y los puntos que necesitan validación adicional.
 
@@ -12,7 +12,7 @@ El comercio requiere que una venta, su efecto sobre existencias y la deuda de un
 
 El análisis cubre los archivos apps/web, apps/api, packages/shared, db/schema.sql, docker-compose.yml y vercel.json. Se complementa con las guías de operación y calidad del repositorio. Los diagramas son elaboraciones propias a partir de esos archivos. Cuando describen la infraestructura administrada, representan el diseño configurado y documentado, sin inventar servidores, réplicas, regiones ni acuerdos de disponibilidad.
 
-Como referencias de organización se utilizan el modelo de Kruchten [R1], la distinción entre capas y niveles de Microsoft [R2] y las secciones de arc42 [R3]. ISO/IEC/IEEE 42010 orienta la descripción de arquitectura, pero esta entrega no declara conformidad certificada con la norma [R4]. La información específica de Localito proviene de su implementación [P].
+Como referencias de organización se utilizan el modelo de Kruchten (Kruchten, 1995), la distinción entre capas y niveles de Microsoft (Microsoft, s. f.) y las secciones de arc42 (arc42, s. f.c). ISO/IEC/IEEE 42010 orienta la descripción de arquitectura, pero esta entrega no declara conformidad certificada con la norma (ISO et al., 2022). La información específica de Localito proviene de su implementación (Equipo Localito, 2026).
 
 # Problema arquitectónico y objetivos de calidad
 
@@ -43,7 +43,7 @@ El alcance offline también tiene límites: permite conservar solicitudes de ven
 
 # Arquitectura de tres capas
 
-La separación entre presentación, lógica y datos permite mantener la decisión comercial en el servidor y tratar el navegador como un cliente que propone acciones. Las capas son responsabilidades lógicas; no significan que existan exactamente tres máquinas físicas. Microsoft distingue ambos conceptos [R2]. En Localito la API puede ejecutarse localmente como un proceso Node o mediante el adaptador serverless de Vercel, conservando esas responsabilidades.
+La separación entre presentación, lógica y datos permite mantener la decisión comercial en el servidor y tratar el navegador como un cliente que propone acciones. Las capas son responsabilidades lógicas; no significan que existan exactamente tres máquinas físicas. Microsoft distingue ambos conceptos (Microsoft, s. f.). En Localito la API puede ejecutarse localmente como un proceso Node o mediante el adaptador serverless de Vercel, conservando esas responsabilidades.
 
 ![Separación de responsabilidades y servicios auxiliares](figuras/capas.png)
 
@@ -65,11 +65,11 @@ Los módulos saleValidation.ts, invoiceImport.ts y visionProvider.ts separan alg
 
 PostgreSQL almacena negocios, usuarios, ventas y sus detalles, movimientos de stock, fiados, compras y caja. db/schema.sql define tablas, modificaciones compatibles, índices y activación de RLS. El cliente pg del backend ejecuta SQL parametrizado. La PWA no recibe DATABASE_URL ni ejecuta SQL directamente.
 
-RLS está activado en el esquema, pero eso no demuestra por sí solo políticas por usuario ni aislamiento de una conexión privilegiada. Las operaciones del backend siguen necesitando filtros por negocio y verificaciones de pertenencia. La guía de Supabase explica el alcance de la seguridad por filas [R13]. La revisión de permisos reales y políticas del proyecto desplegado es una comprobación pendiente, no una propiedad certificada de este documento.
+RLS está activado en el esquema, pero eso no demuestra por sí solo políticas por usuario ni aislamiento de una conexión privilegiada. Las operaciones del backend siguen necesitando filtros por negocio y verificaciones de pertenencia. La guía de Supabase explica el alcance de la seguridad por filas (Supabase, s. f.b). La revisión de permisos reales y políticas del proyecto desplegado es una comprobación pendiente, no una propiedad certificada de este documento.
 
 # Vistas de arquitectura cuatro más uno
 
-Kruchten organiza la descripción mediante cuatro perspectivas y escenarios que las relacionan [R1]. Localito adopta esa organización para permitir que el evaluador diferencie dominio, código, ejecución y despliegue. Un diagrama de componentes no reemplaza la explicación de concurrencia; un diagrama de despliegue no reemplaza el modelo de datos.
+Kruchten organiza la descripción mediante cuatro perspectivas y escenarios que las relacionan (Kruchten, 1995). Localito adopta esa organización para permitir que el evaluador diferencie dominio, código, ejecución y despliegue. Un diagrama de componentes no reemplaza la explicación de concurrencia; un diagrama de despliegue no reemplaza el modelo de datos.
 
 | Vista | Pregunta que resuelve | Representación de Localito |
 | --- | --- | --- |
@@ -105,7 +105,7 @@ La dependencia de persistencia se concentra en Repository. MemoryRepository es �
 
 ## Vista de procesos
 
-El navegador envía solicitudes HTTP; Express valida la sesión y el rol antes de invocar el repositorio. En una venta PostgreSQL se utilizan transacciones y bloqueos sobre productos. Un bloqueo asesor transaccional combina negocio y clave de idempotencia, y la búsqueda de una venta previa evita repetir una solicitud ya procesada. El índice único parcial refuerza la regla en la base. La documentación de PostgreSQL permite fundamentar el uso de transacciones y bloqueos [R8, R9].
+El navegador envía solicitudes HTTP; Express valida la sesión y el rol antes de invocar el repositorio. En una venta PostgreSQL se utilizan transacciones y bloqueos sobre productos. Un bloqueo asesor transaccional combina negocio y clave de idempotencia, y la búsqueda de una venta previa evita repetir una solicitud ya procesada. El índice único parcial refuerza la regla en la base. La documentación de PostgreSQL permite fundamentar el uso de transacciones y bloqueos (PostgreSQL Global Development Group, s. f.d; PostgreSQL Global Development Group, s. f.b).
 
 ![Procesamiento de ventas y sincronización local](figuras/procesos.png)
 
@@ -123,7 +123,7 @@ En desarrollo, la PWA se sirve con Vite en el puerto 5173, la API escucha en 300
 
 *Despliegue administrado descrito por la configuración. Elaboración propia a partir del código.*
 
-En el despliegue documentado, Vercel sirve archivos estáticos y funciones para la API; vercel.json reescribe rutas /api. Supabase proporciona PostgreSQL y su pooler. repository.ts limita el pool local a una conexión por instancia cuando VERCEL vale 1. Eso evita describir una única conexión global: pueden existir varias instancias de función y cada una tener su pool. La configuración total debe respetar los límites de conexiones del proyecto [R12].
+En el despliegue documentado, Vercel sirve archivos estáticos y funciones para la API; vercel.json reescribe rutas /api. Supabase proporciona PostgreSQL y su pooler. repository.ts limita el pool local a una conexión por instancia cuando VERCEL vale 1. Eso evita describir una única conexión global: pueden existir varias instancias de función y cada una tener su pool. La configuración total debe respetar los límites de conexiones del proyecto (Supabase, s. f.a).
 
 La conexión Supabase utiliza TLS con rejectUnauthorized:false en el código auditado. Esto cifra la comunicación, pero relaja la validación del certificado; por tanto, no se documenta como verificación TLS estricta. Debe evaluarse una configuración compatible con validación de certificados. El documento tampoco atribuye una región, réplica, WAF, failover o respaldo probado que no haya sido confirmado.
 
@@ -141,7 +141,7 @@ El segundo escenario es un reintento después de perder la respuesta. Debe devol
 
 # Decisiones arquitectónicas y alternativas
 
-El formato de decisiones registra contexto, selección y consecuencias, siguiendo la orientación de arc42 [R5]. Los registros siguientes reconstruyen decisiones observables en el código; no inventan actas ni aprobación formal del equipo. Las recomendaciones nuevas se identifican expresamente como propuestas.
+El formato de decisiones registra contexto, selección y consecuencias, siguiendo la orientación de arc42 (arc42, s. f.a). Los registros siguientes reconstruyen decisiones observables en el código; no inventan actas ni aprobación formal del equipo. Las recomendaciones nuevas se identifican expresamente como propuestas.
 
 ## ADR A01 Separación lógica de tres capas
 
@@ -175,7 +175,7 @@ Consecuencias. El usuario debe distinguir pendiente, rechazado y sincronizado. N
 
 # Análisis de seguridad y deuda técnica
 
-Se observan consultas parametrizadas, contraseñas derivadas con scrypt, sesiones con hash y validación de roles. Helmet y CORS están configurados en Express. Estos controles deben relacionarse con casos negativos: ausencia de token, rol insuficiente, sesión revocada, producto de otro negocio y payload inválido. Las buenas prácticas de Express y OWASP sirven como criterios de revisión, sin convertir su mención en una certificación [R14, R15].
+Se observan consultas parametrizadas, contraseñas derivadas con scrypt, sesiones con hash y validación de roles. Helmet y CORS están configurados en Express. Estos controles deben relacionarse con casos negativos: ausencia de token, rol insuficiente, sesión revocada, producto de otro negocio y payload inválido. Las buenas prácticas de Express y OWASP sirven como criterios de revisión, sin convertir su mención en una certificación (Express, s. f.; OWASP, s. f.).
 
 Las prioridades pendientes incluyen verificación de políticas y privilegios PostgreSQL, validación estricta de TLS, límites de consumo compartidos entre instancias, revisión del almacenamiento del token en el navegador y concurrencia en cierres de caja. Los mapas de límites en memoria de server.ts pertenecen a cada proceso y no constituyen un contador distribuido global. Las imágenes inline pueden aumentar catálogo, payload y respaldos; evaluar almacenamiento de objetos requiere una decisión futura, no una capacidad ya implementada.
 
@@ -185,38 +185,61 @@ La revisión estática verificó responsabilidades, archivos, endpoints y mecani
 
 Cada resultado debe registrar commit, ambiente, datos iniciales, solicitudes, estado final y evidencia. Una prueba con MemoryRepository no sustituye una prueba PostgreSQL; una compilación no sustituye una revisión de permisos. La revisión 4+1 se completa al comprobar que el escenario utiliza los mismos módulos y entidades que las vistas de desarrollo y lógica, y que su despliegue coincide con la configuración real.
 
+# Relación entre vistas requisitos y evidencia
+
+La Matriz de Trazabilidad relaciona los 34 requisitos funcionales con historias, módulos, casos de prueba y evidencias. Para interpretar las vistas 4+1 se parte de una pregunta de verificación: qué responsabilidad conserva cada capa, dónde se encuentra su implementación, cómo interactúa durante una operación y en qué entorno se ejecuta.
+
+| Vista | Relación con requisitos | Evidencia al 04 de octubre |
+| --- | --- | --- |
+| Lógica | RF-04, RF-07, RF-08 y RF-11; negocio, venta, producto y deuda | HTTP03 y HTTP04 verifican aislamiento en memoria; HTTP07 y HTTP09 verifican efectos de venta |
+| Desarrollo | NRF-07 y NRF-14; monorepo y contratos compartidos | Análisis de tipos y compilación de shared, API y web completados |
+| Procesos | RNF08 y RNF09; atomicidad e idempotencia | HTTP08 verifica reintento secuencial; bloqueo y concurrencia SQL pendientes |
+| Física | RF-34 y RNF03; almacenamiento persistente | Configuración inspeccionada; la campaña HTTP ejecutada usa memoria local |
+| Escenarios | Venta, fiado, aislamiento y sesión | HTTP01 a HTTP12; las pantallas y dispositivos requieren su campaña específica |
+
+## Contratos y límites de consistencia
+
+La capa de presentación envía identificadores y cantidades; la API establece identidad y negocio, valida la forma de la solicitud y aplica permisos. El repositorio obtiene precios y registra efectos. El contrato HTTP observado devuelve 201 al crear venta, 200 al registrar un abono y 204 sin cuerpo al cerrar sesión. El cliente debe admitir respuestas sin JSON y conservar la clave de venta durante un reintento. Los casos HTTP registran estados y efectos sobre datos.
+
+Una escritura de venta puede confirmarse antes de que termine el registro de auditoría del endpoint. La recuperación de una respuesta ambigua debe consultar la operación ya creada. El diseño futuro puede evaluar una bandeja transaccional de eventos si exige que el evento y la venta tengan confirmación conjunta; esa mejora no forma parte de la implementación verificada.
+
+## Evaluación de deuda técnica
+
+App.tsx, server.ts y repository.ts concentran responsabilidades amplias. La separación por capas existe, pero el tamaño de esos archivos dificulta cambios y revisiones. Se propone extraer servicios de aplicación por dominio manteniendo los contratos, con las pruebas actuales como protección frente a regresiones. La mejora no exige microservicios: el tamaño del equipo, el semestre y la necesidad de transacciones justifican conservar un despliegue sencillo.
+
+La aceptación arquitectónica requiere cerrar escenarios de PostgreSQL real, restauración y sincronización en navegador. Las pruebas en memoria y con dobles de servicios permiten comprobar reglas delimitadas; no verifican latencia, bloqueo SQL, políticas del proveedor ni capacidad de producción.
+
 # Conclusiones
 
 La arquitectura de tres capas es coherente con el objetivo de conservar reglas críticas en el backend y datos persistentes en PostgreSQL. Las vistas 4+1 muestran aspectos que un único esquema general omitía: límites de dominio, dependencias del monorepo, coordinación de ventas y distribución física. La idempotencia, la transacción y la revisión humana de IA responden a riesgos concretos del comercio.
 
 La defensa debe explicar también las condiciones de operación: offline parcial, pagos externos manuales, autenticación propia y pruebas productivas pendientes. La madurez del proyecto se demuestra relacionando diseño, código y evidencia, y señalando con precisión qué falta validar. Este documento establece esa base sin atribuir al MVP integraciones o garantías que no se han probado.
 
-# Referencias y evidencia de la versión
+# Referencias
 
-Las referencias externas fundamentan conceptos y organización. La descripción específica de Localito procede del repositorio. Se consultaron fuentes públicas el 03 de octubre de 2026. Las fichas públicas ISO se utilizan para alcance y orientación, sin atribuir acceso al texto normativo completo ni conformidad certificada.
+La evidencia del proyecto corresponde a la revisión versionada del repositorio (Equipo Localito, 2026). Las normas se consultaron mediante sus resúmenes públicos; no se declara certificación. Las fuentes web fueron consultadas durante esta revisión, del 03 al 04 de octubre de 2026.
 
-[R1] Kruchten P 1995. Architectural Blueprints The 4 plus 1 View Model of Software Architecture. https://arxiv.org/abs/2006.04975
+arc42 (s. f.a). *Architecture decisions*. https://docs.arc42.org/section-9/
 
-[R2] Microsoft. N tier architecture style. https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/n-tier
+arc42 (s. f.c). *Template overview*. https://arc42.org/overview/
 
-[R3] arc42. Template overview. https://arc42.org/overview/
+Equipo Localito (2026). *LocalitoSaaS [Código y documentación, commit ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c]*. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/ddb9956cf35cfb2035f62528299fd6bb2c9b7d5c
 
-[R4] ISO IEC IEEE 2022. 42010 Architecture description resumen público. https://www.iso.org/standard/74393.html
+Express (s. f.). *Production best practices Security*. https://expressjs.com/en/advanced/best-practice-security/
 
-[R5] arc42. Architecture decisions. https://docs.arc42.org/section-9/
+ISO, IEC e IEEE (2022). *42010 Architecture description resumen público*. https://www.iso.org/standard/74393.html
 
-[R8] PostgreSQL Global Development Group. PostgreSQL 16 Transactions. https://www.postgresql.org/docs/16/tutorial-transactions.html
+Kruchten, P. (1995). *Architectural Blueprints The 4 plus 1 View Model of Software Architecture*. https://arxiv.org/abs/2006.04975
 
-[R9] PostgreSQL Global Development Group. PostgreSQL 16 Explicit locking. https://www.postgresql.org/docs/16/explicit-locking.html
+Microsoft (s. f.). *N tier architecture style*. https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/n-tier
 
-[R12] Supabase. Connecting to Postgres. https://supabase.com/docs/guides/database/connecting-to-postgres
+OWASP (s. f.). *Application Security Verification Standard*. https://owasp.org/www-project-application-security-verification-standard/
 
-[R13] Supabase. Row Level Security. https://supabase.com/docs/guides/database/postgres/row-level-security
+PostgreSQL Global Development Group (s. f.b). *PostgreSQL 16 Explicit locking*. https://www.postgresql.org/docs/16/explicit-locking.html
 
-[R14] Express. Production best practices Security. https://expressjs.com/en/advanced/best-practice-security/
+PostgreSQL Global Development Group (s. f.d). *PostgreSQL 16 Transactions*. https://www.postgresql.org/docs/16/tutorial-transactions.html
 
-[R15] OWASP. Application Security Verification Standard. https://owasp.org/www-project-application-security-verification-standard/
+Supabase (s. f.a). *Connecting to Postgres*. https://supabase.com/docs/guides/database/connecting-to-postgres
 
-[P] Equipo Localito. Repositorio LocalitoSaaS. Commit base 05a6f34b749cdc97dd560d91bb9be057a1197fbf. https://github.com/CamiloGonzalezSt/LocalitoSaaS/tree/05a6f34b749cdc97dd560d91bb9be057a1197fbf
+Supabase (s. f.b). *Row Level Security*. https://supabase.com/docs/guides/database/postgres/row-level-security
 
-Fuentes internas revisadas: README.md; package.json y manifests de apps; apps/api/src/server.ts, repository.ts y auth.ts; db/schema.sql; apps/web/src/lib/offline.ts y workspaceCache.ts; docs de requisitos, calidad, operación y Scrum. La revisión es documental y estática. No crea resultados de pruebas funcionales, reuniones ni aceptación de usuario.

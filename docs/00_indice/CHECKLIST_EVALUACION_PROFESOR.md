@@ -32,3 +32,13 @@ Cuando exista contradicción entre documentación histórica y vigente, prevalec
 1. `docs/01_documentacion_maestra/Estado-Actual.md`
 2. `docs/01_documentacion_maestra/Documento-Proyecto-Localito.md`
 3. documentación Scrum/Trello vigente.
+
+
+
+## Revisión ampliada del 04 de octubre de 2026
+
+La entrega Word vigente está en [entregables/evaluacion_profesor](../../entregables/evaluacion_profesor/README.md): 22 documentos y 220 páginas revisadas. Incluye cinco complementos académicos y los registros de la campaña de verificación.
+
+Los estados «Cubierto» de la tabla identifican presencia documental; no equivalen a aceptación del docente ni a todas las pruebas aprobadas. La interpretación del criterio SRS se conserva en su documento, sin afirmar que Scrum prohíba una especificación formal.
+
+Tipos y build completados, 78 pruebas automatizadas y 12 casos HTTP locales aprobados. El comando check se bloqueó por IPC de tsx y se utilizaron ejecuciones separadas. PostgreSQL real, restauración, dispositivos físicos y evaluación con comerciantes siguen pendientes. Consulte el Informe de verificación y el Control de entrega para condiciones y evidencias.
