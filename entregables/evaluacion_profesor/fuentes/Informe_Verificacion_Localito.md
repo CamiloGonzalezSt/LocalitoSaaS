@@ -26,13 +26,13 @@ Los identificadores AUT corresponden al orden de los casos superiores del format
 
 | Actividad | Resultado | Evidencia |
 | --- | --- | --- |
-| Instalación reproducible | Completada; secuencias de instalación omitidas | registro de instalación (registro de instalación (registro de instalación (registro de instalación (npm_ci.log)))) |
+| Instalación reproducible | Completada; secuencias de instalación omitidas | registro de instalación (npm_ci.log) |
 | Análisis de tipos web y API | Aprobado | registro del análisis de tipos, antes del bloqueo (check.log) |
-| npm run check | Bloqueado en lanzador tsx; salida 1 | registro y código de salida de la comprobación (registro y código de salida de la comprobación (registro y código de salida de la comprobación (registro y código de salida de la comprobación (check.log, check.exit)))) |
+| npm run check | Bloqueado en lanzador tsx; salida 1 | registro y código de salida de la comprobación (check.log, check.exit) |
 | Ejecutor alternativo | 78 de 78 aprobadas; salida 0 | registro de pruebas en formato TAP y código de salida (pruebas_verificadas.tap, .exit) |
-| Compilación | Componentes compartidos, API y aplicación web aprobados; salida 0 | registro de compilación y código de salida (registro de compilación y código de salida (registro de compilación y código de salida (registro de compilación y código de salida (build.log, build.exit)))) |
-| API HTTP local | 12 de 12 casos aprobados | resultados de la integración HTTP (resultados de la integración HTTP (resultados de la integración HTTP (resultados de la integración HTTP (api_resultados.json)))) |
-| Navegador automatizado | No ejecutado; binario no disponible | registro del navegador y de su instalación (registro del navegador y de su instalación (registro del navegador y de su instalación (registro del navegador y de su instalación (browser.log, browser_install.log)))) |
+| Compilación | Componentes compartidos, API y aplicación web aprobados; salida 0 | registro de compilación y código de salida (build.log, build.exit) |
+| API HTTP local | 12 de 12 casos aprobados | resultados de la integración HTTP (api_resultados.json) |
+| Navegador automatizado | No ejecutado; binario no disponible | registro del navegador y de su instalación (browser.log, browser_install.log) |
 | PostgreSQL y restauración | No ejecutados; sin servicio de base disponible | Casos CP114–118 pendientes |
 | Usuarios y dispositivos físicos | No ejecutados | Protocolo de validación preparado |
 
@@ -112,9 +112,9 @@ Los casos se ejecutaron de forma secuencial. El negocio A comenzó con diez unid
 | HTTP04 Aislamiento de escritura | 404 y ningún cambio sobre producto B | código HTTP: 404; producto B sin cambios: sí |
 | HTTP05 Permiso vendedor | 403 al crear productos | mensaje: Tu rol no tiene permisos para realizar esta acción. |
 | HTTP06 Venta inválida sin efectos | Rechazo de cantidad negativa y conservación de existencias | código HTTP: 400; existencias: 10; ventas nuevas: 0 |
-| HTTP07 Venta y descuento de existencias | Venta por 2000 CLP y existencias de 10 a 8 | total CLP: 2000; existencias finaleseseseses: 8 |
+| HTTP07 Venta y descuento de existencias | Venta por 2000 CLP y existencias de 10 a 8 | total CLP: 2000; existencias finales: 8 |
 | HTTP08 Reintento idempotente | Una venta y ocho unidades disponibles tras repetir la misma clave | misma venta: sí; ventas: 1; existencias: 8 |
-| HTTP09 Venta fiada | Deuda de 1000 CLP vinculada al cliente | deuda CLP: 1000; existencias finaleseseseses: 7 |
+| HTTP09 Venta fiada | Deuda de 1000 CLP vinculada al cliente | deuda CLP: 1000; existencias finales: 7 |
 | HTTP10 Abono de deuda | Saldo de 1000 a 600 CLP | abono CLP: 400; saldo CLP: 600 |
 | HTTP11 Consulta de auditoría por rol | Dueño obtiene eventos y vendedor recibe 403 | eventos visibles para el propietario: 6; código HTTP del vendedor: 403 |
 | HTTP12 Revocación de sesión | 401 después de cerrar sesión | sesión revocada: sí; código HTTP: 401 |
