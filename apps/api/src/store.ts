@@ -299,7 +299,7 @@ export function getCashRegisterSummary(tenantId: string, date = new Date(), open
   return {
     date: dayKey,
     salesCount: activeSales.length,
-    cancelledSalesCount: salesForDay.length - activeSales.length,
+    cancelledSalesCount: salesForDay.filter((sale) => sale.status === "cancelled").length,
     grossTotal,
     receivedTotal,
     creditTotal,

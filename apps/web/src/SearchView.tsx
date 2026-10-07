@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import type { Customer, Product, Sale, User } from "@localito/shared";
+import { saleStatusLabel } from "@localito/shared";
 import { formatCLP, formatDateTime } from "./lib/format";
 import "./sale-search-detail.css";
 
@@ -134,7 +135,7 @@ export function SearchView({
           return <button className="business-search-row" type="button" key={sale.id} onClick={() => setSelectedSale(sale)}>
             <span className="business-search-icon"><ReceiptText size={19}/></span>
             <span className="business-search-copy"><strong>Venta #{sale.id.slice(0, 8)}</strong><small>{formatDateTime(sale.createdAt)} · {customer?.name ?? "Venta sin cliente"} · {sellerById.get(sale.sellerId) ?? "Vendedor"}</small></span>
-            <span className="business-search-meta"><strong>{formatCLP(sale.total)}</strong><small>{sale.items.length} producto(s) · {sale.status === "cancelled" ? "Anulada" : "Registrada"}</small></span>
+            <span className="business-search-meta"><strong>{formatCLP(sale.total)}</strong><small>{sale.items.length} producto(s) · {saleStatusLabel(sale.status)}</small></span>
             <ArrowRight size={18}/>
           </button>;
         })}
@@ -177,7 +178,7 @@ function SaleSearchDetail({ sale, customer, sellerName, onClose }: { sale: Sale;
     credit: "Fiado",
     mixed: "Pago mixto"
   };
-  const statusLabel = sale.status === "cancelled" ? "Anulada" : sale.status === "refunded" ? "Devuelta" : sale.status === "partially_refunded" ? "Devolución parcial" : "Registrada";
+  const statusLabel = saleStatusLabel(sale.status);
 
   return createPortal(<div className="modal-backdrop sale-search-backdrop" role="presentation" onClick={onClose}>
     <section className="panel sale-search-detail" role="dialog" aria-modal="true" aria-labelledby="sale-search-detail-title" onClick={(event) => event.stopPropagation()}>
@@ -200,7 +201,8 @@ function SaleSearchDetail({ sale, customer, sellerName, onClose }: { sale: Sale;
       </section>
       {(sale.discount ?? 0) > 0 && <div className="sale-search-line"><span>Descuento</span><strong>-{formatCLP(sale.discount ?? 0)}</strong></div>}
       {sale.notes && <div className="sale-search-note"><span>Nota de venta</span><p>{sale.notes}</p></div>}
-      <div className="sale-search-total"><span>Total pagado</span><strong>{formatCLP(sale.total)}</strong></div>
+      {(sale.returnedTotal ?? 0) > 0 && <div className="sale-search-line"><span>Devuelto</span><strong>-{formatCLP(sale.returnedTotal ?? 0)}</strong></div>}
+      <div className="sale-search-total"><span>{(sale.returnedTotal ?? 0) > 0 ? "Total neto" : "Total pagado"}</span><strong>{formatCLP(Math.max(0, sale.total - (sale.returnedTotal ?? 0)))}</strong></div>
       <button className="primary-action" type="button" onClick={onClose}>Cerrar detalle</button>
     </section>
   </div>, document.body);

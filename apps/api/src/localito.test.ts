@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createTrialSubscription, effectiveSubscriptionStatus, hasEntitlement, mergeQuickSaleTicket, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
+import { createTrialSubscription, effectiveSubscriptionStatus, hasEntitlement, mergeQuickSaleTicket, netSaleView, returnableQuantity, saleStatusLabel, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
+import type { Sale } from "@localito/shared";
 import { createSessionToken, createSignedSessionToken, hashPassword, hashSessionToken, passwordPolicyError, verifyPassword, verifySignedSessionToken } from "./auth.js";
 import { resolveTransactionalEmailProvider } from "./email.js";
 import { importInvoice, invoiceFingerprint, normalizeInvoiceImportPayload } from "./invoiceImport.js";
@@ -69,6 +70,7 @@ test("PostgreSQL returns and cancellations reuse the held Vercel connection", as
       if (sql.startsWith("select * from detalle_ventas")) return { rows: [detail] };
       if (sql.startsWith("select producto_id, stock_descontado")) return { rows: [{ producto_id: productId, stock_descontado: true }] };
       if (sql.startsWith("select detalle from devoluciones_venta")) return { rows: returned.length ? [{ detalle: returned }] : [] };
+      if (sql.startsWith("select venta_id, total, detalle from devoluciones_venta")) return { rows: returned.length ? [{ venta_id: saleId, total: returned.reduce((sum, item) => sum + Number((item as { amount?: number }).amount ?? 0), 0), detalle: returned }] : [] };
       if (sql.startsWith("update productos set stock_actual")) { stock += Number(params[0]); return { rows: [{ stock_actual: stock }] }; }
       if (sql.startsWith("insert into devoluciones_venta")) { returned = JSON.parse(String(params[6])); return { rows: [] }; }
       if (sql.startsWith("update ventas")) { status = sql.includes("set estado_venta = 'cancelled'") ? "cancelled" : String(params[0]); return { rows: [] }; }
@@ -843,4 +845,54 @@ test("platform deletion removes a tenant and all its operational data", async ()
   assert.equal((await repository.listTenants()).some((tenant) => tenant.id === registered.tenant.id), false);
   assert.equal(await repository.authenticate(registered.user.email, "DeleteSeguro2026"), null);
   assert.equal((await repository.getProducts(registered.tenant.id)).length, 0);
+});
+
+test("net sale view discounts returns for reports and limits further returns", () => {
+  const sale: Sale = {
+    id: "venta-neta", tenantId: demoTenantId, sellerId: demoOwnerId, total: 2_400, paymentMethod: "cash", paymentStatus: "approved", saleType: "normal", status: "partially_refunded", createdAt: new Date().toISOString(),
+    items: [{ productId: "p1", productName: "Producto", quantity: 2, unitPrice: 1_200, subtotal: 2_400 }],
+    returnedTotal: 1_200, returnedItems: [{ productId: "p1", quantity: 1, amount: 1_200 }]
+  };
+  assert.deepEqual(netSaleView(sale), { total: 1_200, items: [{ productId: "p1", productName: "Producto", quantity: 1, unitPrice: 1_200, subtotal: 1_200 }], units: 1, fullyReturned: false });
+  assert.equal(returnableQuantity(sale, "p1"), 1);
+  const refunded: Sale = { ...sale, status: "refunded", returnedTotal: 2_400, returnedItems: [{ productId: "p1", quantity: 2, amount: 2_400 }] };
+  assert.deepEqual(netSaleView(refunded), { total: 0, items: [], units: 0, fullyReturned: true });
+  assert.equal(returnableQuantity(refunded, "p1"), 0);
+  assert.equal(netSaleView({ ...sale, status: "cancelled" }).total, 0);
+  assert.equal(saleStatusLabel("refunded"), "Devuelta");
+  assert.equal(saleStatusLabel("partially_refunded"), "Devolución parcial");
+});
+
+test("sales expose their returns and a fully returned sale cannot be cancelled", async () => {
+  const repository = new MemoryRepository();
+  const product = (await repository.getProducts(demoTenantId)).find((candidate) => candidate.stock >= 2 && candidate.trackStock !== false);
+  assert.ok(product);
+  const initialStock = product.stock;
+  const sale = await repository.createSale(demoTenantId, { sellerId: demoOwnerId, paymentMethod: "cash", idempotencyKey: `neto-${Date.now()}`, items: [{ productId: product.id, quantity: 2 }] });
+  await repository.returnSale(demoTenantId, sale.id, { items: [{ productId: product.id, quantity: 1 }], reason: "Primera", userId: demoOwnerId });
+  let listed = (await repository.getSales(demoTenantId)).find((candidate) => candidate.id === sale.id);
+  assert.equal(listed?.returnedTotal, product.salePrice);
+  assert.equal(listed && returnableQuantity(listed, product.id), 1);
+  await repository.returnSale(demoTenantId, sale.id, { items: [{ productId: product.id, quantity: 1 }], reason: "Segunda", userId: demoOwnerId });
+  listed = (await repository.bootstrap(demoTenantId)).sales.find((candidate) => candidate.id === sale.id);
+  assert.equal(listed?.status, "refunded");
+  assert.equal(listed?.returnedItems?.[0]?.quantity, 2);
+  assert.equal(listed && netSaleView(listed).total, 0);
+  assert.equal((await repository.getProducts(demoTenantId)).find((candidate) => candidate.id === product.id)?.stock, initialStock);
+  await assert.rejects(repository.cancelSale(demoTenantId, sale.id, "No corresponde"), /devuelta completamente/);
+  assert.equal(describeHttpError(new Error("La venta ya fue devuelta completamente; no se puede anular.")).status, 409);
+  assert.equal((await repository.getProducts(demoTenantId)).find((candidate) => candidate.id === product.id)?.stock, initialStock);
+});
+
+test("customers with pending credit cannot be deactivated and stay visible while they owe", async () => {
+  const repository = new MemoryRepository();
+  const product = (await repository.getProducts(demoTenantId)).find((candidate) => candidate.stock >= 1 && candidate.trackStock !== false);
+  assert.ok(product);
+  const customer = await repository.createCustomer(demoTenantId, { name: "Cliente con fiado pendiente", creditLimit: 0, creditDays: 15 });
+  await repository.createSale(demoTenantId, { sellerId: demoOwnerId, customerId: customer.id, paymentMethod: "credit", idempotencyKey: `fiado-${Date.now()}`, items: [{ productId: product.id, quantity: 1 }] });
+  await assert.rejects(repository.deactivateCustomer(demoTenantId, customer.id), /deuda pendiente/);
+  assert.equal(describeHttpError(new Error("El cliente tiene deuda pendiente; registra el abono antes de desactivarlo.")).status, 409);
+  const listed = (await repository.getCustomers(demoTenantId)).find((candidate) => candidate.id === customer.id);
+  assert.equal(listed?.active, true);
+  assert.ok((listed?.debtBalance ?? 0) > 0);
 });
