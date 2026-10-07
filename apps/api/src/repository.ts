@@ -31,7 +31,7 @@ import type {
   Tenant,
   User
 } from "@localito/shared";
-import { createTrialSubscription, subscriptionEntitlements } from "@localito/shared";
+import { createTrialSubscription, subscriptionEntitlements, summarizeSaleReturns } from "@localito/shared";
 import {
   buildDemoCustomers,
   buildDemoProducts,
@@ -282,8 +282,8 @@ function buildMemoryBootstrap(tenantId: string, currentCashRegister?: CashRegist
     user,
     users: store.users.filter((candidate) => candidate.tenantId === tenant.id),
     products: getTenantProducts(tenant.id),
-    customers: getTenantCustomers(tenant.id),
-    sales: store.sales.filter((sale) => sale.tenantId === tenant.id),
+    customers: listCustomersWithPendingDebt(tenant.id),
+    sales: memorySalesWithReturns(tenant.id),
     suppliers: store.suppliers.filter((supplier) => supplier.tenantId === tenant.id && supplier.active),
     purchaseOrders: store.purchaseOrders.filter((purchase) => purchase.tenantId === tenant.id),
     debts: store.debts.filter((debt) => debt.tenantId === tenant.id),
@@ -434,7 +434,7 @@ function buildCashRegisterFromSales(sales: Sale[], date = new Date(), returnedTo
   return {
     date: dayKey,
     salesCount: activeSales.length,
-    cancelledSalesCount: salesForDay.length - activeSales.length,
+    cancelledSalesCount: salesForDay.filter((sale) => sale.status === "cancelled").length,
     grossTotal,
     receivedTotal: grossTotal - creditTotal,
     creditTotal,
@@ -733,7 +733,7 @@ export class MemoryRepository implements DataRepository {
   }
 
   async getCustomers(tenantId: string) {
-    return getTenantCustomers(tenantId);
+    return listCustomersWithPendingDebt(tenantId);
   }
 
   async createCustomer(tenantId: string, body: Partial<Customer>) {
@@ -766,6 +766,7 @@ export class MemoryRepository implements DataRepository {
     if (body.creditLimit != null) customer.creditLimit = readPositiveNumber(body.creditLimit);
     if (body.creditDays != null) customer.creditDays = readPositiveNumber(body.creditDays, 30);
     if (body.creditBlocked != null) customer.creditBlocked = body.creditBlocked;
+    if (body.active === false && customer.active !== false && (customer.debtBalance > 0 || memoryPendingDebt(tenantId, customerId) > 0)) throw new Error(CUSTOMER_WITH_DEBT_MESSAGE);
     if (body.active != null) customer.active = Boolean(body.active);
     return customer;
   }
@@ -775,7 +776,7 @@ export class MemoryRepository implements DataRepository {
   }
 
   async getSales(tenantId: string) {
-    return store.sales.filter((sale) => sale.tenantId === tenantId);
+    return memorySalesWithReturns(tenantId);
   }
 
   async createSale(tenantId: string, body: SaleCreationPayload) {
@@ -862,6 +863,7 @@ export class MemoryRepository implements DataRepository {
     const sale = store.sales.find((candidate) => candidate.id === saleId && candidate.tenantId === tenantId);
     if (!sale) return null;
     if (sale.status === "cancelled") return sale;
+    if (sale.status === "refunded") throw new Error(FULLY_REFUNDED_CANCEL_MESSAGE);
 
     sale.status = "cancelled";
     sale.paymentStatus = "cancelled";
@@ -1798,11 +1800,12 @@ export class PostgresRepository implements DataRepository {
 
   async getCustomers(tenantId: string) {
     const result = await this.pool.query(
-      `select c.*, coalesce(sum(cf.saldo_pendiente) filter (where cf.estado = 'pendiente'), 0) as debt_balance
+      `select c.*, coalesce(sum(cf.saldo_pendiente) filter (where cf.saldo_pendiente > 0 and cf.estado not in ('anulada', 'pagada')), 0) as debt_balance
        from clientes c
        left join cuentas_fiado cf on cf.cliente_id = c.id
-       where c.negocio_id = $1 and c.activo = true
+       where c.negocio_id = $1
        group by c.id
+       having c.activo = true or coalesce(sum(cf.saldo_pendiente) filter (where cf.saldo_pendiente > 0 and cf.estado not in ('anulada', 'pagada')), 0) > 0
        order by c.fecha_creacion desc, c.nombre asc`,
       [tenantId]
     );
@@ -1850,6 +1853,7 @@ export class PostgresRepository implements DataRepository {
       creditBlocked: body.creditBlocked ?? current.creditBlocked,
       active: body.active ?? current.active
     };
+    if (updated.active === false && current.active !== false && current.debtBalance > 0) throw new Error(CUSTOMER_WITH_DEBT_MESSAGE);
 
     await this.pool.query(
       `update clientes
@@ -1891,7 +1895,16 @@ export class PostgresRepository implements DataRepository {
       detailsBySale.set(row.venta_id, list);
     }
 
-    return saleResult.rows.map((row) => mapSale(row, detailsBySale.get(row.id) ?? []));
+    const returnResult = await client.query(`select venta_id, total, detalle from devoluciones_venta where negocio_id = $1`, [tenantId]);
+    const returnsBySale = new Map<string, Array<{ items: Array<{ productId: string; quantity: number; amount?: number }>; total: number }>>();
+    for (const row of returnResult.rows) {
+      const detail = Array.isArray(row.detalle) ? row.detalle : typeof row.detalle === "string" ? JSON.parse(row.detalle) : [];
+      const list = returnsBySale.get(String(row.venta_id)) ?? [];
+      list.push({ items: detail as Array<{ productId: string; quantity: number; amount?: number }>, total: Number(row.total) });
+      returnsBySale.set(String(row.venta_id), list);
+    }
+
+    return saleResult.rows.map((row) => withReturns(mapSale(row, detailsBySale.get(row.id) ?? []), returnsBySale.get(String(row.id))));
   }
 
   async createSale(tenantId: string, body: SaleCreationPayload) {
@@ -1923,6 +1936,10 @@ export class PostgresRepository implements DataRepository {
       if (String(saleRow.estado_venta ?? "active") === "cancelled") {
         await client.query("rollback");
         return (await this.getSales(tenantId, client)).find((sale) => sale.id === saleId) ?? null;
+      }
+      if (String(saleRow.estado_venta ?? "active") === "refunded") {
+        await client.query("rollback");
+        throw new Error(FULLY_REFUNDED_CANCEL_MESSAGE);
       }
 
       const detailResult = await client.query(`select * from detalle_ventas where venta_id = $1`, [saleId]);
@@ -2865,6 +2882,32 @@ function mapCustomer(row: Record<string, unknown>): Customer {
     debtBalance: parseInitialDebt(row),
     active: Boolean(row.activo)
   };
+}
+
+export const CUSTOMER_WITH_DEBT_MESSAGE = "El cliente tiene deuda pendiente; registra el abono antes de desactivarlo.";
+
+function memoryPendingDebt(tenantId: string, customerId: string) {
+  return store.debts
+    .filter((debt) => debt.tenantId === tenantId && debt.customerId === customerId && debt.balance > 0 && debt.status !== "cancelled" && debt.status !== "paid")
+    .reduce((sum, debt) => sum + debt.balance, 0);
+}
+
+/** Clientes activos y, además, clientes inactivos que aún tienen saldo de fiado pendiente. */
+function listCustomersWithPendingDebt(tenantId: string) {
+  return store.customers.filter((customer) => customer.tenantId === tenantId && (customer.active || customer.debtBalance > 0 || memoryPendingDebt(tenantId, customer.id) > 0));
+}
+
+export const FULLY_REFUNDED_CANCEL_MESSAGE = "La venta ya fue devuelta completamente; no se puede anular.";
+
+function withReturns(sale: Sale, returns?: Array<{ items: Array<{ productId: string; quantity: number; amount?: number }>; total: number }>): Sale {
+  if (!returns?.length) return sale;
+  return { ...sale, ...summarizeSaleReturns(returns) };
+}
+
+function memorySalesWithReturns(tenantId: string): Sale[] {
+  return store.sales
+    .filter((sale) => sale.tenantId === tenantId)
+    .map((sale) => withReturns(sale, store.saleReturns.filter((entry) => entry.tenantId === tenantId && entry.saleId === sale.id)));
 }
 
 function mapSale(row: Record<string, unknown>, items: SaleItem[]): Sale {

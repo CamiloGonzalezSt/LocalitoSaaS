@@ -747,7 +747,7 @@ app.post(
 
     if (!validProductImage(body.imageUrl)) { res.status(400).json({ message: "Imagen inválida: usa PNG, JPG o WebP de hasta 500 KB." }); return; }
     const product = await repository.createProduct(tenantId, body);
-    await repository.recordAudit({ tenantId, userId: actor.id, userName: actor.name, action: "create", entity: "product", entityId: product.id });
+    await repository.recordAudit({ tenantId, userId: actor.id, userName: actor.name, action: "create", entity: "product", entityId: product.id, details: { name: product.name, after: { salePrice: product.salePrice, costPrice: product.costPrice, stock: product.stock, minimumStock: product.minimumStock } } });
     res.status(201).json({ data: product });
   })
 );
@@ -778,7 +778,7 @@ app.patch(
       res.status(404).json({ message: "Producto no encontrado." });
       return;
     }
-    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "product", entityId: product.id, details: { name: product.name, before: { salePrice: before?.salePrice, stock: before?.stock }, after: { salePrice: product.salePrice, stock: product.stock }, reason: typeof req.body.reason === "string" ? req.body.reason.slice(0, 300) : "Edición del producto" } });
+    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "product", entityId: product.id, details: { name: product.name, before: { salePrice: before?.salePrice, costPrice: before?.costPrice, stock: before?.stock, minimumStock: before?.minimumStock }, after: { salePrice: product.salePrice, costPrice: product.costPrice, stock: product.stock, minimumStock: product.minimumStock }, reason: typeof req.body.reason === "string" ? req.body.reason.slice(0, 300) : "Edición del producto" } });
     res.json({ data: product });
   })
 );
@@ -938,7 +938,7 @@ app.post("/sales/:id/returns", asyncRoute(async (req, res) => {
   if (!items?.length || !reason?.trim()) { res.status(400).json({ message: "Indica productos y motivo de la devolución." }); return; }
   const result = await repository.returnSale(actor.tenantId, req.params.id, { items, reason, userId: actor.id });
   if (!result) { res.status(404).json({ message: "Venta no encontrada o no admite devolución." }); return; }
-  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "return", entity: "sale", entityId: req.params.id, details: { total: result.total } });
+  await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "return", entity: "sale", entityId: req.params.id, details: { total: result.total, quantity: result.items.reduce((sum, item) => sum + item.quantity, 0), reason: result.reason } });
   res.status(201).json({ data: result });
 }));
 

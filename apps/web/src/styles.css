@@ -7494,3 +7494,9 @@ summary:focus-visible {
   .mobile-ticket-dialog::backdrop { display: none !important; }
   body { overflow: visible !important; }
 }
+
+/* Mientras la barra inferior flotante está visible, el foco y los saltos de
+   desplazamiento dejan espacio libre para que no tape botones del contenido. */
+html {
+  scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom));
+}

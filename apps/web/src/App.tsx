@@ -62,7 +62,7 @@ import type {
   SubscriptionPlan,
   User
 } from "@localito/shared";
-import { effectiveSubscriptionStatus, LOCALITO_PLANS, hasEntitlement, mergeQuickSaleTicket, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
+import { effectiveSubscriptionStatus, LOCALITO_PLANS, hasEntitlement, mergeQuickSaleTicket, netSaleView, returnableQuantity, saleStatusLabel, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
 import { api, flushOfflineQueue, OfflineQueuedError } from "./lib/api";
 import { useSaleWorkspace, reconcileDraft } from "./useSaleWorkspace";
 import type { SaleDraft } from "./useSaleWorkspace";
@@ -929,7 +929,11 @@ function App() {
 
   async function cancelSale(sale: Sale, reason: string) {
     if (!isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede anular ventas.", tone: "warning" });
+      setNotice({ message: "Solo el dueño o administrador puede anular ventas.", tone: "warning" });
+      return false;
+    }
+    if (sale.status === "refunded") {
+      setNotice({ message: "La venta ya fue devuelta completamente; no se puede anular.", tone: "warning" });
       return false;
     }
 
@@ -1024,7 +1028,7 @@ function App() {
 
   function startEditProduct(product: Product) {
     if (!isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede editar productos.", tone: "warning" });
+      setNotice({ message: "Solo el dueño o administrador puede editar productos.", tone: "warning" });
       return;
     }
 
@@ -1052,7 +1056,7 @@ function App() {
 
   async function deactivateProduct(product: Product) {
     if (!isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede desactivar productos.", tone: "warning" });
+      setNotice({ message: "Solo el dueño o administrador puede desactivar productos.", tone: "warning" });
       return;
     }
 
@@ -1078,7 +1082,7 @@ function App() {
 
   async function adjustStock(product: Product, delta: number) {
     if (!isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede ajustar stock manualmente.", tone: "warning" });
+      setNotice({ message: "Solo el dueño o administrador puede ajustar stock manualmente.", tone: "warning" });
       return;
     }
 
@@ -1127,7 +1131,7 @@ function App() {
 
   async function createCustomer() {
     if (editingCustomerId && !isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede editar clientes.", tone: "warning" });
+      setNotice({ message: "Solo el dueño o administrador puede editar clientes.", tone: "warning" });
       return;
     }
 
@@ -1167,7 +1171,7 @@ function App() {
 
   function startEditCustomer(customer: Customer) {
     if (!isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede editar clientes.", tone: "warning" });
+      setNotice({ message: "Solo el dueño o administrador puede editar clientes.", tone: "warning" });
       return;
     }
 
@@ -1187,7 +1191,7 @@ function App() {
 
   async function deactivateCustomer(customer: Customer) {
     if (!isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede desactivar clientes.", tone: "warning" });
+      setNotice({ message: "Solo el dueño o administrador puede desactivar clientes.", tone: "warning" });
       return;
     }
 
@@ -1267,7 +1271,7 @@ function App() {
 
   async function createUser() {
     if (!isOwner) {
-      setNotice({ message: "Solo el dueno/admin puede crear usuarios.", tone: "warning" });
+      setNotice({ message: "Solo el dueño o administrador puede crear usuarios.", tone: "warning" });
       return;
     }
 
@@ -1488,7 +1492,7 @@ function App() {
         <div className="topbar-copy">
           {["scan", "product_create", "setup", "invoice", "plan"].includes(activeView) && <button className="back-button" type="button" onClick={() => navigateTo(previousView === activeView ? "dashboard" : previousView)}><ArrowLeft size={18}/> Volver</button>}
           <p className="eyebrow">{isSystemAdmin ? "Administración de Localito" : `Hola, ${currentUser.name.split(" ")[0]}`}</p>
-          <h1>{viewTitle(activeView, isOwner, isSystemAdmin)}</h1>
+          <h1>{activeView === "product_create" && editingProductId ? "Editar producto" : viewTitle(activeView, isOwner, isSystemAdmin)}</h1>
           <p className="session-line">
             <Store size={15}/>
             <span>{tenant?.name ?? "Localito"}</span>
@@ -1647,6 +1651,7 @@ function App() {
             onCancelEdit={() => {
               setEditingProductId(null);
               setProductForm(emptyProductForm);
+              navigateTo("products");
             }}
             onEdit={startEditProduct}
             onDeactivate={requestDeactivateProduct}
@@ -1727,6 +1732,7 @@ function App() {
             sales={sales}
             lowStockProducts={lowStockProducts}
             cashRegister={cashRegister}
+            cashSession={cashSession}
             cashClosures={cashClosures}
             cashClosureNote={cashClosureNote}
             isBusy={isBusy}
@@ -2302,7 +2308,7 @@ function SaleView({
             Cliente para fiado
             <select value={selectedCustomerId} disabled={isBusy} onChange={(event) => onCustomer(event.target.value)}>
               <option value="">Seleccionar cliente</option>
-              {customers.map((customer) => (
+              {customers.filter((customer) => customer.active !== false).map((customer) => (
                 <option value={customer.id} key={customer.id}>
                   {customer.name} - deuda {formatCLP(customer.debtBalance)}
                 </option>
@@ -2518,7 +2524,7 @@ function ProductsView({
               {categoryOptions.map((category) => <option value={category.label} key={category.id} />)}
             </datalist>
             <FormField label="Precio de venta" value={productForm.salePrice} onChange={value => onForm({ ...productForm, salePrice: value })} type="number" min="1" step="1" required placeholder="$0" />
-            <FormField label="Stock inicial" value={productForm.stock} onChange={value => onForm({ ...productForm, stock: value })} type="number" min="0" step="any" placeholder="0" />
+            <FormField label={editingProductId ? "Stock actual" : "Stock inicial"} value={productForm.stock} onChange={value => onForm({ ...productForm, stock: value })} type="number" min="0" step="any" placeholder="0" />
           </div>
           <details className="progressive-form-additional" open={showAdvancedProductFields || Boolean(editingProductId)} onToggle={event => setShowAdvancedProductFields(event.currentTarget.open)}><summary>Información adicional</summary><div className="progressive-form-heading"><span>Información adicional</span><p>Completa solo lo que te ayude a ordenar mejor el inventario.</p></div><div className="form-grid advanced-product-fields"><label className="form-field"><span>Marca</span><input value={productForm.brand} onChange={(event) => onForm({ ...productForm, brand: event.target.value })} placeholder="Ej. Coca-Cola" /></label><label className="form-field"><span>Código de barras</span><input value={productForm.barcode} onChange={(event) => onForm({ ...productForm, barcode: event.target.value })} placeholder="Código del envase" inputMode="numeric" /></label><FormField label="Costo" value={productForm.costPrice} onChange={value => onForm({ ...productForm, costPrice: value })} type="number" min="0" step="1" placeholder="$0" /><FormField label="Stock mínimo" value={productForm.minimumStock} onChange={value => onForm({ ...productForm, minimumStock: value })} type="number" min="0" step="any" placeholder="0" /><label className="form-field"><span>SKU interno</span><input value={productForm.sku} onChange={(event) => onForm({ ...productForm, sku: event.target.value })} placeholder="Código interno" /></label><label className="form-field"><span>Variante o formato</span><input value={productForm.variant} onChange={(event) => onForm({ ...productForm, variant: event.target.value })} placeholder="Ej. Sin azúcar, pack 6" /></label><label className="form-field"><span>Unidad de venta</span><select value={productForm.unit} onChange={(event) => onForm({ ...productForm, unit: event.target.value as ProductFormState["unit"] })}><option value="unit">Unidad</option><option value="kg">Kilogramo</option><option value="gram">Gramo</option><option value="liter">Litro</option><option value="pack">Pack</option><option value="box">Caja</option></select></label><FormField label="Unidades por pack" value={productForm.unitsPerPack} onChange={value => onForm({ ...productForm, unitsPerPack: value })} type="number" min="1" step="1" placeholder="Ej. 6" /><label className="form-field"><span>Vencimiento</span><input type="date" value={productForm.expiryDate} onChange={(event) => onForm({ ...productForm, expiryDate: event.target.value })} /></label><label className="field checkbox-field"><input type="checkbox" checked={productForm.trackStock} onChange={(event) => onForm({ ...productForm, trackStock: event.target.checked })} /> Controlar stock de este producto</label></div></details>
           <button className="primary-action full" type="submit" disabled={isBusy}>
@@ -2687,11 +2693,12 @@ function CustomersView({
   const [debtMethods, setDebtMethods] = useState<Record<string, Exclude<PaymentMethod, "credit" | "mixed">>>({});
   const overdue = overdueDebts(debts);
   const overdueCustomerIds = new Set(overdue.map(debt => debt.customerId));
-  const visibleCustomers = customerTab === "clients" ? customers : customers.filter(customer => customer.debtBalance > 0 && (customerTab !== "overdue" || overdueCustomerIds.has(customer.id)));
+  const activeCustomerList = customers.filter(customer => customer.active !== false);
+  const visibleCustomers = customerTab === "clients" ? activeCustomerList : customers.filter(customer => customer.debtBalance > 0 && (customerTab !== "overdue" || overdueCustomerIds.has(customer.id)));
   return (
     <div className="stack">
       <nav className="section-tabs" aria-label="Secciones de clientes">
-        {([["clients", "Clientes", customers.length], ["credit", "Fiado", customers.filter(customer => customer.debtBalance > 0).length], ["pending", "Pendientes", customers.filter(customer => customer.debtBalance > 0).length], ["overdue", "Vencidos", customers.filter(customer => customer.debtBalance > 0 && overdueCustomerIds.has(customer.id)).length]] as const).map(([tab, label, count]) => <button className={customerTab === tab ? "active" : ""} type="button" aria-pressed={customerTab === tab} onClick={() => setCustomerTab(tab)} key={tab}>{label} <span>{count}</span></button>)}
+        {([["clients", "Clientes", activeCustomerList.length], ["credit", "Fiado", customers.filter(customer => customer.debtBalance > 0).length], ["pending", "Pendientes", customers.filter(customer => customer.debtBalance > 0).length], ["overdue", "Vencidos", customers.filter(customer => customer.debtBalance > 0 && overdueCustomerIds.has(customer.id)).length]] as const).map(([tab, label, count]) => <button className={customerTab === tab ? "active" : ""} type="button" aria-pressed={customerTab === tab} onClick={() => setCustomerTab(tab)} key={tab}>{label} <span>{count}</span></button>)}
       </nav><div className="workspace-grid customer-workspace">
       {customerTab === "clients" && <FormSurface className="panel customer-form-panel" label="Datos del cliente" busy={isBusy || !canOperate} onSave={onCreate}>
         <div className="section-heading">
@@ -2769,6 +2776,7 @@ function CustomersView({
               <div>
                 <strong>{customer.name}</strong>
                 <p>{customer.phone ?? "Sin teléfono"}</p>
+                {customer.active === false && <p className="warning-text">Cliente inactivo con saldo pendiente</p>}
                 {customerTab === "overdue" && <p>Vencido: {formatCLP(overdue.filter(debt => debt.customerId === customer.id).reduce((total, debt) => total + debt.balance, 0))}</p>}
               </div>
               <span className={customer.debtBalance > 0 ? "debt" : "paid"}>{formatCLP(customer.debtBalance)}</span>
@@ -2796,8 +2804,8 @@ function CustomersView({
                   <Send size={16} />
                   <span>Simular cobro</span>
                 </button>
-                {canManageCustomers && (
-                  <button className="secondary-action small danger-soft" type="button" onClick={() => onDeactivate(customer)} disabled={isBusy}>
+                {canManageCustomers && customer.active !== false && (
+                  <button className="secondary-action small danger-soft" type="button" onClick={() => onDeactivate(customer)} disabled={isBusy || customer.debtBalance > 0} title={customer.debtBalance > 0 ? "Registra el abono de la deuda antes de desactivar" : undefined}>
                     <Trash2 size={16} />
                     <span>Desactivar</span>
                   </button>
@@ -2814,7 +2822,7 @@ function CustomersView({
 
 function CustomerOverview({ customers }: { customers: Customer[] }) {
   const activeCustomers = customers.filter((customer) => customer.active !== false);
-  const customersWithDebt = activeCustomers.filter((customer) => customer.debtBalance > 0);
+  const customersWithDebt = customers.filter((customer) => customer.debtBalance > 0);
   const blockedCustomers = activeCustomers.filter((customer) => customer.creditBlocked);
   const totalDebt = customersWithDebt.reduce((sum, customer) => sum + customer.debtBalance, 0);
 
@@ -2837,6 +2845,7 @@ function ReportsView({
   sales,
   lowStockProducts,
   cashRegister,
+  cashSession,
   cashClosures,
   cashClosureNote,
   isBusy,
@@ -2853,6 +2862,7 @@ function ReportsView({
   sales: Sale[];
   lowStockProducts: Product[];
   cashRegister: CashRegisterSummary;
+  cashSession?: CashSession | null;
   cashClosures: CashRegisterClosure[];
   cashClosureNote: string;
   isBusy: boolean;
@@ -2907,22 +2917,28 @@ function ReportsView({
   const previousPeriodLabel = previousStartDate === previousEndDate ? formatRangeDate(previousStartDate) : `${formatRangeDate(previousStartDate)} — ${formatRangeDate(previousEndDate)}`;
   const productCategoryById = new Map(products.map((product) => [product.id, product.category || "Sin categoría"]));
   const categories = [...new Set(products.map((product) => product.category).filter(Boolean))].sort((left, right) => left.localeCompare(right, "es"));
+  // Los reportes trabajan con valores netos: se descuentan las unidades y montos devueltos.
+  // `original` conserva la venta completa para el historial y las acciones (anular/devolver).
   const createFilteredSales = (from: string, to: string) => sales
     .filter((sale) => sale.createdAt.slice(0, 10) >= from && sale.createdAt.slice(0, 10) <= to)
     .filter((sale) => selectedSellerId === "all" || sale.sellerId === selectedSellerId)
+    .filter((sale) => selectedCategory === "all" || sale.items.some((item) => productCategoryById.get(item.productId) === selectedCategory))
     .map((sale) => {
-      const items = selectedCategory === "all" ? sale.items : sale.items.filter((item) => productCategoryById.get(item.productId) === selectedCategory);
-      const total = selectedCategory === "all" ? sale.total : items.reduce((sum, item) => sum + item.subtotal, 0);
-      return { ...sale, items, total };
-    })
-    .filter((sale) => sale.items.length > 0);
+      const net = netSaleView(sale);
+      const items = selectedCategory === "all" ? net.items : net.items.filter((item) => productCategoryById.get(item.productId) === selectedCategory);
+      const total = selectedCategory === "all" ? net.total : items.reduce((sum, item) => sum + item.subtotal, 0);
+      const ratio = sale.total > 0 ? total / sale.total : 0;
+      const payments = sale.payments?.map((payment) => ({ ...payment, amount: Math.round(payment.amount * ratio) }));
+      return { ...sale, items, total, payments, original: sale, fullyReturned: net.fullyReturned };
+    });
   const monthSales = createFilteredSales(startDate, endDate);
   const historyPageSize = 3;
   const historyPageCount = Math.max(1, Math.ceil(monthSales.length / historyPageSize));
   const visibleHistoryPage = Math.min(historyPage, historyPageCount - 1);
-  const visibleHistorySales = monthSales.slice(visibleHistoryPage * historyPageSize, (visibleHistoryPage + 1) * historyPageSize);
-  const activeSales = monthSales.filter((sale) => sale.status !== "cancelled");
-  const previousActiveSales = createFilteredSales(previousStartDate, previousEndDate).filter((sale) => sale.status !== "cancelled");
+  const visibleHistorySales = monthSales.slice(visibleHistoryPage * historyPageSize, (visibleHistoryPage + 1) * historyPageSize).map((entry) => entry.original);
+  const isCountedSale = (sale: { status: Sale["status"]; fullyReturned: boolean; items: SaleItem[] }) => sale.status !== "cancelled" && !sale.fullyReturned && sale.items.length > 0;
+  const activeSales = monthSales.filter(isCountedSale);
+  const previousActiveSales = createFilteredSales(previousStartDate, previousEndDate).filter(isCountedSale);
   const monthTotal = activeSales.reduce((sum, sale) => sum + sale.total, 0);
   const previousTotal = previousActiveSales.reduce((sum, sale) => sum + sale.total, 0);
   const totalDifference = monthTotal - previousTotal;
@@ -2966,7 +2982,7 @@ function ReportsView({
     const rows = monthSales.flatMap((sale) => sale.items.map((item) => [
       sale.createdAt.slice(0, 10), new Date(sale.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }), sale.id,
       users.find((user) => user.id === sale.sellerId)?.name ?? "Usuario eliminado", productCategoryById.get(item.productId) ?? "Sin categoría",
-      item.productName, String(item.quantity), String(item.unitPrice), String(item.subtotal), String(sale.total), paymentMethodLabel(sale.paymentMethod), sale.status
+      item.productName, String(item.quantity), String(item.unitPrice), String(item.subtotal), String(sale.total), paymentMethodLabel(sale.paymentMethod), saleStatusLabel(sale.status)
     ]));
     const csv = [["Fecha", "Hora", "Venta", "Vendedor", "Categoría", "Producto", "Cantidad", "Precio unitario", "Subtotal", "Total venta", "Medio de pago", "Estado"], ...rows]
       .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(";"))
@@ -2989,7 +3005,7 @@ function ReportsView({
   function openSaleAction(sale: Sale, type: "cancel" | "return") {
     const completeSale = sales.find((entry) => entry.id === sale.id) ?? sale;
     setSaleAction({ sale: completeSale, type }); setActionReason("");
-    setReturnQuantities(Object.fromEntries(completeSale.items.map((item) => [item.productId, type === "return" ? 1 : 0])));
+    setReturnQuantities(Object.fromEntries(completeSale.items.map((item) => [item.productId, type === "return" && returnableQuantity(completeSale, item.productId) > 0 ? 1 : 0])));
   }
 
   async function confirmSaleAction() {
@@ -2997,7 +3013,7 @@ function ReportsView({
     let succeeded: boolean;
     if (saleAction.type === "cancel") succeeded = await onCancelSale(saleAction.sale, actionReason.trim());
     else {
-      const items = saleAction.sale.items.map((item) => ({ productId: item.productId, quantity: Math.min(item.quantity, Math.max(0, returnQuantities[item.productId] ?? 0)) })).filter((item) => item.quantity > 0);
+      const items = saleAction.sale.items.map((item) => ({ productId: item.productId, quantity: Math.min(returnableQuantity(saleAction.sale, item.productId), Math.max(0, returnQuantities[item.productId] ?? 0)) })).filter((item) => item.quantity > 0);
       if (!items.length) return;
       succeeded = await onReturnSale(saleAction.sale, items, actionReason.trim());
     }
@@ -3022,8 +3038,8 @@ function ReportsView({
 
       <section className="panel">
         <div className="section-heading">
-          <div><span>Operación actual</span><h2>Caja de hoy</h2><p>Movimientos del turno abierto, independientes del período seleccionado.</p></div>
-          <span>{cashRegister.date}</span>
+          <div><span>Operación actual</span><h2>{cashSession ? "Caja del turno abierto" : "Caja de hoy"}</h2><p>{cashSession ? `Acumula las ventas desde la apertura del turno (${formatDateTime(cashSession.openedAt)}${cashSession.openedByName ? ` · ${cashSession.openedByName}` : ""}), independiente del período seleccionado.` : "Movimientos del día, independientes del período seleccionado."}</p></div>
+          <span>{cashSession ? `Desde ${formatDateTime(cashSession.openedAt)}` : cashRegister.date}</span>
         </div>
         <div className="report-grid">
           <ReportMetric label="Efectivo" value={formatCLP(cashRegister.totalsByMethod.cash)} />
@@ -3034,7 +3050,7 @@ function ReportsView({
           <ReportMetric label="Fiado" value={formatCLP(cashRegister.creditTotal)} tone="warning" />
           <ReportMetric label="Total bruto" value={formatCLP(cashRegister.grossTotal)} />
           <ReportMetric label="Ticket promedio" value={formatCLP(cashRegister.averageTicket)} />
-          <ReportMetric label="Anuladas" value={String(cashRegister.cancelledSalesCount)} />
+          <ReportMetric label="Ventas anuladas" value={String(cashRegister.cancelledSalesCount)} />
         </div>
         <label className="field">
           Observación del cierre
@@ -3103,10 +3119,10 @@ function ReportsView({
           <section className="panel">
             <div className="section-heading">
               <div><span>Vista general</span><h2>Resumen operativo</h2></div>
-              <span>{monthSales.length} ventas</span>
+              <span>{activeSales.length} {activeSales.length === 1 ? "venta" : "ventas"}</span>
             </div>
             <div className="report-grid">
-              <ReportMetric label="Clientes registrados" value={String(customers.length)} />
+              <ReportMetric label="Clientes registrados" value={String(customers.filter((customer) => customer.active !== false).length)} />
               <ReportMetric label="Productos activos" value={String(products.length)} />
               <ReportMetric label="Ventas fiadas" value={String(activeSales.filter((sale) => sale.saleType === "credit").length)} />
               <ReportMetric label="Stock bajo" value={String(lowStockProducts.length)} tone="warning" />
@@ -3127,10 +3143,11 @@ function ReportsView({
                       {formatDateTime(sale.createdAt)} - {paymentMethodLabel(sale.paymentMethod)}
                     </p>
                     {sale.status === "cancelled" && <p className="warning-text">Anulada: {sale.cancellationReason ?? "sin motivo"}</p>}
+                    {(sale.status === "refunded" || sale.status === "partially_refunded") && <p className="warning-text">{saleStatusLabel(sale.status)}: {formatCLP(sale.returnedTotal ?? 0)} devuelto · neto {formatCLP(netSaleView(sale).total)}</p>}
                   </div>
-                  <span className={sale.status === "cancelled" ? "debt period-sale-amount" : "amount period-sale-amount"}>{formatCLP(sale.total)}</span>
+                  <span className={sale.status === "cancelled" || sale.status === "refunded" ? "debt period-sale-amount" : "amount period-sale-amount"}>{formatCLP(sale.total)}</span>
                   <div className="period-sale-actions">
-                    <button className="secondary-action small danger-soft" type="button" onClick={() => openSaleAction(sale, "cancel")} disabled={sale.status === "cancelled"}>
+                    <button className="secondary-action small danger-soft" type="button" onClick={() => openSaleAction(sale, "cancel")} disabled={sale.status === "cancelled" || sale.status === "refunded"} title={sale.status === "refunded" ? "La venta ya fue devuelta completamente" : undefined}>
                       <Trash2 size={16} />
                       <span>Anular</span>
                     </button>
@@ -3154,7 +3171,7 @@ function ReportsView({
         <section className="panel sale-action-dialog" role="dialog" aria-modal="true" aria-labelledby="sale-action-title" onClick={(event) => event.stopPropagation()}>
           <div className="section-heading"><h2 id="sale-action-title">{saleAction.type === "cancel" ? "Anular venta" : "Registrar devolución"}</h2><button className="icon-button" type="button" onClick={() => setSaleAction(null)} aria-label="Cerrar" disabled={isBusy}><X size={17}/></button></div>
           <p className="helper-text">Venta #{saleAction.sale.id.slice(0, 8)} · {formatCLP(saleAction.sale.total)}</p>
-          {saleAction.type === "return" && <div className="list return-items">{saleAction.sale.items.map((item) => <label className="form-field" key={item.productId}><span>{item.productName} · máximo {item.quantity}</span><input type="number" min="0" max={item.quantity} value={returnQuantities[item.productId] ?? 0} disabled={isBusy} onChange={(event) => setReturnQuantities((current) => ({ ...current, [item.productId]: Number(event.target.value) }))}/></label>)}</div>}
+          {saleAction.type === "return" && <div className="list return-items">{saleAction.sale.items.map((item) => { const available = returnableQuantity(saleAction.sale, item.productId); const returned = item.quantity - available; return <label className="form-field" key={item.productId}><span>{item.productName} · {available > 0 ? `puedes devolver hasta ${available}` : "sin unidades por devolver"}{returned > 0 ? ` (ya devueltas: ${returned} de ${item.quantity})` : ""}</span><input type="number" min="0" max={available} value={returnQuantities[item.productId] ?? 0} disabled={isBusy || available === 0} onChange={(event) => setReturnQuantities((current) => ({ ...current, [item.productId]: Math.min(available, Math.max(0, Number(event.target.value))) }))}/></label>; })}</div>}
           <label className="form-field"><span>Motivo obligatorio</span><textarea value={actionReason} onChange={(event) => setActionReason(event.target.value)} placeholder="Explica brevemente el motivo" disabled={isBusy}/></label>
           <div className="action-grid"><button className="secondary-action" type="button" onClick={() => setSaleAction(null)} disabled={isBusy}>Volver</button><button className="primary-action" type="button" onClick={() => void confirmSaleAction()} disabled={!actionReason.trim() || isBusy}>{isBusy ? "Procesando..." : saleAction.type === "cancel" ? "Confirmar anulación" : "Confirmar devolución"}</button></div>
         </section>

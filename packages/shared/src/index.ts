@@ -118,6 +118,16 @@ export interface Sale {
   cancellationReason?: string;
   cancelledAt?: string;
   createdAt: string;
+  /** Monto total devuelto sobre esta venta (suma de devoluciones registradas). */
+  returnedTotal?: number;
+  /** Unidades y montos devueltos agrupados por producto. */
+  returnedItems?: SaleReturnedItem[];
+}
+
+export interface SaleReturnedItem {
+  productId: string;
+  quantity: number;
+  amount: number;
 }
 
 export interface SaleReturnItem {
@@ -510,4 +520,62 @@ export interface BootstrapData {
 export interface ApiResponse<T> {
   data: T;
   message?: string;
+}
+
+/** Agrupa devoluciones por producto para adjuntarlas a una venta. */
+export function summarizeSaleReturns(returns: Array<{ items: Array<{ productId: string; quantity: number; amount?: number }>; total?: number }>): { returnedTotal: number; returnedItems: SaleReturnedItem[] } {
+  const byProduct = new Map<string, SaleReturnedItem>();
+  let returnedTotal = 0;
+  for (const entry of returns) {
+    let entryTotal = 0;
+    for (const item of entry.items) {
+      const current = byProduct.get(item.productId) ?? { productId: item.productId, quantity: 0, amount: 0 };
+      current.quantity += Number(item.quantity) || 0;
+      current.amount += Number(item.amount) || 0;
+      entryTotal += Number(item.amount) || 0;
+      byProduct.set(item.productId, current);
+    }
+    returnedTotal += entry.total !== undefined ? Number(entry.total) || 0 : entryTotal;
+  }
+  return { returnedTotal, returnedItems: [...byProduct.values()] };
+}
+
+/** Unidades que aún se pueden devolver de un producto de la venta. */
+export function returnableQuantity(sale: Pick<Sale, "items" | "returnedItems">, productId: string) {
+  const sold = sale.items.filter((item) => item.productId === productId).reduce((sum, item) => sum + item.quantity, 0);
+  const returned = (sale.returnedItems ?? []).filter((item) => item.productId === productId).reduce((sum, item) => sum + item.quantity, 0);
+  return Math.max(0, sold - returned);
+}
+
+/**
+ * Vista neta de una venta: descuenta las devoluciones de unidades, subtotales y total.
+ * Las ventas anuladas tienen valor neto cero.
+ */
+export function netSaleView(sale: Sale): { total: number; items: SaleItem[]; units: number; fullyReturned: boolean } {
+  if (sale.status === "cancelled") return { total: 0, items: [], units: 0, fullyReturned: false };
+  const returnedByProduct = new Map((sale.returnedItems ?? []).map((item) => [item.productId, { ...item }]));
+  const items: SaleItem[] = [];
+  for (const item of sale.items) {
+    const returned = returnedByProduct.get(item.productId);
+    const returnedQuantity = Math.min(item.quantity, returned?.quantity ?? 0);
+    const returnedAmount = Math.min(item.subtotal, returned?.amount ?? returnedQuantity * item.unitPrice);
+    if (returned) {
+      returned.quantity -= returnedQuantity;
+      returned.amount -= returnedAmount;
+    }
+    const quantity = item.quantity - returnedQuantity;
+    if (quantity > 0) items.push({ ...item, quantity, subtotal: Math.max(0, item.subtotal - returnedAmount) });
+  }
+  const total = Math.max(0, sale.total - (sale.returnedTotal ?? 0));
+  const units = items.reduce((sum, item) => sum + item.quantity, 0);
+  const fullyReturned = sale.status === "refunded" || (sale.items.length > 0 && units === 0);
+  return { total: fullyReturned ? 0 : total, items, units, fullyReturned };
+}
+
+/** Etiqueta legible del estado de una venta. */
+export function saleStatusLabel(status: SaleStatus) {
+  if (status === "cancelled") return "Anulada";
+  if (status === "refunded") return "Devuelta";
+  if (status === "partially_refunded") return "Devolución parcial";
+  return "Registrada";
 }

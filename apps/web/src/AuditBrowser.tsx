@@ -5,7 +5,10 @@ import { api } from "./lib/api";
 import { formatDateTime } from "./lib/format";
 
 const actionNames: Record<string, string> = { create: "Creación", update: "Edición", adjust_stock: "Ajuste de stock", cancel: "Anulación", return: "Devolución", deactivate: "Desactivación", close: "Cierre", open: "Apertura", bulk_import: "Importación CSV", import_invoice_ai: "Importación de factura" };
-const fieldNames: Record<string, string> = { salePrice: "Precio", stock: "Stock", name: "Nombre", reason: "Motivo", quantity: "Cantidad", total: "Total", difference: "Diferencia", countedAmount: "Efectivo contado" };
+const fieldNames: Record<string, string> = { salePrice: "Precio", costPrice: "Costo", stock: "Stock", minimumStock: "Stock mínimo", name: "Nombre", reason: "Motivo", quantity: "Cantidad", total: "Total", difference: "Diferencia", countedAmount: "Efectivo contado", openingAmount: "Monto inicial", amount: "Monto", method: "Medio de pago", plan: "Plan", status: "Estado", active: "Activo", role: "Rol", paymentMethods: "Medios de pago", ownerEmail: "Correo del dueño", businessType: "Tipo de negocio" };
+const entityNames: Record<string, string> = { sale: "Venta", product: "Producto", customer: "Cliente", cash_session: "Turno de caja", cash_register: "Caja", cash_movement: "Movimiento de caja", user: "Usuario", tenant: "Negocio", tenant_user: "Usuario del negocio", payment_settings: "Medios de pago", subscription: "Suscripción", purchase: "Compra", supplier: "Proveedor" };
+const actionLabel = (action: string) => actionNames[action] ?? (action === "payment" ? "Abono" : action === "sandbox_payment" ? "Pago de prueba" : action);
+const entityLabel = (entity: string) => entityNames[entity] ?? entity.replace(/_/g, " ");
 
 export function AuditBrowser({ events: revision }: { events: AuditEvent[] }) {
   const [search, setSearch] = useState(""), [action, setAction] = useState(""), [from, setFrom] = useState(""), [to, setTo] = useState("");
@@ -51,7 +54,7 @@ export function AuditBrowser({ events: revision }: { events: AuditEvent[] }) {
     </div>
     <p role="status">{busy ? "Cargando historial..." : `${events.length} eventos mostrados${cursor ? " · hay más resultados" : ""}`}</p>
     {error && <p role="alert">{error}</p>}
-    {events.map(event => <details className="audit-event" key={event.id}><summary><strong>{actionNames[event.action] ?? event.action} · {String(event.details?.name ?? event.entity)}</strong><span>{event.userName ?? "Sistema"} · {formatDateTime(event.createdAt)}</span></summary><div><p>Registro: {event.entityId ?? event.id}</p>{Object.entries(event.details ?? {}).map(([key, value]) => <div key={key} className="audit-detail"><strong>{key === "before" ? "Antes" : key === "after" ? "Después" : fieldNames[key] ?? key}</strong><span>{value && typeof value === "object" && !Array.isArray(value) ? Object.entries(value).map(([field, val]) => `${fieldNames[field] ?? field}: ${val}`).join(" · ") : String(value ?? "")}</span></div>)}</div></details>)}
+    {events.map(event => <details className="audit-event" key={event.id}><summary><strong>{actionLabel(event.action)} · {event.details?.name ? `${entityLabel(event.entity)}: ${String(event.details.name)}` : entityLabel(event.entity)}</strong><span>{event.userName ?? "Sistema"} · {formatDateTime(event.createdAt)}</span></summary><div><p>Registro: {event.entityId ?? event.id}</p>{Object.entries(event.details ?? {}).map(([key, value]) => <div key={key} className="audit-detail"><strong>{key === "before" ? "Antes" : key === "after" ? "Después" : fieldNames[key] ?? key}</strong><span>{value && typeof value === "object" && !Array.isArray(value) ? Object.entries(value).map(([field, val]) => `${fieldNames[field] ?? field}: ${val}`).join(" · ") : String(value ?? "")}</span></div>)}</div></details>)}
     {!busy && !error && !events.length && <p className="empty-state">No hay cambios para estos filtros.</p>}
     {cursor && <button className="secondary-action" disabled={busy} onClick={() => void more()}>Mostrar más eventos</button>}
   </section>;

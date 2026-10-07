@@ -8,6 +8,7 @@ import { readProductImportFile, validateProductImportRows } from "./productImpor
 import type { PurchaseProposalLine } from "./lib/inventory";
 import { AuditBrowser, ReplenishmentPanel } from "./ManagementPanels";
 import { CashReconciliation } from "./CashReconciliation";
+import { overdueDebts } from "./lib/dashboard";
 import { defaultBusinessPreferences } from "@localito/shared";
 import type { BusinessPreferences, Sale } from "@localito/shared";
 
@@ -27,6 +28,7 @@ export function OperationsView({ products, sales = [], preferences = defaultBusi
   const [debts, setDebts] = useState<DebtAccount[]>([]);
   const [reminders, setReminders] = useState<Array<{ debt: DebtAccount; message: string; whatsappUrl?: string }>>([]);
   const [cashSession, setCashSession] = useState<CashSession | null>(null);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const [cashMovements, setCashMovements] = useState<CashMovement[]>([]);
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
   const [audit, setAudit] = useState<AuditEvent[]>([]);
@@ -76,7 +78,7 @@ export function OperationsView({ products, sales = [], preferences = defaultBusi
     tabRefs.current[next]?.focus();
   }
 
-  const overdue = useMemo(() => debts.filter((debt) => debt.status === "overdue" && debt.balance > 0), [debts]);
+  const overdue = useMemo(() => overdueDebts(debts), [debts]);
   const activeCashMovements = useMemo(
     () => cashSession ? cashMovements.filter((movement) => movement.sessionId === cashSession.id) : [],
     [cashMovements, cashSession]
@@ -103,7 +105,7 @@ export function OperationsView({ products, sales = [], preferences = defaultBusi
     setMessageError(false);
     try {
       const [sessionResponse, movementResponse] = await Promise.all([api.getCashSession(), api.getCashMovements()]);
-      setCashSession(sessionResponse.data); setCashMovements(movementResponse.data);
+      setCashSession(sessionResponse.data); setCashMovements(movementResponse.data); setSessionLoaded(true);
       if (canManage) {
         const [debtResponse, reminderResponse, supplierResponse, purchaseResponse, stockResponse, auditResponse] = await Promise.all([
           api.getDebts(), api.getDebtReminders(), api.getSuppliers(), api.getPurchases(), api.getStockMovements(), api.getAuditEvents()
@@ -173,8 +175,8 @@ export function OperationsView({ products, sales = [], preferences = defaultBusi
     {/* Keep panels mounted so switching tabs preserves unfinished forms. */}
     <div className="operations-pane stack" id={`${tabsId}-shift`} role="tabpanel" aria-labelledby={`${tabsId}-shift-tab`} hidden={selectedTab !== "shift"} tabIndex={0}>
       <section className="panel">
-        <div className="section-heading"><h2>Caja por turno</h2><span className={cashSession ? "status-badge success" : "status-badge"}>{cashSession ? `Abierta · ${new Date(cashSession.openedAt).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : "Cerrada"}</span></div>
-        {!cashSession ? <form className="operations-form" onSubmit={event => {
+        <div className="section-heading"><h2>Caja por turno</h2><span className={cashSession ? "status-badge success" : "status-badge"}>{!sessionLoaded ? "Consultando…" : cashSession ? `Abierta · ${new Date(cashSession.openedAt).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : "Cerrada"}</span></div>
+        {!sessionLoaded ? <p className="empty-state" role="status">Consultando el estado del turno…</p> : !cashSession ? <form className="operations-form" onSubmit={event => {
           event.preventDefault();
           if (!Number.isSafeInteger(Number(openingAmount)) || Number(openingAmount) < 0) return;
           void run(() => api.openCashSession(Number(openingAmount)), "Caja abierta.");
