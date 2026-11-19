@@ -3,6 +3,27 @@
 > **PWA SaaS para la gestión integral de almacenes, minimarkets y pequeños comercios de barrio.**
 > Proyecto Capstone/Tesis 2026 orientado a centralizar ventas, inventario, caja, clientes, fiado, compras y reportes, incorporando asistencia visual con IA en tareas donde realmente reduce trabajo manual.
 
+##Integrantes
+>Camilo Gonzalez
+>Samuel Solis
+>Alexander Patiño
+
+##Roles 
+Los roles fueron rotativos cada 2 sprint:
+
+>Camilo: Developer
+  • Diseño de la interfaz y la experiencia de usuario
+  • Desarrollo del frontend y del backend de la app
+  • Modelo de datos, integración de IA y despliegue
+>Samuel: Scrum Master
+  • Se aseguró de que cada evento Scrum ocurriera y fuera útil
+  • Gestionó el tablero Scrum y el seguimiento del avance
+  • Removió impedimentos y cuidó los tiempos del equipo
+>Alexander: Product Owner
+  • Definió requisitos e historias de usuario con criterios de aceptación
+  • Priorizó el product backlog según el valor para el almacén
+  • Revisó cada incremento en la Sprint Review y ajustó el backlog
+
 ## Índice
 
 - [Descripción general](#descripción-general)
