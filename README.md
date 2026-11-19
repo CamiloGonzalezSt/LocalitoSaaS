@@ -3,12 +3,12 @@
 > **PWA SaaS para la gestión integral de almacenes, minimarkets y pequeños comercios de barrio.**
 > Proyecto Capstone/Tesis 2026 orientado a centralizar ventas, inventario, caja, clientes, fiado, compras y reportes, incorporando asistencia visual con IA en tareas donde realmente reduce trabajo manual.
 
-##Integrantes
+## Integrantes
 >Camilo Gonzalez
 >Samuel Solis
 >Alexander Patiño
 
-##Roles 
+## Roles 
 Los roles fueron rotativos cada 2 sprint:
 
 >Camilo: Developer
