@@ -627,7 +627,7 @@ test("quick sale vision uses strict structured output, catalog context and provi
     assert.equal(requestBody?.store, false);
     assert.equal((requestBody?.text as { format?: { strict?: boolean } }).format?.strict, true);
     const input = JSON.stringify(requestBody?.input);
-    assert.match(input, /catalog-cola/);
+    assert.match(input, /p1\|Marca\|Bebida cola 1.5 L/);
     assert.match(input, /No inventes productos/i);
     assert.doesNotMatch(input, /"salePrice"|"stock"/);
   } finally {
@@ -652,7 +652,7 @@ test("quick sale uses Groq vision JSON mode without sending prices or stock", as
     requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
     return new Response(JSON.stringify({
       choices: [{ message: { content: JSON.stringify({
-        items: [{ observedLabel: "Bebida cola", matchedProductId: "groq-cola", candidateProductIds: ["groq-cola"], quantity: 2, confidence: 0.94 }],
+        items: [{ observedLabel: "Bebida cola", matchedProductId: "p1", candidateProductIds: ["p1"], quantity: 2, confidence: 0.94 }],
         warnings: []
       }) } }]
     }), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -674,13 +674,41 @@ test("quick sale uses Groq vision JSON mode without sending prices or stock", as
     assert.match(schemaText, /quantityUncertain/);
     assert.match(schemaText, /nunca adivines unidades ocultas/i);
     const messages = JSON.stringify(requestBody?.messages);
-    assert.match(messages, /groq-cola/);
+    assert.match(messages, /p1\|Marca\|Bebida cola 1.5 L/);
+    assert.doesNotMatch(messages, /groq-cola/);
     assert.match(messages, /No inventes productos/i);
     assert.doesNotMatch(messages, /"salePrice"|"stock"/);
   } finally {
     globalThis.fetch = previousFetch;
     if (previousGroqKey == null) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = previousGroqKey;
     if (previousOpenAiKey == null) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = previousOpenAiKey;
+    if (previousProvider == null) delete process.env.VISION_PROVIDER; else process.env.VISION_PROVIDER = previousProvider;
+  }
+});
+
+test("quick sale keeps a large catalog prompt compact", async () => {
+  const previousGroqKey = process.env.GROQ_API_KEY;
+  const previousProvider = process.env.VISION_PROVIDER;
+  const previousFetch = globalThis.fetch;
+  let promptLength = 0;
+  process.env.VISION_PROVIDER = "groq";
+  process.env.GROQ_API_KEY = "groq-test-only-key";
+  globalThis.fetch = async (_input, init) => {
+    promptLength = String(init?.body).length;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ items: [{ observedLabel: "x", matchedProductId: "p250", candidateProductIds: [], quantity: 1, confidence: 0.9 }], warnings: [] }) } }] }), { status: 200 });
+  };
+  const catalog = Array.from({ length: 300 }, (_, i) => ({
+    id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`, tenantId: "t", name: `Producto de prueba número ${i} 1 L`, brand: "Marca",
+    category: "Bebidas", sku: `SKU-${i}`, barcode: `78000000${String(i).padStart(5, "0")}`, imageUrl: `https://images.example.com/products/${i}/photo-large.jpg`,
+    costPrice: 1, salePrice: 2, stock: 5, minimumStock: 1, active: true
+  }));
+  try {
+    const result = await extractQuickSaleImage("data:image/jpeg;base64,AAAA", catalog);
+    assert.equal(result.items[0]?.productId, catalog[249]!.id);
+    assert.ok(promptLength < 22_000, `prompt too long: ${promptLength}`);
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousGroqKey == null) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = previousGroqKey;
     if (previousProvider == null) delete process.env.VISION_PROVIDER; else process.env.VISION_PROVIDER = previousProvider;
   }
 });
@@ -721,7 +749,6 @@ test("quick sale reads a product created immediately before the analysis from th
 
   try {
     const result = await extractQuickSaleImage("data:image/jpeg;base64,AAAA", currentCatalog);
-    assert.match(providerInput, new RegExp(created.id));
     assert.match(providerInput, /Galletas recién agregadas 120 g/);
     assert.equal(result.items[0]?.productId, created.id);
     assert.equal(result.items[0]?.salePrice, 990);
