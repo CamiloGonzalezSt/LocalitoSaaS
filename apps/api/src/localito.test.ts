@@ -16,6 +16,7 @@ import {
 } from "./repository.js";
 import { demoOwnerId, demoTenantId, systemAdminEmail, systemAdminId } from "./store.js";
 import { extractInvoiceImage, extractQuickSaleImage, normalizeInvoiceAnalysis, normalizeQuickSaleAnalysis } from "./vision.js";
+import { buildQuickSaleCatalogIndex, matchObservedQuickSaleItems, rankQuickSaleMatches } from "./quickSaleMatch.js";
 import { requestVisionJson, resolveVisionProvider } from "./visionProvider.js";
 
 test("expected domain errors do not leak as internal server failures", () => {
@@ -686,26 +687,107 @@ test("quick sale uses Groq vision JSON mode without sending prices or stock", as
   }
 });
 
-test("quick sale keeps a large catalog prompt compact", async () => {
+const supermarketCatalog = ([
+  ["coca-original-15", "Coca-Cola", "Bebida Coca-Cola Original 1.5 L", "7801610001622"],
+  ["coca-zero-15", "Coca-Cola", "Bebida Coca-Cola Zero 1.5 L", "7801610350409"],
+  ["coca-zero-2", "Coca-Cola", "Bebida Coca-Cola Zero 2 L", "7801610305287"],
+  ["coca-pack-lata", "Coca-Cola", "Pack 6 un. Bebida Coca-Cola Original 350 cc", "7801610001202"],
+  ["sprite-15", "Sprite", "Bebida Sprite 1.5 L", "7801610005262"],
+  ["fanta-175", "Fanta", "Bebida Fanta Naranja 1.75 L", "7801610003053"],
+  ["ramitas-queso-110", "Evercrisp", "Ramitas Evercrisp Queso 110 g", "7802000015786"],
+  ["ramitas-queso-330", "Evercrisp", "Ramitas Evercrisp Sabor Queso 330 g", "7802000017308"],
+  ["ramitas-original-330", "Evercrisp", "Ramitas Evercrisp Sabor Original 330 g", "7802000017292"],
+  ["lays-250", "Evercrisp", "Papas Lays Tradicionales 250 g", "7802000019210"],
+  ["lays-artesanas", "Lay's", "Papas Fritas Lay's Artesanas Sal de Mar 150 g", "7802000021817"],
+  ["leche-colun-entera", "Colun", "Leche Colun Entera 1 L", "7802920777542"],
+  ["leche-colun-semi", "Colun", "Leche Colun Semidescremada 1 L", "7802920000091"],
+  ["leche-soprole-entera", "Soprole", "Leche Soprole Entera Natural 1 L", "7802900001308"],
+  ["triton-vainilla", "Triton Mckay", "Galleta Triton Vainilla 116 g", "8445291716841"],
+  ["triton-chocolate", "Triton Mckay", "Galleta Triton Chocolate 116 g", "8445291719736"],
+  ["oreo-108", "Oreo", "Galletas Oreo Rollo Sabor Original 108 g", "7622201693091"],
+  ["super8", "Nestlé", "Oblea Bañada Super 8 29 g", "7613030612339"],
+  ["spaghetti-carozzi", "Carozzi", "Pasta Spaghetti N°5 Carozzi 400 g", "7802575004437"],
+  ["arroz-tucapel", "Tucapel", "Arroz Grado 1 Tucapel Gran Selección Grano Largo y Ancho 1 kg", "7801420250142"],
+  ["nectar-watts-durazno", "Watt's", "Néctar Watt's Durazno 1.5 L", "7801620011611"],
+  ["agua-cachantun-600", "Cachantun", "Agua Cachantun Sin Gas 600 ml", "7801620009717"],
+  ["agua-cachantun-6l", "Cachantun", "Agua Mineral Cachantun Sin Gas 6 L", "7801620005054"],
+  ["cheetos-queso-110", "Evercrisp", "Cheetos Palitos Sabor A Queso 110 g", "7802000015779"],
+  ["sprite-zero-15", "Sprite", "Bebida Sprite Sin Azúcar 1.5 L", "7801610223727"]
+] as const).map(([id, brand, name, barcode]) => ({
+  id, tenantId: "t", brand, name, barcode, category: "General", costPrice: 1, salePrice: 1_000, stock: 10, minimumStock: 1, active: true
+}));
+
+test("quick sale local matching picks the exact brand, flavour, size and pack from a large catalog", () => {
+  const cases: Array<[Record<string, unknown>, string]> = [
+    [{ brand: "Coca-Cola", observedLabel: "Coca-Cola", variant: "Original", size: "1,5 lt" }, "coca-original-15"],
+    [{ brand: "Coca-Cola", observedLabel: "Coca-Cola", variant: "Zero", size: "1.5 L" }, "coca-zero-15"],
+    [{ brand: "Coca-Cola", observedLabel: "Coca-Cola Sin Azúcar Zero", variant: null, size: "2 litros" }, "coca-zero-2"],
+    [{ brand: "Coca-Cola", observedLabel: "Pack latas Coca-Cola", variant: null, size: "350 ml" }, "coca-pack-lata"],
+    [{ brand: "Evercrisp", observedLabel: "Ramitas", variant: "Queso", size: "110 g" }, "ramitas-queso-110"],
+    [{ brand: "Evercrisp", observedLabel: "Ramitas", variant: "Original", size: "330 g" }, "ramitas-original-330"],
+    [{ brand: "Lay's", observedLabel: "Papas fritas Artesanas", variant: "Sal de mar", size: "150 g" }, "lays-artesanas"],
+    [{ brand: "Colun", observedLabel: "Leche", variant: "Semidescremada", size: "1 L" }, "leche-colun-semi"],
+    [{ brand: "Soprole", observedLabel: "Leche entera", variant: null, size: "1000 ml" }, "leche-soprole-entera"],
+    [{ brand: "McKay", observedLabel: "Tritón", variant: "Chocolate", size: null }, "triton-chocolate"],
+    [{ brand: "Nestlé", observedLabel: "Super 8", variant: null, size: "29 g" }, "super8"],
+    [{ brand: "Carozzi", observedLabel: "Spaghetti N° 5", variant: null, size: "400 g" }, "spaghetti-carozzi"],
+    [{ brand: "Watts", observedLabel: "Néctar durazno", variant: null, size: "1.5 L" }, "nectar-watts-durazno"],
+    [{ brand: "Sprite", observedLabel: "Sprite", variant: "Zero", size: "1.5 L" }, "sprite-zero-15"],
+    [{ brand: "Sprite", observedLabel: "Sprite", variant: null, size: "1.5 L" }, "sprite-15"]
+  ];
+  const index = buildQuickSaleCatalogIndex(supermarketCatalog);
+  for (const [observed, expected] of cases) {
+    const [best] = rankQuickSaleMatches(observed, index);
+    assert.equal(best?.product.id, expected, `${JSON.stringify(observed)} → ${best?.product.id}`);
+  }
+});
+
+test("quick sale local matching asks for confirmation when the flavour is not visible", () => {
+  const [ramitas] = matchObservedQuickSaleItems([{ brand: "Evercrisp", observedLabel: "Ramitas", variant: null, size: "330 g", quantity: 1, confidence: 0.9 }], supermarketCatalog);
+  assert.ok((ramitas?.confidence ?? 1) < 0.82, "two flavours share brand and size, so the cashier must confirm");
+  assert.deepEqual([...(ramitas?.candidateProductIds ?? [])].sort(), ["ramitas-original-330", "ramitas-queso-110", "ramitas-queso-330"].sort());
+
+  const [ramitasNotCheetos] = matchObservedQuickSaleItems([{ brand: "Evercrisp", observedLabel: "Ramitas", variant: "Queso", size: "110 g", quantity: 1, confidence: 0.9 }], supermarketCatalog);
+  assert.equal(ramitasNotCheetos?.matchedProductId, "ramitas-queso-110");
+
+  const [otherSize] = matchObservedQuickSaleItems([{ brand: "Cachantun", observedLabel: "Agua mineral", variant: "Sin gas", size: "1.6 L", quantity: 1, confidence: 0.95 }], supermarketCatalog);
+  assert.equal(otherSize?.matchedProductId, null, "a 1.6 L bottle must not be sold as the 600 ml or 6 L one");
+  assert.ok((otherSize?.candidateProductIds ?? []).includes("agua-cachantun-600"));
+
+  const [unknown] = matchObservedQuickSaleItems([{ brand: "Marca Inexistente", observedLabel: "Detergente en polvo", variant: null, size: "3 kg", quantity: 1, confidence: 0.9 }], supermarketCatalog);
+  assert.equal(unknown?.matchedProductId, null);
+  assert.equal(unknown?.candidateProductIds.length, 0);
+});
+
+test("quick sale with a large catalog only sends brands to the model and matches products locally", async () => {
   const previousGroqKey = process.env.GROQ_API_KEY;
   const previousProvider = process.env.VISION_PROVIDER;
   const previousFetch = globalThis.fetch;
-  let promptLength = 0;
+  let requestBody = "";
   process.env.VISION_PROVIDER = "groq";
   process.env.GROQ_API_KEY = "groq-test-only-key";
   globalThis.fetch = async (_input, init) => {
-    promptLength = String(init?.body).length;
-    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ items: [{ observedLabel: "x", matchedProductId: "p250", candidateProductIds: [], quantity: 1, confidence: 0.9 }], warnings: [] }) } }] }), { status: 200 });
+    requestBody = String(init?.body);
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      items: [
+        { observedLabel: "Coca-Cola", brand: "Coca-Cola", variant: "Original", size: "1.5 L", quantity: 2, quantityUncertain: false, quantityNote: null, confidence: 0.95 },
+        { observedLabel: "Ramitas", brand: "Evercrisp", variant: "Queso", size: "110 g", quantity: 1, quantityUncertain: false, quantityNote: null, confidence: 0.93 }
+      ],
+      warnings: []
+    }) } }] }), { status: 200 });
   };
-  const catalog = Array.from({ length: 300 }, (_, i) => ({
-    id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`, tenantId: "t", name: `Producto de prueba número ${i} 1 L`, brand: "Marca",
-    category: "Bebidas", sku: `SKU-${i}`, barcode: `78000000${String(i).padStart(5, "0")}`, imageUrl: `https://images.example.com/products/${i}/photo-large.jpg`,
+  const filler = Array.from({ length: 380 }, (_, i) => ({
+    id: `relleno-${i}`, tenantId: "t", name: `Producto de prueba número ${i} 1 L`, brand: `Marca ${i % 40}`,
+    category: "Bebidas", barcode: `78000000${String(i).padStart(5, "0")}`, imageUrl: `https://images.example.com/products/${i}/photo-large.jpg`,
     costPrice: 1, salePrice: 2, stock: 5, minimumStock: 1, active: true
   }));
   try {
-    const result = await extractQuickSaleImage("data:image/jpeg;base64,AAAA", catalog);
-    assert.equal(result.items[0]?.productId, catalog[249]!.id);
-    assert.ok(promptLength < 22_000, `prompt too long: ${promptLength}`);
+    const result = await extractQuickSaleImage("data:image/jpeg;base64,AAAA", [...supermarketCatalog, ...filler]);
+    assert.deepEqual(result.items.map((item) => [item.productId, item.quantity, item.status]), [["coca-original-15", 2, "matched"], ["ramitas-queso-110", 1, "matched"]]);
+    assert.ok(requestBody.length < 8_000, `request too long: ${requestBody.length}`);
+    assert.match(requestBody, /Coca-Cola/);
+    assert.doesNotMatch(requestBody, /Producto de prueba|7801610001622|relleno-/);
+    assert.match(requestBody, /quantityUncertain/);
   } finally {
     globalThis.fetch = previousFetch;
     if (previousGroqKey == null) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = previousGroqKey;
