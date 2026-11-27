@@ -1,6 +1,6 @@
-import { Building2, CheckCircle2, Download, Pencil, Plus, Save, Trash2, WalletCards } from "lucide-react";
+import { Building2, CheckCircle2, ChevronDown, CreditCard, Download, ExternalLink, Landmark, Loader2, Pencil, Plus, Save, Trash2, Wallet, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { Subscription, SubscriptionPlan, Tenant, User } from "@localito/shared";
+import type { BillingProvider, Subscription, SubscriptionPlan, Tenant, User } from "@localito/shared";
 import { effectiveSubscriptionStatus, LOCALITO_PLANS, subscriptionDaysRemaining } from "@localito/shared";
 import { formatCLP } from "./lib/format";
 import { FormField, FormSurface } from "./FormControls";
@@ -84,24 +84,79 @@ export function SettingsView({ tenant, user, users, userForm, profileForm, isBus
   </div>;
 }
 
-export function PlanView({ subscription, isBusy, onSelect }: { subscription: Subscription; isBusy: boolean; onSelect: (plan: SubscriptionPlan, provider: "webpay_sandbox" | "mercadopago_sandbox" | "transfer") => void }) {
+export type PlanPaymentMethod = BillingProvider | "transfer";
+
+const paymentMethodCopy: Record<PlanPaymentMethod, { title: string; detail: string }> = {
+  webpay: { title: "Webpay", detail: "Débito o crédito · Transbank" },
+  mercadopago: { title: "Mercado Pago", detail: "Tarjeta o saldo Mercado Pago" },
+  transfer: { title: "Transferencia", detail: "Se activa cuando el administrador la confirme" }
+};
+const paymentMethodIcons = { webpay: CreditCard, mercadopago: Wallet, transfer: Landmark } as const;
+
+export function PlanView({ subscription, isBusy, onSelect }: { subscription: Subscription; isBusy: boolean; onSelect: (plan: SubscriptionPlan, provider: PlanPaymentMethod) => void }) {
   const days = subscriptionDaysRemaining(subscription);
   const status = effectiveSubscriptionStatus(subscription);
   const statusCopy = subscriptionStatusCopy(status, days);
-  const [provider, setProvider] = useState<"webpay_sandbox" | "mercadopago_sandbox" | "transfer">("webpay_sandbox");
+  const [openPlan, setOpenPlan] = useState<SubscriptionPlan | null>(null);
+  const [chosen, setChosen] = useState<{ plan: SubscriptionPlan; method: PlanPaymentMethod } | null>(null);
+
+  useEffect(() => {
+    if (!openPlan) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpenPlan(null); };
+    const onPointer = (event: PointerEvent) => { if (!(event.target as HTMLElement).closest(".plan-checkout")) setOpenPlan(null); };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => { document.removeEventListener("keydown", onKey); document.removeEventListener("pointerdown", onPointer); };
+  }, [openPlan]);
+
+  useEffect(() => { if (!isBusy) setChosen(null); }, [isBusy]);
+
+  function choose(plan: SubscriptionPlan, method: PlanPaymentMethod) {
+    setChosen({ plan, method });
+    onSelect(plan, method);
+  }
+
   return <div className="stack">
     <section className="panel hero-panel plan-hero"><div className="hero-copy"><span>MI PLAN</span><strong>{status === "trialing" ? `Prueba Pro · ${days} días restantes` : LOCALITO_PLANS[subscription.plan].name}</strong><p>{statusCopy}</p></div></section>
-    {(status === "past_due" || status === "expired" || status === "cancelled") && <section className="panel subscription-recovery" role="status"><WalletCards size={22}/><div><strong>{status === "past_due" ? "Activación pendiente" : "Tu acceso operativo está pausado"}</strong><p>Tus datos siguen guardados y puedes revisarlos. Elige un plan y solicita activación; un administrador confirmará el pago manualmente.</p></div></section>}
+    {(status === "past_due" || status === "expired" || status === "cancelled") && <section className="panel subscription-recovery" role="status"><WalletCards size={22}/><div><strong>{status === "past_due" ? "Activación pendiente" : "Tu acceso operativo está pausado"}</strong><p>Tus datos siguen guardados y puedes revisarlos. Elige un plan y paga con Webpay o Mercado Pago para reactivar al instante, o solicita activación por transferencia.</p></div></section>}
     {subscription.pendingPlan && (status === "active" || status === "trialing") && <section className="panel subscription-recovery" role="status"><WalletCards size={22}/><div><strong>Solicitud registrada: {LOCALITO_PLANS[subscription.pendingPlan].name}</strong><p>Tu acceso actual continúa sin cambios hasta que el pago sea verificado y el nuevo plan sea activado.</p></div></section>}
-    <section className="panel billing-methods"><div className="section-heading"><div><span>PAGO DE PRUEBA</span><h2>¿Cómo quieres probar la activación?</h2></div><span>No se cobrará dinero real</span></div><div className="billing-method-grid"><button className={provider === "webpay_sandbox" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("webpay_sandbox")}><strong>Webpay</strong><small>Ambiente de prueba · aprobación simulada</small></button><button className={provider === "mercadopago_sandbox" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("mercadopago_sandbox")}><strong>Mercado Pago</strong><small>Sandbox · aprobación simulada</small></button><button className={provider === "transfer" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("transfer")}><strong>Transferencia</strong><small>Queda pendiente de revisión administrativa</small></button></div></section>
     <section className="plan-grid">
       {Object.values(LOCALITO_PLANS).map((plan) => {
         const isCurrent = plan.id === subscription.plan && status === "active";
         const isRequested = plan.id === subscription.pendingPlan;
-        return <article className={plan.id === subscription.plan ? "panel plan-card current" : "panel plan-card"} key={plan.id}><div><span className="status-badge success">{isRequested ? "Solicitado" : plan.recommended ? "Recomendado" : "Esencial"}</span><h2>{plan.name}</h2><p>{plan.description}</p></div><strong className="plan-price">{formatCLP(plan.price)}<small>/mes</small></strong><ul>{plan.entitlements.map((feature) => <li key={feature}><CheckCircle2 size={16}/>{entitlementLabel(feature)}</li>)}</ul><button className={isCurrent ? "secondary-action full" : "primary-action full"} type="button" disabled={isBusy || isCurrent || isRequested} onClick={() => onSelect(plan.id, provider)}>{isCurrent ? "Plan actual" : isRequested ? "Activación solicitada" : provider === "transfer" ? `Solicitar ${plan.name}` : `Probar pago y activar`}</button></article>;
+        const isOpen = openPlan === plan.id;
+        const menuId = `plan-pay-menu-${plan.id}`;
+        return <article className={plan.id === subscription.plan ? "panel plan-card current" : "panel plan-card"} key={plan.id}>
+          <div><span className="status-badge success">{isRequested ? "Solicitado" : plan.recommended ? "Recomendado" : "Esencial"}</span><h2>{plan.name}</h2><p>{plan.description}</p></div>
+          <strong className="plan-price">{formatCLP(plan.price)}<small>/mes</small></strong>
+          <ul>{plan.entitlements.map((feature) => <li key={feature}><CheckCircle2 size={16}/>{entitlementLabel(feature)}</li>)}</ul>
+          {isCurrent
+            ? <button className="secondary-action full" type="button" disabled>Plan actual</button>
+            : <div className={isOpen ? "plan-checkout open" : "plan-checkout"}>
+                <button className="primary-action full plan-checkout-toggle" type="button" aria-expanded={isOpen} aria-controls={menuId} disabled={isBusy} onClick={() => setOpenPlan(isOpen ? null : plan.id)}>
+                  {isBusy && chosen?.plan === plan.id ? <><Loader2 size={16} className="spin"/> Conectando…</> : <>Contratar {plan.name.replace("Localito ", "")} <ChevronDown size={16} aria-hidden="true"/></>}
+                </button>
+                {isOpen && <div className="plan-pay-menu" id={menuId} role="menu" aria-label={`Medio de pago para ${plan.name}`}>
+                  <span className="plan-pay-menu-title">¿Cómo quieres pagar?</span>
+                  {(Object.keys(paymentMethodCopy) as PlanPaymentMethod[]).map((method) => {
+                    const Icon = paymentMethodIcons[method];
+                    const disabled = isBusy || (method === "transfer" && isRequested);
+                    return <button key={method} className="plan-pay-option" type="button" role="menuitem" disabled={disabled} onClick={() => { setOpenPlan(null); choose(plan.id, method); }}>
+                      <Icon size={20} aria-hidden="true"/>
+                      <span><strong>{paymentMethodCopy[method].title}</strong><small>{method === "transfer" && isRequested ? "Ya solicitaste este plan" : paymentMethodCopy[method].detail}</small></span>
+                      {method !== "transfer" && <ExternalLink size={15} aria-hidden="true" className="plan-pay-option-go"/>}
+                    </button>;
+                  })}
+                  <details className="plan-test-data"><summary>Modo prueba · datos para pagar</summary>
+                    <p><strong>Webpay:</strong> tarjeta <code>4051 8856 0044 6623</code>, CVV <code>123</code>, cualquier fecha futura. Si pide autenticación: RUT <code>11.111.111-1</code>, clave <code>123</code>.</p>
+                    <p><strong>Mercado Pago:</strong> entra con la cuenta compradora de prueba (en incógnito). Titular <code>APRO</code> aprueba, <code>OTHE</code> rechaza.</p>
+                  </details>
+                </div>}
+              </div>}
+        </article>;
       })}
     </section>
-    <p className="helper-text">Webpay y Mercado Pago funcionan aquí en modo sandbox para la tesis: simulan una aprobación sin mover dinero. La transferencia mantiene el flujo manual de revisión.</p>
+    <p className="helper-text">Al elegir Webpay o Mercado Pago te llevamos a la página segura de la pasarela y, al terminar, vuelves a Localito con el plan activado. Ambiente de prueba: no se cobra dinero real.</p>
   </div>;
 }
 

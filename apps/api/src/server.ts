@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import type { Customer, EntitlementKey, PaymentMethod, Product, SubscriptionPlan, Tenant, User } from "@localito/shared";
+import type { BillingCheckout, BillingCheckoutStart, BillingCheckoutStatus, BillingProvider, Customer, EntitlementKey, PaymentMethod, Product, SubscriptionPlan, Tenant, User } from "@localito/shared";
 import { effectiveSubscriptionStatus, LOCALITO_PLANS, hasEntitlement, subscriptionCanMutate } from "@localito/shared";
 import { createRepository } from "./repository.js";
 import { createSessionToken, createSignedSessionToken, hashSessionToken, passwordPolicyError, verifySignedSessionToken } from "./auth.js";
@@ -14,6 +14,26 @@ import { assertSalePayload } from "./saleValidation.js";
 import { parseAuditQuery } from "./auditQuery.js";
 import { parsePreferences, validProductImage } from "./businessPreferences.js";
 import { bulkImportProducts } from "./productImport.js";
+import {
+  BillingConfigError,
+  BillingGatewayError,
+  classifyWebpayReturn,
+  commitWebpayTransaction,
+  createBuyOrder,
+  createMercadoPagoPreference,
+  createWebpayTransaction,
+  evaluateMercadoPagoPayment,
+  evaluateWebpayCommit,
+  getMercadoPagoPayment,
+  getWebpayTransactionStatus,
+  isMercadoPagoConfigured,
+  providerLabel,
+  resolveMercadoPagoConfig,
+  resolveWebpayConfig,
+  sanitizeMercadoPagoPayment,
+  sanitizeWebpayResponse,
+  verifyMercadoPagoSignature
+} from "./billing.js";
 import { extractInvoiceImage, extractQuickSaleImage, identifyProductImage, isInvoiceAiConfigured, isQuickSaleAiConfigured } from "./vision.js";
 
 const app = express();
@@ -251,17 +271,96 @@ function passwordResetConfirmationRateLimit(req: express.Request, res: express.R
   rateLimitPasswordReset(passwordResetConfirmations, 10, req, res, next);
 }
 
-function passwordResetUrl(token: string) {
-  const configuredUrl =
+function publicAppUrl() {
+  return (
     process.env.APP_URL ??
     process.env.PUBLIC_APP_URL ??
     configuredWebOrigins.find((origin) => origin.startsWith("https://")) ??
     vercelOrigin ??
     configuredWebOrigins[0] ??
-    "http://localhost:5173";
-  const url = new URL(configuredUrl);
+    "http://localhost:5173"
+  );
+}
+
+function passwordResetUrl(token: string) {
+  const url = new URL(publicAppUrl());
   url.hash = `reset_token=${encodeURIComponent(token)}`;
   return url.toString();
+}
+
+/** URL pública de esta API, a la que vuelven Webpay y Mercado Pago. */
+function publicApiBaseUrl(req: express.Request) {
+  const configured = process.env.PAYMENTS_RETURN_BASE_URL?.trim() || process.env.API_PUBLIC_URL?.trim();
+  if (configured) return configured.replace(/\/+$/, "");
+  const host = (req.get("x-forwarded-host") ?? req.get("host") ?? `localhost:${port}`).split(",")[0].trim();
+  const origin = `${req.protocol}://${host}`;
+  return process.env.VERCEL === "1" ? `${origin}/api` : origin;
+}
+
+function safeReturnOrigin(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  try {
+    const origin = new URL(value).origin;
+    return isAllowedOrigin(origin) ? origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function billingResultUrl(checkout: BillingCheckout | null, status: BillingCheckoutStatus) {
+  const url = new URL(checkout?.returnOrigin && isAllowedOrigin(checkout.returnOrigin) ? checkout.returnOrigin : publicAppUrl());
+  const params = new URLSearchParams({ plan_payment: status });
+  if (checkout) {
+    params.set("provider", checkout.provider);
+    params.set("plan", checkout.plan);
+    params.set("checkout", checkout.id);
+  }
+  url.hash = params.toString();
+  return url.toString();
+}
+
+/**
+ * Cierra un checkout con el resultado verificado contra la pasarela. La
+ * transición es condicional (solo desde "pending"), así que si el retorno del
+ * navegador y el webhook llegan a la vez, el plan se activa una sola vez.
+ */
+async function finalizeBillingCheckout(
+  checkout: BillingCheckout,
+  outcome: { status: BillingCheckoutStatus; detail: string },
+  extra: { externalPaymentId?: string; gatewayResponse?: Record<string, unknown> } = {}
+) {
+  if (outcome.status === "pending") {
+    return (await repository.updateBillingCheckout(checkout.id, { statusDetail: outcome.detail, ...extra }, "pending")) ?? checkout;
+  }
+  const updated = await repository.updateBillingCheckout(checkout.id, {
+    status: outcome.status,
+    statusDetail: outcome.detail,
+    completedAt: new Date().toISOString(),
+    ...extra
+  }, "pending");
+  if (!updated) return (await repository.getBillingCheckout(checkout.id)) ?? checkout;
+
+  if (updated.status === "approved") {
+    let subscription;
+    try {
+      subscription = await repository.updateSubscription(updated.tenantId, {
+        plan: updated.plan,
+        status: "active",
+        paymentProvider: `${updated.provider}${updated.environment === "integration" ? "_sandbox" : ""}`,
+        pendingPlan: null
+      });
+    } catch (error) {
+      // El pago está aprobado pero el plan no se pudo activar: se libera el
+      // checkout para que el webhook o un reintento completen la activación.
+      console.error("[billing] pago aprobado sin activar plan", updated.id, error);
+      await repository.updateBillingCheckout(updated.id, { status: "pending", statusDetail: "Pago aprobado; activación del plan pendiente de reintento." }, "approved");
+      throw error;
+    }
+    await repository.recordAudit({ tenantId: updated.tenantId, userId: updated.userId, action: "online_payment", entity: "subscription", entityId: subscription.id, details: { checkoutId: updated.id, plan: updated.plan, provider: updated.provider, environment: updated.environment, amount: updated.amount, buyOrder: updated.buyOrder, externalPaymentId: updated.externalPaymentId } });
+  } else {
+    await repository.recordAudit({ tenantId: updated.tenantId, userId: updated.userId, action: "online_payment_failed", entity: "subscription", entityId: updated.id, details: { checkoutId: updated.id, plan: updated.plan, provider: updated.provider, status: updated.status, detail: updated.statusDetail } });
+  }
+  return updated;
 }
 
 function readPositiveNumber(value: unknown) {
@@ -593,22 +692,191 @@ app.get("/subscription", asyncRoute(async (req, res) => {
 
 app.post("/subscription/change-plan", asyncRoute(async (req, res) => {
   const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
-  const { plan, provider = "transfer" } = req.body as { plan?: SubscriptionPlan; provider?: "webpay_sandbox" | "mercadopago_sandbox" | "transfer" };
+  const { plan, provider = "transfer" } = req.body as { plan?: SubscriptionPlan; provider?: string };
   if (!plan || !["basic", "pro"].includes(plan)) { res.status(400).json({ message: "Elige un plan válido." }); return; }
-  if (!["webpay_sandbox", "mercadopago_sandbox", "transfer"].includes(provider)) { res.status(400).json({ message: "El medio de pago indicado no está disponible." }); return; }
+  if (provider !== "transfer") { res.status(400).json({ message: "Los pagos con Webpay o Mercado Pago se hacen desde la pasarela. Actualiza la app e inténtalo de nuevo." }); return; }
   const current = await repository.getSubscription(actor.tenantId);
   if (current.plan === plan && current.status === "active" && !current.pendingPlan) { res.json({ data: current }); return; }
-  if (provider !== "transfer") {
-    const activated = await repository.updateSubscription(actor.tenantId, { plan, status: "active", paymentProvider: provider, pendingPlan: null });
-    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "sandbox_payment", entity: "subscription", entityId: activated.id, details: { plan, provider, amount: LOCALITO_PLANS[plan].price } });
-    res.json({ data: activated, message: "Pago de prueba aprobado. No se realizó ningún cobro real." });
-    return;
-  }
   const currentStatus = effectiveSubscriptionStatus(current);
   const nextStatus = ["expired", "cancelled", "past_due"].includes(currentStatus) ? "past_due" : current.status;
   const subscription = await repository.updateSubscription(actor.tenantId, { status: nextStatus, paymentProvider: "transfer", pendingPlan: plan });
   await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "update", entity: "subscription", entityId: subscription.id, details: { plan: subscription.plan, status: subscription.status } });
   res.json({ data: subscription });
+}));
+
+// Inicia el pago de un plan: crea el intento y devuelve a dónde redirigir.
+app.post("/subscription/checkout", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
+  const { plan, provider, appOrigin } = req.body as { plan?: SubscriptionPlan; provider?: BillingProvider; appOrigin?: string };
+  if (!plan || !["basic", "pro"].includes(plan)) { res.status(400).json({ message: "Elige un plan válido." }); return; }
+  if (!provider || !["webpay", "mercadopago"].includes(provider)) { res.status(400).json({ message: "Elige Webpay o Mercado Pago." }); return; }
+  const current = await repository.getSubscription(actor.tenantId);
+  if (current.plan === plan && effectiveSubscriptionStatus(current) === "active" && !current.pendingPlan) {
+    res.status(409).json({ message: `Ya tienes ${LOCALITO_PLANS[plan].name} activo.` });
+    return;
+  }
+
+  let webpayConfig: ReturnType<typeof resolveWebpayConfig> | undefined;
+  let mercadoPagoConfig: ReturnType<typeof resolveMercadoPagoConfig> | undefined;
+  try {
+    if (provider === "webpay") webpayConfig = resolveWebpayConfig();
+    else mercadoPagoConfig = resolveMercadoPagoConfig();
+  } catch (error) {
+    if (error instanceof BillingConfigError) { res.status(503).json({ message: error.message }); return; }
+    throw error;
+  }
+
+  const now = new Date().toISOString();
+  const sandbox = provider === "webpay" ? webpayConfig!.environment === "integration" : mercadoPagoConfig!.sandbox;
+  const checkout = await repository.createBillingCheckout({
+    id: crypto.randomUUID(),
+    tenantId: actor.tenantId,
+    userId: actor.id,
+    plan,
+    provider,
+    environment: sandbox ? "integration" : "production",
+    amount: LOCALITO_PLANS[plan].price,
+    currency: "CLP",
+    status: "pending",
+    buyOrder: createBuyOrder(),
+    returnOrigin: safeReturnOrigin(appOrigin),
+    createdAt: now,
+    updatedAt: now
+  });
+
+  const apiBase = publicApiBaseUrl(req);
+  try {
+    let start: BillingCheckoutStart;
+    if (provider === "webpay") {
+      const transaction = await createWebpayTransaction({ buyOrder: checkout.buyOrder, sessionId: checkout.id, amount: checkout.amount, returnUrl: `${apiBase}/billing/webpay/return` }, webpayConfig);
+      await repository.updateBillingCheckout(checkout.id, { externalToken: transaction.token });
+      start = { checkoutId: checkout.id, provider, sandbox, redirectUrl: transaction.url, method: "POST", fields: { token_ws: transaction.token } };
+    } else {
+      const preference = await createMercadoPagoPreference({
+        checkoutId: checkout.id,
+        title: `${LOCALITO_PLANS[plan].name} · 1 mes`,
+        amount: checkout.amount,
+        returnUrl: `${apiBase}/billing/mercadopago/return?checkout=${checkout.id}`,
+        notificationUrl: `${apiBase}/billing/mercadopago/webhook`
+      }, mercadoPagoConfig);
+      await repository.updateBillingCheckout(checkout.id, { externalToken: preference.preferenceId });
+      start = { checkoutId: checkout.id, provider, sandbox, redirectUrl: preference.redirectUrl, method: "GET" };
+    }
+    await repository.recordAudit({ tenantId: actor.tenantId, userId: actor.id, userName: actor.name, action: "checkout_started", entity: "subscription", entityId: checkout.id, details: { plan, provider, amount: checkout.amount, buyOrder: checkout.buyOrder, sandbox } });
+    res.status(201).json({ data: start, message: `Redirigiendo a ${providerLabel(provider)}${sandbox ? " (modo prueba)" : ""}.` });
+  } catch (error) {
+    await repository.updateBillingCheckout(checkout.id, { status: "failed", statusDetail: error instanceof Error ? error.message : "Error al iniciar el pago.", completedAt: new Date().toISOString() }, "pending");
+    if (error instanceof BillingGatewayError) { res.status(502).json({ message: error.message }); return; }
+    throw error;
+  }
+}));
+
+app.get("/subscription/checkout/:id", asyncRoute(async (req, res) => {
+  const actor = await requireRoles(req, res, ["owner"]); if (!actor) return;
+  const checkout = await repository.getBillingCheckout(req.params.id);
+  if (!checkout || checkout.tenantId !== actor.tenantId) { res.status(404).json({ message: "Pago no encontrado." }); return; }
+  const { gatewayResponse: _gatewayResponse, returnOrigin: _returnOrigin, ...visible } = checkout;
+  res.json({ data: visible });
+}));
+
+// Retorno de Webpay Plus. Transbank vuelve por GET o POST según el flujo.
+app.all("/billing/webpay/return", express.urlencoded({ extended: false }), asyncRoute(async (req, res) => {
+  const params = { ...(req.query as Record<string, unknown>), ...((req.body ?? {}) as Record<string, unknown>) };
+  const result = classifyWebpayReturn(params);
+  if (result.kind === "invalid") { res.redirect(303, billingResultUrl(null, "failed")); return; }
+
+  const checkout = result.kind === "timeout"
+    ? await repository.findBillingCheckout({ buyOrder: result.buyOrder })
+    : (await repository.findBillingCheckout({ externalToken: result.token })) ?? (result.kind === "aborted" && result.buyOrder ? await repository.findBillingCheckout({ buyOrder: result.buyOrder }) : null);
+  if (!checkout || checkout.provider !== "webpay") { res.redirect(303, billingResultUrl(null, "failed")); return; }
+  if (checkout.status !== "pending") { res.redirect(303, billingResultUrl(checkout, checkout.status)); return; }
+
+  if (result.kind === "aborted") {
+    const updated = await finalizeBillingCheckout(checkout, { status: "cancelled", detail: "Pago anulado en el formulario de Webpay." });
+    res.redirect(303, billingResultUrl(updated, updated.status));
+    return;
+  }
+  if (result.kind === "timeout") {
+    const updated = await finalizeBillingCheckout(checkout, { status: "failed", detail: "Se agotó el tiempo para pagar en Webpay." });
+    res.redirect(303, billingResultUrl(updated, updated.status));
+    return;
+  }
+
+  const config = resolveWebpayConfig();
+  let commit;
+  try {
+    commit = await commitWebpayTransaction(result.token, config);
+  } catch (error) {
+    // Si el token ya había sido confirmado (p. ej. reintento tras un error), Transbank
+    // responde 422; en ese caso se consulta el estado en vez de darlo por perdido.
+    if (error instanceof BillingGatewayError && error.status === 422) {
+      commit = await getWebpayTransactionStatus(result.token, config).catch(() => undefined);
+    }
+    if (!commit) {
+      console.error("[billing] commit Webpay falló", error);
+      const updated = await finalizeBillingCheckout(checkout, { status: "failed", detail: error instanceof Error ? error.message : "No se pudo confirmar el pago en Webpay." });
+      res.redirect(303, billingResultUrl(updated, updated.status));
+      return;
+    }
+  }
+  const updated = await finalizeBillingCheckout(checkout, evaluateWebpayCommit(checkout, commit), {
+    externalPaymentId: commit.authorization_code,
+    gatewayResponse: sanitizeWebpayResponse(commit)
+  });
+  res.redirect(303, billingResultUrl(updated, updated.status));
+}));
+
+// Retorno de Mercado Pago Checkout Pro (back_urls success / pending / failure).
+app.get("/billing/mercadopago/return", asyncRoute(async (req, res) => {
+  const query = req.query as Record<string, string | undefined>;
+  const checkoutId = query.checkout ?? query.external_reference;
+  const checkout = checkoutId ? await repository.getBillingCheckout(checkoutId) : null;
+  if (!checkout || checkout.provider !== "mercadopago") { res.redirect(303, billingResultUrl(null, "failed")); return; }
+  if (checkout.status !== "pending") { res.redirect(303, billingResultUrl(checkout, checkout.status)); return; }
+
+  const paymentId = [query.payment_id, query.collection_id].find((value) => value && /^\d+$/.test(value));
+  if (!paymentId) {
+    // El comprador volvió sin pagar. Se deja pendiente por si paga después (llega por webhook).
+    res.redirect(303, billingResultUrl(checkout, "cancelled"));
+    return;
+  }
+  try {
+    const payment = await getMercadoPagoPayment(paymentId, resolveMercadoPagoConfig());
+    const updated = await finalizeBillingCheckout(checkout, evaluateMercadoPagoPayment(checkout, payment), {
+      externalPaymentId: paymentId,
+      gatewayResponse: sanitizeMercadoPagoPayment(payment)
+    });
+    res.redirect(303, billingResultUrl(updated, updated.status));
+  } catch (error) {
+    console.error("[billing] consulta de pago Mercado Pago falló", error);
+    res.redirect(303, billingResultUrl(checkout, "pending"));
+  }
+}));
+
+// Webhook de Mercado Pago: confirma pagos aunque el comprador cierre la pestaña.
+app.post("/billing/mercadopago/webhook", asyncRoute(async (req, res) => {
+  if (!isMercadoPagoConfigured()) { res.status(200).json({ received: true }); return; }
+  const body = (req.body ?? {}) as { type?: string; topic?: string; data?: { id?: string | number } };
+  const query = req.query as Record<string, string | undefined>;
+  const type = body.type ?? body.topic ?? query.type ?? query.topic;
+  const dataId = String(query["data.id"] ?? body.data?.id ?? query.id ?? "");
+  if (type !== "payment" || !/^\d+$/.test(dataId)) { res.status(200).json({ received: true }); return; }
+
+  const config = resolveMercadoPagoConfig();
+  if (config.webhookSecret && !verifyMercadoPagoSignature({ signature: req.get("x-signature"), requestId: req.get("x-request-id"), dataId, secret: config.webhookSecret })) {
+    res.status(401).json({ message: "Firma inválida." });
+    return;
+  }
+
+  const payment = await getMercadoPagoPayment(dataId, config);
+  const checkout = payment.external_reference ? await repository.getBillingCheckout(payment.external_reference) : null;
+  if (checkout && checkout.provider === "mercadopago" && checkout.status === "pending") {
+    await finalizeBillingCheckout(checkout, evaluateMercadoPagoPayment(checkout, payment), {
+      externalPaymentId: dataId,
+      gatewayResponse: sanitizeMercadoPagoPayment(payment)
+    });
+  }
+  res.status(200).json({ received: true });
 }));
 
 app.use(subscriptionGuard);

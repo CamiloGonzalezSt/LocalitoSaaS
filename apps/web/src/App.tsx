@@ -63,7 +63,7 @@ import type {
   User
 } from "@localito/shared";
 import { effectiveSubscriptionStatus, LOCALITO_PLANS, hasEntitlement, mergeQuickSaleTicket, netSaleView, returnableQuantity, saleStatusLabel, subscriptionCanMutate, subscriptionDaysRemaining } from "@localito/shared";
-import { api, flushOfflineQueue, OfflineQueuedError } from "./lib/api";
+import { api, flushOfflineQueue, OfflineQueuedError, redirectToCheckout } from "./lib/api";
 import { useSaleWorkspace, reconcileDraft } from "./useSaleWorkspace";
 import type { SaleDraft } from "./useSaleWorkspace";
 import type { AuthSession } from "./lib/api";
@@ -87,7 +87,7 @@ import { BusinessSettings } from "./BusinessSettings";
 import { CustomerStatement } from "./ManagementPanels";
 import { defaultBusinessPreferences } from "@localito/shared";
 import { SearchView } from "./SearchView";
-import { PlanView, SettingsView } from "./AccountViews";
+import { PlanView, SettingsView, type PlanPaymentMethod } from "./AccountViews";
 import type { BusinessFormState, ProfileFormState, ThemePreference, UserFormState } from "./AccountViews";
 import "./sale-action-dialog.css";
 
@@ -332,6 +332,41 @@ function removePasswordResetTokenFromUrl() {
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
+type PlanPaymentResult = { status: string; provider?: string; plan?: SubscriptionPlan; checkoutId?: string };
+
+/** Lee el resultado que deja la API en el hash al volver de Webpay o Mercado Pago. */
+function readPlanPaymentResult(): PlanPaymentResult | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const status = params.get("plan_payment");
+  if (!status) return null;
+  const plan = params.get("plan");
+  return {
+    status,
+    provider: params.get("provider") ?? undefined,
+    plan: plan === "basic" || plan === "pro" ? plan : undefined,
+    checkoutId: params.get("checkout") ?? undefined
+  };
+}
+
+function removePlanPaymentResultFromUrl() {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.hash.replace(/^#/, ""));
+  for (const key of ["plan_payment", "provider", "plan", "checkout"]) params.delete(key);
+  url.hash = params.toString() ? `#${params.toString()}` : "";
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function planPaymentNotice(result: PlanPaymentResult): NoticeState {
+  const gateway = result.provider === "mercadopago" ? "Mercado Pago" : result.provider === "webpay" ? "Webpay" : "la pasarela";
+  const planName = result.plan ? LOCALITO_PLANS[result.plan].name : "tu plan";
+  if (result.status === "approved") return { message: `Pago aprobado con ${gateway}. ${planName} ya está activo.`, tone: "success" };
+  if (result.status === "pending") return { message: `${gateway} dejó el pago en revisión. Activaremos ${planName} apenas se confirme.`, tone: "warning" };
+  if (result.status === "cancelled") return { message: `Cancelaste el pago en ${gateway}. No se hizo ningún cobro.`, tone: "warning" };
+  if (result.status === "rejected") return { message: `${gateway} rechazó el pago. Prueba con otra tarjeta o medio de pago.`, tone: "error" };
+  return { message: `No pudimos confirmar el pago con ${gateway}. Inténtalo nuevamente.`, tone: "error" };
+}
+
 function navItemIsActive(item: View, active: View) {
   if (item === active) return true;
   if (item === "sale" && active === "scan") return true;
@@ -358,6 +393,7 @@ function App() {
   const [cashClosures, setCashClosures] = useState<CashRegisterClosure[]>([]);
   const [summary, setSummary] = useState<ReportSummary>(emptySummary);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [planPaymentResult, setPlanPaymentResult] = useState<PlanPaymentResult | null>(readPlanPaymentResult);
   const [theme, setTheme] = useState<ThemePreference>("light");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileActionsRef = useRef<HTMLDivElement>(null);
@@ -565,6 +601,21 @@ function App() {
 
     return () => window.clearTimeout(timeoutId);
   }, [notice]);
+
+  useEffect(() => {
+    if (!planPaymentResult || !currentUser || !subscription) return;
+    removePlanPaymentResultFromUrl();
+    setPlanPaymentResult(null);
+    if (isOwnerUser(currentUser)) setActiveView("plan");
+    setNotice(planPaymentNotice(planPaymentResult));
+  }, [planPaymentResult, currentUser?.id, subscription?.id]);
+
+  useEffect(() => {
+    // Si el usuario vuelve con "atrás" desde la pasarela, el botón no queda bloqueado.
+    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) setIsBusy(false); };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -1414,12 +1465,24 @@ function App() {
     finally { setIsBusy(false); }
   }
 
-  async function changePlan(plan: SubscriptionPlan, provider: "webpay_sandbox" | "mercadopago_sandbox" | "transfer") {
+  async function changePlan(plan: SubscriptionPlan, provider: PlanPaymentMethod) {
     setIsBusy(true);
+    if (provider !== "transfer") {
+      try {
+        const response = await api.startPlanCheckout(plan, provider);
+        setNotice({ message: response.message ?? "Redirigiendo a la pasarela de pago…", tone: "success" });
+        redirectToCheckout(response.data);
+        // El navegador sale de Localito; isBusy queda activo para evitar doble clic.
+      } catch (error) {
+        setNotice({ message: error instanceof Error ? error.message : "No se pudo iniciar el pago.", tone: "error" });
+        setIsBusy(false);
+      }
+      return;
+    }
     try {
       const response = await api.changePlan(plan, provider);
       setSubscription(response.data);
-      setNotice({ message: provider === "transfer" ? `Solicitud de ${LOCALITO_PLANS[plan].name} registrada. Se activará cuando el administrador confirme la transferencia.` : `Pago de prueba aprobado. ${LOCALITO_PLANS[plan].name} quedó activo sin realizar un cobro real.`, tone: "success" });
+      setNotice({ message: `Solicitud de ${LOCALITO_PLANS[plan].name} registrada. Se activará cuando el administrador confirme la transferencia.`, tone: "success" });
     } catch (error) {
       setNotice({ message: error instanceof Error ? error.message : "No se pudo cambiar el plan.", tone: "error" });
     } finally {

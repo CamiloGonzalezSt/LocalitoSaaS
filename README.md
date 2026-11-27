@@ -342,6 +342,12 @@ GROQ_API_KEY=
 GROQ_VISION_MODEL=qwen/qwen3.8-27b
 OPENAI_API_KEY=
 OPENAI_VISION_MODEL=gpt-5.6
+WEBPAY_ENVIRONMENT=integration
+WEBPAY_COMMERCE_CODE=
+WEBPAY_API_KEY=
+MERCADOPAGO_ACCESS_TOKEN=
+MERCADOPAGO_WEBHOOK_SECRET=
+PAYMENTS_RETURN_BASE_URL=
 ```
 
 Para la demostración académica configure `VISION_PROVIDER=groq`, `GROQ_API_KEY` y `GROQ_VISION_MODEL=qwen/qwen3.8-27b`. Groq se usa desde el backend y permite ejecutar reconocimiento real sujeto a la cuota de su plan gratuito. El modelo anterior `qwen/qwen3.6-27b` fue retirado del plan gratuito; Localito lo sustituye automáticamente si aún está configurado en Vercel. `OPENAI_API_KEY` y `OPENAI_VISION_MODEL` se conservan como alternativa opcional; si no se fuerza un proveedor, Localito prefiere Groq cuando ambas claves existen. Las imágenes se reducen en el navegador, se procesan sin guardarlas en Localito y toda respuesta externa vuelve a validarse antes de afectar el flujo. Ninguna clave debe exponerse en el frontend, llevar el prefijo `VITE_` ni subirse al repositorio.
@@ -369,6 +375,7 @@ Requisitos mínimos del entorno de producción:
 - origen web autorizado;
 - proveedor visual opcional para las funciones de IA;
 - proveedor de correo si se desea recuperación real de contraseña.
+- `MERCADOPAGO_ACCESS_TOKEN` de prueba para pagar planes con Mercado Pago (Webpay en modo prueba no requiere variables).
 
 El endpoint `/api/health` permite comprobar el estado operativo sin exponer secretos. En producción, si PostgreSQL no puede inicializarse, la API debe fallar en lugar de continuar con almacenamiento temporal.
 
@@ -431,7 +438,7 @@ Este flujo organiza inventario a partir de un documento comercial; no emite, val
 
 Localito registra efectivo, tarjeta en terminal externa, transferencia, Webpay externo, Mercado Pago externo, fiado y pago mixto. El vendedor cobra fuera de Localito, ingresa manualmente el monto en el terminal o aplicación correspondiente y confirma en la app que recibió el pago. El MVP no envía montos a un POS, no genera QR de Mercado Pago y no almacena datos de tarjeta.
 
-Para la tesis, la contratación de planes usa simulaciones sandbox: Webpay y Mercado Pago activan una prueba sin mover dinero, mientras que la transferencia queda pendiente de aprobación manual. El cobro Webpay mostrado desde fiados también es una simulación académica; no debe utilizarse para cobrar a clientes reales.
+La contratación de planes se paga en línea con **Webpay Plus** o **Mercado Pago Checkout Pro**, ambos en ambiente de prueba (ver [Pago de planes en línea](#pago-de-planes-en-línea)); la transferencia queda pendiente de aprobación manual. El cobro Webpay mostrado desde fiados sigue siendo una simulación académica; no debe utilizarse para cobrar a clientes reales.
 
 ## Seguridad y criterios de protección
 
@@ -482,7 +489,23 @@ Todo negocio nuevo recibe una prueba de **Localito Pro por 30 días**. `suscripc
 - **Pro ($19.990/mes):** agrega clientes, fiado, proveedores, compras, reportes avanzados, auditoría, alertas y Venta Rápida con foto.
 - Al vencer, los datos no se borran: quedan disponibles en modo lectura y las mutaciones responden `403` hasta reactivar.
 
-La selección por transferencia registra un `pendingPlan`: no activa funciones sin confirmación ni interrumpe una prueba vigente. Las opciones Webpay y Mercado Pago de esta pantalla son únicamente una aprobación sandbox para demostrar el flujo. El cobro recurrente automático con un proveedor externo continúa fuera del MVP académico.
+La selección por transferencia registra un `pendingPlan`: no activa funciones sin confirmación ni interrumpe una prueba vigente. Webpay y Mercado Pago redirigen a la pasarela real en modo prueba y el plan se activa solo cuando la API verifica el pago con el proveedor. El cobro recurrente automático continúa fuera del MVP académico: cada pago activa 30 días.
+
+### Pago de planes en línea
+
+Flujo: **Mi plan → Pagar** → `POST /subscription/checkout` crea un intento en `pagos_suscripcion` → el navegador va a la pasarela → la pasarela vuelve a la API → la API confirma con el proveedor (commit de Webpay o consulta del pago en Mercado Pago), valida orden, monto y moneda, activa el plan y redirige a la app con `#plan_payment=<estado>`. La activación es idempotente: el retorno del navegador y el webhook nunca activan el plan dos veces.
+
+| Ruta | Uso |
+| --- | --- |
+| `POST /subscription/checkout` | Inicia el pago (`plan`, `provider: webpay \| mercadopago`). Solo dueños. |
+| `GET /subscription/checkout/:id` | Estado de un intento de pago del propio local. |
+| `GET\|POST /billing/webpay/return` | `return_url` de Webpay (aprobado, anulado o timeout). |
+| `GET /billing/mercadopago/return` | `back_urls` de Mercado Pago. |
+| `POST /billing/mercadopago/webhook` | Notificaciones de pago de Mercado Pago (valida `x-signature` si hay secreto). |
+
+**Webpay Plus (Transbank).** Funciona sin configurar nada: usa el ambiente de integración y las credenciales públicas de prueba (código de comercio `597055555532`). Tarjeta de prueba VISA `4051 8856 0044 6623`, CVV `123`, cualquier fecha futura; si pide autenticación, RUT `11.111.111-1` y clave `123`. Funciona también en `localhost`. Para producción: `WEBPAY_ENVIRONMENT=production`, `WEBPAY_COMMERCE_CODE` y `WEBPAY_API_KEY` entregados por Transbank.
+
+**Mercado Pago Checkout Pro.** Requiere `MERCADOPAGO_ACCESS_TOKEN` con el Access Token de la **cuenta vendedora de prueba** (Tus integraciones → Cuentas de prueba). Para pagar, use la cuenta **compradora** de prueba en una ventana de incógnito y una tarjeta de prueba de Chile; el titular `APRO` aprueba y `OTHE` rechaza. Mercado Pago no acepta URLs `localhost` como retorno, por lo que se prueba en Vercel o exponiendo la API con un túnel (`PAYMENTS_RETURN_BASE_URL=https://<túnel>`). El webhook se configura solo en cada preferencia; `MERCADOPAGO_WEBHOOK_SECRET` (opcional) activa la validación de firma.
 
 ## Estructura
 
@@ -515,7 +538,8 @@ La documentación vigente parte en [docs/00_indice/INDICE_DOCUMENTACION.md](docs
 ## Alcance pendiente
 
 - Cumplimiento tributario chileno, excluido por decisión de esta iteración.
-- Integración real con terminales, Webpay o Mercado Pago, excluida del MVP de tesis: los pagos externos se registran manualmente y las simulaciones no cobran dinero.
+- Integración con terminales POS para cobros presenciales: los pagos externos de ventas se registran manualmente. El pago de planes ya usa Webpay y Mercado Pago en modo prueba.
+- Cobro recurrente automático de planes (Oneclick / suscripciones de Mercado Pago) y paso a credenciales productivas.
 - Configuración de un proveedor real de correo en Vercel; el flujo de recuperación está implementado, pero requiere credenciales de Gmail o Resend para enviar correos.
 - Avisos automáticos por correo distintos de la recuperación de contraseña.
 - Múltiples sucursales, e-commerce público, fidelización y facturación de la suscripción SaaS; son expansiones de producto y no forman parte del núcleo operacional entregado aquí.

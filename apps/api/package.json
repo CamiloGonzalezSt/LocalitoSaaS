@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test src/localito.test.ts"
+    "test": "tsx --test src/localito.test.ts src/billing.test.ts"
   },
   "dependencies": {
     "@localito/shared": "0.1.0",

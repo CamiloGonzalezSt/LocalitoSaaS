@@ -27,6 +27,8 @@ import type {
   StockMovementType,
   Subscription,
   SubscriptionPlan,
+  BillingCheckout,
+  BillingCheckoutStatus,
   Supplier,
   Tenant,
   User
@@ -79,6 +81,8 @@ export interface PaymentRecord {
   createdAt: string;
 }
 
+export type BillingCheckoutPatch = Partial<Pick<BillingCheckout, "status" | "externalToken" | "externalPaymentId" | "statusDetail" | "gatewayResponse" | "completedAt">>;
+
 export interface DataRepository {
   mode: "memory" | "postgres";
   registerTenant(input: { name: string; email: string; password: string; businessName: string; businessType: string }): Promise<{ tenant: Tenant; user: User }>;
@@ -86,6 +90,14 @@ export interface DataRepository {
   listTenants(): Promise<PlatformTenantSummary[]>;
   getSubscription(tenantId: string): Promise<Subscription>;
   updateSubscription(tenantId: string, input: { plan?: SubscriptionPlan; status?: Subscription["status"]; paymentProvider?: string; pendingPlan?: SubscriptionPlan | null }): Promise<Subscription>;
+  createBillingCheckout(checkout: BillingCheckout): Promise<BillingCheckout>;
+  getBillingCheckout(checkoutId: string): Promise<BillingCheckout | null>;
+  findBillingCheckout(query: { externalToken?: string; buyOrder?: string }): Promise<BillingCheckout | null>;
+  /**
+   * Actualiza un checkout. Con `onlyIfStatus` la escritura es condicional, de
+   * modo que el retorno del navegador y el webhook nunca activan el plan dos veces.
+   */
+  updateBillingCheckout(checkoutId: string, patch: BillingCheckoutPatch, onlyIfStatus?: BillingCheckoutStatus): Promise<BillingCheckout | null>;
   updateTenant(tenantId: string, tenant: Partial<Tenant>): Promise<Tenant | null>;
   deleteTenant(tenantId: string): Promise<boolean>;
   getUsers(tenantId: string, includeInactive?: boolean): Promise<User[]>;
@@ -306,6 +318,10 @@ function buildMemoryBootstrap(tenantId: string, currentCashRegister?: CashRegist
   };
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 function toOptional(value: unknown) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
 }
@@ -492,6 +508,31 @@ export class MemoryRepository implements DataRepository {
     return subscription;
   }
 
+  async createBillingCheckout(checkout: BillingCheckout) {
+    const stored = structuredClone(checkout);
+    store.billingCheckouts.push(stored);
+    return structuredClone(stored);
+  }
+
+  async getBillingCheckout(checkoutId: string) {
+    const checkout = store.billingCheckouts.find((item) => item.id === checkoutId);
+    return checkout ? structuredClone(checkout) : null;
+  }
+
+  async findBillingCheckout(query: { externalToken?: string; buyOrder?: string }) {
+    const checkout = store.billingCheckouts.find((item) =>
+      (query.externalToken != null && item.externalToken === query.externalToken) ||
+      (query.buyOrder != null && item.buyOrder === query.buyOrder));
+    return checkout ? structuredClone(checkout) : null;
+  }
+
+  async updateBillingCheckout(checkoutId: string, patch: BillingCheckoutPatch, onlyIfStatus?: BillingCheckoutStatus) {
+    const checkout = store.billingCheckouts.find((item) => item.id === checkoutId);
+    if (!checkout || (onlyIfStatus && checkout.status !== onlyIfStatus)) return null;
+    Object.assign(checkout, Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)), { updatedAt: new Date().toISOString() });
+    return structuredClone(checkout);
+  }
+
   async updateTenant(tenantId: string, body: Partial<Tenant>) {
     const tenant = store.tenants.find((candidate) => candidate.id === tenantId && candidate.id !== systemTenantId);
     if (!tenant) return null;
@@ -525,6 +566,7 @@ export class MemoryRepository implements DataRepository {
     store.auditEvents = store.auditEvents.filter((item) => item.tenantId !== tenantId);
     store.saleReturns = store.saleReturns.filter((item) => item.tenantId !== tenantId);
     store.subscriptions = store.subscriptions.filter((item) => item.tenantId !== tenantId);
+    store.billingCheckouts = store.billingCheckouts.filter((item) => item.tenantId !== tenantId);
     store.sessions = store.sessions.filter((session) => !userIds.has(session.userId));
     store.passwordResetTokens = store.passwordResetTokens.filter((token) => !userIds.has(token.userId));
     for (const userId of userIds) delete store.passwordHashes[userId];
@@ -1437,14 +1479,57 @@ export class PostgresRepository implements DataRepository {
       endsAt: new Date(now.getTime() + 30 * 86_400_000).toISOString()
     } : { startedAt: current.currentPeriodStartedAt, endsAt: current.currentPeriodEndsAt };
     const result = await this.pool.query(
-      `update suscripciones set plan=$1, estado=$2, inicio_periodo=$3, fin_periodo=$4, proveedor_pago=$5,
-       fecha_cancelacion=case when $2='cancelled' then CURRENT_TIMESTAMP when $2 in ('active','trialing') then null else fecha_cancelacion end,
-       plan_solicitado=case when $6::text is null then null else $6 end,
-       fecha_solicitud_cambio=case when $6::text is null then null when $6::text <> coalesce(plan_solicitado, '') then CURRENT_TIMESTAMP else fecha_solicitud_cambio end,
-       fecha_actualizacion=CURRENT_TIMESTAMP where negocio_id=$7 returning *`,
+      // Casts explícitos: sin ellos PostgreSQL deduce tipos distintos para $2/$6
+      // (varchar en la asignación y text en la comparación) y falla con 42P08.
+      `update suscripciones set plan=$1::varchar, estado=$2::varchar, inicio_periodo=$3::timestamptz, fin_periodo=$4::timestamptz, proveedor_pago=$5::varchar,
+       fecha_cancelacion=case when $2::varchar='cancelled' then CURRENT_TIMESTAMP when $2::varchar in ('active','trialing') then null else fecha_cancelacion end,
+       plan_solicitado=$6::varchar,
+       fecha_solicitud_cambio=case when $6::varchar is null then null when $6::varchar <> coalesce(plan_solicitado, '') then CURRENT_TIMESTAMP else fecha_solicitud_cambio end,
+       fecha_actualizacion=CURRENT_TIMESTAMP where negocio_id=$7::uuid returning *`,
       [plan, status, activePeriod.startedAt, activePeriod.endsAt, input.paymentProvider ?? current.paymentProvider ?? "manual", input.pendingPlan === undefined ? current.pendingPlan ?? null : input.pendingPlan, tenantId]
     );
     return mapSubscription(result.rows[0]);
+  }
+
+  async createBillingCheckout(checkout: BillingCheckout) {
+    const result = await this.pool.query(
+      `insert into pagos_suscripcion (id, negocio_id, usuario_id, plan, proveedor, ambiente, monto, moneda, estado, orden_compra, token_externo, pago_externo_id, detalle_estado, origen_retorno, respuesta_pasarela, fecha_creacion, fecha_actualizacion)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) returning *`,
+      [checkout.id, checkout.tenantId, checkout.userId ?? null, checkout.plan, checkout.provider, checkout.environment, checkout.amount, checkout.currency, checkout.status, checkout.buyOrder, checkout.externalToken ?? null, checkout.externalPaymentId ?? null, checkout.statusDetail ?? null, checkout.returnOrigin ?? null, checkout.gatewayResponse ? JSON.stringify(checkout.gatewayResponse) : null, checkout.createdAt, checkout.updatedAt]
+    );
+    return mapBillingCheckout(result.rows[0]);
+  }
+
+  async getBillingCheckout(checkoutId: string) {
+    if (!isUuid(checkoutId)) return null;
+    const result = await this.pool.query(`select * from pagos_suscripcion where id=$1 limit 1`, [checkoutId]);
+    return result.rows[0] ? mapBillingCheckout(result.rows[0]) : null;
+  }
+
+  async findBillingCheckout(query: { externalToken?: string; buyOrder?: string }) {
+    if (query.externalToken == null && query.buyOrder == null) return null;
+    const result = await this.pool.query(
+      `select * from pagos_suscripcion where ($1::varchar is not null and token_externo=$1::varchar) or ($2::varchar is not null and orden_compra=$2::varchar) order by fecha_creacion desc limit 1`,
+      [query.externalToken ?? null, query.buyOrder ?? null]
+    );
+    return result.rows[0] ? mapBillingCheckout(result.rows[0]) : null;
+  }
+
+  async updateBillingCheckout(checkoutId: string, patch: BillingCheckoutPatch, onlyIfStatus?: BillingCheckoutStatus) {
+    if (!isUuid(checkoutId)) return null;
+    const result = await this.pool.query(
+      `update pagos_suscripcion set
+         estado=coalesce($2::varchar, estado),
+         token_externo=coalesce($3::varchar, token_externo),
+         pago_externo_id=coalesce($4::varchar, pago_externo_id),
+         detalle_estado=coalesce($5::varchar, detalle_estado),
+         respuesta_pasarela=coalesce($6::jsonb, respuesta_pasarela),
+         fecha_completado=coalesce($7::timestamptz, fecha_completado),
+         fecha_actualizacion=CURRENT_TIMESTAMP
+       where id=$1::uuid and ($8::varchar is null or estado=$8::varchar) returning *`,
+      [checkoutId, patch.status ?? null, patch.externalToken ?? null, patch.externalPaymentId ?? null, patch.statusDetail?.slice(0, 300) ?? null, patch.gatewayResponse ? JSON.stringify(patch.gatewayResponse) : null, patch.completedAt ?? null, onlyIfStatus ?? null]
+    );
+    return result.rows[0] ? mapBillingCheckout(result.rows[0]) : null;
   }
 
   async updateTenant(tenantId: string, body: Partial<Tenant>) {
@@ -1489,6 +1574,7 @@ export class PostgresRepository implements DataRepository {
       await client.query(`delete from password_reset_tokens where usuario_id in (select id from usuarios where negocio_id=$1)`, [tenantId]);
       await client.query(`delete from sesiones where usuario_id in (select id from usuarios where negocio_id=$1)`, [tenantId]);
       await client.query(`delete from usuarios where negocio_id=$1`, [tenantId]);
+      await client.query(`delete from pagos_suscripcion where negocio_id=$1`, [tenantId]);
       await client.query(`delete from suscripciones where negocio_id=$1`, [tenantId]);
       await client.query(`delete from negocios where id=$1`, [tenantId]);
       await client.query("commit");
@@ -2965,6 +3051,30 @@ function mapStockMovement(row: Record<string, unknown>): StockMovement {
 function mapAuditEvent(row: Record<string, unknown>): AuditEvent {
   const details = typeof row.detalle === "object" && row.detalle ? row.detalle as Record<string, unknown> : undefined;
   return { id: String(row.id), tenantId: String(row.negocio_id), userId: toOptional(row.usuario_id), userName: toOptional(row.user_name), action: String(row.accion), entity: String(row.entidad), entityId: toOptional(row.entidad_id), details, createdAt: new Date(String(row.fecha_creacion)).toISOString() };
+}
+
+function mapBillingCheckout(row: Record<string, unknown>): BillingCheckout {
+  const response = typeof row.respuesta_pasarela === "object" && row.respuesta_pasarela ? row.respuesta_pasarela as Record<string, unknown> : undefined;
+  return {
+    id: String(row.id),
+    tenantId: String(row.negocio_id),
+    userId: toOptional(row.usuario_id),
+    plan: String(row.plan) as BillingCheckout["plan"],
+    provider: String(row.proveedor) as BillingCheckout["provider"],
+    environment: String(row.ambiente) === "production" ? "production" : "integration",
+    amount: Number(row.monto),
+    currency: "CLP",
+    status: String(row.estado) as BillingCheckoutStatus,
+    buyOrder: String(row.orden_compra),
+    externalToken: toOptional(row.token_externo),
+    externalPaymentId: toOptional(row.pago_externo_id),
+    statusDetail: toOptional(row.detalle_estado),
+    returnOrigin: toOptional(row.origen_retorno),
+    gatewayResponse: response,
+    createdAt: new Date(String(row.fecha_creacion)).toISOString(),
+    updatedAt: new Date(String(row.fecha_actualizacion)).toISOString(),
+    completedAt: row.fecha_completado ? new Date(String(row.fecha_completado)).toISOString() : undefined
+  };
 }
 
 function mapSubscription(row: Record<string, unknown>): Subscription {

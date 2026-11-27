@@ -3,6 +3,9 @@ import type {
   AuditEvent,
   AuditPage,
   AuditQuery,
+  BillingCheckout,
+  BillingCheckoutStart,
+  BillingProvider,
   CashRegisterClosure,
   BootstrapData,
   CashMovement,
@@ -199,8 +202,16 @@ export const api = {
 
   async getSubscription() { return request<Subscription>("/subscription"); },
 
-  async changePlan(plan: SubscriptionPlan, provider: "webpay_sandbox" | "mercadopago_sandbox" | "transfer") {
+  async changePlan(plan: SubscriptionPlan, provider: "transfer") {
     return request<Subscription>("/subscription/change-plan", { method: "POST", body: JSON.stringify({ plan, provider }) });
+  },
+
+  async startPlanCheckout(plan: SubscriptionPlan, provider: BillingProvider) {
+    return request<BillingCheckoutStart>("/subscription/checkout", { method: "POST", body: JSON.stringify({ plan, provider, appOrigin: window.location.origin }) });
+  },
+
+  async getPlanCheckout(checkoutId: string) {
+    return request<BillingCheckout>(`/subscription/checkout/${encodeURIComponent(checkoutId)}`);
   },
 
   async updateTenant(payload: Pick<Tenant, "name" | "businessType" | "address" | "phone">) {
@@ -391,3 +402,24 @@ export const api = {
   },
   async getAuditEvents() { return request<AuditEvent[]>("/audit"); }
 };
+
+/** Lleva el navegador a la pasarela. Webpay exige un POST con token_ws. */
+export function redirectToCheckout(start: BillingCheckoutStart) {
+  if (start.method === "GET") {
+    window.location.assign(start.redirectUrl);
+    return;
+  }
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = start.redirectUrl;
+  form.style.display = "none";
+  for (const [name, value] of Object.entries(start.fields ?? {})) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  }
+  document.body.appendChild(form);
+  form.submit();
+}

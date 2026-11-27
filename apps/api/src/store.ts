@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type {
   AuditEvent,
+  BillingCheckout,
   CashMovement,
   CashRegisterClosure,
   CashRegisterSummary,
@@ -74,6 +75,7 @@ export interface Store {
   saleReturns: SaleReturn[];
   idempotencyKeys: Record<string, string>;
   subscriptions: Subscription[];
+  billingCheckouts: BillingCheckout[];
 }
 
 export const demoTenantId = demoTenantIds.dondeJuanita;
@@ -204,6 +206,7 @@ export const store: Store = {
   auditEvents: [],
   saleReturns: [],
   idempotencyKeys: {},
+  billingCheckouts: [],
   subscriptions: demoTenantSeeds.map((tenant) => {
     const now = new Date();
     return {
