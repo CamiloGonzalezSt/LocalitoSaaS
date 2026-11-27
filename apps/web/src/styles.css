@@ -5887,10 +5887,24 @@ button:active:not(:disabled) { transform: none; }
 .billing-method { display: grid; gap: 5px; min-height: 88px; padding: 14px; color: var(--text-primary); text-align: left; background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 8px; }
 .billing-method small { color: var(--text-secondary); }
 .billing-method.active { color: var(--primary-hover); background: var(--primary-soft); border-color: var(--primary); }
-.billing-test-hint { display: grid; gap: 4px; margin-top: 12px; padding: 12px 14px; color: var(--text-secondary); font-size: 0.9rem; background: var(--surface-secondary); border: 1px dashed var(--border); border-radius: 8px; }
-.billing-test-hint strong { color: var(--text-primary); font-size: 0.92rem; }
-.billing-test-hint code { padding: 1px 5px; color: var(--text-primary); font-size: 0.86rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
-.plan-card .primary-action.full svg { flex-shrink: 0; }
+.plan-checkout { display: grid; gap: 8px; margin-top: auto; }
+.plan-checkout-toggle svg { flex-shrink: 0; transition: transform 160ms ease; }
+.plan-checkout.open .plan-checkout-toggle svg:last-child { transform: rotate(180deg); }
+.plan-pay-menu { display: grid; gap: 6px; padding: 10px; background: var(--surface-secondary); border: 1px solid var(--border); border-radius: 10px; animation: plan-pay-menu-in 140ms ease-out; }
+.plan-pay-menu-title { padding: 2px 4px 4px; color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; }
+.plan-pay-option { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 12px; color: var(--text-primary); text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.plan-pay-option:hover:not(:disabled), .plan-pay-option:focus-visible { border-color: var(--primary); background: var(--primary-soft); }
+.plan-pay-option:disabled { opacity: 0.55; cursor: not-allowed; }
+.plan-pay-option > svg:first-child { color: var(--primary); }
+.plan-pay-option span { display: grid; gap: 2px; }
+.plan-pay-option small { color: var(--text-secondary); font-size: 0.8rem; }
+.plan-pay-option-go { color: var(--text-secondary); }
+.plan-test-data { padding: 4px 4px 0; color: var(--text-secondary); font-size: 0.82rem; }
+.plan-test-data summary { cursor: pointer; font-weight: 600; }
+.plan-test-data p { margin: 6px 0 0; line-height: 1.45; }
+.plan-test-data code { padding: 0 4px; color: var(--text-primary); font-size: 0.8rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+@keyframes plan-pay-menu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .plan-pay-menu { animation: none; } .plan-checkout-toggle svg { transition: none; } }
 
 .platform-tenant-row { grid-template-columns: minmax(220px,1fr) auto auto auto auto; }
 .admin-search { margin-bottom: 14px; }
