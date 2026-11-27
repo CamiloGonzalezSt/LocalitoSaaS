@@ -1,6 +1,6 @@
-import { Building2, CheckCircle2, Download, Pencil, Plus, Save, Trash2, WalletCards } from "lucide-react";
+import { Building2, CheckCircle2, Download, ExternalLink, Pencil, Plus, Save, Trash2, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { Subscription, SubscriptionPlan, Tenant, User } from "@localito/shared";
+import type { BillingProvider, Subscription, SubscriptionPlan, Tenant, User } from "@localito/shared";
 import { effectiveSubscriptionStatus, LOCALITO_PLANS, subscriptionDaysRemaining } from "@localito/shared";
 import { formatCLP } from "./lib/format";
 import { FormField, FormSurface } from "./FormControls";
@@ -84,25 +84,42 @@ export function SettingsView({ tenant, user, users, userForm, profileForm, isBus
   </div>;
 }
 
-export function PlanView({ subscription, isBusy, onSelect }: { subscription: Subscription; isBusy: boolean; onSelect: (plan: SubscriptionPlan, provider: "webpay_sandbox" | "mercadopago_sandbox" | "transfer") => void }) {
+export type PlanPaymentMethod = BillingProvider | "transfer";
+
+const paymentMethodCopy: Record<PlanPaymentMethod, { title: string; detail: string; action: string }> = {
+  webpay: { title: "Webpay", detail: "Webpay Plus · ambiente de integración Transbank", action: "Pagar con Webpay" },
+  mercadopago: { title: "Mercado Pago", detail: "Checkout Pro · credenciales de prueba", action: "Pagar con Mercado Pago" },
+  transfer: { title: "Transferencia", detail: "Queda pendiente de revisión administrativa", action: "Solicitar" }
+};
+
+export function PlanView({ subscription, isBusy, onSelect }: { subscription: Subscription; isBusy: boolean; onSelect: (plan: SubscriptionPlan, provider: PlanPaymentMethod) => void }) {
   const days = subscriptionDaysRemaining(subscription);
   const status = effectiveSubscriptionStatus(subscription);
   const statusCopy = subscriptionStatusCopy(status, days);
-  const [provider, setProvider] = useState<"webpay_sandbox" | "mercadopago_sandbox" | "transfer">("webpay_sandbox");
+  const [provider, setProvider] = useState<PlanPaymentMethod>("webpay");
+  const online = provider !== "transfer";
   return <div className="stack">
     <section className="panel hero-panel plan-hero"><div className="hero-copy"><span>MI PLAN</span><strong>{status === "trialing" ? `Prueba Pro · ${days} días restantes` : LOCALITO_PLANS[subscription.plan].name}</strong><p>{statusCopy}</p></div></section>
-    {(status === "past_due" || status === "expired" || status === "cancelled") && <section className="panel subscription-recovery" role="status"><WalletCards size={22}/><div><strong>{status === "past_due" ? "Activación pendiente" : "Tu acceso operativo está pausado"}</strong><p>Tus datos siguen guardados y puedes revisarlos. Elige un plan y solicita activación; un administrador confirmará el pago manualmente.</p></div></section>}
+    {(status === "past_due" || status === "expired" || status === "cancelled") && <section className="panel subscription-recovery" role="status"><WalletCards size={22}/><div><strong>{status === "past_due" ? "Activación pendiente" : "Tu acceso operativo está pausado"}</strong><p>Tus datos siguen guardados y puedes revisarlos. Paga con Webpay o Mercado Pago para reactivar al instante, o solicita activación por transferencia.</p></div></section>}
     {subscription.pendingPlan && (status === "active" || status === "trialing") && <section className="panel subscription-recovery" role="status"><WalletCards size={22}/><div><strong>Solicitud registrada: {LOCALITO_PLANS[subscription.pendingPlan].name}</strong><p>Tu acceso actual continúa sin cambios hasta que el pago sea verificado y el nuevo plan sea activado.</p></div></section>}
-    <section className="panel billing-methods"><div className="section-heading"><div><span>PAGO DE PRUEBA</span><h2>¿Cómo quieres probar la activación?</h2></div><span>No se cobrará dinero real</span></div><div className="billing-method-grid"><button className={provider === "webpay_sandbox" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("webpay_sandbox")}><strong>Webpay</strong><small>Ambiente de prueba · aprobación simulada</small></button><button className={provider === "mercadopago_sandbox" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("mercadopago_sandbox")}><strong>Mercado Pago</strong><small>Sandbox · aprobación simulada</small></button><button className={provider === "transfer" ? "billing-method active" : "billing-method"} type="button" onClick={() => setProvider("transfer")}><strong>Transferencia</strong><small>Queda pendiente de revisión administrativa</small></button></div></section>
+    <section className="panel billing-methods"><div className="section-heading"><div><span>MEDIO DE PAGO</span><h2>¿Cómo quieres pagar tu plan?</h2></div><span>Modo prueba · sin cobros reales</span></div><div className="billing-method-grid">{(Object.keys(paymentMethodCopy) as PlanPaymentMethod[]).map((method) => <button key={method} className={provider === method ? "billing-method active" : "billing-method"} type="button" aria-pressed={provider === method} onClick={() => setProvider(method)}><strong>{paymentMethodCopy[method].title}</strong><small>{paymentMethodCopy[method].detail}</small></button>)}</div>{online && <TestPaymentHint provider={provider}/>}</section>
     <section className="plan-grid">
       {Object.values(LOCALITO_PLANS).map((plan) => {
         const isCurrent = plan.id === subscription.plan && status === "active";
         const isRequested = plan.id === subscription.pendingPlan;
-        return <article className={plan.id === subscription.plan ? "panel plan-card current" : "panel plan-card"} key={plan.id}><div><span className="status-badge success">{isRequested ? "Solicitado" : plan.recommended ? "Recomendado" : "Esencial"}</span><h2>{plan.name}</h2><p>{plan.description}</p></div><strong className="plan-price">{formatCLP(plan.price)}<small>/mes</small></strong><ul>{plan.entitlements.map((feature) => <li key={feature}><CheckCircle2 size={16}/>{entitlementLabel(feature)}</li>)}</ul><button className={isCurrent ? "secondary-action full" : "primary-action full"} type="button" disabled={isBusy || isCurrent || isRequested} onClick={() => onSelect(plan.id, provider)}>{isCurrent ? "Plan actual" : isRequested ? "Activación solicitada" : provider === "transfer" ? `Solicitar ${plan.name}` : `Probar pago y activar`}</button></article>;
+        const label = isCurrent ? "Plan actual" : isRequested && !online ? "Activación solicitada" : online ? paymentMethodCopy[provider].action : `Solicitar ${plan.name}`;
+        return <article className={plan.id === subscription.plan ? "panel plan-card current" : "panel plan-card"} key={plan.id}><div><span className="status-badge success">{isRequested ? "Solicitado" : plan.recommended ? "Recomendado" : "Esencial"}</span><h2>{plan.name}</h2><p>{plan.description}</p></div><strong className="plan-price">{formatCLP(plan.price)}<small>/mes</small></strong><ul>{plan.entitlements.map((feature) => <li key={feature}><CheckCircle2 size={16}/>{entitlementLabel(feature)}</li>)}</ul><button className={isCurrent ? "secondary-action full" : "primary-action full"} type="button" disabled={isBusy || isCurrent || (isRequested && !online)} onClick={() => onSelect(plan.id, provider)}>{online && !isCurrent && <ExternalLink size={16}/>}{isBusy && online && !isCurrent ? "Conectando…" : label}</button></article>;
       })}
     </section>
-    <p className="helper-text">Webpay y Mercado Pago funcionan aquí en modo sandbox para la tesis: simulan una aprobación sin mover dinero. La transferencia mantiene el flujo manual de revisión.</p>
+    <p className="helper-text">Al pagar te llevamos a la página segura de la pasarela y, al terminar, vuelves a Localito con el plan activado. Ambas pasarelas están en modo prueba: no se mueve dinero real. La transferencia mantiene el flujo manual de revisión.</p>
   </div>;
+}
+
+function TestPaymentHint({ provider }: { provider: BillingProvider }) {
+  if (provider === "webpay") {
+    return <div className="billing-test-hint" role="note"><strong>Datos de prueba Webpay</strong><span>Tarjeta VISA <code>4051 8856 0044 6623</code> · CVV <code>123</code> · cualquier fecha futura.</span><span>Si pide autenticación: RUT <code>11.111.111-1</code> · clave <code>123</code>.</span></div>;
+  }
+  return <div className="billing-test-hint" role="note"><strong>Datos de prueba Mercado Pago</strong><span>Entra con tu cuenta compradora de prueba (en incógnito) y usa una tarjeta de prueba de tu panel.</span><span>Titular <code>APRO</code> = aprobado · <code>OTHE</code> = rechazado · CVV <code>123</code>.</span></div>;
 }
 
 function LabeledInput({ label, value, onChange, type = "text", autoComplete }: { label: string; value: string; onChange: (value: string) => void; type?: string; autoComplete?: string }) {

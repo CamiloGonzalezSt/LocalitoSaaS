@@ -66,6 +66,32 @@ FROM negocios n
 WHERE n.rubro <> 'Plataforma'
 ON CONFLICT (negocio_id) DO NOTHING;
 
+-- Pagos en línea de planes (Webpay Plus / Mercado Pago). Cada fila es un
+-- intento de compra; el plan solo se activa cuando la pasarela confirma.
+CREATE TABLE IF NOT EXISTS pagos_suscripcion (
+  id UUID PRIMARY KEY,
+  negocio_id UUID NOT NULL REFERENCES negocios(id) ON DELETE CASCADE,
+  usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+  plan VARCHAR(20) NOT NULL CHECK (plan IN ('basic', 'pro')),
+  proveedor VARCHAR(20) NOT NULL CHECK (proveedor IN ('webpay', 'mercadopago')),
+  ambiente VARCHAR(20) NOT NULL DEFAULT 'integration' CHECK (ambiente IN ('integration', 'production')),
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda VARCHAR(3) NOT NULL DEFAULT 'CLP',
+  estado VARCHAR(20) NOT NULL CHECK (estado IN ('pending', 'approved', 'rejected', 'cancelled', 'failed')),
+  orden_compra VARCHAR(26) NOT NULL UNIQUE,
+  token_externo VARCHAR(200),
+  pago_externo_id VARCHAR(80),
+  detalle_estado VARCHAR(300),
+  origen_retorno VARCHAR(300),
+  respuesta_pasarela JSONB,
+  fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fecha_completado TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_pagos_suscripcion_negocio ON pagos_suscripcion(negocio_id, fecha_creacion DESC);
+CREATE INDEX IF NOT EXISTS idx_pagos_suscripcion_token ON pagos_suscripcion(token_externo);
+
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
   id UUID PRIMARY KEY,
   usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -423,13 +449,14 @@ ALTER TABLE alertas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reconocimientos_ia ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cierres_caja ENABLE ROW LEVEL SECURITY;
 ALTER TABLE suscripciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pagos_suscripcion ENABLE ROW LEVEL SECURITY;
 
 -- Localito no consulta estas tablas mediante la Data API. En Supabase se
 -- revocan sus permisos para anon/authenticated como defensa adicional; el
 -- bloque se omite en PostgreSQL local cuando esos roles no existen.
 DO $$
 DECLARE
-  app_tables TEXT := 'negocios, usuarios, sesiones, password_reset_tokens, categorias, productos, clientes, ventas, detalle_ventas, movimientos_stock, devoluciones_venta, cuentas_fiado, abonos_fiado, pagos, proveedores, ordenes_compra, detalle_ordenes_compra, sesiones_caja, movimientos_caja, auditoria, alertas, reconocimientos_ia, cierres_caja, suscripciones';
+  app_tables TEXT := 'negocios, usuarios, sesiones, password_reset_tokens, categorias, productos, clientes, ventas, detalle_ventas, movimientos_stock, devoluciones_venta, cuentas_fiado, abonos_fiado, pagos, proveedores, ordenes_compra, detalle_ordenes_compra, sesiones_caja, movimientos_caja, auditoria, alertas, reconocimientos_ia, cierres_caja, suscripciones, pagos_suscripcion';
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
     EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE %s FROM anon', app_tables);

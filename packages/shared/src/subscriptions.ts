@@ -114,3 +114,42 @@ export function createTrialSubscription(tenantId: string, now = new Date()): Sub
     updatedAt: now.toISOString()
   };
 }
+
+/** Pasarelas en línea para pagar un plan (ambas en modo de prueba por defecto). */
+export type BillingProvider = "webpay" | "mercadopago";
+export type BillingCheckoutStatus = "pending" | "approved" | "rejected" | "cancelled" | "failed";
+
+export interface BillingCheckout {
+  id: string;
+  tenantId: string;
+  userId?: string;
+  plan: SubscriptionPlan;
+  provider: BillingProvider;
+  environment: "integration" | "production";
+  amount: number;
+  currency: "CLP";
+  status: BillingCheckoutStatus;
+  /** Orden de compra enviada a la pasarela (Webpay exige máximo 26 caracteres). */
+  buyOrder: string;
+  /** token_ws de Webpay o id de preferencia de Mercado Pago. */
+  externalToken?: string;
+  /** Código de autorización Webpay o payment_id de Mercado Pago. */
+  externalPaymentId?: string;
+  statusDetail?: string;
+  /** Origen del frontend al que se devuelve al usuario después de pagar. */
+  returnOrigin?: string;
+  gatewayResponse?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+}
+
+/** Instrucciones para que el navegador salte a la pasarela. */
+export interface BillingCheckoutStart {
+  checkoutId: string;
+  provider: BillingProvider;
+  sandbox: boolean;
+  redirectUrl: string;
+  method: "GET" | "POST";
+  fields?: Record<string, string>;
+}
